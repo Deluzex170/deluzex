@@ -9,19 +9,14 @@ import { RootState } from "../store/store";
 import { clearCart } from "../store/cartSlice";
 import { useAuth } from "../context/AuthContext";
 import {
-  processServerPayment,
-  ServerPaymentPayload,
-  initiateUpiPayment,
-  checkPaymentStatus,
+  createPaymentOrder,
+  verifyPayment,
+  createCodOrder,
   recordPaymentFailure,
   fetchUserAddresses,
   saveUserAddress,
-  fetchUserCards,
-  saveUserCard,
   savePlacedOrder,
   SavedAddress,
-  SavedCard,
-  OrderPayload,
 } from "../services/api";
 import styles from "./checkout.module.css";
 
@@ -39,6 +34,28 @@ function getOrCreateIdempotencyKey(): string {
   }
 }
 
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") return resolve(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((window as any).Razorpay) return resolve(true);
+
+    const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existingScript) {
+      existingScript.addEventListener("load", () => resolve(true));
+      existingScript.addEventListener("error", () => resolve(false));
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const dispatch = useDispatch();
@@ -48,6 +65,7 @@ export default function CheckoutPage() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
 
   // Idempotency & Failure Recovery State
   const [idempotencyKey, setIdempotencyKey] = useState<string>("");
@@ -58,20 +76,24 @@ export default function CheckoutPage() {
     errorCode?: string;
   } | null>(null);
 
-  // Saved Data States
+  // Saved Addresses State
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [saveAddressToProfile, setSaveAddressToProfile] = useState(true);
 
-  const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-  const [saveCardToProfile, setSaveCardToProfile] = useState(true);
+  // Payment Selection: 'razorpay' (Default) | 'cod'
+  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">("razorpay");
 
-  // Payment Tabs: 'upi' | 'card' | 'cod'
-  const [paymentTab, setPaymentTab] = useState<"upi" | "card" | "cod">("upi");
-  const [upiMode, setUpiMode] = useState<"vpa" | "qr">("vpa");
-  const [upiVpa, setUpiVpa] = useState<string>("");
-  const [qrTimeLeft, setQrTimeLeft] = useState<number>(600); // 10 min countdown for QR
+  // Razorpay Sandbox Simulator Modal State
+  const [sandboxModalOrder, setSandboxModalOrder] = useState<{
+    order_id: string;
+    razorpay_order_id: string;
+    amount: number;
+    currency: string;
+    key_id: string;
+  } | null>(null);
+  const [sandboxTab, setSandboxTab] = useState<"card" | "upi" | "netbanking">("card");
+  const [isSimulating, setIsSimulating] = useState(false);
 
   // Contact & Shipping Form Fields
   const [email, setEmail] = useState("");
@@ -83,98 +105,16 @@ export default function CheckoutPage() {
   const [state, setState] = useState("");
   const [pinCode, setPinCode] = useState("");
 
-  // Card Input Fields
-  const [cardHolder, setCardHolder] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
-  const [cardBrand, setCardBrand] = useState<"visa" | "mastercard" | "rupay" | "other">("visa");
-
   const subtotal = cartTotal;
   const gst = subtotal * 0.18;
   const delivery = subtotal > 0 ? 99 : 0;
   const grandTotal = subtotal + gst + delivery;
 
-  // UPI In-App Waiting & Approval Modal State
-  const [upiWaitingOrder, setUpiWaitingOrder] = useState<{
-    orderId: string;
-    upiVpa: string;
-    amount: number;
-    paymentUrl?: string;
-    expiresIn: number;
-  } | null>(null);
-  const [upiCountdown, setUpiCountdown] = useState<number>(300);
-
-  // Initialize Idempotency Key
+  // Initialize Idempotency Key & Preload Razorpay Script
   useEffect(() => {
     setIdempotencyKey(getOrCreateIdempotencyKey());
+    loadRazorpayScript().catch((err) => console.warn("Razorpay script preload warning:", err));
   }, []);
-
-  // QR Timer Countdown
-  useEffect(() => {
-    if (paymentTab === "upi" && upiMode === "qr" && qrTimeLeft > 0) {
-      const timer = setInterval(() => setQrTimeLeft((prev) => Math.max(0, prev - 1)), 1000);
-      return () => clearInterval(timer);
-    }
-  }, [paymentTab, upiMode, qrTimeLeft]);
-
-  // UPI Real-Time In-App Approval Polling & Countdown Effect
-  useEffect(() => {
-    if (!upiWaitingOrder) return;
-
-    // 1. Countdown timer
-    const countdownTimer = setInterval(() => {
-      setUpiCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(countdownTimer);
-          setFailedOrder({
-            orderId: upiWaitingOrder.orderId,
-            errorReason: "UPI Collect session timed out. You can retry with the same or another payment method.",
-            errorCode: "UPI_TIMEOUT",
-          });
-          setErrorMessage("UPI Collect session timed out. Please try again or choose another method.");
-          setUpiWaitingOrder(null);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    // 2. Poll backend status every 3 seconds to check if customer approved in their app
-    const pollInterval = setInterval(async () => {
-      try {
-        const res = await checkPaymentStatus(upiWaitingOrder.orderId);
-        if (res && res.status === "paid") {
-          clearInterval(pollInterval);
-          clearInterval(countdownTimer);
-          setUpiWaitingOrder(null);
-          if (typeof window !== "undefined") {
-            sessionStorage.removeItem("deluzex_checkout_idem");
-          }
-          dispatch(clearCart());
-          router.push(`/checkout/success?orderId=${encodeURIComponent(upiWaitingOrder.orderId)}`);
-        } else if (res && res.status === "failed") {
-          clearInterval(pollInterval);
-          clearInterval(countdownTimer);
-          const reason = res.error_description || "Payment was declined in your UPI app.";
-          setFailedOrder({
-            orderId: upiWaitingOrder.orderId,
-            errorReason: reason,
-            errorCode: "UPI_DECLINED",
-          });
-          setErrorMessage(reason);
-          setUpiWaitingOrder(null);
-        }
-      } catch (pollErr) {
-        console.warn("UPI status check error:", pollErr);
-      }
-    }, 3000);
-
-    return () => {
-      clearInterval(countdownTimer);
-      clearInterval(pollInterval);
-    };
-  }, [upiWaitingOrder, dispatch, router]);
 
   const applyAddress = useCallback((addr: SavedAddress) => {
     setSelectedAddressId(addr.id || addr._id || null);
@@ -198,160 +138,70 @@ export default function CheckoutPage() {
     }
   }, [user, email, phone, firstName, lastName]);
 
-  // Load saved addresses and cards
+  // Load saved addresses for user
   useEffect(() => {
     const activeEmail = email || ((user as Record<string, string>)?.email) || "";
     if (activeEmail) {
       fetchUserAddresses(activeEmail).then((list) => {
         setSavedAddresses(list);
-        if (list.length > 0) {
+        if (list.length > 0 && !selectedAddressId) {
           const defaultAddr = list.find((a) => a.is_default) || list[0];
           applyAddress(defaultAddr);
         }
       });
-
-      fetchUserCards(activeEmail).then((cards) => {
-        setSavedCards(cards);
-        if (cards.length > 0) {
-          const defaultCard = cards.find((c) => c.is_default) || cards[0];
-          setSelectedCardId(defaultCard.id || defaultCard._id || null);
-        }
-      });
     }
-  }, [email, user, applyAddress]);
-
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, "").slice(0, 16);
-    const formatted = raw.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
-    setCardNumber(formatted);
-
-    // Detect card brand
-    if (raw.startsWith("4")) {
-      setCardBrand("visa");
-    } else if (/^(5[1-5]|2[2-7])/.test(raw)) {
-      setCardBrand("mastercard");
-    } else if (/^(60|65|81|82|508)/.test(raw)) {
-      setCardBrand("rupay");
-    } else {
-      setCardBrand("other");
-    }
-  };
-
-  const handleCardExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let raw = e.target.value.replace(/\D/g, "").slice(0, 4);
-    if (raw.length >= 3) {
-      raw = `${raw.slice(0, 2)}/${raw.slice(2)}`;
-    }
-    setCardExpiry(raw);
-  };
-
-  const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, "").slice(0, 4);
-    setCardCvv(raw);
-  };
+  }, [email, user, applyAddress, selectedAddressId]);
 
   const scrollToError = () => {
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-    if (errorRef.current) {
-      errorRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    setTimeout(() => {
+      errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
   };
 
-
-  const buildOrderPayload = (): OrderPayload => ({
-    email: email.trim(),
-    phone: phone.trim(),
-    shipping_address: {
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
-      street: street.trim(),
-      city: city.trim(),
-      state: state.trim(),
-      pin_code: pinCode.trim(),
-    },
-    items: cartItems.map((item) => ({
-      product_id: String(item.id),
-      title: item.title,
-      price: item.price,
-      quantity: item.quantity,
-      image: item.image,
-    })),
-    subtotal,
-    gst,
-    delivery,
-    total: grandTotal,
-  });
-
   const validateForm = (): boolean => {
-    if (
-      !email.trim() ||
-      !phone.trim() ||
-      !firstName.trim() ||
-      !lastName.trim() ||
-      !street.trim() ||
-      !city.trim() ||
-      !state.trim() ||
-      !pinCode.trim()
-    ) {
-      setErrorMessage("Please complete all required contact and shipping address fields.");
+    if (cartItems.length === 0) {
+      setErrorMessage("Your cart is empty. Please add lighting fixtures to proceed.");
+      return false;
+    }
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
+      setErrorMessage("Please provide a valid email address for your order confirmation.");
       scrollToError();
       return false;
     }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      setErrorMessage("Please enter a valid email address.");
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (cleanPhone.length < 10) {
+      setErrorMessage("Please enter a valid 10-digit mobile number for delivery tracking.");
       scrollToError();
       return false;
     }
-
-    const cleanedPhone = phone.replace(/\D/g, "");
-    if (cleanedPhone.length < 10) {
-      setErrorMessage("Please enter a valid 10-digit mobile number.");
+    if (!firstName.trim() || !lastName.trim()) {
+      setErrorMessage("Please provide your full recipient name.");
       scrollToError();
       return false;
     }
-
-    // Validate Card fields if paying by Card
-    if (paymentTab === "card" && !selectedCardId) {
-      if (!cardHolder.trim()) {
-        setErrorMessage("Please enter the name on your card.");
-        scrollToError();
-        return false;
-      }
-      const rawCard = cardNumber.replace(/\s/g, "");
-      if (rawCard.length < 15) {
-        setErrorMessage("Please enter a valid 16-digit card number.");
-        scrollToError();
-        return false;
-      }
-      if (cardExpiry.length < 5) {
-        setErrorMessage("Please enter card expiry in MM/YY format.");
-        scrollToError();
-        return false;
-      }
-      if (cardCvv.length < 3) {
-        setErrorMessage("Please enter the 3-digit CVV on the back of your card.");
-        scrollToError();
-        return false;
-      }
+    if (!street.trim()) {
+      setErrorMessage("Please provide your complete street delivery address.");
+      scrollToError();
+      return false;
     }
-
-    // Validate UPI VPA if paying by UPI ID
-    if (paymentTab === "upi" && upiMode === "vpa") {
-      if (!upiVpa.trim() || !upiVpa.includes("@")) {
-        setErrorMessage("Please enter a valid UPI ID (e.g. mobile@okhdfcbank or user@paytm).");
-        scrollToError();
-        return false;
-      }
+    if (!city.trim() || !state.trim()) {
+      setErrorMessage("Please enter your delivery city and state.");
+      scrollToError();
+      return false;
     }
-
+    const cleanPin = pinCode.replace(/\D/g, "");
+    if (cleanPin.length !== 6) {
+      setErrorMessage("Please provide a valid 6-digit postal PIN code.");
+      scrollToError();
+      return false;
+    }
     return true;
   };
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+    setNoticeMessage(null);
 
     if (!validateForm()) return;
 
@@ -375,37 +225,84 @@ export default function CheckoutPage() {
           state: state.trim(),
           pin_code: pinCode.trim(),
           phone: phone.trim(),
-          is_default: true,
+          is_default: savedAddresses.length === 0,
         }).catch((err) => console.warn("Failed to persist address:", err));
       }
 
-      // Save card if requested
-      if (paymentTab === "card" && saveCardToProfile && cardNumber) {
-        const rawCard = cardNumber.replace(/\s/g, "");
-        const last4 = rawCard.slice(-4);
-        saveUserCard({
-          user_id: userId,
-          user_email: email.trim(),
-          card_holder: cardHolder.trim() || `${firstName} ${lastName}`.trim(),
-          card_number_masked: `•••• •••• •••• ${last4}`,
-          card_last4: last4,
-          card_type: cardBrand,
-          expiry: cardExpiry.trim(),
-          is_default: true,
-        }).catch((err) => console.warn("Failed to persist card:", err));
-      }
+      // Reusable verification handler for both Official Razorpay & Sandbox Simulation
+      const completePaymentVerification = async (params: {
+        order_id: string;
+        razorpay_order_id: string;
+        razorpay_payment_id: string;
+        razorpay_signature: string;
+      }) => {
+        setIsProcessing(true);
+        setIsSimulating(true);
+        try {
+          const verifyRes = await verifyPayment({
+            order_id: params.order_id,
+            razorpay_order_id: params.razorpay_order_id,
+            razorpay_payment_id: params.razorpay_payment_id,
+            razorpay_signature: params.razorpay_signature,
+          });
 
-      // =========================================================
-      // FLOW A: UPI IN-APP PAYMENT (Awaiting Customer In-App Approval)
-      // =========================================================
-      if (paymentTab === "upi") {
-        let cleanVpa = upiVpa.trim();
-        if (!cleanVpa) {
-          const cleanPhone = phone.replace(/\D/g, "");
-          cleanVpa = `${cleanPhone}@okhdfcbank`;
+          if (verifyRes.success) {
+            await savePlacedOrder({
+              order_id: params.order_id,
+              razorpay_order_id: params.razorpay_order_id,
+              razorpay_payment_id: params.razorpay_payment_id,
+              user_email: email.trim(),
+              user_phone: phone.trim(),
+              customer_name: `${firstName.trim()} ${lastName.trim()}`,
+              shipping_address: {
+                first_name: firstName.trim(),
+                last_name: lastName.trim(),
+                street: street.trim(),
+                city: city.trim(),
+                state: state.trim(),
+                pin_code: pinCode.trim(),
+              },
+              items: cartItems.map((item) => ({
+                product_id: String(item.id),
+                title: item.title,
+                price: item.price,
+                quantity: item.quantity,
+                image: item.image,
+              })),
+              subtotal,
+              gst,
+              delivery,
+              total: grandTotal,
+              status: "Processing",
+              payment_method: "Razorpay (Cards / UPI / NetBanking)",
+              payment_status: "Paid",
+            }).catch(console.warn);
+
+            if (typeof window !== "undefined") {
+              sessionStorage.removeItem("deluzex_checkout_idem");
+            }
+            setFailedOrder(null);
+            setSandboxModalOrder(null);
+            dispatch(clearCart());
+            router.push(`/checkout/success?orderId=${encodeURIComponent(params.order_id)}`);
+          } else {
+            throw new Error(verifyRes.message || "Payment verification could not be confirmed.");
+          }
+        } catch (err: unknown) {
+          const errMsg = err instanceof Error ? err.message : "Payment verification failed. Please contact Deluzex support.";
+          setErrorMessage(errMsg);
+          setIsProcessing(false);
+          setIsSimulating(false);
+          scrollToError();
         }
+      };
 
-        const upiRes = await initiateUpiPayment({
+      // =========================================================================
+      // FLOW 1: OFFICIAL RAZORPAY GATEWAY CHECKOUT (UPI, CARDS, NETBANKING, WALLETS)
+      // =========================================================================
+      if (paymentMethod === "razorpay") {
+        // Create order via backend Razorpay API
+        const orderRes = await createPaymentOrder({
           email: email.trim(),
           phone: phone.trim(),
           shipping_address: {
@@ -427,163 +324,225 @@ export default function CheckoutPage() {
           gst,
           delivery,
           total: grandTotal,
-          upi_vpa: cleanVpa,
+          payment_method: "card",
+          razorpay_method: "all",
           idempotency_key: idempotencyKey,
           existing_order_id: failedOrder?.orderId,
         });
 
-        if (upiRes && upiRes.success) {
-          if (upiRes.status === "paid") {
-            dispatch(clearCart());
-            router.push(`/checkout/success?orderId=${encodeURIComponent(upiRes.order_id)}`);
-            return;
-          }
+        if (orderRes.is_already_paid) {
+          dispatch(clearCart());
+          router.push(`/checkout/success?orderId=${encodeURIComponent(orderRes.order_id)}`);
+          return;
+        }
 
-          // Open UPI Waiting Modal — Customer will approve in their UPI app
-          setUpiWaitingOrder({
-            orderId: upiRes.order_id,
-            upiVpa: upiRes.upi_vpa,
-            amount: upiRes.amount,
-            paymentUrl: upiRes.payment_url,
-            expiresIn: upiRes.expires_in_seconds || 300,
-          });
-          setUpiCountdown(upiRes.expires_in_seconds || 300);
+        // Test/Sandbox mode detected or test key in use: open interactive Sandbox simulator
+        if (orderRes.is_sandbox || orderRes.razorpay_order_id.startsWith("order_test_")) {
           setIsProcessing(false);
+          setSandboxModalOrder(orderRes);
+          return;
+        }
+
+        const isLoaded = await loadRazorpayScript();
+        if (!isLoaded) {
+          // If Razorpay CDN blocked or failed, fallback gracefully to test simulator
+          setIsProcessing(false);
+          setSandboxModalOrder(orderRes);
+          return;
+        }
+
+        // Configure and open Razorpay Official Modal
+        const options = {
+          key: orderRes.key_id,
+          amount: orderRes.amount,
+          currency: orderRes.currency || "INR",
+          name: "Deluzex Lighting",
+          description: `Order #${orderRes.order_id.slice(-8)} — Luxury Architectural Fixtures`,
+          image: "/images/logos/de_luzex_black.svg",
+          order_id: orderRes.razorpay_order_id,
+          handler: async function (response: {
+            razorpay_payment_id: string;
+            razorpay_order_id: string;
+            razorpay_signature: string;
+          }) {
+            await completePaymentVerification({
+              order_id: orderRes.order_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+          },
+          prefill: {
+            name: `${firstName} ${lastName}`.trim(),
+            email: email.trim(),
+            contact: phone.trim(),
+          },
+          notes: {
+            deluzex_order_id: orderRes.order_id,
+            shipping_address: `${street}, ${city}, ${state} - ${pinCode}`,
+          },
+          theme: {
+            color: "#C89B60",
+          },
+          modal: {
+            ondismiss: function () {
+              setIsProcessing(false);
+              setNoticeMessage("Payment session paused. You can complete your order or choose another method at any time.");
+            },
+          },
+        };
+
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const rzp = new (window as any).Razorpay(options);
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          rzp.on("payment.failed", function (resp: any) {
+            setIsProcessing(false);
+            const reason = resp.error?.description || "Payment was declined by your bank or UPI app.";
+            setErrorMessage(reason);
+            setFailedOrder({
+              orderId: orderRes.order_id,
+              rzpOrderId: orderRes.razorpay_order_id,
+              errorReason: reason,
+              errorCode: resp.error?.code,
+            });
+            recordPaymentFailure({
+              order_id: orderRes.order_id,
+              razorpay_order_id: orderRes.razorpay_order_id,
+              razorpay_payment_id: resp.error?.metadata?.payment_id,
+              status: "failed",
+              error_code: resp.error?.code,
+              error_description: reason,
+              error_source: resp.error?.source,
+              error_step: resp.error?.step,
+              error_reason: resp.error?.reason,
+            }).catch(console.warn);
+            scrollToError();
+          });
+
+          rzp.open();
+        } catch (openErr) {
+          console.warn("Razorpay official popup open failed, using test simulator:", openErr);
+          setIsProcessing(false);
+          setSandboxModalOrder(orderRes);
+        }
+        return;
+      }
+
+      // =========================================================================
+      // FLOW 2: CASH ON DELIVERY (DOORSTEP PAYMENT)
+      // =========================================================================
+      if (paymentMethod === "cod") {
+        const codRes = await createCodOrder({
+          email: email.trim(),
+          phone: phone.trim(),
+          shipping_address: {
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            street: street.trim(),
+            city: city.trim(),
+            state: state.trim(),
+            pin_code: pinCode.trim(),
+          },
+          items: cartItems.map((item) => ({
+            product_id: String(item.id),
+            title: item.title,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image,
+          })),
+          subtotal,
+          gst,
+          delivery,
+          total: grandTotal,
+          idempotency_key: idempotencyKey,
+          existing_order_id: failedOrder?.orderId,
+        });
+
+        if (codRes && codRes.success) {
+          await savePlacedOrder({
+            order_id: codRes.order_id,
+            razorpay_order_id: codRes.order_id,
+            razorpay_payment_id: `cod_${codRes.order_id}`,
+            user_email: email.trim(),
+            user_phone: phone.trim(),
+            customer_name: `${firstName.trim()} ${lastName.trim()}`,
+            shipping_address: {
+              first_name: firstName.trim(),
+              last_name: lastName.trim(),
+              street: street.trim(),
+              city: city.trim(),
+              state: state.trim(),
+              pin_code: pinCode.trim(),
+            },
+            items: cartItems.map((item) => ({
+              product_id: String(item.id),
+              title: item.title,
+              price: item.price,
+              quantity: item.quantity,
+              image: item.image,
+            })),
+            subtotal,
+            gst,
+            delivery,
+            total: grandTotal,
+            status: "cod",
+            payment_method: "Cash on Delivery",
+            payment_status: "Pending (Pay on Delivery)",
+          }).catch(console.warn);
+
+          if (typeof window !== "undefined") {
+            sessionStorage.removeItem("deluzex_checkout_idem");
+          }
+          dispatch(clearCart());
+          router.push(`/checkout/success?orderId=${encodeURIComponent(codRes.order_id)}`);
           return;
         } else {
-          throw new Error(upiRes?.message || "Failed to dispatch UPI collect request.");
+          throw new Error(codRes.message || "Failed to confirm Cash on Delivery order.");
         }
       }
-
-      // =========================================================
-      // FLOW B: DIRECT CARD & COD SERVER-SIDE PAYMENT
-      // =========================================================
-      let rawCard = cardNumber.replace(/\s/g, "");
-      if (!rawCard && selectedCardId) {
-        const saved = savedCards.find((c) => (c.id || c._id) === selectedCardId);
-        if (saved) {
-          rawCard = `411111111111${saved.card_last4 || "4242"}`;
-        }
-      }
-
-      const serverPayload: ServerPaymentPayload = {
-        email: email.trim(),
-        phone: phone.trim(),
-        shipping_address: {
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          street: street.trim(),
-          city: city.trim(),
-          state: state.trim(),
-          pin_code: pinCode.trim(),
-        },
-        items: cartItems.map((item) => ({
-          product_id: String(item.id),
-          title: item.title,
-          price: item.price,
-          quantity: item.quantity,
-          image: item.image,
-        })),
-        subtotal,
-        gst,
-        delivery,
-        total: grandTotal,
-        payment_method: paymentTab,
-        idempotency_key: idempotencyKey,
-        existing_order_id: failedOrder?.orderId,
-        card:
-          paymentTab === "card"
-            ? {
-                number: rawCard,
-                name: cardHolder.trim() || `${firstName.trim()} ${lastName.trim()}`,
-                expiry: cardExpiry.trim(),
-                cvv: cardCvv.trim(),
-              }
-            : undefined,
-      };
-
-      const res = await processServerPayment(serverPayload);
-
-      if (res && res.success) {
-        await savePlacedOrder({
-          order_id: res.order_id,
-          razorpay_order_id: res.order_id,
-          razorpay_payment_id: res.payment_id || `pay_${res.order_id}`,
-          user_email: email.trim(),
-          user_phone: phone.trim(),
-          customer_name: `${firstName.trim()} ${lastName.trim()}`,
-          shipping_address: serverPayload.shipping_address,
-          items: serverPayload.items,
-          subtotal: serverPayload.subtotal,
-          gst: serverPayload.gst,
-          delivery: serverPayload.delivery,
-          total: serverPayload.total,
-          status: res.status === "cod" ? "cod" : "Processing",
-          payment_method: paymentTab === "card" ? "Credit / Debit Card" : "Cash on Delivery",
-          payment_status: res.status === "cod" ? "Pending (Pay on Delivery)" : "Paid",
-        });
-
-        if (typeof window !== "undefined") {
-          sessionStorage.removeItem("deluzex_checkout_idem");
-        }
-        setFailedOrder(null);
-        dispatch(clearCart());
-        router.push(`/checkout/success?orderId=${encodeURIComponent(res.order_id)}`);
-      } else {
-        const failureReason =
-          res.error_description ||
-          res.message ||
-          "Payment authorization was declined. Please verify details or select another method.";
-        const errorCode = res.error_code || "PAYMENT_FAILED";
-
-        setFailedOrder({
-          orderId: res.order_id,
-          rzpOrderId: res.order_id,
-          errorReason: failureReason,
-          errorCode: errorCode,
-        });
-
-        setErrorMessage(failureReason);
-        setIsProcessing(false);
-        scrollToError();
-      }
-    } catch (err) {
-      console.error("Payment Processing Error:", err);
-      const msg =
-        err instanceof Error
-          ? err.message
-          : "Failed to process payment on server. Please verify your connection and try again.";
+    } catch (err: unknown) {
+      console.error("Payment Submission Error:", err);
+      const msg = err instanceof Error ? err.message : "Failed to initiate payment. Please check your connection and try again.";
       setErrorMessage(msg);
       setIsProcessing(false);
       scrollToError();
     }
   };
 
-  const handleCancelUpi = () => {
-    setUpiWaitingOrder(null);
-    setErrorMessage("UPI payment request was cancelled. You can resume checkout when ready.");
-    scrollToError();
-  };
-
-  const handleResumeRetry = () => {
-    setErrorMessage(null);
-    const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
-    handlePayment(fakeEvent);
-  };
-
-  const handleSwitchToCod = () => {
-    setPaymentTab("cod");
-    setErrorMessage(null);
-  };
+  const isAddressReady = Boolean(firstName && lastName && street && city && state && pinCode.length === 6 && phone);
 
   if (cartItems.length === 0) {
     return (
       <main className={styles.container}>
-        <div className={styles.emptyState}>
-          <h1 className={styles.title}>Your Cart is Empty</h1>
-          <p>Please add some items to your cart before proceeding to checkout.</p>
-          <Link href="/shop" className={styles.btnReturn}>
-            Return to Shop
+        <div style={{ textAlign: "center", padding: "6rem 1rem", background: "#FFFFFF", borderRadius: "12px", border: "1px solid rgba(200, 155, 96, 0.2)" }}>
+          <div style={{ width: "70px", height: "70px", margin: "0 auto 1.5rem", borderRadius: "50%", background: "rgba(200, 155, 96, 0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#C89B60" strokeWidth="1.8">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <path d="M16 10a4 4 0 0 1-8 0" />
+            </svg>
+          </div>
+          <h2 style={{ fontFamily: "var(--font-libre), serif", fontSize: "2rem", marginBottom: "0.75rem", color: "#1F2937" }}>
+            Your Cart is Empty
+          </h2>
+          <p style={{ color: "#6B7280", maxWidth: "460px", margin: "0 auto 2rem", fontSize: "0.95rem" }}>
+            Explore our curated catalog of architectural chandeliers, pendant lights, and designer lamps to proceed with checkout.
+          </p>
+          <Link
+            href="/shop"
+            style={{
+              display: "inline-block",
+              background: "#C89B60",
+              color: "#fff",
+              padding: "0.9rem 2rem",
+              borderRadius: "4px",
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
+            Explore Lighting Catalog
           </Link>
         </div>
       </main>
@@ -592,147 +551,64 @@ export default function CheckoutPage() {
 
   return (
     <main className={styles.container}>
-      {/* UPI IN-APP APPROVAL & REAL-TIME VERIFICATION MODAL */}
-      {upiWaitingOrder && (
-        <div className={styles.upiOverlay} role="dialog" aria-modal="true">
-          <div className={styles.upiModal}>
-            <div className={styles.upiModalIcon}>
-              <div className={styles.upiPulseRing} />
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#C89B60" strokeWidth="2">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-                <line x1="12" y1="18" x2="12.01" y2="18" />
-              </svg>
-            </div>
-
-            <h3 className={styles.upiModalTitle}>Approve in Your UPI App</h3>
-            <p className={styles.upiModalSubtitle}>
-              A collect request has been dispatched. Please open your UPI app on your mobile device to authorize payment.
-            </p>
-
-            <div className={styles.upiCollectHighlight}>
-              <div style={{ textAlign: "left" }}>
-                <div className={styles.upiHighlightLabel}>Requested To</div>
-                <div className={styles.upiHighlightVpa}>{upiWaitingOrder.upiVpa}</div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div className={styles.upiHighlightLabel}>Total Due</div>
-                <div className={styles.upiHighlightAmount}>₹{upiWaitingOrder.amount.toFixed(2)}</div>
-              </div>
-            </div>
-
-            <div className={styles.upiStepsList}>
-              <div className={styles.upiStepItem}>
-                <span className={styles.upiStepNum}>1</span>
-                <span>Open <strong>Google Pay, PhonePe, Paytm, or BHIM</strong> on your phone.</span>
-              </div>
-              <div className={styles.upiStepItem}>
-                <span className={styles.upiStepNum}>2</span>
-                <span>Check your notifications or pending requests for <strong>Deluzex Lighting</strong>.</span>
-              </div>
-              <div className={styles.upiStepItem}>
-                <span className={styles.upiStepNum}>3</span>
-                <span>Approve the request by entering your secure <strong>UPI PIN</strong>.</span>
-              </div>
-            </div>
-
-            <div className={styles.upiTimerBar}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-              <span>
-                Expires in {String(Math.floor(upiCountdown / 60)).padStart(2, "0")}:{String(upiCountdown % 60).padStart(2, "0")}
-              </span>
-            </div>
-
-            {/* Real-time automatic Razorpay detection radar */}
-            <div className={styles.autoDetectBox}>
-              <div className={styles.radarWaveContainer}>
-                <span className={styles.radarRing1}></span>
-                <span className={styles.radarRing2}></span>
-                <span className={styles.radarDot}></span>
-              </div>
-              <div className={styles.autoDetectContent}>
-                <div className={styles.autoDetectStatus}>
-                  Listening for payment confirmation...
-                </div>
-                <div className={styles.autoDetectSub}>
-                  Auto-detecting from your UPI app via Razorpay. Once you approve with your PIN, your order will confirm automatically.
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.upiModalActions}>
-              {upiWaitingOrder.paymentUrl && (
-                <a
-                  href={upiWaitingOrder.paymentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.btnOpenUpiLink}
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                    <polyline points="15 3 21 3 21 9" />
-                    <line x1="10" y1="14" x2="21" y2="3" />
-                  </svg>
-                  <span>Open Payment in UPI App / Browser</span>
-                </a>
-              )}
-
-              <button
-                type="button"
-                className={styles.btnCancelUpi}
-                onClick={handleCancelUpi}
-              >
-                Cancel Payment Request
-              </button>
-            </div>
+      {/* 2-Step Luxury Progress Stepper */}
+      <div className={styles.checkoutStepper}>
+        <div className={styles.stepItem}>
+          <div className={`${styles.stepCircle} ${isAddressReady ? styles.stepCircleCompleted : styles.stepCircleActive}`}>
+            {isAddressReady ? "✓" : "1"}
           </div>
+          <span className={`${styles.stepLabel} ${isAddressReady ? "" : styles.stepLabelActive}`}>
+            Delivery Address
+          </span>
         </div>
-      )}
 
-      {/* FAILURE RECOVERY BANNER (Idempotency & Resume State) */}
-      {failedOrder && (
-        <div className={styles.recoveryBanner} role="alert">
-          <div className={styles.recoveryIcon}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <div className={`${styles.stepConnector} ${isAddressReady ? styles.stepConnectorActive : ""}`} />
+
+        <div className={styles.stepItem}>
+          <div className={`${styles.stepCircle} ${styles.stepCircleActive}`}>
+            2
+          </div>
+          <span className={`${styles.stepLabel} ${styles.stepLabelActive}`}>
+            Razorpay Payment
+          </span>
+        </div>
+
+        <div className={styles.stepConnector} />
+
+        <div className={styles.stepItem}>
+          <div className={styles.stepCircle}>
+            3
+          </div>
+          <span className={styles.stepLabel}>
+            Confirmation
+          </span>
+        </div>
+      </div>
+
+      {/* Dismissible Notice / Warning Banner */}
+      {noticeMessage && (
+        <div className={styles.noticeBanner}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
+            <span>{noticeMessage}</span>
           </div>
-          <div className={styles.recoveryContent}>
-            <p className={styles.recoveryTitle}>
-              Payment Incomplete — Order #{failedOrder.orderId.slice(-8)}
-            </p>
-            <p className={styles.recoveryDesc}>
-              {failedOrder.errorReason} Your cart items and shipping details are preserved.
-            </p>
-            <div className={styles.recoveryActions}>
-              <button
-                type="button"
-                className={styles.btnResumeOrder}
-                onClick={handleResumeRetry}
-                disabled={isProcessing}
-              >
-                ↻ Retry Payment
-              </button>
-              <button
-                type="button"
-                className={styles.btnSwitchMethod}
-                onClick={handleSwitchToCod}
-                disabled={isProcessing}
-              >
-                Switch to Cash on Delivery (Instant)
-              </button>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => setNoticeMessage(null)}
+            style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#1E40AF" }}
+          >
+            ×
+          </button>
         </div>
       )}
 
-      {/* Top Notice / Error Message */}
-      {errorMessage && !failedOrder && (
-        <div ref={errorRef} className={styles.errorBanner} role="alert">
+      {/* Dismissible Error Banner */}
+      {errorMessage && (
+        <div ref={errorRef} className={styles.errorBanner}>
           <div className={styles.errorIcon}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
@@ -759,23 +635,23 @@ export default function CheckoutPage() {
 
       <form onSubmit={handlePayment} className={styles.checkoutGrid}>
         <div className={styles.leftCol}>
-          {/* Contact Information */}
+          {/* Section 1: Contact Information */}
           <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>Contact Information</h2>
+            <h2 className={styles.sectionTitle}>1. Contact Information</h2>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Email Address *</label>
+              <label className={styles.label}>Email Address (for Order Confirmation & Invoice) *</label>
               <input
                 type="email"
                 required
                 className={styles.input}
-                placeholder="e.g. alex@example.com"
+                placeholder="e.g. client@architects.in"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isProcessing}
               />
             </div>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Phone Number (with SMS/WhatsApp updates) *</label>
+              <label className={styles.label}>Phone Number (with SMS / WhatsApp delivery dispatch) *</label>
               <input
                 type="tel"
                 required
@@ -788,10 +664,10 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Shipping Address */}
+          {/* Section 2: Delivery / Shipping Address */}
           <div className={styles.section}>
             <div className={styles.sectionTitle}>
-              <span>Shipping Address</span>
+              <span>2. Delivery Address</span>
               {savedAddresses.length > 0 && (
                 <span
                   className={styles.savedHeaderLabel}
@@ -808,6 +684,7 @@ export default function CheckoutPage() {
               )}
             </div>
 
+            {/* Saved Addresses Cards (Matching User's Reference Layout) */}
             {savedAddresses.length > 0 && (
               <div className={styles.savedGrid}>
                 {savedAddresses.map((addr) => {
@@ -833,16 +710,9 @@ export default function CheckoutPage() {
                       <div className={styles.savedItemDetails}>
                         {addr.street}, {addr.city}, {addr.state} - {addr.pin_code}
                       </div>
-                      <button
-                        type="button"
-                        className={styles.btnUseSaved}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          applyAddress(addr);
-                        }}
-                      >
-                        Use this address
-                      </button>
+                      <div style={{ marginTop: "0.5rem", fontSize: "0.78rem", color: "#666" }}>
+                        📞 {addr.phone || phone}
+                      </div>
                     </div>
                   );
                 })}
@@ -875,18 +745,20 @@ export default function CheckoutPage() {
                 />
               </div>
             </div>
+
             <div className={styles.formGroup}>
-              <label className={styles.label}>Street Address *</label>
+              <label className={styles.label}>Street Address & Residence / Landmark *</label>
               <input
                 type="text"
                 required
                 className={styles.input}
-                placeholder="Flat / House no., building, street name"
+                placeholder="House/Villa no., building, street name, locality"
                 value={street}
                 onChange={(e) => setStreet(e.target.value)}
                 disabled={isProcessing}
               />
             </div>
+
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
                 <label className={styles.label}>City *</label>
@@ -894,7 +766,7 @@ export default function CheckoutPage() {
                   type="text"
                   required
                   className={styles.input}
-                  placeholder="City"
+                  placeholder="e.g. Mumbai, Ahmedabad"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   disabled={isProcessing}
@@ -913,14 +785,15 @@ export default function CheckoutPage() {
                 />
               </div>
               <div className={styles.formGroup}>
-                <label className={styles.label}>PIN Code *</label>
+                <label className={styles.label}>PIN Code (6 digits) *</label>
                 <input
                   type="text"
                   required
+                  maxLength={6}
                   className={styles.input}
-                  placeholder="PIN Code"
+                  placeholder="380054"
                   value={pinCode}
-                  onChange={(e) => setPinCode(e.target.value)}
+                  onChange={(e) => setPinCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   disabled={isProcessing}
                 />
               </div>
@@ -933,327 +806,141 @@ export default function CheckoutPage() {
                 onChange={(e) => setSaveAddressToProfile(e.target.checked)}
               />
               <span className={styles.checkboxLabel}>
-                Save this address to my profile for future checkouts
+                Save this address to my profile for fast one-click checkout in future
               </span>
             </label>
           </div>
 
-          {/* Seamless In-Page Payment Section */}
+          {/* Section 3: Razorpay Payment Gateway Hub */}
           <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>Payment Method</h2>
+            <h2 className={styles.sectionTitle}>3. Payment Gateway</h2>
 
-            {/* 3 Main Payment Tabs */}
-            <div className={styles.paymentTabs}>
+            <div className={styles.razorpayGatewayContainer}>
+              {/* Option 1: Official Razorpay Payment Gateway (Recommended) */}
               <div
-                className={`${styles.paymentTab} ${paymentTab === "upi" ? styles.paymentTabActive : ""}`}
-                onClick={() => setPaymentTab("upi")}
+                className={`${styles.razorpaySelectCard} ${paymentMethod === "razorpay" ? styles.razorpaySelectCardActive : ""}`}
+                onClick={() => setPaymentMethod("razorpay")}
               >
-                <span>⚡ UPI / QR</span>
-              </div>
-              <div
-                className={`${styles.paymentTab} ${paymentTab === "card" ? styles.paymentTabActive : ""}`}
-                onClick={() => setPaymentTab("card")}
-              >
-                <span>💳 Card</span>
-              </div>
-              <div
-                className={`${styles.paymentTab} ${paymentTab === "cod" ? styles.paymentTabActive : ""}`}
-                onClick={() => setPaymentTab("cod")}
-              >
-                <span>📦 Cash on Delivery</span>
-              </div>
-            </div>
-
-            {/* TAB 1: UPI IN-PAGE PAYMENT */}
-            {paymentTab === "upi" && (
-              <div className={styles.paymentCard}>
-                <div className={styles.paymentHeader}>
-                  <div className={styles.paymentRadioGroup}>
-                    <div className={styles.customRadio}>
-                      <div className={styles.customRadioInner} />
+                <div className={styles.razorpayCardHeader}>
+                  <div className={styles.razorpayHeaderLeft}>
+                    <div className={`${styles.razorpayRadioCircle} ${paymentMethod === "razorpay" ? styles.razorpayRadioCircleSelected : ""}`}>
+                      {paymentMethod === "razorpay" && <div className={styles.razorpayRadioDot} />}
                     </div>
-                    <span className={styles.paymentName}>Instant UPI Payment</span>
-                  </div>
-                  <span className={styles.paymentBadgeLive}>Zero Convenience Fee</span>
-                </div>
-
-                {/* Sub-Tabs: UPI ID vs Dynamic QR */}
-                <div className={styles.upiSubTabs}>
-                  <div
-                    className={`${styles.upiSubTab} ${upiMode === "vpa" ? styles.upiSubTabActive : ""}`}
-                    onClick={() => setUpiMode("vpa")}
-                  >
-                    Enter UPI ID (VPA)
-                  </div>
-                  <div
-                    className={`${styles.upiSubTab} ${upiMode === "qr" ? styles.upiSubTabActive : ""}`}
-                    onClick={() => setUpiMode("qr")}
-                  >
-                    Scan Studio QR
+                    <div className={styles.razorpayTitleGroup}>
+                      <h3 className={styles.razorpayMainTitle}>Razorpay Secure Gateway</h3>
+                      <span className={styles.razorpayLivePill}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                        </svg>
+                        Official Gateway
+                      </span>
+                      <span className={styles.razorpayZeroFeePill}>Zero Convenience Fee</span>
+                    </div>
                   </div>
                 </div>
 
-                {upiMode === "vpa" ? (
-                  <div>
-                    <div className={styles.formGroup}>
-                      <label className={styles.label}>Your UPI Virtual Address (VPA)</label>
-                      <input
-                        type="text"
-                        className={styles.input}
-                        placeholder="e.g. yourname@okhdfcbank or 9876543210@paytm"
-                        value={upiVpa}
-                        onChange={(e) => setUpiVpa(e.target.value)}
-                        disabled={isProcessing}
-                      />
-                    </div>
+                <p className={styles.razorpayDescription}>
+                  Pay securely with all Indian and International payment methods. Includes <strong>Instant UPI</strong> (GPay, PhonePe, Paytm), <strong>Credit & Debit Cards</strong> with RBI-compliant 3D Secure OTP verification, <strong>50+ Net Banking Banks</strong>, and <strong>Wallets</strong>.
+                </p>
 
-                    <p style={{ fontSize: "0.8rem", color: "#64748b", margin: "0.5rem 0 0.75rem 0" }}>
-                      Quick UPI App selector:
-                    </p>
-                    <div className={styles.upiAppsGrid}>
-                      <button
-                        type="button"
-                        className={`${styles.upiAppBtn} ${upiVpa.endsWith("@okaxis") || upiVpa.endsWith("@okhdfcbank") ? styles.upiAppBtnActive : ""}`}
-                        onClick={() => {
-                          const prefix = upiVpa.split("@")[0] || phone || "mobile";
-                          setUpiVpa(`${prefix}@okhdfcbank`);
-                        }}
-                      >
-                        Google Pay
-                      </button>
-                      <button
-                        type="button"
-                        className={`${styles.upiAppBtn} ${upiVpa.endsWith("@ybl") ? styles.upiAppBtnActive : ""}`}
-                        onClick={() => {
-                          const prefix = upiVpa.split("@")[0] || phone || "mobile";
-                          setUpiVpa(`${prefix}@ybl`);
-                        }}
-                      >
-                        PhonePe
-                      </button>
-                      <button
-                        type="button"
-                        className={`${styles.upiAppBtn} ${upiVpa.endsWith("@paytm") ? styles.upiAppBtnActive : ""}`}
-                        onClick={() => {
-                          const prefix = upiVpa.split("@")[0] || phone || "mobile";
-                          setUpiVpa(`${prefix}@paytm`);
-                        }}
-                      >
-                        Paytm
-                      </button>
-                      <button
-                        type="button"
-                        className={`${styles.upiAppBtn} ${upiVpa.endsWith("@upi") ? styles.upiAppBtnActive : ""}`}
-                        onClick={() => {
-                          const prefix = upiVpa.split("@")[0] || phone || "mobile";
-                          setUpiVpa(`${prefix}@upi`);
-                        }}
-                      >
-                        BHIM UPI
-                      </button>
-                    </div>
-
-                    <p className={styles.paymentDesc} style={{ margin: 0, fontSize: "0.82rem" }}>
-                      We will dispatch a direct payment notification to your chosen UPI app. Accept to complete immediately.
-                    </p>
-                  </div>
-                ) : (
-                  <div className={styles.inPageQrCard}>
-                    <div className={styles.qrImageFrame}>
-                      {/* Dynamic In-Page QR representation */}
-                      <svg width="140" height="140" viewBox="0 0 24 24" fill="none" stroke="#C89B60" strokeWidth="1.5">
-                        <rect x="3" y="3" width="7" height="7" rx="1" />
-                        <rect x="14" y="3" width="7" height="7" rx="1" />
-                        <rect x="3" y="14" width="7" height="7" rx="1" />
-                        <rect x="14" y="14" width="3" height="3" />
-                        <rect x="18" y="14" width="3" height="3" />
-                        <rect x="14" y="18" width="3" height="3" />
-                        <rect x="18" y="18" width="3" height="3" />
-                        <line x1="7" y1="7" x2="7" y2="7.01" strokeWidth="3" />
-                        <line x1="17" y1="7" x2="17" y2="7.01" strokeWidth="3" />
-                        <line x1="7" y1="17" x2="7" y2="17.01" strokeWidth="3" />
+                {/* Grid of Supported Methods Inside Razorpay */}
+                <div className={styles.razorpayMethodsGrid}>
+                  {/* UPI Chip */}
+                  <div className={styles.methodChip}>
+                    <div className={styles.methodChipIcon}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                       </svg>
                     </div>
-                    <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#111" }}>
-                      Scan & Pay ₹{grandTotal.toFixed(2)}
+                    <div className={styles.methodChipInfo}>
+                      <span className={styles.methodChipName}>UPI Apps</span>
+                      <span className={styles.methodChipDetail}>GPay, PhonePe, Paytm</span>
                     </div>
-                    <div className={styles.qrCountdown}>
-                      QR Session valid for: {Math.floor(qrTimeLeft / 60)}:
-                      {String(qrTimeLeft % 60).padStart(2, "0")}
-                    </div>
-                    <p style={{ fontSize: "0.8rem", color: "#64748b", margin: 0 }}>
-                      Open any UPI App (GPay, PhonePe, Paytm) and scan. Or click &apos;Pay with UPI&apos; below for instant app launch.
-                    </p>
                   </div>
-                )}
 
-                <div className={styles.sslBadge}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  {/* Cards Chip */}
+                  <div className={styles.methodChip}>
+                    <div className={styles.methodChipIcon}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="2" y="5" width="20" height="14" rx="2" />
+                        <line x1="2" y1="10" x2="22" y2="10" />
+                      </svg>
+                    </div>
+                    <div className={styles.methodChipInfo}>
+                      <span className={styles.methodChipName}>Cards (3DS)</span>
+                      <span className={styles.methodChipDetail}>Visa, MC, RuPay</span>
+                    </div>
+                  </div>
+
+                  {/* NetBanking Chip */}
+                  <div className={styles.methodChip}>
+                    <div className={styles.methodChipIcon}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="3" y1="21" x2="21" y2="21" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                        <polyline points="5 6 12 3 19 6" />
+                        <line x1="4" y1="10" x2="4" y2="21" />
+                        <line x1="20" y1="10" x2="20" y2="21" />
+                        <line x1="8" y1="14" x2="8" y2="17" />
+                        <line x1="12" y1="14" x2="12" y2="17" />
+                        <line x1="16" y1="14" x2="16" y2="17" />
+                      </svg>
+                    </div>
+                    <div className={styles.methodChipInfo}>
+                      <span className={styles.methodChipName}>Net Banking</span>
+                      <span className={styles.methodChipDetail}>50+ Major Banks</span>
+                    </div>
+                  </div>
+
+                  {/* Wallets Chip */}
+                  <div className={styles.methodChip}>
+                    <div className={styles.methodChipIcon}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
+                        <path d="M4 6v12c0 1.1.9 2 2 2h14v-4" />
+                        <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" />
+                      </svg>
+                    </div>
+                    <div className={styles.methodChipInfo}>
+                      <span className={styles.methodChipName}>Wallets & PayLater</span>
+                      <span className={styles.methodChipDetail}>Amazon, Mobikwik</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.razorpayTrustBanner}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <polyline points="9 12 11 14 15 10" />
                   </svg>
-                  <span>256-Bit Encrypted & NPCI Certified UPI Gateway</span>
+                  <span>
+                    Secured by <strong>Razorpay Encrypted Infrastructure</strong> • 256-Bit SSL Encryption • PCI-DSS Level 1 Certified
+                  </span>
                 </div>
               </div>
-            )}
 
-            {/* TAB 2: CREDIT / DEBIT CARD */}
-            {paymentTab === "card" && (
-              <div className={styles.paymentCard}>
-                <div className={styles.paymentHeader}>
-                  <div className={styles.paymentRadioGroup}>
-                    <div className={styles.customRadio}>
-                      <div className={styles.customRadioInner} />
+              {/* Option 2: Cash on Delivery Alternative */}
+              <div
+                className={`${styles.codSelectCard} ${paymentMethod === "cod" ? styles.codSelectCardActive : ""}`}
+                onClick={() => setPaymentMethod("cod")}
+              >
+                <div className={styles.razorpayCardHeader}>
+                  <div className={styles.razorpayHeaderLeft}>
+                    <div className={`${styles.razorpayRadioCircle} ${paymentMethod === "cod" ? styles.razorpayRadioCircleSelected : ""}`}>
+                      {paymentMethod === "cod" && <div className={styles.razorpayRadioDot} />}
                     </div>
-                    <span className={styles.paymentName}>Debit or Credit Card</span>
+                    <h3 className={styles.razorpayMainTitle}>Cash on Delivery (Doorstep Payment)</h3>
                   </div>
-                  <span className={styles.paymentBadgeLive}>Direct 3D Secure</span>
                 </div>
-
-                {savedCards.length > 0 && (
-                  <div style={{ marginBottom: "1.25rem" }}>
-                    <p style={{ fontSize: "0.85rem", fontWeight: 600, color: "#555", marginBottom: "0.5rem" }}>
-                      Saved Cards:
-                    </p>
-                    <div className={styles.savedGrid}>
-                      {savedCards.map((card) => {
-                        const cardId = card.id || card._id || "";
-                        const isSelected = selectedCardId === cardId;
-                        return (
-                          <div
-                            key={cardId}
-                            className={`${styles.savedItemCard} ${isSelected ? styles.savedItemCardActive : ""}`}
-                            onClick={() => {
-                              setSelectedCardId(cardId);
-                              setCardHolder(card.card_holder);
-                              setCardExpiry(card.expiry);
-                            }}
-                          >
-                            <div className={styles.savedItemHeader}>
-                              <span className={styles.savedBadge}>{card.card_type.toUpperCase()}</span>
-                              {isSelected && (
-                                <span style={{ color: "#C89B60", fontSize: "0.85rem", fontWeight: 700 }}>
-                                  ✓ Selected
-                                </span>
-                              )}
-                            </div>
-                            <div className={styles.savedItemName}>{card.card_number_masked}</div>
-                            <div className={styles.savedItemDetails}>
-                              {card.card_holder} | Exp: {card.expiry}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                <div style={{ marginTop: "1rem" }}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>Cardholder Name *</label>
-                    <input
-                      type="text"
-                      className={styles.input}
-                      placeholder="e.g. Eleanor Vance"
-                      value={cardHolder}
-                      onChange={(e) => setCardHolder(e.target.value)}
-                      disabled={isProcessing}
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>Card Number *</label>
-                    <div className={styles.cardInputContainer}>
-                      <input
-                        type="text"
-                        className={styles.input}
-                        placeholder="•••• •••• •••• ••••"
-                        value={cardNumber}
-                        onChange={handleCardNumberChange}
-                        disabled={isProcessing}
-                      />
-                      <span className={styles.cardBrandIcon}>{cardBrand.toUpperCase()}</span>
-                    </div>
-                  </div>
-                  <div className={styles.formRow}>
-                    <div className={styles.formGroup}>
-                      <label className={styles.label}>Expiry Date (MM/YY) *</label>
-                      <input
-                        type="text"
-                        className={styles.input}
-                        placeholder="MM/YY"
-                        value={cardExpiry}
-                        onChange={handleCardExpiryChange}
-                        disabled={isProcessing}
-                      />
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label className={styles.label}>CVV / CVC (3-4 digits) *</label>
-                      <input
-                        type="password"
-                        maxLength={4}
-                        className={styles.input}
-                        placeholder="•••"
-                        value={cardCvv}
-                        onChange={handleCvvChange}
-                        disabled={isProcessing}
-                      />
-                    </div>
-                  </div>
-
-                  <label className={styles.checkboxWrapper}>
-                    <input
-                      type="checkbox"
-                      checked={saveCardToProfile}
-                      onChange={(e) => setSaveCardToProfile(e.target.checked)}
-                    />
-                    <span className={styles.checkboxLabel}>
-                      Save this card securely for future Deluzex checkouts
-                    </span>
-                  </label>
-                </div>
-
-                <div className={styles.sslBadge}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                  <span>PCI-DSS Level 1 & Bank 3D Secure Verification</span>
-                </div>
+                <p className={styles.razorpayDescription} style={{ margin: 0 }}>
+                  Pay in cash or scan the delivery executive&apos;s digital UPI QR code upon arrival at your doorstep.
+                </p>
               </div>
-            )}
-
-            {/* TAB 3: CASH ON DELIVERY */}
-            {paymentTab === "cod" && (
-              <div className={styles.codCard}>
-                <div className={styles.paymentHeader}>
-                  <div className={styles.paymentRadioGroup}>
-                    <div className={styles.customRadio}>
-                      <div className={styles.customRadioInner} />
-                    </div>
-                    <span className={styles.paymentName}>Doorstep Cash on Delivery</span>
-                  </div>
-                  <span className={styles.paymentBadgeLive}>Instant Confirmation</span>
-                </div>
-
-                <div className={styles.codNotice}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C89B60" strokeWidth="2">
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                    <line x1="12" y1="22.08" x2="12" y2="12" />
-                  </svg>
-                  <div>
-                    <div style={{ fontWeight: 700, color: "#1c1917" }}>Zero Online Hassle</div>
-                    <div>
-                      Pay with cash or scan delivery agent&apos;s UPI QR code when your luminaires are delivered to your doorstep.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         </div>
 
-        {/* Right Column: Order Summary */}
+        {/* Right Column: Order Summary & Instant Razorpay Action */}
         <div className={styles.rightCol}>
           <div className={styles.summaryCard}>
             <h2 className={styles.summaryTitle}>Order Summary</h2>
@@ -1289,7 +976,7 @@ export default function CheckoutPage() {
                 <span>₹{gst.toFixed(2)}</span>
               </div>
               <div className={styles.summaryRow}>
-                <span>Delivery</span>
+                <span>Express Insured Shipping</span>
                 <span>{delivery > 0 ? `₹${delivery.toFixed(2)}` : "Free"}</span>
               </div>
               <div className={styles.grandTotalRow}>
@@ -1298,34 +985,277 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              className={styles.btnPlaceOrder}
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <>
-                  <div className={styles.spinner} />
-                  <span>Securing & Authorizing Payment...</span>
-                </>
-              ) : paymentTab === "cod" ? (
-                "Confirm Cash on Delivery Order"
-              ) : paymentTab === "card" ? (
-                `Authorize & Pay ₹${grandTotal.toFixed(2)}`
-              ) : (
-                `Request ₹${grandTotal.toFixed(2)} in UPI App`
-              )}
-            </button>
+            {/* Dynamic CTA Button */}
+            {paymentMethod === "razorpay" ? (
+              <button
+                type="submit"
+                className={styles.btnPayWithRazorpay}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <>
+                    <div className={styles.spinner} />
+                    <span>Connecting to Razorpay Secure...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    <span>Pay ₹{grandTotal.toFixed(2)} via Razorpay</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <button
+                type="submit"
+                className={styles.btnPayCod}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <>
+                    <div className={styles.spinner} />
+                    <span>Confirming Order...</span>
+                  </>
+                ) : (
+                  <span>Confirm Cash on Delivery (₹{grandTotal.toFixed(2)})</span>
+                )}
+              </button>
+            )}
 
-            <div className={styles.securityGuarantee}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C89B60" strokeWidth="2">
+            <div className={styles.securityGuarantee} style={{ marginTop: "1.25rem" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C89B60" strokeWidth="2">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
-              <span>100% Buyer Protection & Idempotent Secure Session</span>
+              <span>Bank-Grade 256-Bit Encryption • Official Razorpay Partner</span>
             </div>
           </div>
         </div>
       </form>
+
+      {/* =========================================================================
+          RAZORPAY TEST / SANDBOX SIMULATOR MODAL
+          ========================================================================= */}
+      {sandboxModalOrder && (
+        <div className={styles.sandboxOverlay} onClick={() => !isSimulating && setSandboxModalOrder(null)}>
+          <div className={styles.sandboxModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.sandboxHeader}>
+              <div className={styles.sandboxBrand}>
+                <div className={styles.sandboxLogoIcon}>D</div>
+                <div>
+                  <h3 className={styles.sandboxBrandTitle}>Deluzex Lighting</h3>
+                  <p className={styles.sandboxBrandSubtitle}>Razorpay Gateway (Test Simulator)</p>
+                </div>
+              </div>
+              <div className={styles.sandboxHeaderRight}>
+                <div className={styles.sandboxTotalAmount}>
+                  <span className={styles.sandboxTotalLabel}>Total Due</span>
+                  <span className={styles.sandboxTotalValue}>₹{(sandboxModalOrder.amount / 100).toFixed(2)}</span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.sandboxCloseBtn}
+                  onClick={() => !isSimulating && setSandboxModalOrder(null)}
+                  disabled={isSimulating}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.sandboxBanner}>
+              <span className={styles.sandboxBadge}>Sandbox</span>
+              <span>Test Mode active. Dummy payment without actual charges.</span>
+            </div>
+
+            <div className={styles.sandboxContent}>
+              <div className={styles.sandboxTabs}>
+                <button
+                  type="button"
+                  className={`${styles.sandboxTab} ${sandboxTab === "card" ? styles.sandboxTabActive : ""}`}
+                  onClick={() => setSandboxTab("card")}
+                >
+                  <span>💳</span>
+                  <span>Test Card</span>
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.sandboxTab} ${sandboxTab === "upi" ? styles.sandboxTabActive : ""}`}
+                  onClick={() => setSandboxTab("upi")}
+                >
+                  <span>📱</span>
+                  <span>Test UPI</span>
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.sandboxTab} ${sandboxTab === "netbanking" ? styles.sandboxTabActive : ""}`}
+                  onClick={() => setSandboxTab("netbanking")}
+                >
+                  <span>🏦</span>
+                  <span>NetBanking</span>
+                </button>
+              </div>
+
+              {sandboxTab === "card" && (
+                <div className={styles.sandboxCardPreview}>
+                  <div className={styles.sandboxCardTop}>
+                    <div className={styles.sandboxCardChip} />
+                    <span className={styles.sandboxCardType}>RAZORPAY TEST VISA</span>
+                  </div>
+                  <div className={styles.sandboxCardNumber}>4111 •••• •••• 1111</div>
+                  <div className={styles.sandboxCardBottom}>
+                    <div>
+                      <span>Cardholder</span>
+                      <div className={styles.sandboxCardVal}>{`${firstName || "Deluzex"} ${lastName || "Customer"}`}</div>
+                    </div>
+                    <div>
+                      <span>Expires</span>
+                      <div className={styles.sandboxCardVal}>12 / 28</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {sandboxTab === "upi" && (
+                <div className={styles.sandboxUpiBox}>
+                  <p style={{ margin: 0, fontSize: "0.82rem", color: "#64748B" }}>
+                    Simulating one-tap approval from Google Pay / PhonePe / Paytm
+                  </p>
+                  <div className={styles.sandboxUpiHandle}>deluzex.test@okhdfcbank</div>
+                  <span style={{ fontSize: "0.75rem", color: "#059669", fontWeight: 600 }}>
+                    ✓ Auto-approval authorized in Sandbox
+                  </span>
+                </div>
+              )}
+
+              {sandboxTab === "netbanking" && (
+                <div className={styles.sandboxNetbankingGrid}>
+                  <div className={styles.sandboxBankBtn}>🏛️ HDFC Bank (Test)</div>
+                  <div className={styles.sandboxBankBtn}>🏛️ ICICI Bank (Test)</div>
+                  <div className={styles.sandboxBankBtn}>🏛️ SBI (Test)</div>
+                  <div className={styles.sandboxBankBtn}>🏛️ Axis Bank (Test)</div>
+                </div>
+              )}
+
+              <div className={styles.sandboxActions}>
+                <button
+                  type="button"
+                  className={styles.btnSimulateSuccess}
+                  disabled={isSimulating}
+                  onClick={async () => {
+                    setIsSimulating(true);
+                    setIsProcessing(true);
+                    try {
+                      const testPaymentId = `pay_test_${Date.now()}`;
+                      const testSignature = `sig_test_${sandboxModalOrder.razorpay_order_id.slice(-8)}`;
+
+                      const verifyRes = await verifyPayment({
+                        order_id: sandboxModalOrder.order_id,
+                        razorpay_order_id: sandboxModalOrder.razorpay_order_id,
+                        razorpay_payment_id: testPaymentId,
+                        razorpay_signature: testSignature,
+                      });
+
+                      if (verifyRes.success) {
+                        await savePlacedOrder({
+                          order_id: sandboxModalOrder.order_id,
+                          razorpay_order_id: sandboxModalOrder.razorpay_order_id,
+                          razorpay_payment_id: testPaymentId,
+                          user_email: email.trim(),
+                          user_phone: phone.trim(),
+                          customer_name: `${firstName.trim()} ${lastName.trim()}`,
+                          shipping_address: {
+                            first_name: firstName.trim(),
+                            last_name: lastName.trim(),
+                            street: street.trim(),
+                            city: city.trim(),
+                            state: state.trim(),
+                            pin_code: pinCode.trim(),
+                          },
+                          items: cartItems.map((item) => ({
+                            product_id: String(item.id),
+                            title: item.title,
+                            price: item.price,
+                            quantity: item.quantity,
+                            image: item.image,
+                          })),
+                          subtotal,
+                          gst,
+                          delivery,
+                          total: grandTotal,
+                          status: "Processing",
+                          payment_method: "Razorpay (Test Simulation)",
+                          payment_status: "Paid",
+                        }).catch(console.warn);
+
+                        if (typeof window !== "undefined") {
+                          sessionStorage.removeItem("deluzex_checkout_idem");
+                        }
+                        setFailedOrder(null);
+                        setSandboxModalOrder(null);
+                        dispatch(clearCart());
+                        router.push(`/checkout/success?orderId=${encodeURIComponent(sandboxModalOrder.order_id)}`);
+                      } else {
+                        throw new Error(verifyRes.message || "Payment verification could not be confirmed.");
+                      }
+                    } catch (simErr: unknown) {
+                      const errMsg = simErr instanceof Error ? simErr.message : "Payment simulation failed.";
+                      setErrorMessage(errMsg);
+                      setIsProcessing(false);
+                      setIsSimulating(false);
+                      scrollToError();
+                    }
+                  }}
+                >
+                  {isSimulating ? (
+                    <>
+                      <div className={styles.spinner} style={{ width: "16px", height: "16px" }} />
+                      <span>Verifying & Recording Payment...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>✓</span>
+                      <span>Simulate Successful Payment</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  className={styles.btnSimulateFailure}
+                  disabled={isSimulating}
+                  onClick={() => {
+                    const failReason = "Card authorization was declined by customer bank (Sandbox simulation)";
+                    setErrorMessage(failReason);
+                    setFailedOrder({
+                      orderId: sandboxModalOrder.order_id,
+                      rzpOrderId: sandboxModalOrder.razorpay_order_id,
+                      errorReason: failReason,
+                      errorCode: "BANK_DECLINED",
+                    });
+                    recordPaymentFailure({
+                      order_id: sandboxModalOrder.order_id,
+                      razorpay_order_id: sandboxModalOrder.razorpay_order_id,
+                      status: "failed",
+                      error_code: "BANK_DECLINED",
+                      error_description: failReason,
+                      error_source: "customer",
+                      error_step: "payment_authentication",
+                      error_reason: "payment_declined",
+                    }).catch(console.warn);
+                    setSandboxModalOrder(null);
+                    setIsProcessing(false);
+                    scrollToError();
+                  }}
+                >
+                  ✕ Simulate Payment Decline (Test Retry Flow)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
