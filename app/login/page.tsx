@@ -129,8 +129,10 @@ export default function Login() {
     setIsLoading(true);
 
     try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+
       if (isLogin) {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+        const response = await fetch(`${apiUrl}/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
@@ -172,7 +174,7 @@ export default function Login() {
           setToast({ type: "error", message: data.detail || "Login failed." });
         }
       } else {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
+        const response = await fetch(`${apiUrl}/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
