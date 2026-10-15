@@ -2213,4 +2213,144 @@ export async function submitProductReview(
   return await res.json();
 }
 
+// ─────────────────────────────────────────────────────────────
+// CART BACKEND SYNC API
+// ─────────────────────────────────────────────────────────────
+export interface BackendCartItem {
+  id: string;
+  product_id: string;
+  title: string;
+  price: number;
+  image: string;
+  quantity: number;
+  stock?: number;
+  session_id?: string;
+  user_email?: string;
+}
+
+export function getCartSessionId(): string {
+  if (typeof window === "undefined") return "server_session";
+  try {
+    let sid = localStorage.getItem("deluzex_cart_session");
+    if (!sid) {
+      sid = "guest_" + Math.random().toString(36).substring(2, 10) + "_" + Date.now().toString(36);
+      localStorage.setItem("deluzex_cart_session", sid);
+    }
+    return sid;
+  } catch {
+    return "guest_fallback_session";
+  }
+}
+
+export async function fetchBackendCart(identifier: string): Promise<BackendCartItem[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/cart/${encodeURIComponent(identifier)}`, {
+      headers: getAuthHeaders(),
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    logger.error("API", "Error fetching backend cart:", error);
+    return [];
+  }
+}
+
+export async function addToBackendCart(payload: {
+  session_id: string;
+  product_id: string;
+  quantity: number;
+  user_email?: string;
+  title?: string;
+  price?: number;
+  image?: string;
+}): Promise<BackendCartItem | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/cart/add`, {
+      method: "POST",
+      headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (error) {
+    logger.error("API", "Error adding item to backend cart:", error);
+    return null;
+  }
+}
+
+export async function updateBackendCartItem(
+  identifier: string,
+  productId: string,
+  quantity: number
+): Promise<BackendCartItem | null> {
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/cart/${encodeURIComponent(identifier)}/items/${encodeURIComponent(productId)}`,
+      {
+        method: "PUT",
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ quantity }),
+      }
+    );
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (error) {
+    logger.error("API", "Error updating backend cart item:", error);
+    return null;
+  }
+}
+
+export async function removeBackendCartItem(
+  identifier: string,
+  productId: string
+): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/cart/${encodeURIComponent(identifier)}/items/${encodeURIComponent(productId)}`,
+      {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      }
+    );
+    return res.ok;
+  } catch (error) {
+    logger.error("API", "Error removing backend cart item:", error);
+    return false;
+  }
+}
+
+export async function clearBackendCart(identifier: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/cart/${encodeURIComponent(identifier)}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+    return res.ok;
+  } catch (error) {
+    logger.error("API", "Error clearing backend cart:", error);
+    return false;
+  }
+}
+
+export async function syncBackendCart(
+  sessionId: string,
+  userEmail: string
+): Promise<BackendCartItem[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/cart/sync`, {
+      method: "POST",
+      headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId, user_email: userEmail }),
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (error) {
+    logger.error("API", "Error syncing backend cart:", error);
+    return [];
+  }
+}
+
+
 

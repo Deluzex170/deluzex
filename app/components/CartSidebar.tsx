@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
-import { closeCart, removeFromCart, updateQuantity } from "../store/cartSlice";
+import { closeCart, removeFromCart, updateQuantity, clearCart } from "../store/cartSlice";
 import { useAuth } from "../context/AuthContext";
 import { useRouter } from "next/navigation";
 import styles from "./CartSidebar.module.css";
@@ -36,7 +36,18 @@ export default function CartSidebar() {
       <div className={styles.overlay} onClick={() => dispatch(closeCart())}></div>
       <div className={styles.sidebar}>
         <div className={styles.header}>
-          <h2>{cartItems.length} ITEM{cartItems.length !== 1 ? 'S' : ''} IN CART</h2>
+          <div>
+            <h2>{cartItems.length} ITEM{cartItems.length !== 1 ? 'S' : ''} IN CART</h2>
+            {cartItems.length > 0 && (
+              <button
+                type="button"
+                className={styles.clearCartBtn}
+                onClick={() => dispatch(clearCart())}
+              >
+                Clear Cart
+              </button>
+            )}
+          </div>
           <button className={styles.closeBtn} onClick={() => dispatch(closeCart())}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>

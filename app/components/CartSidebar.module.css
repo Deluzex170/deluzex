@@ -44,6 +44,23 @@
   font-weight: 400;
   color: #2B2B2B;
   letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.clearCartBtn {
+  background: none;
+  border: none;
+  color: #888888;
+  font-size: 0.72rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 4px;
+  transition: color 0.2s ease;
+}
+
+.clearCartBtn:hover {
+  color: #C19A6B;
 }
 
 .closeBtn {
