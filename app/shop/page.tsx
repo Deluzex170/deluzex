@@ -128,6 +128,8 @@ function ShopContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
+  const searchParam = searchParams.get("search") || searchParams.get("q") || "";
+  const priceParam = searchParams.get("price") || "ALL";
 
   const { isAuthenticated, openLoginModal } = useAuth();
   const cartItems = useSelector((state: RootState) => state.cart.cartItems);
@@ -135,14 +137,29 @@ function ShopContent() {
   const [categories, setCategories] = useState<Category[]>(FALLBACK_CATEGORIES);
   const [products, setProducts] = useState<Product[]>(FALLBACK_PRODUCTS);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryParam);
+  const [searchQuery, setSearchQuery] = useState<string>(searchParam);
+  const [priceRange, setPriceRange] = useState<string>(priceParam);
   const [sortBy, setSortBy] = useState<string>("FEATURED");
   const [loading, setLoading] = useState(true);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Sync category param from URL
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (selectedCategory && selectedCategory.toLowerCase() !== "all") count += 1;
+    if (priceRange && priceRange !== "ALL") count += 1;
+    return count;
+  }, [selectedCategory, priceRange]);
+
+  // Sync category and search params from URL
   useEffect(() => {
     setSelectedCategory(categoryParam);
     setCurrentPage(1);
   }, [categoryParam]);
+
+  useEffect(() => {
+    setSearchQuery(searchParam);
+    setCurrentPage(1);
+  }, [searchParam]);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -159,7 +176,14 @@ function ShopContent() {
           setCategories(cats);
         }
         if (prods && prods.length > 0) {
-          setProducts(prods);
+          // Merge MongoDB products with catalog defaults so all luxury categories remain rich
+          const merged = [...prods];
+          FALLBACK_PRODUCTS.forEach((fb) => {
+            if (!merged.some((p) => String(p._id || p.id) === String(fb._id || fb.id) || p.product_title === fb.product_title)) {
+              merged.push(fb);
+            }
+          });
+          setProducts(merged);
         }
       } catch (error) {
         console.error("Failed to load shop data:", error);
@@ -170,38 +194,61 @@ function ShopContent() {
     loadData();
   }, []);
 
-  // Filter products by selected category
+  // Filter products by selected category, search query, and price range
   const filteredProducts = useMemo(() => {
-    if (!selectedCategory || selectedCategory.toLowerCase() === "all") {
-      return products;
+    let list = products;
+
+    // 1. Category Filter
+    if (selectedCategory && selectedCategory.toLowerCase() !== "all") {
+      const sel = selectedCategory.toLowerCase().trim();
+      list = list.filter((product) => {
+        const prodCategory = String(product.product_category || "").toLowerCase().trim();
+        if (prodCategory === sel) return true;
+
+        const matchedCat = categories.find(
+          (c) =>
+            String(c._id || c.id || c.category_id || "").toLowerCase().trim() === sel ||
+            c.name.toLowerCase().trim() === sel
+        );
+
+        if (matchedCat) {
+          const catName = matchedCat.name.toLowerCase().trim();
+          const catId = String(matchedCat._id || matchedCat.id || matchedCat.category_id || "").toLowerCase().trim();
+          if (prodCategory === catName || prodCategory === catId) return true;
+          if (prodCategory.includes(catName) || catName.includes(prodCategory)) return true;
+          if (String(product.product_title || "").toLowerCase().includes(catName)) return true;
+        }
+
+        if (prodCategory.includes(sel) || sel.includes(prodCategory)) return true;
+        if (String(product.product_title || "").toLowerCase().includes(sel)) return true;
+
+        return false;
+      });
     }
 
-    const sel = selectedCategory.toLowerCase().trim();
+    // 2. Search Query Filter (Title, Description, SKU, Category)
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((product) => {
+        const title = String(product.product_title || "").toLowerCase();
+        const desc = String(product.product_description || "").toLowerCase();
+        const sku = String(product.sku || "").toLowerCase();
+        const cat = String(product.product_category || "").toLowerCase();
+        return title.includes(q) || desc.includes(q) || sku.includes(q) || cat.includes(q);
+      });
+    }
 
-    return products.filter((product) => {
-      const prodCategory = String(product.product_category || "").toLowerCase().trim();
-      if (prodCategory === sel) return true;
+    // 3. Price Range Filter
+    if (priceRange === "UNDER_25K") {
+      list = list.filter((p) => Number(p.product_price || 0) < 25000);
+    } else if (priceRange === "25K_50K") {
+      list = list.filter((p) => Number(p.product_price || 0) >= 25000 && Number(p.product_price || 0) <= 50000);
+    } else if (priceRange === "ABOVE_50K") {
+      list = list.filter((p) => Number(p.product_price || 0) > 50000);
+    }
 
-      const matchedCat = categories.find(
-        (c) =>
-          String(c._id || c.id || c.category_id || "").toLowerCase().trim() === sel ||
-          c.name.toLowerCase().trim() === sel
-      );
-
-      if (matchedCat) {
-        const catName = matchedCat.name.toLowerCase().trim();
-        const catId = String(matchedCat._id || matchedCat.id || matchedCat.category_id || "").toLowerCase().trim();
-        if (prodCategory === catName || prodCategory === catId) return true;
-        if (prodCategory.includes(catName) || catName.includes(prodCategory)) return true;
-        if (String(product.product_title || "").toLowerCase().includes(catName)) return true;
-      }
-
-      if (prodCategory.includes(sel) || sel.includes(prodCategory)) return true;
-      if (String(product.product_title || "").toLowerCase().includes(sel)) return true;
-
-      return false;
-    });
-  }, [products, selectedCategory, categories]);
+    return list;
+  }, [products, selectedCategory, searchQuery, priceRange, categories]);
 
   // Sort filtered products
   const sortedProducts = useMemo(() => {
@@ -214,6 +261,9 @@ function ShopContent() {
     }
     if (sortBy === "NEWEST ARRIVALS") {
       return list.sort((a, b) => (b.is_new_arrival ? 1 : 0) - (a.is_new_arrival ? 1 : 0));
+    }
+    if (sortBy === "RATING: HIGH TO LOW") {
+      return list.sort((a, b) => Number(b.product_rating || 0) - Number(a.product_rating || 0));
     }
     return list;
   }, [filteredProducts, sortBy]);
@@ -232,13 +282,25 @@ function ShopContent() {
   };
 
   const handleSelectCategory = (catIdentifier: string | null) => {
+    const params = new URLSearchParams(window.location.search);
     if (!catIdentifier || catIdentifier.toLowerCase() === "all" || selectedCategory === catIdentifier) {
       setSelectedCategory(null);
-      router.push("/shop", { scroll: false });
+      params.delete("category");
     } else {
       setSelectedCategory(catIdentifier);
-      router.push(`/shop?category=${encodeURIComponent(catIdentifier)}`, { scroll: false });
+      params.set("category", catIdentifier);
     }
+    const newUrl = params.toString() ? `/shop?${params.toString()}` : "/shop";
+    router.push(newUrl, { scroll: false });
+    setCurrentPage(1);
+  };
+
+  const handleClearAllFilters = () => {
+    setSelectedCategory(null);
+    setSearchQuery("");
+    setPriceRange("ALL");
+    setSortBy("FEATURED");
+    router.push("/shop", { scroll: false });
     setCurrentPage(1);
   };
 
@@ -319,67 +381,256 @@ function ShopContent() {
         </div>
       </section>
 
-      {/* FILTER BAR */}
-      <section className={styles.filterBar}>
-        <div className={styles.filterPills}>
-          <button
-            type="button"
-            className={`${styles.pill} ${!selectedCategory ? styles.pillActive : ""}`}
-            onClick={() => handleSelectCategory(null)}
-          >
-            All
-          </button>
-          {categories.map((cat, i) => {
-            const catId = cat._id || cat.id || cat.category_id || cat.name;
-            const isSelected =
-              selectedCategory !== null &&
-              (selectedCategory.toLowerCase() === cat.name.toLowerCase() ||
-                selectedCategory.toLowerCase() === String(catId).toLowerCase());
-
-            return (
-              <button
-                key={catId || i}
-                type="button"
-                className={`${styles.pill} ${isSelected ? styles.pillActive : ""}`}
-                onClick={() => handleSelectCategory(cat.name)}
-              >
-                {cat.name}
-              </button>
-            );
-          })}
+      {/* LUXURY COMPACT BAR (Style A) */}
+      <section className={styles.compactBar}>
+        {/* Left: Compact, elegant search bar */}
+        <div className={styles.compactSearchWrapper}>
+          <span className={styles.compactSearchIcon}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
+          <input
+            type="text"
+            className={styles.compactSearchInput}
+            placeholder="Search fixtures, SKU (e.g. ME-DP-105)..."
+            value={searchQuery}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSearchQuery(val);
+              setCurrentPage(1);
+              const params = new URLSearchParams(window.location.search);
+              if (val.trim()) {
+                params.set("search", val.trim());
+              } else {
+                params.delete("search");
+              }
+              const newUrl = params.toString() ? `/shop?${params.toString()}` : "/shop";
+              router.replace(newUrl, { scroll: false });
+            }}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              className={styles.compactClearBtn}
+              onClick={() => {
+                setSearchQuery("");
+                setCurrentPage(1);
+                const params = new URLSearchParams(window.location.search);
+                params.delete("search");
+                const newUrl = params.toString() ? `/shop?${params.toString()}` : "/shop";
+                router.replace(newUrl, { scroll: false });
+              }}
+              aria-label="Clear search"
+            >
+              &times;
+            </button>
+          )}
         </div>
 
-        <div className={styles.sortBy}>
-          <span>SORT BY :</span>
-          <select
-            className={styles.sortSelect}
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+        {/* Right: Filter trigger button & Sort dropdown */}
+        <div className={styles.compactActions}>
+          <button
+            type="button"
+            className={`${styles.filterTriggerBtn} ${activeFilterCount > 0 ? styles.filterTriggerBtnActive : ""}`}
+            onClick={() => setIsDrawerOpen(true)}
+            aria-label="Open filter options"
           >
-            <option>FEATURED</option>
-            <option>PRICE: LOW TO HIGH</option>
-            <option>PRICE: HIGH TO LOW</option>
-            <option>NEWEST ARRIVALS</option>
-          </select>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="4" y1="21" x2="4" y2="14"></line>
+              <line x1="4" y1="10" x2="4" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12" y2="3"></line>
+              <line x1="20" y1="21" x2="20" y2="16"></line>
+              <line x1="20" y1="12" x2="20" y2="3"></line>
+              <line x1="1" y1="14" x2="7" y2="14"></line>
+              <line x1="9" y1="8" x2="15" y2="8"></line>
+              <line x1="17" y1="16" x2="23" y2="16"></line>
+            </svg>
+            <span>Filters</span>
+            {activeFilterCount > 0 && (
+              <span className={styles.filterCountBadge}>{activeFilterCount}</span>
+            )}
+          </button>
+
+          <div className={styles.compactSort}>
+            <span className={styles.compactSortLabel}>Sort:</span>
+            <select
+              className={styles.compactSortSelect}
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option>FEATURED</option>
+              <option>PRICE: LOW TO HIGH</option>
+              <option>PRICE: HIGH TO LOW</option>
+              <option>NEWEST ARRIVALS</option>
+              <option>RATING: HIGH TO LOW</option>
+            </select>
+          </div>
         </div>
       </section>
 
-      {/* ACTIVE CATEGORY BANNER */}
-      {selectedCategory && (
-        <div className={styles.activeFilterNotice}>
-          <div className={styles.activeFilterText}>
-            <span>Showing products for category:</span>
-            <strong>{activeCategoryDisplayName}</strong>
-            <span>({filteredProducts.length} {filteredProducts.length === 1 ? "product" : "products"})</span>
-          </div>
+      {/* ACTIVE FILTER CHIPS (Under bar) */}
+      {(selectedCategory || priceRange !== "ALL" || searchQuery.trim()) && (
+        <div className={styles.activeChipsRow}>
+          <span className={styles.activeChipsLabel}>Active:</span>
+          {selectedCategory && (
+            <button
+              type="button"
+              className={styles.chip}
+              onClick={() => handleSelectCategory(null)}
+              title="Remove category filter"
+            >
+              {activeCategoryDisplayName} <span>&times;</span>
+            </button>
+          )}
+          {priceRange !== "ALL" && (
+            <button
+              type="button"
+              className={styles.chip}
+              onClick={() => setPriceRange("ALL")}
+              title="Remove price filter"
+            >
+              {priceRange === "UNDER_25K"
+                ? "Under ₹25k"
+                : priceRange === "25K_50K"
+                ? "₹25k - ₹50k"
+                : "Above ₹50k"}{" "}
+              <span>&times;</span>
+            </button>
+          )}
+          {searchQuery.trim() && (
+            <button
+              type="button"
+              className={styles.chip}
+              onClick={() => {
+                setSearchQuery("");
+                const params = new URLSearchParams(window.location.search);
+                params.delete("search");
+                const newUrl = params.toString() ? `/shop?${params.toString()}` : "/shop";
+                router.replace(newUrl, { scroll: false });
+              }}
+              title="Clear search term"
+            >
+              &quot;{searchQuery}&quot; <span>&times;</span>
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => handleSelectCategory(null)}
-            className={styles.clearFilterBtn}
-            aria-label="Clear category filter"
+            className={styles.clearAllLink}
+            onClick={handleClearAllFilters}
           >
-            Show All Products &times;
+            Reset all
           </button>
+          <span className={styles.chipsProductCount}>
+            ({filteredProducts.length} {filteredProducts.length === 1 ? "fixture" : "fixtures"})
+          </span>
+        </div>
+      )}
+
+      {/* LUXURY SLIDE-OUT DRAWER */}
+      {isDrawerOpen && (
+        <div className={styles.drawerOverlay} onClick={() => setIsDrawerOpen(false)}>
+          <div className={styles.drawerContent} onClick={(e) => e.stopPropagation()}>
+            {/* Drawer Header */}
+            <div className={styles.drawerHeader}>
+              <div className={styles.drawerTitleRow}>
+                <h3 className={styles.drawerTitle}>Filters</h3>
+                {activeFilterCount > 0 && (
+                  <button
+                    type="button"
+                    className={styles.drawerResetBtn}
+                    onClick={handleClearAllFilters}
+                  >
+                    Reset All
+                  </button>
+                )}
+              </div>
+              <button
+                type="button"
+                className={styles.drawerCloseBtn}
+                onClick={() => setIsDrawerOpen(false)}
+                aria-label="Close filters"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Drawer Body */}
+            <div className={styles.drawerBody}>
+              {/* Category Options */}
+              <div className={styles.drawerSection}>
+                <h4 className={styles.drawerSectionTitle}>Categories</h4>
+                <div className={styles.drawerItemList}>
+                  <button
+                    type="button"
+                    className={`${styles.drawerItem} ${!selectedCategory ? styles.drawerItemActive : ""}`}
+                    onClick={() => handleSelectCategory(null)}
+                  >
+                    <span>All Categories</span>
+                    {!selectedCategory && <span className={styles.checkIcon}>✓</span>}
+                  </button>
+                  {categories.map((cat, i) => {
+                    const catId = cat._id || cat.id || cat.category_id || cat.name;
+                    const isSelected =
+                      selectedCategory !== null &&
+                      (selectedCategory.toLowerCase() === cat.name.toLowerCase() ||
+                        selectedCategory.toLowerCase() === String(catId).toLowerCase());
+
+                    return (
+                      <button
+                        key={catId || i}
+                        type="button"
+                        className={`${styles.drawerItem} ${isSelected ? styles.drawerItemActive : ""}`}
+                        onClick={() => handleSelectCategory(cat.name)}
+                      >
+                        <span>{cat.name}</span>
+                        {isSelected && <span className={styles.checkIcon}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Price Range Options */}
+              <div className={styles.drawerSection}>
+                <h4 className={styles.drawerSectionTitle}>Price Range</h4>
+                <div className={styles.drawerItemList}>
+                  {[
+                    { label: "All Prices", value: "ALL" },
+                    { label: "Under ₹25,000", value: "UNDER_25K" },
+                    { label: "₹25,000 – ₹50,000", value: "25K_50K" },
+                    { label: "Above ₹50,000", value: "ABOVE_50K" },
+                  ].map((p) => {
+                    const isSelected = priceRange === p.value;
+                    return (
+                      <button
+                        key={p.value}
+                        type="button"
+                        className={`${styles.drawerItem} ${isSelected ? styles.drawerItemActive : ""}`}
+                        onClick={() => setPriceRange(p.value)}
+                      >
+                        <span>{p.label}</span>
+                        {isSelected && <span className={styles.checkIcon}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Drawer Footer */}
+            <div className={styles.drawerFooter}>
+              <button
+                type="button"
+                className={styles.applyBtn}
+                onClick={() => setIsDrawerOpen(false)}
+              >
+                View {filteredProducts.length} {filteredProducts.length === 1 ? "Fixture" : "Fixtures"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -391,21 +642,24 @@ function ShopContent() {
           ) : currentProducts.length === 0 ? (
             <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "3rem 1rem" }}>
               <p style={{ fontSize: "1.2rem", marginBottom: "1rem", color: "var(--color-text)" }}>
-                No products found in category <strong>&quot;{activeCategoryDisplayName}&quot;</strong>.
+                No fixtures found matching your search or filters.
               </p>
               <button
                 type="button"
-                onClick={() => handleSelectCategory(null)}
+                onClick={handleClearAllFilters}
                 className={styles.clearFilterBtn}
                 style={{ margin: "0 auto" }}
               >
-                View All Products
+                Reset All Filters
               </button>
             </div>
           ) : (
             currentProducts.map((product, i) => {
               const pId = String(product._id || product.id || i);
               const cartItem = cartItems.find((item) => String(item.id) === pId);
+              const isOutOfStock =
+                product.in_stock === false ||
+                String(product.stock_status || "").toUpperCase() === "OUT OF STOCK";
 
               return (
                 <div key={pId} className={styles.productCard}>
@@ -426,7 +680,15 @@ function ShopContent() {
                       />
                     </Link>
 
-                    {cartItem ? (
+                    {isOutOfStock && (
+                      <span className={styles.outOfStockBadge}>Out of Stock</span>
+                    )}
+
+                    {isOutOfStock ? (
+                      <div className={styles.outOfStockBtn} title="Currently unavailable">
+                        Out of Stock
+                      </div>
+                    ) : cartItem ? (
                       <div className={styles.cartQuantityControl}>
                         <button
                           onClick={(e) => {
