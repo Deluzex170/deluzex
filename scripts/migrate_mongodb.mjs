@@ -1,7 +1,33 @@
+import fs from "fs";
+import path from "path";
 import { MongoClient } from "mongodb";
 
-const SOURCE_URI = "mongodb+srv://deluzexdata_db_user:h1NcEh52LTJtZ3cE@deluzex.eszrr2w.mongodb.net/?retryWrites=true&w=majority";
-const TARGET_URI = "mongodb+srv://aabidalideluzexlighting_db_user:ed6sMrhwo2mgbJOl@cluster0.wpeeulp.mongodb.net/?retryWrites=true&w=majority";
+// Load .env.local if present
+const envLocalPath = path.resolve(process.cwd(), ".env.local");
+if (fs.existsSync(envLocalPath)) {
+  const content = fs.readFileSync(envLocalPath, "utf-8");
+  for (const line of content.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eqIdx = trimmed.indexOf("=");
+    if (eqIdx > 0) {
+      const key = trimmed.slice(0, eqIdx).trim();
+      let val = trimmed.slice(eqIdx + 1).trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.slice(1, -1);
+      }
+      process.env[key] = val;
+    }
+  }
+}
+
+const SOURCE_URI = process.env.SOURCE_MONGODB_URI || "";
+const TARGET_URI = process.env.MONGODB_URI || "";
+
+if (!SOURCE_URI || !TARGET_URI) {
+  console.error("Please set SOURCE_MONGODB_URI and MONGODB_URI in your environment or .env.local!");
+  process.exit(1);
+}
 
 async function migrate() {
   console.log("Connecting to Source MongoDB...");
