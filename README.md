@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Deluzex — Luxury Architectural Lighting
 
-## Getting Started
+Fullstack e-commerce monorepo powering the [Deluzex Lighting](https://www.deluzexlighting.com) brand, featuring custom lighting fixtures, bespoke design consultations, and automated commerce workflows.
 
-First, run the development server:
+---
 
+## Architecture Stack
+
+- **Frontend**: Next.js 16 (App Router, React 19, TypeScript, TailwindCSS v4)
+- **Backend**: FastAPI (Python 3.11+, PyMongo, Pydantic v2)
+- **Database**: MongoDB Atlas (`Deluzex`)
+- **Payments**: Razorpay (Dual Sandbox / Live Support)
+- **CDN & Storage**: Cloudinary & ImageKit
+- **Deployment**: Vercel (Dual projects: Staging & Production)
+
+---
+
+## Quick Start (Local Development)
+
+### 1. Install All Dependencies (Node + Python)
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run install:all
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Start Both Frontend & Backend Concurrently
+```bash
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Frontend Application**: [http://localhost:3000](http://localhost:3000)
+- **Backend API Server**: [http://localhost:8000](http://localhost:8000)
+- **Interactive Swagger Docs**: [http://localhost:8000/api/v1/docs](http://localhost:8000/api/v1/docs)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Monorepo NPM Scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Command | Description |
+|---|---|
+| `npm run dev` | Runs Next.js (`:3000`) and FastAPI (`:8000`) concurrently |
+| `npm run dev:frontend` | Starts only the Next.js frontend |
+| `npm run dev:backend` | Starts only the FastAPI Python backend |
+| `npm run build` | Compiles the Next.js production build |
+| `npm run start` | Boots the Next.js production server |
+| `npm run lint` | Runs ESLint checks |
+| `npm run install:backend` | Installs Python packages from `backend/requirements.txt` |
+| `npm run install:all` | Installs both Node.js and Python dependencies |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Comprehensive Documentation
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+For complete operational details, Vercel multi-environment deployment configurations, API proxy rewrites, and environment variable references, consult the [Monorepo Guide](MONOREPO_GUIDE.md).
