@@ -30,4 +30,4 @@ jobs:
       - name: Build Next.js project
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: https://api.deluzexlighting.com/api/v1
+          NEXT_PUBLIC_API_URL: /api/v1

@@ -1,6 +1,6 @@
 import { logger } from "@/lib/logger";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.deluzexlighting.com/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
 const originalFetch = globalThis.fetch;
 
@@ -32,7 +32,17 @@ export function handleSessionExpired(): void {
 }
 
 async function loggedFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+  let url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+
+  // On the server (SSR), prepend the host for relative paths so fetch doesn't throw Invalid URL
+  if (typeof window === "undefined" && url.startsWith("/")) {
+    const base = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://127.0.0.1:8000";
+    url = `${base}${url}`;
+    input = url;
+  }
+
   const method = init?.method || "GET";
   const startTime = typeof performance !== "undefined" ? performance.now() : Date.now();
 

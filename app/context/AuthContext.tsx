@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Check validity with backend
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.deluzexlighting.com/api/v1";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
       fetch(`${apiUrl}/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`,

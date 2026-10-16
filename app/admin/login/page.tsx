@@ -71,7 +71,7 @@ export default function AdminLogin() {
     setIsLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.deluzexlighting.com/api/v1";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
       // Call dedicated admin login endpoint
       const response = await fetch(`${apiUrl}/auth/admin/login`, {
         method: "POST",
