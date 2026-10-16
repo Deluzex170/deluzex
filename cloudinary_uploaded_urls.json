@@ -1,0 +1,234 @@
+{
+  "public/deluzex-logo.jpeg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163767/deluzex/branding/deluzex_logo.jpg",
+    "public_id": "deluzex/branding/deluzex_logo",
+    "folder": "deluzex/branding",
+    "format": "jpg",
+    "width": 1179,
+    "height": 269
+  },
+  "public/deluzex-black-logo.jpeg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163768/deluzex/branding/deluzex_black_logo.jpg",
+    "public_id": "deluzex/branding/deluzex_black_logo",
+    "folder": "deluzex/branding",
+    "format": "jpg",
+    "width": 480,
+    "height": 110
+  },
+  "public/images/logos/De Luzex Final Favicon Url png logo.png": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163768/deluzex/branding/favicon_logo.png",
+    "public_id": "deluzex/branding/favicon_logo",
+    "folder": "deluzex/branding",
+    "format": "png",
+    "width": 1834,
+    "height": 1834
+  },
+  "public/images/logos/De Luzex Png Black Logo.png": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163769/deluzex/branding/deluzex_png_black_logo.png",
+    "public_id": "deluzex/branding/deluzex_png_black_logo",
+    "folder": "deluzex/branding",
+    "format": "png",
+    "width": 678,
+    "height": 154
+  },
+  "public/images/logos/De Luzex Png White Logo.png": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163770/deluzex/branding/deluzex_png_white_logo.png",
+    "public_id": "deluzex/branding/deluzex_png_white_logo",
+    "folder": "deluzex/branding",
+    "format": "png",
+    "width": 680,
+    "height": 156
+  },
+  "public/images/logos/de_luzex_black.png": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163770/deluzex/branding/de_luzex_black.png",
+    "public_id": "deluzex/branding/de_luzex_black",
+    "folder": "deluzex/branding",
+    "format": "png",
+    "width": 678,
+    "height": 154
+  },
+  "public/images/logos/de_luzex_white.png": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163771/deluzex/branding/de_luzex_white.png",
+    "public_id": "deluzex/branding/de_luzex_white",
+    "folder": "deluzex/branding",
+    "format": "png",
+    "width": 680,
+    "height": 156
+  },
+  "public/images/lamp_black_gold_1784107745696.jpg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163772/deluzex/products/covers/lamp_black_gold.jpg",
+    "public_id": "deluzex/products/covers/lamp_black_gold",
+    "folder": "deluzex/products/covers",
+    "format": "jpg",
+    "width": 1024,
+    "height": 1024
+  },
+  "public/images/lamp_classic_1784107722127.jpg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163772/deluzex/products/covers/lamp_classic.jpg",
+    "public_id": "deluzex/products/covers/lamp_classic",
+    "folder": "deluzex/products/covers",
+    "format": "jpg",
+    "width": 1024,
+    "height": 1024
+  },
+  "public/images/lamp_modern_tall_1784107732736.jpg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163773/deluzex/products/covers/lamp_modern_tall.jpg",
+    "public_id": "deluzex/products/covers/lamp_modern_tall",
+    "folder": "deluzex/products/covers",
+    "format": "jpg",
+    "width": 1024,
+    "height": 1024
+  },
+  "public/images/category_chandelier_1784107756268.jpg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163773/deluzex/categories/category_chandelier.jpg",
+    "public_id": "deluzex/categories/category_chandelier",
+    "folder": "deluzex/categories",
+    "format": "jpg",
+    "width": 1024,
+    "height": 1024
+  },
+  "public/images/project_lobby_1784107778993.jpg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163774/deluzex/projects/project_lobby.jpg",
+    "public_id": "deluzex/projects/project_lobby",
+    "folder": "deluzex/projects",
+    "format": "jpg",
+    "width": 1024,
+    "height": 1024
+  },
+  "public/images/project_lounge_1784107767735.jpg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163775/deluzex/projects/project_lounge.jpg",
+    "public_id": "deluzex/projects/project_lounge",
+    "folder": "deluzex/projects",
+    "format": "jpg",
+    "width": 1024,
+    "height": 1024
+  },
+  "public/images/hero_bg.png": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163776/deluzex/cms/hero_bg.png",
+    "public_id": "deluzex/cms/hero_bg",
+    "folder": "deluzex/cms",
+    "format": "png",
+    "width": 1817,
+    "height": 866
+  },
+  "public/images/about_chandelier_1784107790569.jpg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163777/deluzex/cms/about_chandelier.jpg",
+    "public_id": "deluzex/cms/about_chandelier",
+    "folder": "deluzex/cms",
+    "format": "jpg",
+    "width": 1024,
+    "height": 1024
+  },
+  "public/images/avatar_woman_1784107804209.jpg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163778/deluzex/testimonials/avatar_woman.jpg",
+    "public_id": "deluzex/testimonials/avatar_woman",
+    "folder": "deluzex/testimonials",
+    "format": "jpg",
+    "width": 1024,
+    "height": 1024
+  },
+  "public/images/coming-soon-desktop-bg.jpg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163778/deluzex/cms/coming_soon_desktop_bg.jpg",
+    "public_id": "deluzex/cms/coming_soon_desktop_bg",
+    "folder": "deluzex/cms",
+    "format": "jpg",
+    "width": 1024,
+    "height": 576
+  },
+  "public/images/coming-soon-desktop-ref.jpg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163779/deluzex/cms/coming_soon_desktop_ref.jpg",
+    "public_id": "deluzex/cms/coming_soon_desktop_ref",
+    "folder": "deluzex/cms",
+    "format": "jpg",
+    "width": 1024,
+    "height": 728
+  },
+  "public/images/coming-soon-mobile-bg.png": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163780/deluzex/cms/coming_soon_mobile_bg.png",
+    "public_id": "deluzex/cms/coming_soon_mobile_bg",
+    "folder": "deluzex/cms",
+    "format": "png",
+    "width": 470,
+    "height": 1024
+  },
+  "public/images/coming-soon-mobile-ref.png": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163780/deluzex/cms/coming_soon_mobile_ref.png",
+    "public_id": "deluzex/cms/coming_soon_mobile_ref",
+    "folder": "deluzex/cms",
+    "format": "png",
+    "width": 390,
+    "height": 844
+  },
+  "public/coming-soon/logo.png": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163781/deluzex/branding/coming_soon_logo.png",
+    "public_id": "deluzex/branding/coming_soon_logo",
+    "folder": "deluzex/branding",
+    "format": "png",
+    "width": 680,
+    "height": 156
+  },
+  "public/coming-soon/00d77533f67bac5a13fc4b0d78146c44e5ab38f6.png": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163782/deluzex/cms/coming_soon_ref.png",
+    "public_id": "deluzex/cms/coming_soon_ref",
+    "folder": "deluzex/cms",
+    "format": "png",
+    "width": 1671,
+    "height": 941
+  },
+  "public/images/logos/amazon.svg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163782/deluzex/icons/amazon.svg",
+    "public_id": "deluzex/icons/amazon",
+    "folder": "deluzex/icons",
+    "format": "svg",
+    "width": 64,
+    "height": 64
+  },
+  "public/images/logos/flipkart.svg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163785/deluzex/icons/flipkart.svg",
+    "public_id": "deluzex/icons/flipkart",
+    "folder": "deluzex/icons",
+    "format": "svg",
+    "width": 64,
+    "height": 64
+  },
+  "public/images/logos/instagram.svg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163786/deluzex/icons/instagram.svg",
+    "public_id": "deluzex/icons/instagram",
+    "folder": "deluzex/icons",
+    "format": "svg",
+    "width": 64,
+    "height": 64
+  },
+  "public/images/logos/whatsapp.svg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163787/deluzex/icons/whatsapp.svg",
+    "public_id": "deluzex/icons/whatsapp",
+    "folder": "deluzex/icons",
+    "format": "svg",
+    "width": 64,
+    "height": 64
+  },
+  "public/images/logos/De Luzex Final Favicon Url png logo.svg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163789/deluzex/branding/favicon_svg.svg",
+    "public_id": "deluzex/branding/favicon_svg",
+    "folder": "deluzex/branding",
+    "format": "svg",
+    "width": 1833,
+    "height": 1833
+  },
+  "public/images/logos/De Luzex Svg logo black.svg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163790/deluzex/branding/logo_svg_black.svg",
+    "public_id": "deluzex/branding/logo_svg_black",
+    "folder": "deluzex/branding",
+    "format": "svg",
+    "width": 678,
+    "height": 155
+  },
+  "public/images/logos/De Luzex_white_logo.svg": {
+    "secure_url": "https://res.cloudinary.com/xyl1w0pz/image/upload/v1792163792/deluzex/branding/logo_svg_white.svg",
+    "public_id": "deluzex/branding/logo_svg_white",
+    "folder": "deluzex/branding",
+    "format": "svg",
+    "width": 678,
+    "height": 155
+  }
+}
