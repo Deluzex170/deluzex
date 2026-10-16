@@ -2,9 +2,9 @@ name: CI / Build Validation
 
 on:
   push:
-    branches: [ "main", "dev", "kb23" ]
+    branches: [ "main", "dev", "kb23", "Test", "test" ]
   pull_request:
-    branches: [ "main", "dev" ]
+    branches: [ "main", "dev", "Test", "test" ]
 
 jobs:
   build:
