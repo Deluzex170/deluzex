@@ -1849,6 +1849,26 @@ export async function updateSiteContent(key: string, data: Record<string, any>):
 }
 
 export async function uploadCmsImage(file: File): Promise<string> {
+  // First attempt uploading via Next.js Cloudinary API route
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "cms");
+
+    const cloudRes = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+    if (cloudRes.ok) {
+      const data = await cloudRes.json();
+      if (data.success && data.url) {
+        return data.url;
+      }
+    }
+  } catch {
+    // If local/Cloudinary endpoint unavailable, fallback to backend API
+  }
+
   const formData = new FormData();
   formData.append("file", file);
 
