@@ -1,0 +1,33 @@
+name: CI / Build Validation
+
+on:
+  push:
+    branches: [ "main", "dev", "kb23" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Build Next.js project
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://api.deluzexlighting.com/api/v1
