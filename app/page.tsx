@@ -12,11 +12,11 @@ import StoreHome from "./page.store.backup";
  * - Change `SHOW_COMING_SOON = false;` to restore the complete e-commerce store homepage.
  * - The Coming Soon design will automatically continue to serve all 404 routes via `app/not-found.tsx`.
  */
-const SHOW_COMING_SOON = true;
+const SHOW_COMING_SOON = false;
 
 export const metadata = {
-  title: "Deluzex Lighting — We’re Coming Soon",
-  description: "Find beautiful lights for your home, office, hotel, and other spaces. Explore chandeliers, wall lights, ceiling lights, lamps, and more.",
+  title: "Deluzex Lighting — Where Lights Become Art",
+  description: "Crafted with exceptional materials and refined details to elevate modern living spaces. Explore chandeliers, wall lights, ceiling lights, lamps, and more.",
 };
 
 export default async function Home() {
