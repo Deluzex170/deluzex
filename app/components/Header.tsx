@@ -1,22 +1,38 @@
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./Header.module.css";
 import { useDispatch, useSelector } from "react-redux";
 import { openCart } from "../store/cartSlice";
 import { useSidebar } from "../context/SidebarContext";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { RootState } from "../store/store";
 import Image from "next/image";
 import { useAuth } from "../context/AuthContext";
 import { useRouter } from "next/navigation";
 
-export default function Header() {
+const NAV_ITEMS = [
+  { name: "Home", href: "/" },
+  { name: "Shop", href: "/shop" },
+  { name: "Projects", href: "/projects" },
+  { name: "About", href: "/about" },
+  { name: "Contact", href: "/contact" },
+  { name: "Blogs", href: "/blogs" },
+];
+
+const HERO_ROUTES = ["/", "/shop", "/projects", "/about", "/blogs"];
+
+interface HeaderProps {
+  hasBackgroundImage?: boolean;
+}
+
+export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useDispatch();
   const { sidebarOpen, toggleSidebar } = useSidebar();
-  const { isAuthenticated, user, isAdmin } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -28,6 +44,33 @@ export default function Header() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Dynamically determine if the current page has a background hero image
+  const pageHasBg = useMemo(() => {
+    if (typeof propHasBg === "boolean") return propHasBg;
+    if (!pathname) return false;
+    if (HERO_ROUTES.includes(pathname)) return true;
+    if (pathname.startsWith("/blogs/") || pathname.startsWith("/projects/")) return true;
+    return false;
+  }, [pathname, propHasBg]);
+
+  // Reset scroll and recheck scroll state on pathname change
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+      setScrolled(false);
+    }
+  }, [pathname]);
+
+  // Track scroll position to trigger State 1 -> State 2 transition
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 60);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [pathname]);
 
   const userRecord = user as Record<string, any> | null;
   const localAvatar = mounted && typeof window !== "undefined" ? localStorage.getItem("user_avatar") : null;
@@ -50,18 +93,6 @@ export default function Header() {
   const displayName = [firstName, lastName].filter(Boolean).join(" ") || userRecord?.email || "My Profile";
   const initial = (firstName?.[0] || userRecord?.email?.[0] || "U").toUpperCase();
 
-  const isHome = pathname === "/";
-
-  // Listen to scroll only on home page
-  useEffect(() => {
-    if (!isHome) return;
-
-    const onScroll = () => setScrolled(window.scrollY > 60);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [isHome]);
-
   useEffect(() => {
     if (searchOpen && searchInputRef.current) {
       searchInputRef.current.focus();
@@ -77,13 +108,6 @@ export default function Header() {
     }
   };
 
-  // On home: transparent → scrolled solid. On other pages: always solid.
-  const headerClass = isHome
-    ? scrolled
-      ? styles.headerSolid
-      : styles.headerTransparent
-    : styles.headerSolid;
-
   const isExcludedPage =
     pathname?.startsWith("/admin") ||
     pathname?.includes("/login") ||
@@ -91,11 +115,31 @@ export default function Header() {
     pathname?.includes("/signin");
   if (isExcludedPage) return null;
 
+  const isItemActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    if (href === "/shop") {
+      return (
+        pathname === "/shop" ||
+        pathname.startsWith("/shop/") ||
+        pathname.startsWith("/product/") ||
+        pathname.startsWith("/categories")
+      );
+    }
+    if (href === "/blogs") {
+      return pathname === "/blogs" || pathname.startsWith("/blogs/");
+    }
+    if (href === "/projects") {
+      return pathname === "/projects" || pathname.startsWith("/projects/");
+    }
+    return pathname === href || pathname.startsWith(href + "/");
+  };
+
+  const isState1 = pageHasBg && !scrolled;
+  const headerClass = isState1 ? styles.headerState1 : styles.headerState2;
+
   return (
     <header className={`${styles.header} ${headerClass}`}>
-
       <div className={styles.logoRow}>
-        {/* Hamburger — visible on mobile/tablet */}
         <button
           className={styles.hamburgerBtn}
           onClick={toggleSidebar}
@@ -118,36 +162,85 @@ export default function Header() {
         <div className={styles.logo}>
           <Link href="/" className={styles.logoLink} aria-label="De Luzex Lighting Home">
             <img
-              src="/images/logos/de_luzex_white.svg"
-              alt="De Luzex"
-              height="38"
-              width="130"
-              className={styles.logoWhite}
-            />
-            <img
               src="/images/logos/de_luzex_black.svg"
               alt="De Luzex"
-              height="38"
+              height="36"
               width="130"
               className={styles.logoBlack}
+            />
+            <img
+              src="/images/logos/de_luzex_white.svg"
+              alt="De Luzex"
+              height="36"
+              width="130"
+              className={styles.logoWhite}
             />
           </Link>
         </div>
       </div>
 
       <nav className={styles.nav}>
-        <Link href="/">Lighting</Link>
-        <Link href="/categories">Categories</Link>
-        <Link href="/shop">Shop</Link>
-        <Link href="/projects">Projects</Link>
-        <Link href="/blogs">Blogs</Link>
-        <Link href="/about">About</Link>
-        <Link href="/contact">Contact</Link>
-        {isAdmin && (
-          <Link href="/admin" style={{ color: "#C49A45", fontWeight: 700, letterSpacing: "0.05em" }}>
-            Admin
-          </Link>
-        )}
+        {NAV_ITEMS.map((item) => {
+          const active = isItemActive(item.href);
+          const cutoutMaskPath =
+            "M 0,46 C 14,46 20,36 22,24 C 24,12 30,0 44,0 L 116,0 C 130,0 136,12 138,24 C 140,36 146,46 160,46 L 160,100 L 0,100 Z";
+          const solidTabPath =
+            "M 0,46 C 14,46 20,36 22,24 C 24,12 30,0 44,0 L 116,0 C 130,0 136,12 138,24 C 140,36 146,46 160,46 L 160,52 L 0,52 Z";
+          const maskId = `tab-cutout-mask-${item.name}`;
+
+          if (active) {
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={styles.activeTab}
+              >
+                <span className={styles.tabLabel}>{item.name}</span>
+                <div className={styles.tabBgWrapper}>
+                  {isState1 ? (
+                    <svg
+                      viewBox="0 0 160 46"
+                      className={styles.tabCutoutSvg}
+                      preserveAspectRatio="none"
+                    >
+                      <defs>
+                        <mask id={maskId}>
+                          <rect x="-3000" y="-1000" width="6000" height="3000" fill="#ffffff" />
+                          <path d={cutoutMaskPath} fill="#000000" />
+                        </mask>
+                      </defs>
+                      <rect
+                        x="-3000"
+                        y="-1000"
+                        width="6000"
+                        height="3000"
+                        fill="#F8F1EA"
+                        mask={`url(#${maskId})`}
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      viewBox="0 0 160 46"
+                      className={styles.tabSolidSvg}
+                      preserveAspectRatio="none"
+                    >
+                      <path d={solidTabPath} fill="#F8F1EA" />
+                    </svg>
+                  )}
+                </div>
+              </Link>
+            );
+          }
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={styles.navLink}
+            >
+              {item.name}
+            </Link>
+          );
+        })}
       </nav>
 
       <div className={styles.headerIcons}>
@@ -160,14 +253,16 @@ export default function Header() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
-                background: "rgba(255,255,255,0.9)",
+                background: "rgba(255,255,255,0.95)",
                 border: "1px solid #C49A45",
                 borderRadius: "20px",
-                padding: "0.35rem 0.85rem",
-                fontSize: "0.85rem",
+                padding: "0.2rem 0.85rem",
+                height: "32px",
+                fontSize: "0.82rem",
                 color: "#111",
                 outline: "none",
-                width: "180px",
+                width: "185px",
+                boxSizing: "border-box",
               }}
             />
           </form>
@@ -177,16 +272,16 @@ export default function Header() {
           type="button"
           onClick={() => {
             if (searchOpen && searchQuery.trim()) {
-              handleSearchSubmit({ preventDefault: () => {} } as any);
+              handleSearchSubmit({ preventDefault: () => { } } as any);
             } else {
               setSearchOpen(!searchOpen);
             }
           }}
           aria-label="Search"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M21 21L15 15" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
 
@@ -218,13 +313,14 @@ export default function Header() {
         )}
         <div className={styles.cartIconWrapper}>
           <button className={styles.iconBtn} onClick={() => dispatch(openCart())} aria-label="Cart">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <path d="M16 10a4 4 0 0 1-8 0" />
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <circle cx="6" cy="19" r="2" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="17" cy="19" r="2" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M17 17H6V3H4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M6 5L20 6L19 13H6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
-          <span className={styles.cartBadge}>{cartItems.length != 0 ? cartItems.length : "0"}</span>
+          <span className={styles.cartBadge}>{mounted && cartItems.length > 0 ? cartItems.length : "0"}</span>
         </div>
       </div>
     </header>

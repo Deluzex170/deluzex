@@ -16,7 +16,9 @@
 .hero {
   position: relative;
   width: 100%;
-  min-height: 560px;
+  min-height: 580px;
+  margin-top: -68px;
+  /* pull up behind fixed transparent header */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -66,133 +68,109 @@
   transform: translateX(-2px);
 }
 
-/* Floating Card */
+/* Floating Card (Figma Glassmorphism Design) */
 .heroCard {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 780px;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 24px;
-  padding: 44px 40px 36px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+  max-width: 860px;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 28px;
+  padding: 42px 48px 36px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.14);
   text-align: center;
 }
 
 .cardCategory {
   font-family: var(--font-libre), serif;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #C89B60;
-  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 400;
+  color: #D79322;
+  letter-spacing: 0.02em;
+  margin: 0 0 8px;
+  font-style: italic;
 }
 
 .cardTitle {
   font-family: var(--font-libre), serif;
-  font-size: 46px;
+  font-size: 52px;
   font-weight: 400;
-  color: #2B2B2B;
-  line-height: 1.15;
+  color: #111827;
+  line-height: 1.1;
   margin: 0 0 12px;
   letter-spacing: -0.01em;
 }
 
-.cardDivider {
-  width: 36px;
-  height: 2px;
-  background: #C89B60;
-  margin: 0 auto 14px;
-  border-radius: 2px;
-}
-
-.cardSubtitle {
-  font-size: 14px;
-  color: #888888;
-  font-style: italic;
-  margin: 0 0 16px;
+.cardLocation {
+  font-family: 'General Sans', var(--font-hanken), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 10px;
+  letter-spacing: 0.01em;
 }
 
 .cardDescription {
-  font-size: 14px;
-  line-height: 1.7;
-  color: #555555;
-  max-width: 620px;
-  margin: 0 auto 28px;
+  font-family: 'General Sans', var(--font-hanken), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: #475569;
+  max-width: 660px;
+  margin: 0 auto 24px;
+}
+
+.horizontalDivider {
+  width: 100%;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.15);
+  margin: 0 auto 24px;
 }
 
 /* 3-column Meta Bar */
 .metaGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  padding-top: 24px;
+  grid-template-columns: 1fr 1fr 1.25fr;
   gap: 16px;
+  text-align: center;
 }
 
 .metaItem {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   padding: 0 12px;
-  border-right: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.metaItem:last-child {
-  border-right: none;
 }
 
 .metaLabel {
-  font-size: 12px;
-  color: #888888;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-family: 'General Sans', var(--font-hanken), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
 }
 
 .metaValue {
+  font-family: 'General Sans', var(--font-hanken), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
-  font-weight: 600;
-  color: #2B2B2B;
+  font-weight: 500;
+  color: #334155;
 }
 
 /* ===================== GALLERY SECTION ===================== */
 .gallerySection {
-  max-width: 1280px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 56px 32px 90px;
+  padding: 48px 32px 80px;
   width: 100%;
 }
 
-.galleryHeader {
-  text-align: center;
-  margin-bottom: 36px;
-}
-
-.galleryTagline {
-  font-family: var(--font-libre), serif;
-  font-size: 14px;
-  color: #C89B60;
-  font-style: italic;
-  margin: 0 0 6px;
-}
-
-.galleryTitle {
-  font-family: var(--font-libre), serif;
-  font-size: 32px;
-  font-weight: 400;
-  color: #2B2B2B;
-  margin: 0;
-}
-
-/* LAPTOP / DESKTOP VIEW: 2 GRID ITEMS IN ONE ROW */
+/* 1-COLUMN VERTICAL STACKED FULL-WIDTH IMAGES (FIGMA DESIGN) */
 .galleryGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 28px;
   width: 100%;
 }
@@ -200,27 +178,28 @@
 .galleryCard {
   position: relative;
   width: 100%;
-  height: 420px;
-  border-radius: 18px;
+  height: 600px;
+  min-height: 480px;
+  border-radius: 0;
   overflow: hidden;
   background: #EFEFEF;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   transition: transform 0.35s ease, box-shadow 0.35s ease;
   cursor: pointer;
 }
 
 .galleryCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
 }
 
 .galleryImg {
   object-fit: cover;
-  transition: transform 0.5s ease;
+  transition: transform 0.6s ease;
 }
 
 .galleryCard:hover .galleryImg {
-  transform: scale(1.03);
+  transform: scale(1.02);
 }
 
 .galleryOverlay {
@@ -228,14 +207,14 @@
   inset: 0;
   background: linear-gradient(
     to bottom,
-    transparent 60%,
-    rgba(0, 0, 0, 0.45) 100%
+    transparent 70%,
+    rgba(0, 0, 0, 0.4) 100%
   );
   opacity: 0;
   transition: opacity 0.3s ease;
   display: flex;
   align-items: flex-end;
-  padding: 20px;
+  padding: 24px;
   color: #ffffff;
 }
 
@@ -245,30 +224,31 @@
 
 .zoomIcon {
   margin-left: auto;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.9);
   color: #2B2B2B;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .videoCard {
   position: relative;
   width: 100%;
-  height: 420px;
-  border-radius: 18px;
+  height: 580px;
+  border-radius: 0;
   overflow: hidden;
   background: #000000;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   transition: transform 0.35s ease, box-shadow 0.35s ease;
 }
 
 .videoCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
 }
 
 .videoFrame {
@@ -301,52 +281,6 @@
   z-index: 2;
   border: 1px solid rgba(255, 255, 255, 0.15);
   pointer-events: none;
-}
-
-/* ===================== INQUIRY CTA ===================== */
-.inquirySection {
-  background: #F4EFEA;
-  border-top: 1px solid rgba(200, 155, 96, 0.2);
-  padding: 60px 24px;
-  text-align: center;
-}
-
-.inquiryInner {
-  max-width: 680px;
-  margin: 0 auto;
-}
-
-.inquiryTitle {
-  font-family: var(--font-libre), serif;
-  font-size: 32px;
-  color: #2B2B2B;
-  font-weight: 400;
-  margin: 0 0 12px;
-}
-
-.inquiryDesc {
-  font-size: 15px;
-  color: #666666;
-  line-height: 1.6;
-  margin: 0 0 24px;
-}
-
-.inquiryBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  background: #C89B60;
-  color: #ffffff;
-  padding: 14px 36px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-size: 15px;
-  font-weight: 500;
-  transition: background 0.3s ease;
-}
-
-.inquiryBtn:hover {
-  background: #b28850;
 }
 
 /* ===================== LIGHTBOX MODAL ===================== */
@@ -393,6 +327,7 @@
 /* ===================== RESPONSIVE / MOBILE ===================== */
 @media (max-width: 1024px) {
   .hero {
+    margin-top: -68px;
     padding: 120px 20px 50px;
     min-height: 500px;
   }
@@ -409,12 +344,13 @@
 /* MOBILE VIEW: SHOW ALL IMAGES IN SAME STRUCTURE (1-COLUMN STACKED) */
 @media (max-width: 768px) {
   .hero {
-    padding: 100px 16px 40px;
+    margin-top: -68px;
+    padding: 108px 16px 40px;
     min-height: 440px;
   }
 
   .backBtn {
-    top: 75px;
+    top: 80px;
     left: 16px;
     padding: 6px 12px;
     font-size: 12px;
@@ -422,32 +358,36 @@
 
   .heroCard {
     padding: 28px 20px 24px;
-    border-radius: 18px;
+    border-radius: 20px;
   }
 
   .cardCategory {
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .cardTitle {
-    font-size: 28px;
-    margin-bottom: 8px;
+    font-size: 32px;
+    margin-bottom: 6px;
   }
 
-  .cardSubtitle {
-    font-size: 12px;
-    margin-bottom: 12px;
+  .cardLocation {
+    font-size: 13px;
+    margin-bottom: 8px;
   }
 
   .cardDescription {
     font-size: 13px;
     line-height: 1.6;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
+  }
+
+  .horizontalDivider {
+    margin-bottom: 16px;
   }
 
   .metaGrid {
     gap: 8px;
-    padding-top: 18px;
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .metaItem {
@@ -481,11 +421,17 @@
   .videoCard {
     height: 260px;
     min-height: 220px;
-    border-radius: 14px;
+    border-radius: 0;
   }
 }
 
 @media (max-width: 480px) {
+  .hero {
+    margin-top: -68px;
+    padding: 95px 14px 35px;
+    min-height: 400px;
+  }
+
   .cardTitle {
     font-size: 24px;
   }
@@ -494,6 +440,6 @@
   .videoCard {
     height: 220px;
     min-height: 200px;
-    border-radius: 12px;
+    border-radius: 0;
   }
 }

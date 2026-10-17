@@ -38,7 +38,7 @@ export default async function Home() {
 
         {/* Left content */}
         <div className={styles.heroLeft}>
-          <p className={styles.heroTagline}>{cmsHome?.hero?.tagline || "Celebrate Every Moment with"}</p>
+          <p className={styles.heroTagline}>Celebrate Every Moment with</p>
           <h1 className={styles.heroTitle}>{cmsHome?.hero?.title || "Where Lights become Art"}</h1>
           <p className={styles.heroDesc}>
             {cmsHome?.hero?.description || (
@@ -52,8 +52,8 @@ export default async function Home() {
             <Link href={cmsHome?.hero?.btn_explore_link || "/shop"} className={styles.btnExplore}>
               {cmsHome?.hero?.btn_explore_text || "Explore Collection"}
             </Link>
-            <Link href={cmsHome?.hero?.btn_catalogue_link || "/categories"} className={styles.btncatalogue}>
-              {cmsHome?.hero?.btn_catalogue_text || "View Catalogue"}
+            <Link href={cmsHome?.hero?.btn_catalogue_link || "/projects"} className={styles.btncatalogue}>
+              View portfolio
             </Link>
           </div>
         </div>
@@ -89,7 +89,7 @@ export default async function Home() {
                 <Link
                   key={cat.id || cat._id || i}
                   href={`/shop?category=${encodeURIComponent(catIdentifier)}`}
-                  className={`${styles.catCard} ${i === 1 ? styles.catCardActive : ''}`}
+                  className={styles.catCard}
                 >
                   <Image
                     src={cat.image_url || "/images/category_chandelier_1784107756268.jpg"}
@@ -112,7 +112,7 @@ export default async function Home() {
                   <span>Pendant Lights</span>
                 </div>
               </Link>
-              <Link href={`/shop?category=${encodeURIComponent("Chandeliers")}`} className={`${styles.catCard} ${styles.catCardActive}`}>
+              <Link href={`/shop?category=${encodeURIComponent("Chandeliers")}`} className={styles.catCard}>
                 <Image src="/images/about_chandelier_1784107790569.jpg" alt="Chandeliers" fill style={{ objectFit: "cover" }} />
                 <div className={styles.catCardLabel}>
                   <span>Chandeliers</span>
@@ -137,7 +137,7 @@ export default async function Home() {
           Explore Categories
         </Link>
       </section>
-      
+
       {/* ===================== FEATURED PROJECTS SECTION ===================== */}
       {/* Figma: 1440x885, "Our Featured Projects." title, 2 large project cards, Explore button */}
       <section className={styles.projectsSection}>
@@ -260,39 +260,45 @@ export default async function Home() {
               )}
             </p>
             <Link href="/about" className={styles.btnDiscoverStory}>
-              Discover Our Story
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M5 12h14M12 5l7 7-7 7" />
+              <span className={styles.btnStoryDesktopText}>Discover Our Story</span>
+              <span className={styles.btnStoryMobileText}>Learn more</span>
+              <svg className={styles.btnStoryArrow} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
               </svg>
             </Link>
             <div className={styles.aboutFeatures}>
               <div className={styles.aboutFeatureItem}>
-                <div className={styles.aboutFeatureIcon}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <polygon points="6 3 18 3 22 9 12 22 2 9 6 3"></polygon>
-                  </svg>
-                </div>
-                <span>Premium Craftsmanship</span>
+                <Image
+                  src="/images/logos/PremiumCraftmanship.svg"
+                  alt="Premium Craftmanship"
+                  width={68}
+                  height={68}
+                  className={styles.aboutFeatureSvg}
+                />
+                <span className={styles.aboutFeatureLabel}>Premium Craftmanship</span>
               </div>
               <div className={styles.aboutFeatureDivider}></div>
               <div className={styles.aboutFeatureItem}>
-                <div className={styles.aboutFeatureIcon}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                  </svg>
-                </div>
-                <span>Bespoke Design</span>
+                <Image
+                  src="/images/logos/BespokeDesign.svg"
+                  alt="Bespoke Design"
+                  width={68}
+                  height={68}
+                  className={styles.aboutFeatureSvg}
+                />
+                <span className={styles.aboutFeatureLabel}>Bespoke Design</span>
               </div>
               <div className={styles.aboutFeatureDivider}></div>
               <div className={styles.aboutFeatureItem}>
-                <div className={styles.aboutFeatureIcon}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                </div>
-                <span>Handcrafted Excellence</span>
+                <Image
+                  src="/images/logos/HandcraftedExcellence.svg"
+                  alt="Handcrafted Excellence"
+                  width={68}
+                  height={68}
+                  className={styles.aboutFeatureSvg}
+                />
+                <span className={styles.aboutFeatureLabel}>Handcrafted Excellence</span>
               </div>
             </div>
           </div>
@@ -301,7 +307,8 @@ export default async function Home() {
               src={cmsHome?.story?.image || "/images/about_chandelier_1784107790569.jpg"}
               alt="Chandelier"
               fill
-              style={{ objectFit: "cover", borderRadius: "12px" }}
+              className={styles.aboutRightImg}
+              style={{ objectFit: "cover" }}
             />
           </div>
         </div>
@@ -311,11 +318,11 @@ export default async function Home() {
           {(cmsHome?.story?.stats && cmsHome.story.stats.length === 4
             ? cmsHome.story.stats
             : [
-                { number: "10+", label: "Years Of Excellence", image: "/images/project_lounge_1784107767735.jpg" },
-                { number: "98%", label: "Client Satisfaction", image: "/images/about_chandelier_1784107790569.jpg" },
-                { number: "500+", label: "Lighting Installations", image: "/images/project_lobby_1784107778993.jpg" },
-                { number: "50K+", label: "Happy Customers", image: "/images/project_lounge_1784107767735.jpg" }
-              ]
+              { number: "10+", label: "Years Of Excellence", image: "/images/project_lounge_1784107767735.jpg" },
+              { number: "98%", label: "Client Satisfaction", image: "/images/about_chandelier_1784107790569.jpg" },
+              { number: "500+", label: "Lighting Installations", image: "/images/project_lobby_1784107778993.jpg" },
+              { number: "50K+", label: "Happy Customers", image: "/images/project_lounge_1784107767735.jpg" }
+            ]
           ).map((st: any, idx: number) => {
             const numVal = parseInt(st.number.replace(/\D/g, ""), 10) || 10;
             const suffixVal = st.number.replace(/[0-9]/g, "") || "+";
@@ -325,7 +332,8 @@ export default async function Home() {
                   src={st.image || "/images/project_lounge_1784107767735.jpg"}
                   alt={st.label}
                   fill
-                  style={{ objectFit: "cover", borderRadius: "8px" }}
+                  className={styles.statCardImg}
+                  style={{ objectFit: "cover" }}
                 />
                 <div className={styles.statOverlay}>
                   <AnimatedCounter target={numVal} suffix={suffixVal} className={styles.statNum} duration={2 + idx * 0.2} />
@@ -345,8 +353,18 @@ export default async function Home() {
       </section>
 
       {/* ===================== CTA SECTION ===================== */}
-      {/* Figma: 1440x518, cream textured bg, big serif title, 2 buttons */}
+      {/* Figma: 1440x518, dark background image with overlay, white serif title, 2 buttons */}
       <section className={styles.ctaSection}>
+        <div className={styles.ctaBg}>
+          <Image
+            src={cmsHome?.cta?.bg_image || "/images/cta_bg.jpg"}
+            alt="Lighting Collections"
+            fill
+            sizes="100vw"
+            style={{ objectFit: "cover" }}
+          />
+          <div className={styles.ctaOverlay}></div>
+        </div>
         <div className={styles.ctaInner}>
           <h2 className={styles.ctaTitle}>{cmsHome?.cta?.title || "Discover Timeless Lighting"}</h2>
           <p className={styles.ctaDesc}>

@@ -101,7 +101,7 @@ export default function HeroProductWidget() {
 
     const timer = window.setInterval(() => {
       setCarouselPosition((currentPosition) => currentPosition + 1);
-    }, 3500);
+    }, 2000);
 
     return () => window.clearInterval(timer);
   }, [isPaused, isDragging]);
@@ -161,11 +161,12 @@ export default function HeroProductWidget() {
     }
 
     if (isHorizontalSwipeRef.current) {
-      if (Math.abs(diffX) > 6) {
+      if (Math.abs(diffX) > 4) {
         hasDraggedRef.current = true;
       }
-      currentDragOffsetRef.current = diffX;
-      setDragOffset(diffX);
+      const acceleratedDiff = diffX * 1.5;
+      currentDragOffsetRef.current = acceleratedDiff;
+      setDragOffset(acceleratedDiff);
     }
   };
 
@@ -177,12 +178,12 @@ export default function HeroProductWidget() {
       const step = isMobile ? 127 : 204;
 
       let delta = 0;
-      if (Math.abs(diffX) > 25) {
+      if (Math.abs(diffX) > 15) {
         delta = Math.round(-diffX / step);
         if (delta === 0) {
           delta = diffX < 0 ? 1 : -1;
         }
-      } else if (elapsed < 300 && Math.abs(diffX) > 15) {
+      } else if (elapsed < 350 && Math.abs(diffX) > 10) {
         delta = diffX < 0 ? 1 : -1;
       }
 
@@ -217,8 +218,8 @@ export default function HeroProductWidget() {
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isMouseDraggingRef.current || mouseStartXRef.current === null) return;
-    const diffX = e.clientX - mouseStartXRef.current;
-    if (Math.abs(diffX) > 6) {
+    const diffX = (e.clientX - mouseStartXRef.current) * 1.5;
+    if (Math.abs(diffX) > 4) {
       hasDraggedRef.current = true;
     }
     currentDragOffsetRef.current = diffX;
@@ -284,11 +285,12 @@ export default function HeroProductWidget() {
             src={activeLamp.image}
             alt={activeLamp.alt}
             fill
-            sizes="112px"
+            sizes="110px"
             style={{ objectFit: "cover" }}
           />
         </div>
-        <div className={styles.heroInfoCardText}>
+        <div className={styles.heroInfoCardContent}>
+          <span className={styles.heroInfoCardNum}>/{String(activeIndex + 1).padStart(2, "0")}</span>
           <span className={styles.heroInfoCardName}>{activeLamp.name}</span>
           <span className={styles.heroInfoCardCount}>₹{activeLamp.price ?? activeLamp.count}</span>
         </div>
@@ -310,7 +312,7 @@ export default function HeroProductWidget() {
           className={styles.heroLampsTrack}
           style={{
             transform: `translateX(calc(50% - var(--hero-card-half) - ${carouselPosition} * var(--hero-carousel-step) + ${dragOffset}px))`,
-            transition: isDragging || isResetting ? "none" : "transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)",
+            transition: isDragging || isResetting ? "none" : "transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         >
           {carouselLamps.map((lamp, position) => (
@@ -345,16 +347,19 @@ export default function HeroProductWidget() {
       </div>
 
       <div className={styles.heroDots} aria-label="Select featured lighting product">
-        {lamps.map((lamp, index) => (
-          <button
-            key={lamp.image}
-            type="button"
-            className={`${styles.heroDot} ${index === activeIndex ? styles.heroDotActive : ""}`}
-            onClick={() => selectLamp(index)}
-            aria-label={`Select ${lamp.name}`}
-            aria-pressed={index === activeIndex}
-          />
-        ))}
+        {[0, 1, 2].map((dotIndex) => {
+          const isSelected = ((activeIndex % 3) + 3) % 3 === dotIndex;
+          return (
+            <button
+              key={dotIndex}
+              type="button"
+              className={`${styles.heroDot} ${isSelected ? styles.heroDotActive : ""}`}
+              onClick={() => selectLamp(dotIndex)}
+              aria-label={`Select product ${dotIndex + 1}`}
+              aria-pressed={isSelected}
+            />
+          );
+        })}
       </div>
     </div>
   );

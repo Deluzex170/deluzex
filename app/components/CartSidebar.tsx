@@ -35,7 +35,9 @@ export default function CartSidebar() {
     <>
       <div className={styles.overlay} onClick={() => dispatch(closeCart())}></div>
       <div className={styles.sidebar}>
+        {/* Header */}
         <div className={styles.header}>
+<<<<<<< HEAD
           <div>
             <h2>{cartItems.length} ITEM{cartItems.length !== 1 ? 'S' : ''} IN CART</h2>
             {cartItems.length > 0 && (
@@ -50,9 +52,24 @@ export default function CartSidebar() {
           </div>
           <button className={styles.closeBtn} onClick={() => dispatch(closeCart())}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+=======
+          <h2 className={styles.headerTitle}>
+            {cartItems.length} ITEM{cartItems.length !== 1 ? "S" : ""} IN CART
+          </h2>
+          <button
+            className={styles.closeBtn}
+            onClick={() => dispatch(closeCart())}
+            aria-label="Close cart"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+>>>>>>> dev
           </button>
         </div>
 
+        {/* Cart Items List */}
         <div className={styles.cartItems}>
           {cartItems.length === 0 ? (
             <div className={styles.emptyState}>
@@ -67,20 +84,62 @@ export default function CartSidebar() {
             cartItems.map((item) => (
               <div key={item.id} className={styles.cartItem}>
                 <div className={styles.itemImageWrapper}>
-                  <Image src={item.image} alt={item.title} fill style={{ objectFit: 'contain' }} />
+                  <Image
+                    src={item.image}
+                    alt={item.title}
+                    fill
+                    sizes="88px"
+                    style={{ objectFit: "cover" }}
+                  />
                 </div>
                 <div className={styles.itemDetails}>
-                  <h4>{item.title}</h4>
-                  <p className={styles.price}>₹{item.price.toFixed(2)}</p>
+                  <div className={styles.itemTitleArea}>
+                    <h4 className={styles.itemTitle}>{item.title}</h4>
+                  </div>
+                  <p className={styles.price}>
+                    ₹{item.price.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
                   <div className={styles.itemActions}>
                     <div className={styles.quantity}>
-                      <button onClick={() => dispatch(updateQuantity({ id: item.id, change: -1 }))}>-</button>
+                      <button
+                        type="button"
+                        onClick={() => dispatch(updateQuantity({ id: item.id, change: -1 }))}
+                        aria-label="Decrease quantity"
+                      >
+                        −
+                      </button>
                       <span>{item.quantity}</span>
-                      <button onClick={() => dispatch(updateQuantity({ id: item.id, change: 1 }))}>+</button>
+                      <button
+                        type="button"
+                        onClick={() => dispatch(updateQuantity({ id: item.id, change: 1 }))}
+                        aria-label="Increase quantity"
+                      >
+                        +
+                      </button>
                     </div>
                     <div className={styles.iconButtons}>
-                      <button className={styles.iconBtnSmall} onClick={() => dispatch(removeFromCart(item.id))}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <button
+                        type="button"
+                        className={styles.actionCircleBtn}
+                        onClick={() => {
+                          dispatch(closeCart());
+                          router.push(`/product/${item.id}`);
+                        }}
+                        title="View / Edit Product"
+                        aria-label="View / Edit Product"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.actionCircleBtn}
+                        onClick={() => dispatch(removeFromCart(item.id))}
+                        title="Remove from cart"
+                        aria-label="Remove from cart"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="3 6 5 6 21 6"></polyline>
                           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                         </svg>
@@ -93,27 +152,40 @@ export default function CartSidebar() {
           )}
         </div>
 
+        {/* Footer / Summary Section */}
         <div className={styles.footer}>
-          <div className={styles.summaryRow}>
-            <span>Subtotal</span>
-            <span>₹{subtotal.toFixed(2)}</span>
-          </div>
-          <div className={styles.summaryRow}>
-            <span>GST (18%)</span>
-            <span>₹{gst.toFixed(2)}</span>
-          </div>
-          <div className={styles.summaryRow}>
-            <span>Delivery Charges</span>
-            <span>{delivery > 0 ? `₹${delivery.toFixed(2)}` : 'Free'}</span>
-          </div>
-          <div className={styles.subtotalRow} style={{ marginTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '1rem', marginBottom: '1.5rem' }}>
-            <div>
-              <h3>Grand Total</h3>
-              <p>Taxes & Shipping included</p>
+          {cartItems.length > 0 && (
+            <div className={styles.breakdownSection}>
+              <div className={styles.summaryRow}>
+                <span>Subtotal</span>
+                <span>₹{subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+              <div className={styles.summaryRow}>
+                <span>GST (18%)</span>
+                <span>₹{gst.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+              <div className={styles.summaryRow}>
+                <span>Delivery Charges</span>
+                <span>{delivery > 0 ? `₹${delivery.toFixed(2)}` : "Free"}</span>
+              </div>
             </div>
-            <div className={styles.totalPrice}>₹{grandTotal.toFixed(2)}</div>
+          )}
+
+          <div className={styles.grandTotalRow}>
+            <div>
+              <h3 className={styles.grandTotalLabel}>Subtotal</h3>
+              <p className={styles.taxesSubtext}>Taxes included</p>
+            </div>
+            <div className={styles.totalPrice}>
+              ₹{grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
           </div>
-          <button className={styles.btnCheckout} disabled={cartItems.length === 0} onClick={handleCheckout}>
+
+          <button
+            className={styles.btnCheckout}
+            disabled={cartItems.length === 0}
+            onClick={handleCheckout}
+          >
             Proceed to Checkout
           </button>
         </div>

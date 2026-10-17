@@ -7,12 +7,14 @@
   position: relative;
   height: 50vh;
   min-height: 350px;
+  margin-top: -68px;
+  /* pull up behind fixed transparent header */
+  padding: 68px 2rem 0;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   color: var(--color-white);
-  padding: 0 2rem;
 }
 
 .heroBg {
@@ -24,32 +26,42 @@
 .heroOverlay {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.6);
   z-index: -1;
 }
 
 .heroContent {
   z-index: 1;
+  max-width: 820px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
 .heroSub {
-  font-size: 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: var(--color-primary);
-  margin-bottom: 1rem;
+  letter-spacing: 0.18em;
+  color: #D8A56E;
+  margin-top: 0;
+  margin-bottom: 0.6rem;
 }
 
 .heroTitle {
   font-family: var(--font-libre), serif;
-  font-size: 3rem;
-  line-height: 1.1;
+  font-size: 2.25rem;
+  line-height: 1.25;
+  font-weight: 400;
+  margin: 0 auto;
+  max-width: 780px;
 }
 
 /* ARTICLE SECTION */
 .articleSection {
-  background: var(--color-bg); /* Beige background */
-  padding: 6rem 0;
+  background: var(--color-bg);
+  /* Beige background */
+  padding: 4.5rem 0 5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -58,8 +70,8 @@
 .authorInfo {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 4rem;
+  gap: 1.1rem;
+  margin-bottom: 2.2rem;
   text-align: left;
   max-width: 700px;
   width: 100%;
@@ -67,23 +79,38 @@
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: #000;
+  background: #111111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatarMiniLogo {
+  font-size: 8.5px;
+  color: #FFFFFF;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+  font-family: var(--font-hanken), sans-serif;
+  line-height: 1;
 }
 
 .authorName {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.9rem;
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 1.15rem;
   font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 0.25rem;
+  color: #1F2937;
+  margin-bottom: 0.2rem;
 }
 
 .authorDate {
-  font-size: 0.75rem;
-  color: var(--color-text-light);
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.88rem;
+  color: #6B7280;
 }
 
 .articleBody {
@@ -92,21 +119,25 @@
   padding: 0 2rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .contentSubtitle {
-  font-family: var(--font-libre), serif;
-  font-size: 1.5rem;
-  color: var(--color-primary);
-  margin-top: 2rem;
-  margin-bottom: 0.5rem;
+  font-family: var(--font-playfair), Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: #D79322;
+  margin: 0.6rem 0 0.2rem 0;
+  line-height: 1.35;
 }
 
-.articleBody p {
-  font-size: 1rem;
-  line-height: 1.8;
-  color: var(--color-text-light);
+.articleBody p,
+.paragraphText {
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: #4B5563;
+  margin: 0;
 }
 
 .articleImage {
@@ -120,49 +151,58 @@
 
 .shareSection {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 1rem;
-  margin-top: 6rem;
-  border-top: 1px solid rgba(0,0,0,0.05);
-  padding-top: 3rem;
+  justify-content: space-between;
+  margin-top: 1.75rem;
+  border-top: none;
+  padding: 0 2rem;
   width: 100%;
   max-width: 700px;
+  box-sizing: border-box;
 }
 
-.shareText {
-  font-size: 0.75rem;
+.writtenByText {
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--color-text-light);
+  letter-spacing: 0.06em;
+  color: #64748B;
 }
 
 .shareIcons {
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  gap: 1.15rem;
 }
 
 .shareIcons a {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid var(--color-primary);
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  border: none;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-primary);
-  transition: all 0.3s;
+  color: #D79322;
+  transition: transform 0.2s ease, opacity 0.2s ease, color 0.2s ease;
+  text-decoration: none;
+  padding: 0;
 }
 
 .shareIcons a:hover {
-  background: var(--color-primary);
-  color: var(--color-white);
+  background: transparent;
+  color: #B87A19;
+  transform: translateY(-2px);
+  opacity: 0.85;
 }
 
 /* READ MORE SECTION */
 .readMoreSection {
   background: var(--color-bg);
-  padding: 0 6rem 8rem;
+  padding: 0 6rem 2.5rem;
 }
 
 .readMoreTitle {
@@ -180,124 +220,226 @@
 }
 
 .blogCard {
-  background: var(--color-white);
-  border-radius: 12px;
+  background: #FFFFFF;
+  border-radius: 16px;
   overflow: hidden;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .blogCard:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
 }
 
 .blogImageSmall {
   position: relative;
-  aspect-ratio: 16/9;
+  aspect-ratio: 4 / 3;
   width: 100%;
   overflow: hidden;
+  background: #111111;
 }
 
 .blogContentSmall {
-  padding: 1.5rem;
+  padding: 0.95rem 1.15rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
-.blogCategory {
-  color: var(--color-primary);
-  font-size: 0.7rem;
+.authorBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
 
+.authorAvatar {
+  width: 22px;
+  height: 22px;
+  background: #111111;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.authorMiniLogo {
+  font-size: 5.5px;
+  color: #FFFFFF;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+  font-family: var(--font-hanken), sans-serif;
+  line-height: 1;
+}
+
+.authorName {
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #2B2B2B;
+}
+
 .blogTitleSmall {
-  font-family: var(--font-playfair), serif;
-  font-size: 1rem;
-  color: var(--color-text);
-  margin-bottom: 1rem;
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #2B2B2B;
+  margin: 0 0 0.85rem 0;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex-grow: 1;
 }
 
 .blogFooter {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.7rem;
-  color: var(--color-text-light);
-  border-top: 1px solid rgba(0,0,0,0.05);
-  padding-top: 1rem;
+  border-top: none;
+  padding-top: 0;
+  margin-top: auto;
 }
 
-.blogFooter svg {
-  color: var(--color-text-light);
-  transition: transform 0.3s;
+.blogMeta {
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.75rem;
+  color: #78716c;
 }
 
-.blogCard:hover .blogFooter svg {
+.arrowWrap {
+  color: #78716c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.blogCard:hover .arrowWrap {
   transform: translateX(4px);
-  color: var(--color-primary);
+  color: #D8A56E;
 }
 
 /* CTA SECTION */
 .ctaSection {
-  padding: 8rem 6rem;
-  background: #F7EFE3;
   position: relative;
+  width: 100%;
+  min-height: 340px;
+  padding: 3.5rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  background: #111111;
+  overflow: hidden;
+}
+
+.ctaBg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+}
+
+.ctaOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.68) 0%, rgba(0, 0, 0, 0.8) 100%);
 }
 
 .ctaContent {
   position: relative;
-  z-index: 1;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 820px;
+  width: 100%;
 }
 
 .ctaTitle {
-  font-family: var(--font-playfair), serif;
-  font-size: 3rem;
-  color: var(--color-text);
-  margin-bottom: 1rem;
+  font-family: var(--font-libre), var(--font-playfair), serif;
+  font-size: 2.85rem;
+  color: #FFFFFF;
+  font-weight: 400;
+  margin: 0 0 0.85rem 0;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
 }
 
-.ctaContent p {
-  color: var(--color-text-light);
-  margin-bottom: 3rem;
+.ctaDesc {
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.55;
+  max-width: 680px;
+  margin: 0 0 1.75rem 0;
 }
 
 .ctaButtons {
   display: flex;
-  gap: 1.5rem;
+  gap: 1.25rem;
   justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .btnPrimaryRounded {
-  background: var(--color-primary);
-  color: var(--color-white);
-  padding: 0.8rem 2.5rem;
-  border-radius: 30px;
-  font-size: 0.8rem;
+  background: #D8A56E;
+  color: #FFFFFF;
+  padding: 0.55rem 1.85rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
   border: none;
   cursor: pointer;
-  transition: all 0.3s;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(216, 165, 110, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btnPrimaryRounded:hover {
-  background: var(--color-primary-hover);
+  background: #c7925a;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(216, 165, 110, 0.4);
 }
 
 .btnOutlineRounded {
-  background: transparent;
-  border: 1px solid var(--color-primary);
-  color: var(--color-primary);
-  padding: 0.8rem 2.5rem;
-  border-radius: 30px;
-  font-size: 0.8rem;
+  background: rgba(20, 20, 20, 0.6);
+  border: 1px solid rgba(216, 165, 110, 0.55);
+  color: #D8A56E;
+  padding: 0.55rem 1.85rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(8px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btnOutlineRounded:hover {
-  background: var(--color-primary);
-  color: var(--color-white);
+  background: rgba(216, 165, 110, 0.15);
+  border-color: #D8A56E;
+  color: #FFFFFF;
+  transform: translateY(-2px);
 }
 
 @media (max-width: 992px) {
@@ -311,54 +453,70 @@
     min-height: 260px;
     padding: 4rem 1.25rem 2rem;
   }
+
   .heroTitle {
     font-size: 2rem;
   }
+
   .articleSection {
     padding: 3rem 0;
   }
-  .authorInfo, .articleBody {
+
+  .authorInfo,
+  .articleBody {
     padding: 0 1.25rem;
   }
+
   .authorInfo {
     margin-bottom: 2rem;
   }
+
   .articleImage {
     margin: 1.5rem 0;
     border-radius: 6px;
   }
+
   .shareSection {
-    margin-top: 3rem;
-    padding-top: 2rem;
+    margin-top: 1.5rem;
+    padding: 0 1.25rem;
   }
+
   .readMoreSection {
     padding: 0 1.25rem 4rem;
   }
+
   .readMoreTitle {
     font-size: 2rem;
     margin-bottom: 2rem;
   }
+
   .blogGrid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
+
   .blogCard {
     flex: none;
     width: 100%;
   }
+
   .ctaSection {
     padding: 4rem 1.25rem;
   }
+
   .ctaTitle {
     font-size: 2.2rem;
   }
+
   .ctaButtons {
     flex-direction: column;
     align-items: center;
     gap: 1rem;
   }
-  .btnPrimaryRounded, .btnOutlineRounded {
+
+  .btnPrimaryRounded,
+  .btnOutlineRounded {
     width: 100%;
     max-width: 280px;
     text-align: center;
@@ -369,6 +527,7 @@
   .heroTitle {
     font-size: 1.75rem;
   }
+
   .readMoreTitle {
     font-size: 1.75rem;
   }

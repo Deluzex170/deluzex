@@ -99,9 +99,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Sidebar */}
         <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarCollapsed}`}>
           <div className={styles.sidebarInner}>
-            <div style={{ padding: "1.25rem 1.5rem 1rem 1.5rem", borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: "0.75rem" }}>
+            <div style={{ padding: "1.25rem 1.5rem 1rem 1.5rem", borderBottom: "1px solid rgba(0, 0, 0, 0.08)", marginBottom: "0.75rem" }}>
               <Link href="/" title="Storefront" style={{ display: "flex", alignItems: "center" }}>
-                <img src="/images/logos/de_luzex_white.svg" alt="De Luzex" height="30" style={{ height: "30px", width: "auto" }} />
+                <img src="/images/logos/de_luzex_black.svg" alt="De Luzex" height="32" style={{ height: "32px", width: "auto" }} />
               </Link>
             </div>
 

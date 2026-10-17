@@ -29,18 +29,12 @@ export default function MainSidebar() {
           </button>
         </div>
         <nav className={styles.nav}>
-          <Link href="/" onClick={() => setSidebarOpen(false)}>Lighting</Link>
-          <Link href="/categories" onClick={() => setSidebarOpen(false)}>Categories</Link>
+          <Link href="/" onClick={() => setSidebarOpen(false)}>Home</Link>
           <Link href="/shop" onClick={() => setSidebarOpen(false)}>Shop</Link>
           <Link href="/projects" onClick={() => setSidebarOpen(false)}>Projects</Link>
-          <Link href="/blogs" onClick={() => setSidebarOpen(false)}>Blogs</Link>
           <Link href="/about" onClick={() => setSidebarOpen(false)}>About</Link>
           <Link href="/contact" onClick={() => setSidebarOpen(false)}>Contact</Link>
-          {isAdmin && (
-            <Link href="/admin" onClick={() => setSidebarOpen(false)} style={{ color: "#C49A45", fontWeight: 700 }}>
-              Admin Panel
-            </Link>
-          )}
+          <Link href="/blogs" onClick={() => setSidebarOpen(false)}>Blogs</Link>
         </nav>
       </aside>
 

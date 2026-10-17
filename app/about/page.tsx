@@ -12,9 +12,9 @@ export default async function About() {
   const ctaTitle = cmsAbout?.cta?.title || "Custom Lighting For\nEvery Project";
 
   const defaultFeatures = [
-    { icon: "bespoke", title: "Bespoke Design" },
-    { icon: "star", title: "Unrivaled Excellence" },
-    { icon: "layers", title: "Luxury Finishes" },
+    { icon: "/images/logos/BespokeDesign.svg", title: "Bespoke Design" },
+    { icon: "/images/logos/HandcraftedExcellence.svg", title: "Handcrafted Excellence" },
+    { icon: "/images/logos/PremiumCraftmanship.svg", title: "Luxury Finishes" },
   ];
 
   const features = cmsAbout?.story?.features || defaultFeatures;
@@ -31,19 +31,19 @@ export default async function About() {
   const defaultPillars = [
     {
       title: "Timeless Design Excellence",
-      description: "We blend traditional craftsmanship with contemporary aesthetics to create fixtures that remain elegant for years to come.",
+      description: "Inspired by modern luxury and classic aesthetics, our lighting collections are designed to remain elegant for years to come.",
     },
     {
-      title: "Expert Artisanal Craftsmanship",
-      description: "Every piece is meticulously handcrafted by skilled artisans, ensuring unparalleled attention to detail and unmatched quality.",
+      title: "Exceptional Craftsmanship",
+      description: "Every fixture is meticulously crafted with precision, attention to detail, and uncompromising quality.",
     },
     {
       title: "Premium Materials",
-      description: "We source only the finest materials—from high-grade crystals to premium metals—to guarantee durability and a luxurious finish.",
+      description: "We source the finest metals, crystal, and glass to ensure durability, beauty, and lasting performance.",
     },
     {
       title: "Bespoke Lighting Solutions",
-      description: "From grand hotel lobbies to intimate dining rooms, we offer personalized designs tailored to perfectly complement your unique space.",
+      description: "From custom finishes to tailored dimensions, we create lighting that perfectly complements your vision.",
     },
   ];
 
@@ -82,17 +82,7 @@ export default async function About() {
             )}
           </p>
           <Link href={cmsAbout?.hero?.btn_link || "/projects"} className={styles.btnOutlineHero}>
-            {cmsAbout?.hero?.btn_text || "Explore Portfolio"}{" "}
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
+            {cmsAbout?.hero?.btn_text || "Signature peice"}
           </Link>
         </div>
       </section>
@@ -122,26 +112,31 @@ export default async function About() {
             </p>
 
             <div className={styles.passionIcons}>
-              {features.map((f: any, idx: number) => (
-                <div key={idx} className={styles.iconItem}>
-                  <div className={styles.iconCircle}>
-                    {idx === 0 ? (
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                      </svg>
-                    ) : idx === 1 ? (
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                      </svg>
-                    ) : (
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-                      </svg>
-                    )}
+              {features.map((f: any, idx: number) => {
+                const defaultIcon =
+                  idx === 0
+                    ? "/images/logos/BespokeDesign.svg"
+                    : idx === 1
+                    ? "/images/logos/HandcraftedExcellence.svg"
+                    : "/images/logos/PremiumCraftmanship.svg";
+                const iconSrc =
+                  f.icon && typeof f.icon === "string" && f.icon.startsWith("/images/")
+                    ? f.icon
+                    : defaultIcon;
+
+                return (
+                  <div key={idx} className={styles.iconItem}>
+                    <Image
+                      src={iconSrc}
+                      alt={f.title || "Feature"}
+                      width={68}
+                      height={68}
+                      className={styles.featureSvg}
+                    />
+                    <span>{f.title}</span>
                   </div>
-                  <span>{f.title}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
           <div className={styles.passionImage}>
@@ -155,12 +150,23 @@ export default async function About() {
         </div>
       </section>
 
-      {/* STATS BANNER */}
+      {/* STATS SECTION */}
       <section className={styles.statsBanner}>
         {stats.map((st: any, idx: number) => (
-          <div key={idx} className={styles.statBox}>
-            <h3>{st.number}</h3>
-            <p>{st.label}</p>
+          <div key={idx} className={styles.statCard}>
+            <div className={styles.statCardBg}>
+              <Image
+                src={st.image || "/images/stats_trophy.jpg"}
+                alt={st.label || "Statistic"}
+                fill
+                style={{ objectFit: "cover" }}
+              />
+            </div>
+            <div className={styles.statCardOverlay}></div>
+            <div className={styles.statCardContent}>
+              <h3 className={styles.statNumber}>{st.number}</h3>
+              <p className={styles.statLabel}>{st.label}</p>
+            </div>
           </div>
         ))}
       </section>
@@ -177,24 +183,39 @@ export default async function About() {
             />
           </div>
           <div className={styles.chooseText}>
-            <p className={styles.sectionSub}>{cmsAbout?.why_choose_us?.subtitle || "WHY CHOOSE US"}</p>
-            <h2 className={styles.sectionTitle}>{cmsAbout?.why_choose_us?.title || "Why client Choose Us"}</h2>
+            <p className={styles.chooseSub}>{cmsAbout?.why_choose_us?.subtitle || "why choose us"}</p>
+            <h2 className={styles.chooseTitle}>{cmsAbout?.why_choose_us?.title || "Why client Choose Us"}</h2>
+
+            <div className={styles.chooseDivider}>
+              <span className={styles.chooseDividerLine}></span>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D79322" strokeWidth="1.5" className={styles.chooseDividerIcon}>
+                <circle cx="12" cy="12" r="3" />
+                <circle cx="12" cy="6" r="2.2" />
+                <circle cx="12" cy="18" r="2.2" />
+                <circle cx="6.8" cy="9" r="2.2" />
+                <circle cx="17.2" cy="9" r="2.2" />
+                <circle cx="6.8" cy="15" r="2.2" />
+                <circle cx="17.2" cy="15" r="2.2" />
+              </svg>
+              <span className={styles.chooseDividerLine}></span>
+            </div>
+
             <p className={styles.chooseDesc}>
               {cmsAbout?.why_choose_us?.description ||
-                "Our belief is in a shared passion for transformative design. We see light as a medium for artistic expression, not just a functional element."}
+                "Every lighting piece is thoughtfully designed and expertly crafted to bring elegance, warmth, and sophistication to extraordinary spaces."}
             </p>
 
-            <div className={styles.accordion}>
+            <div className={styles.pillarList}>
               {pillars.map((p: any, idx: number) => (
-                <div key={idx} className={styles.accordionItem}>
-                  <h4>{p.title}</h4>
-                  <p>{p.description}</p>
+                <div key={idx} className={styles.pillarItem}>
+                  <h4 className={styles.pillarTitle}>{p.title}</h4>
+                  <p className={styles.pillarDesc}>{p.description}</p>
                 </div>
               ))}
             </div>
 
-            <Link href={cmsAbout?.why_choose_us?.btn_link || "/contact"} className={styles.btnPrimaryRounded}>
-              {cmsAbout?.why_choose_us?.btn_text || "Book A Consultation"}
+            <Link href={cmsAbout?.why_choose_us?.btn_link || "/shop"} className={styles.btnExploreCollection}>
+              {cmsAbout?.why_choose_us?.btn_text || "Explore Collection"}
             </Link>
           </div>
         </div>
@@ -264,7 +285,7 @@ export default async function About() {
           </Link>
         </div>
         <div className={styles.centerBtn}>
-          <Link href="/projects" className={styles.btnPrimaryRounded}>
+          <Link href="/projects" className={styles.btnExploreProjects}>
             Explore All Projects
           </Link>
         </div>
@@ -272,6 +293,16 @@ export default async function About() {
 
       {/* CTA SECTION */}
       <section className={styles.ctaSection}>
+        <div className={styles.ctaBg}>
+          <Image
+            src={cmsAbout?.cta?.bg_image || "/images/cta_bg.jpg"}
+            alt="Custom Lighting"
+            fill
+            sizes="100vw"
+            style={{ objectFit: "cover" }}
+          />
+          <div className={styles.ctaOverlay}></div>
+        </div>
         <div className={styles.ctaContent}>
           <h2 className={styles.ctaTitle}>
             {ctaTitle.split("\n").map((line: string, i: number) => (
@@ -281,13 +312,15 @@ export default async function About() {
               </React.Fragment>
             ))}
           </h2>
-          <p>
+          <p className={styles.ctaDesc}>
             {cmsAbout?.cta?.description ||
-              "We Create Custom Chandeliers And Unique Fixtures That Perfectly Match The Style Of Your Space."}
+              "We Create Custom Chandeliers, Wall, Ceiling, Pendant, And Table Lights For Homes, Hotels, And Commercial Spaces."}
           </p>
           <div className={styles.ctaButtons}>
             <Link href={cmsAbout?.cta?.btn_primary_link || "/contact"} className={styles.btnPrimaryRounded}>
-              {cmsAbout?.cta?.btn_primary_text || "Book A Consultation"}
+              {cmsAbout?.cta?.btn_primary_text && cmsAbout?.cta?.btn_primary_text !== "Book A Consultation"
+                ? cmsAbout.cta.btn_primary_text
+                : "Start Your Project"}
             </Link>
             <Link href={cmsAbout?.cta?.btn_secondary_link || "/projects"} className={styles.btnOutlineRounded}>
               {cmsAbout?.cta?.btn_secondary_text || "View Our Projects"}

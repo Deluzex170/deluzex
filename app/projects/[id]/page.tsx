@@ -37,6 +37,9 @@ export default function ProjectDetailPage() {
   const [activeLightboxImg, setActiveLightboxImg] = useState<string | null>(null);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+    }
     if (!id) return;
     async function load() {
       setLoading(true);
@@ -51,16 +54,6 @@ export default function ProjectDetailPage() {
     }
     load();
   }, [id]);
-
-  if (loading) {
-    return (
-      <main className={styles.main}>
-        <div style={{ padding: "160px 24px 100px", textAlign: "center", color: "#666" }}>
-          <p style={{ fontSize: "1.1rem" }}>Loading architectural showcase...</p>
-        </div>
-      </main>
-    );
-  }
 
   const currentProject = project || {
     title: "Luxury Villa Residence.",
@@ -108,7 +101,7 @@ export default function ProjectDetailPage() {
     })),
   ];
 
-  const bgImage = currentProject.image_url || displayGallery[0] || "/images/project_lounge_1784107767735.jpg";
+  const bgImage = "/images/hero_bg_1784107713316.jpg";
 
   return (
     <main className={styles.main}>
@@ -126,38 +119,33 @@ export default function ProjectDetailPage() {
         </div>
         <div className={styles.heroOverlay} />
 
-        {/* Back Link */}
-        <Link href="/projects" className={styles.backBtn}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          <span>All Projects</span>
-        </Link>
-
         {/* Floating Glassmorphism Hero Card (Figma Design) */}
         <div className={styles.heroCard}>
           <p className={styles.cardCategory}>
-            {currentProject.category ? currentProject.category.toUpperCase() : "HOMES & VILLAS"}
+            {currentProject.category ? (currentProject.category.toLowerCase().includes("featured") ? currentProject.category : `Featured ${currentProject.category}`) : "Featured Project"}
           </p>
 
-          <h1 className={styles.cardTitle}>{currentProject.title}</h1>
+          <h1 className={styles.cardTitle}>
+            {currentProject.title ? (currentProject.title.endsWith(".") ? currentProject.title : `${currentProject.title}.`) : "Luxury Villa Residence."}
+          </h1>
 
-          <div className={styles.cardDivider} />
-
-          <p className={styles.cardSubtitle}>
-            {currentProject.subtitle || `${currentProject.category || "Residential"} | ${currentProject.year || currentProject.location || "2024"}`}
+          <p className={styles.cardLocation}>
+            {currentProject.location || "Ahmedabad , India"}
           </p>
 
           <p className={styles.cardDescription}>
             {currentProject.description ||
-              "Custom Lighting Design Crafted To Enhance Elegance, Comfort, And A Natural Warmth Throughout The Residence."}
+              "Custom Lighting Design Crafted To Enhance Elegance, Comfort, And Ambiance Throughout The Residence."}
           </p>
+
+          {/* Horizontal Divider Line */}
+          <div className={styles.horizontalDivider} />
 
           {/* 3-column Metadata Bar */}
           <div className={styles.metaGrid}>
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Year</span>
-              <span className={styles.metaValue}>{currentProject.year || currentProject.location || "2024"}</span>
+              <span className={styles.metaValue}>{currentProject.year || "2025"}</span>
             </div>
 
             <div className={styles.metaItem}>
@@ -168,7 +156,7 @@ export default function ProjectDetailPage() {
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Scope</span>
               <span className={styles.metaValue}>
-                {currentProject.scope || currentProject.installations_count || "Architectural Lighting Design"}
+                {currentProject.scope || currentProject.installations_count || "Complete Lighting Design"}
               </span>
             </div>
           </div>
@@ -176,15 +164,8 @@ export default function ProjectDetailPage() {
       </section>
 
       {/* ===================== GALLERY SECTION ===================== */}
-      {/* 2-column grid in Laptop view, 1-column stacked in Mobile view */}
+      {/* 1-column vertically stacked architectural layout matching Figma */}
       <section className={styles.gallerySection}>
-        <div className={styles.galleryHeader}>
-          <p className={styles.galleryTagline}>Architectural Showcase</p>
-          <h2 className={styles.galleryTitle}>
-            Spatial Lighting Details {projectVideos.length > 0 ? `& Walkthroughs` : ""}
-          </h2>
-        </div>
-
         <div className={styles.galleryGrid}>
           {galleryItems.map((item, idx) => {
             if (item.type === "image") {
@@ -198,7 +179,7 @@ export default function ProjectDetailPage() {
                     src={item.src}
                     alt={`${currentProject.title} detail ${idx + 1}`}
                     fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
+                    sizes="(max-width: 1200px) 100vw, 1200px"
                     className={styles.galleryImg}
                   />
                   <div className={styles.galleryOverlay}>
@@ -244,23 +225,6 @@ export default function ProjectDetailPage() {
               </div>
             );
           })}
-        </div>
-      </section>
-
-      {/* ===================== INQUIRY CTA ===================== */}
-      <section className={styles.inquirySection}>
-        <div className={styles.inquiryInner}>
-          <h2 className={styles.inquiryTitle}>Bespoke Illumination for Your Space</h2>
-          <p className={styles.inquiryDesc}>
-            Collaborate with our design studio to create custom handcrafted chandeliers, architectural
-            fixtures, and ambient living systems for your upcoming residence or venue.
-          </p>
-          <Link href="/contact" className={styles.inquiryBtn}>
-            <span>Inquire About A Project</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </Link>
         </div>
       </section>
 

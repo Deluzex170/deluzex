@@ -3,39 +3,130 @@
   top: 0;
   left: 0;
   right: 0;
-  padding: 2.5rem 6rem;
+  height: 68px;
+  padding: 0 4.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   z-index: 500;
-  transition: background 0.4s ease, color 0.4s ease, padding 0.4s ease, box-shadow 0.4s ease;
+  overflow: hidden;
+  transition: background-color 0.35s ease, color 0.35s ease;
 }
 
-.headerTransparent {
-  color: var(--color-white);
-  background: transparent;
-  box-shadow: none;
+/* ==========================================================================
+   STATE 1: Unscrolled on pages with Hero Image (Home, Shop, Projects, About, Blogs)
+   Navbar = Cream (#F8F1EA), Active tab = Cutout revealing Hero Image
+   ========================================================================== */
+.headerState1 {
+  background-color: transparent;
+  color: #3B3E51;
 }
 
-.headerSolid {
-  color: var(--color-text);
-  background: var(--color-bg);
-  border-bottom: 1px solid rgba(0,0,0,0.06);
-  padding: 1.2rem 6rem;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+.headerState1 .logoBlack {
+  display: block;
+  height: 36px;
+  width: auto;
+  max-width: 140px;
+  object-fit: contain;
 }
+
+.headerState1 .logoWhite {
+  display: none;
+}
+
+.headerState1 .navLink {
+  color: #3B3E51 !important;
+  font-weight: 600;
+}
+
+.headerState1 .navLink:hover {
+  color: #111111 !important;
+  opacity: 0.85;
+}
+
+.headerState1 .tabLabel {
+  color: #D79322 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.headerState1 .iconBtn,
+.headerState1 .userIcon {
+  color: #3B3E51 !important;
+}
+
+.headerState1 .hamburgerBtn {
+  color: #3B3E51;
+}
+
+.headerState1 .hamburgerBtn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* ==========================================================================
+   STATE 2: Scrolled (>60px) OR Pages without Hero Image (Contact, Dashboard, etc.)
+   Navbar = Solid Black (#000000), Active tab = Solid Cream (#F8F1EA) with Black text (#000000)
+   ========================================================================== */
+.headerState2 {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.headerState2 .logoWhite {
+  display: block;
+  height: 36px;
+  width: auto;
+  max-width: 140px;
+  object-fit: contain;
+}
+
+.headerState2 .logoBlack {
+  display: none;
+}
+
+.headerState2 .navLink {
+  color: #ffffff !important;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.headerState2 .navLink:hover {
+  color: #D79322 !important;
+  opacity: 1;
+}
+
+.headerState2 .tabLabel {
+  color: #000000 !important;
+  text-shadow: none;
+}
+
+.headerState2 .iconBtn,
+.headerState2 .userIcon {
+  color: #ffffff !important;
+}
+
+.headerState2 .hamburgerBtn {
+  color: #ffffff;
+}
+
+.headerState2 .hamburgerBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   COMMON BASE STYLES
+   ========================================================================== */
 
 .logoRow {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  position: relative;
+  z-index: 20;
 }
 
 .logo {
-  font-family: var(--font-playfair), serif;
-  font-size: 1rem;
-  font-weight: 500;
-  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
 }
 
 .logoLink {
@@ -44,33 +135,7 @@
   text-decoration: none;
 }
 
-.logoWhite {
-  display: none;
-  height: 38px;
-  width: auto;
-  max-width: 140px;
-  object-fit: contain;
-  transition: opacity 0.25s ease;
-}
-
-.logoBlack {
-  display: block;
-  height: 38px;
-  width: auto;
-  max-width: 140px;
-  object-fit: contain;
-  transition: opacity 0.25s ease;
-}
-
-.headerTransparent .logoWhite {
-  display: block;
-}
-
-.headerTransparent .logoBlack {
-  display: none;
-}
-
-/* Hidden on desktop, shown on mobile/tablet only via media query */
+/* Mobile Hamburger button */
 .hamburgerBtn {
   display: none;
   align-items: center;
@@ -81,54 +146,112 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  color: inherit;
   transition: background 0.2s;
   flex-shrink: 0;
-}
-
-.hamburgerBtn:hover {
-  background: rgba(0,0,0,0.06);
+  position: relative;
+  z-index: 20;
 }
 
 .nav {
   display: flex;
-  gap: 3.5rem;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
+  align-items: flex-end;
+  height: 100%;
+  gap: 1.5rem;
 }
 
-.nav a {
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  padding: 0 0.5rem;
+  text-decoration: none;
+  font-size: 16px;
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: color 0.2s ease, opacity 0.2s ease;
   position: relative;
-  transition: opacity 0.3s ease;
+  z-index: 20;
 }
 
-.nav a:hover {
-  opacity: 0.7;
+/* ==========================================
+   ACTIVE TAB & SVG CUTOUT/SOLID RENDERING
+   ========================================== */
+
+.activeTab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  width: 160px;
+  text-decoration: none;
+  z-index: 10;
+  margin-bottom: 0;
+  overflow: visible;
 }
 
+.tabLabel {
+  position: relative;
+  z-index: 2;
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.tabBgWrapper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible;
+}
+
+.tabCutoutSvg,
+.tabSolidSvg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* Header Icons styling */
 .headerIcons {
   display: flex;
-  gap: 1.5rem;
+  gap: 1.25rem;
   align-items: center;
+  position: relative;
+  z-index: 20;
 }
 
 .iconBtn {
-  color: inherit;
-  transition: opacity 0.3s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, opacity 0.2s ease;
+  position: relative;
+  z-index: 20;
 }
 
 .iconBtn:hover {
-  opacity: 0.7;
+  color: #D79322 !important;
 }
 
 .userIcon {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: inherit;
   text-decoration: none;
   transition: transform 0.2s ease, opacity 0.2s ease;
+  position: relative;
+  z-index: 20;
 }
 
 .userIcon:hover {
@@ -167,42 +290,80 @@
   position: relative;
   display: flex;
   align-items: center;
+  z-index: 20;
 }
 
 .cartBadge {
   position: absolute;
-  top: -8px;
-  right: -12px;
-  background: var(--color-primary);
-  color: var(--color-white);
-  font-size: 0.6rem;
-  font-weight: bold;
-  padding: 2px 6px;
+  top: -6px;
+  right: -8px;
+  background: var(--color-primary, #D79322);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 10px;
+  pointer-events: none;
 }
 
 @media (max-width: 1024px) {
   .header {
-    padding: 1.25rem 2rem;
+    padding: 0 1.5rem;
+    height: 64px;
   }
+
   .nav {
     display: none;
   }
+
   .hamburgerBtn {
     display: flex;
+  }
+
+  /* In mobile view State 1 (transparent over dark hero), icons and logo must be white */
+  .headerState1 .hamburgerBtn {
+    color: #ffffff !important;
+  }
+
+  .headerState1 .logoBlack {
+    display: none !important;
+  }
+
+  .headerState1 .logoWhite {
+    display: block !important;
+  }
+
+  .headerState1 .iconBtn,
+  .headerState1 .userIcon {
+    color: #ffffff !important;
+  }
+
+  .headerState1 .hamburgerBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
   }
 }
 
 @media (max-width: 768px) {
   .header {
-    padding: 1rem 1.25rem;
+    padding: 0 1.25rem;
+    height: 60px;
   }
-  .headerSolid {
-    padding: 0.85rem 1.25rem;
+
+  .headerState1 .logoWhite,
+  .headerState2 .logoWhite {
+    height: 32px;
+    display: block !important;
   }
-  .logo {
-    font-size: 1.5rem;
+
+  .headerState1 .logoBlack {
+    display: none !important;
   }
+
   .headerIcons {
     gap: 1rem;
   }
@@ -210,14 +371,20 @@
 
 @media (max-width: 480px) {
   .header {
-    padding: 0.85rem 1rem;
+    padding: 0 1rem;
+    height: 56px;
   }
-  .headerSolid {
-    padding: 0.75rem 1rem;
+
+  .headerState1 .logoWhite,
+  .headerState2 .logoWhite {
+    height: 28px;
+    display: block !important;
   }
-  .logo {
-    font-size: 1.35rem;
+
+  .headerState1 .logoBlack {
+    display: none !important;
   }
+
   .headerIcons {
     gap: 0.75rem;
   }

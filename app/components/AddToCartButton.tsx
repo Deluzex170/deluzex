@@ -10,14 +10,20 @@ import { useAuth } from "../context/AuthContext";
 interface AddToCartButtonProps {
   product: Product;
   styleClass?: string;
+  variant?: "default" | "plus";
 }
 
-export default function AddToCartButton({ product, styleClass }: AddToCartButtonProps) {
+export default function AddToCartButton({ product, styleClass, variant = "default" }: AddToCartButtonProps) {
   const dispatch = useDispatch();
   const { isAuthenticated, openLoginModal } = useAuth();
   const cartItems = useSelector((state: RootState) => state.cart.cartItems);
   const productId = product._id || product.id || "";
   const cartItem = cartItems.find(item => String(item.id) === String(productId));
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -54,38 +60,71 @@ export default function AddToCartButton({ product, styleClass }: AddToCartButton
     dispatch(updateQuantity({ id: productId, change: 1 }));
   };
 
-  if (cartItem) {
+  if (mounted && cartItem) {
     return (
       <div className="cartQuantityControl" style={{
         position: 'absolute',
-        right: '1rem',
-        bottom: '1rem',
-        background: '#C19A6B',
-        borderRadius: '20px',
+        right: '16px',
+        bottom: '16px',
+        background: '#C4924F',
+        borderRadius: '24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '12px',
+        gap: '10px',
         padding: '6px 12px',
         zIndex: 10,
-        boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+        boxShadow: '0 4px 12px rgba(196, 146, 79, 0.35)'
       }}>
         <button 
           onClick={handleDecrease}
-          style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px', fontWeight: 500, padding: '0 4px' }}
+          style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px', fontWeight: 600, padding: '0 4px', lineHeight: 1 }}
         >
-          -
+          −
         </button>
-        <span style={{ color: 'white', fontSize: '14px', fontWeight: 600, minWidth: '14px', textAlign: 'center' }}>
+        <span style={{ color: 'white', fontSize: '13px', fontWeight: 700, minWidth: '14px', textAlign: 'center' }}>
           {cartItem.quantity}
         </span>
         <button 
           onClick={handleIncrease}
-          style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px', fontWeight: 500, padding: '0 4px' }}
+          style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px', fontWeight: 600, padding: '0 4px', lineHeight: 1 }}
         >
           +
         </button>
       </div>
+    );
+  }
+
+  if (variant === "plus") {
+    return (
+      <button 
+        className={styleClass} 
+        onClick={handleAdd}
+        aria-label="Add to cart"
+        style={{
+          position: 'absolute',
+          right: '16px',
+          bottom: '16px',
+          width: '42px',
+          height: '42px',
+          borderRadius: '50%',
+          background: '#C4924F',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: 'none',
+          cursor: 'pointer',
+          zIndex: 10,
+          boxShadow: '0 4px 14px rgba(196, 146, 79, 0.4)',
+          transition: 'transform 0.25s ease, background 0.25s ease',
+        }}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
     );
   }
 

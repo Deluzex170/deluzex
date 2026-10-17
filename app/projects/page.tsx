@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import styles from "./projects.module.css";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,12 +14,67 @@ const CATEGORIES = [
   "Public Spaces",
 ];
 
+const PROJECT_TYPES = [
+  { label: "Residential", value: "Residential" },
+  { label: "Commercial", value: "Commercial" },
+  { label: "Hospitality", value: "Hospitality" },
+  { label: "Public Spaces", value: "Public Spaces" },
+  { label: "Bespoke Installation", value: "Bespoke Design" },
+];
+
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All Projects");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [visibleLimit, setVisibleLimit] = useState(6);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    projectType: "",
+  });
+  const [submitted, setSubmitted] = useState(false);
+  const [isProjectTypeOpen, setIsProjectTypeOpen] = useState(false);
+  const projectTypeRef = useRef<HTMLDivElement>(null);
+
+  // Close project type dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        projectTypeRef.current &&
+        !projectTypeRef.current.contains(event.target as Node)
+      ) {
+        setIsProjectTypeOpen(false);
+      }
+    }
+    if (isProjectTypeOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isProjectTypeOpen]);
+
+  const handleSelectProjectType = (val: string) => {
+    setFormData((prev) => ({ ...prev, projectType: val }));
+    setIsProjectTypeOpen(false);
+  };
+
+  const handleFormChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitted(true);
+    setTimeout(() => {
+      setSubmitted(false);
+      setFormData({ name: "", email: "", phone: "", projectType: "" });
+    }, 4000);
+  };
 
   useEffect(() => {
     async function load() {
@@ -54,7 +109,7 @@ export default function Projects() {
       <section className={styles.hero}>
         <div className={styles.heroBg}>
           <Image
-            src="/images/project_lobby_1784107778993.jpg"
+            src="/images/hero_bg_1784107713316.jpg"
             alt="Projects Hero"
             fill
             style={{ objectFit: "cover" }}
@@ -254,11 +309,11 @@ export default function Projects() {
                     style={{ objectFit: "cover" }}
                   />
                   <div className={styles.projectLabelBox}>
-                    <div>
+                    <div className={styles.plbTextContainer}>
                       <span className={styles.plbTitle}>{project.title}</span>
                       <span className={styles.plbSub}>
-                        {project.location || "Global"} •{" "}
-                        {project.installations_count || "View Details >"}
+                        <span className={styles.plbSubLocation}>{project.location || "Global"}</span>
+                        <span className={styles.plbSubDetails}> • {project.installations_count || "View Details >"}</span>
                       </span>
                     </div>
                     <span
@@ -271,7 +326,7 @@ export default function Projects() {
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        strokeWidth="2"
+                        strokeWidth="2.2"
                       >
                         <path d="M5 12h14M12 5l7 7-7 7" />
                       </svg>
@@ -286,38 +341,192 @@ export default function Projects() {
         {filteredProjects.length > visibleLimit && (
           <div className={styles.centerBtn}>
             <button
-              className={styles.btnPrimaryRounded}
+              className={styles.loadMoreBtn}
               type="button"
               onClick={() => setVisibleLimit((prev) => prev + 6)}
             >
-              Load More ({filteredProjects.length - visibleLimit} Remaining)
+              Load More masterpeice
             </button>
           </div>
         )}
       </section>
 
-      {/* CTA SECTION */}
-      <section className={styles.ctaSection}>
-        <div className={styles.ctaContent}>
-          <h2 className={styles.ctaTitle}>Start Your Project</h2>
-          <p>
-            Let our experts help you select the perfect lighting for your next design endeavor.
-          </p>
-          <div className={styles.ctaButtons}>
-            <Link
-              href="/contact"
-              className={styles.btnPrimaryRounded}
-              style={{ textDecoration: "none" }}
-            >
-              Book A Consultation
-            </Link>
-            <Link
-              href="/contact"
-              className={styles.btnOutlineRounded}
-              style={{ textDecoration: "none" }}
-            >
-              Contact Us
-            </Link>
+      {/* CUSTOM LIGHTING CONSULTATION SECTION (#FEEDDF) */}
+      <section className={styles.consultationSection}>
+        <div className={styles.consultationContainer}>
+          <div className={styles.consultationLeft}>
+            <span className={styles.consultationTagline}>bespoke lighting design</span>
+            <h2 className={styles.consultationHeading}>
+              Custom Lighting<br />Consultation
+            </h2>
+            <p className={styles.consultationDesc}>
+              Bring Your Unique Vision To Life. Our Lighting Specialists Collaborate With Architects, Interior Designers,
+            </p>
+
+            <form onSubmit={handleFormSubmit} className={styles.formCard}>
+              {submitted && (
+                <div className={styles.successMsg}>
+                  Thank you! Our lighting specialist will contact you shortly.
+                </div>
+              )}
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel} htmlFor="name">
+                  Name
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="Enter your name"
+                  value={formData.name}
+                  onChange={handleFormChange}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel} htmlFor="email">
+                  Email<span style={{ color: "#e11d48" }}>*</span>
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="Enter your mail"
+                  value={formData.email}
+                  onChange={handleFormChange}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel} htmlFor="phone">
+                  Phone Number
+                </label>
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="Enter your Number"
+                  value={formData.phone}
+                  onChange={handleFormChange}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} ref={projectTypeRef}>
+                <label className={styles.formLabel} id="projectTypeLabel">
+                  Project Type
+                </label>
+                <input
+                  type="hidden"
+                  name="projectType"
+                  value={formData.projectType}
+                />
+                <button
+                  type="button"
+                  id="projectType"
+                  aria-labelledby="projectTypeLabel"
+                  aria-haspopup="listbox"
+                  aria-expanded={isProjectTypeOpen}
+                  className={`${styles.customSelectBtn} ${
+                    isProjectTypeOpen ? styles.customSelectBtnOpen : ""
+                  }`}
+                  onClick={() => setIsProjectTypeOpen((prev) => !prev)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setIsProjectTypeOpen((prev) => !prev);
+                    } else if (e.key === "Escape") {
+                      setIsProjectTypeOpen(false);
+                    }
+                  }}
+                >
+                  <span
+                    className={
+                      formData.projectType
+                        ? styles.selectValueText
+                        : styles.selectPlaceholderText
+                    }
+                  >
+                    {PROJECT_TYPES.find(
+                      (p) => p.value === formData.projectType
+                    )?.label || "Select your project type"}
+                  </span>
+                  <svg
+                    className={`${styles.selectChevron} ${
+                      isProjectTypeOpen ? styles.selectChevronOpen : ""
+                    }`}
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+
+                {isProjectTypeOpen && (
+                  <ul
+                    className={styles.selectDropdownMenu}
+                    role="listbox"
+                    aria-labelledby="projectTypeLabel"
+                  >
+                    {PROJECT_TYPES.map((pt) => {
+                      const isSelected = formData.projectType === pt.value;
+                      return (
+                        <li
+                          key={pt.value}
+                          role="option"
+                          aria-selected={isSelected}
+                          className={`${styles.selectOption} ${
+                            isSelected ? styles.selectOptionActive : ""
+                          }`}
+                          onClick={() => handleSelectProjectType(pt.value)}
+                        >
+                          <span>{pt.label}</span>
+                          {isSelected && (
+                            <svg
+                              className={styles.checkIcon}
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+
+              <button type="submit" className={styles.submitBtn}>
+                Start Collaboration
+              </button>
+            </form>
+          </div>
+
+          <div className={styles.consultationRight}>
+            <Image
+              src="/images/consultation_lounge.jpg"
+              alt="Custom Lighting Consultation"
+              fill
+              style={{ objectFit: "cover" }}
+              sizes="(max-width: 992px) 100vw, 50vw"
+            />
           </div>
         </div>
       </section>

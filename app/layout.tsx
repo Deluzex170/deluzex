@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Libre_Caslon_Display, Italianno } from "next/font/google";
+import { Libre_Caslon_Display, Italianno, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header";
 import ConditionalFooter from "./components/ConditionalFooter";
@@ -23,6 +23,12 @@ const italianno = Italianno({
   variable: "--font-italianno",
 });
 
+const hanken = Hanken_Grotesk({
+  weight: ["400", "600"],
+  subsets: ["latin"],
+  variable: "--font-hanken",
+});
+
 import { AuthProvider } from "./context/AuthContext";
 import { SidebarProvider } from "./context/SidebarContext";
 
@@ -43,8 +49,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${libre.variable} ${italianno.variable}`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${libre.variable} ${italianno.variable} ${hanken.variable}`} suppressHydrationWarning>
         <AuthProvider>
           <VisitorTracker />
           <SidebarProvider>

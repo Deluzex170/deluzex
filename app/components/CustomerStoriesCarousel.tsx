@@ -133,19 +133,19 @@ export default function CustomerStoriesCarousel({
     for (let i = 1; i <= 5; i++) {
       if (i <= fullStars) {
         stars.push(
-          <span key={i} style={{ color: "#C89B60" }}>
+          <span key={i} style={{ color: "#D79322" }}>
             ★
           </span>
         );
       } else if (i === fullStars + 1 && hasHalf) {
         stars.push(
-          <span key={i} style={{ color: "#C89B60" }}>
+          <span key={i} style={{ color: "#D79322" }}>
             ★
           </span>
         );
       } else {
         stars.push(
-          <span key={i} style={{ color: "#D5C5B5" }}>
+          <span key={i} style={{ color: "#E0D5C7" }}>
             ☆
           </span>
         );

@@ -91,27 +91,30 @@
 .categoriesSection {
   max-width: 1340px;
   margin: 0 auto;
-  padding: 70px 32px 100px;
+  padding: 36px 32px 80px;
 }
 
 .sectionHeader {
   text-align: center;
-  margin-bottom: 50px;
+  margin-bottom: 24px;
 }
 
 .sectionSub {
-  font-family: var(--font-italianno), cursive;
-  font-size: 2rem;
-  color: #C89B60;
-  margin-bottom: 4px;
+  font-family: 'Adobe Arabic', serif;
+  font-style: normal;
+  font-size: 1.85rem;
+  color: #D79322;
+  margin: 0 0 -6px 0;
+  line-height: 1.15;
 }
 
 .sectionTitle {
-  font-family: var(--font-libre), serif;
-  font-size: 2.4rem;
+  font-family: 'Adobe Arabic', var(--font-libre), serif;
+  font-size: 3.4rem;
   font-weight: 400;
+  line-height: 1.1;
   color: #1A1A1A;
-  margin: 0 0 12px;
+  margin: 0;
 }
 
 .sectionDesc {
@@ -132,11 +135,10 @@
 .categoryCard {
   position: relative;
   height: 420px;
-  border-radius: 24px;
   border-top-left-radius: 56px;
   border-bottom-right-radius: 56px;
-  border-top-right-radius: 12px;
-  border-bottom-left-radius: 12px;
+  border-top-right-radius: 0;
+  border-bottom-left-radius: 0;
   overflow: hidden;
   background: #2A1F14;
   text-decoration: none;
@@ -150,8 +152,8 @@
 
 .categoryCard:hover {
   transform: translateY(-8px);
-  box-shadow: 0 20px 45px rgba(200, 155, 96, 0.22);
-  border-color: #C89B60;
+  box-shadow: 0 20px 45px rgba(215, 147, 34, 0.22);
+  border-color: #D79322;
 }
 
 .cardImageWrapper {

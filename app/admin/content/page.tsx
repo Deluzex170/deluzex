@@ -748,6 +748,39 @@ export default function AdminContentPage() {
                     className={styles.formInput}
                   />
                 </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                  <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                    <label className={styles.formLabel}>Hero Link Text</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Signature peice"
+                      value={aboutData.hero?.btn_text || ""}
+                      onChange={(e) =>
+                        setAboutData((prev: any) => ({
+                          ...prev,
+                          hero: { ...prev.hero, btn_text: e.target.value },
+                        }))
+                      }
+                      className={styles.formInput}
+                    />
+                  </div>
+                  <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                    <label className={styles.formLabel}>Hero Link Target URL</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. /projects"
+                      value={aboutData.hero?.btn_link || ""}
+                      onChange={(e) =>
+                        setAboutData((prev: any) => ({
+                          ...prev,
+                          hero: { ...prev.hero, btn_link: e.target.value },
+                        }))
+                      }
+                      className={styles.formInput}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Hero Image */}
@@ -1084,7 +1117,7 @@ export default function AdminContentPage() {
                 </h3>
               </div>
               <p style={{ margin: "0.35rem 0 0 0", fontSize: "0.85rem", color: "var(--admin-text-muted)" }}>
-                Configure the destination links for the Amazon, Flipkart, WhatsApp, and Instagram logos displayed under &quot;Available On&quot; in the website footer.
+                Configure the destination links for the Amazon and Flipkart logos displayed under &quot;Available On&quot; in the website footer.
               </p>
             </div>
 
@@ -1115,7 +1148,7 @@ export default function AdminContentPage() {
               {/* Flipkart Link */}
               <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                 <label className={styles.formLabel} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <img src="/images/logos/flipkart.svg" alt="Flipkart" width={22} height={22} style={{ borderRadius: "4px" }} />
+                  <img src="/images/logos/flip.svg" alt="Flipkart" width={22} height={22} style={{ borderRadius: "4px" }} />
                   Flipkart Store Link
                 </label>
                 <input
@@ -1128,52 +1161,6 @@ export default function AdminContentPage() {
                       available_on: {
                         ...(settingsData.available_on || {}),
                         flipkart: e.target.value,
-                      },
-                    })
-                  }
-                  className={styles.formInput}
-                />
-              </div>
-
-              {/* WhatsApp Link */}
-              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
-                <label className={styles.formLabel} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <img src="/images/logos/whatsapp.svg" alt="WhatsApp" width={22} height={22} style={{ borderRadius: "4px" }} />
-                  WhatsApp Link / Phone Number
-                </label>
-                <input
-                  type="text"
-                  placeholder="https://wa.me/918511682031 or 918511682031"
-                  value={settingsData.available_on?.whatsapp || ""}
-                  onChange={(e) =>
-                    setSettingsData({
-                      ...settingsData,
-                      available_on: {
-                        ...(settingsData.available_on || {}),
-                        whatsapp: e.target.value,
-                      },
-                    })
-                  }
-                  className={styles.formInput}
-                />
-              </div>
-
-              {/* Instagram Link */}
-              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
-                <label className={styles.formLabel} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <img src="/images/logos/instagram.svg" alt="Instagram" width={22} height={22} style={{ borderRadius: "4px" }} />
-                  Instagram Profile Link
-                </label>
-                <input
-                  type="text"
-                  placeholder="https://instagram.com/deluzex"
-                  value={settingsData.available_on?.instagram || ""}
-                  onChange={(e) =>
-                    setSettingsData({
-                      ...settingsData,
-                      available_on: {
-                        ...(settingsData.available_on || {}),
-                        instagram: e.target.value,
                       },
                     })
                   }
@@ -1196,13 +1183,12 @@ export default function AdminContentPage() {
                 <input
                   type="text"
                   placeholder="https://wa.me/918511682031 or +91 85116 82031"
-                  value={settingsData.social_links?.whatsapp || settingsData.available_on?.whatsapp || ""}
+                  value={settingsData.social_links?.whatsapp || ""}
                   onChange={(e) => {
                     const val = e.target.value;
                     setSettingsData({
                       ...settingsData,
                       social_links: { ...settingsData.social_links, whatsapp: val },
-                      available_on: { ...settingsData.available_on, whatsapp: val },
                     });
                   }}
                   className={styles.formInput}
@@ -1219,7 +1205,6 @@ export default function AdminContentPage() {
                     setSettingsData({
                       ...settingsData,
                       social_links: { ...settingsData.social_links, instagram: val },
-                      available_on: { ...settingsData.available_on, instagram: val },
                     });
                   }}
                   className={styles.formInput}
@@ -1265,6 +1250,38 @@ export default function AdminContentPage() {
                     setSettingsData({
                       ...settingsData,
                       social_links: { ...settingsData.social_links, twitter: e.target.value },
+                    })
+                  }
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label className={styles.formLabel}>YouTube URL</label>
+                <input
+                  type="text"
+                  placeholder="https://youtube.com/@deluzex"
+                  value={settingsData.social_links?.youtube || ""}
+                  onChange={(e) =>
+                    setSettingsData({
+                      ...settingsData,
+                      social_links: { ...settingsData.social_links, youtube: e.target.value },
+                    })
+                  }
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label className={styles.formLabel}>Pinterest URL</label>
+                <input
+                  type="text"
+                  placeholder="https://pinterest.com/deluzex"
+                  value={settingsData.social_links?.pinterest || ""}
+                  onChange={(e) =>
+                    setSettingsData({
+                      ...settingsData,
+                      social_links: { ...settingsData.social_links, pinterest: e.target.value },
                     })
                   }
                   className={styles.formInput}

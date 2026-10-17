@@ -6,10 +6,17 @@ import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { addToCart, updateQuantity, removeFromCart } from "../store/cartSlice";
 import { RootState } from "../store/store";
-import { useEffect, useState, useMemo, Suspense } from "react";
+import { useEffect, useState, useMemo, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { fetchCategories, fetchProducts, Category, Product } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+
+const SORT_OPTIONS = [
+  { label: "Featured", value: "FEATURED" },
+  { label: "Price: Low to High", value: "PRICE: LOW TO HIGH" },
+  { label: "Price: High to Low", value: "PRICE: HIGH TO LOW" },
+  { label: "Newest Arrivals", value: "NEWEST ARRIVALS" },
+];
 
 const FALLBACK_CATEGORIES: Category[] = [
   { id: "chandeliers", name: "Chandeliers", image_url: "/images/about_chandelier_1784107790569.jpg" },
@@ -140,9 +147,12 @@ function ShopContent() {
   const [searchQuery, setSearchQuery] = useState<string>(searchParam);
   const [priceRange, setPriceRange] = useState<string>(priceParam);
   const [sortBy, setSortBy] = useState<string>("FEATURED");
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
+<<<<<<< HEAD
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (selectedCategory && selectedCategory.toLowerCase() !== "all") count += 1;
@@ -151,6 +161,24 @@ function ShopContent() {
   }, [selectedCategory, priceRange]);
 
   // Sync category and search params from URL
+=======
+  // Close sort dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (sortRef.current && !sortRef.current.contains(event.target as Node)) {
+        setIsSortOpen(false);
+      }
+    }
+    if (isSortOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isSortOpen]);
+
+  // Sync category param from URL
+>>>>>>> dev
   useEffect(() => {
     setSelectedCategory(categoryParam);
     setCurrentPage(1);
@@ -429,6 +457,7 @@ function ShopContent() {
           )}
         </div>
 
+<<<<<<< HEAD
         {/* Right: Filter trigger button & Sort dropdown */}
         <div className={styles.compactActions}>
           <button
@@ -467,6 +496,70 @@ function ShopContent() {
               <option>NEWEST ARRIVALS</option>
               <option>RATING: HIGH TO LOW</option>
             </select>
+=======
+        <div className={styles.sortBy}>
+          <span className={styles.sortByLabel}>SORT BY :</span>
+          <div className={styles.customSortWrapper} ref={sortRef}>
+            <button
+              type="button"
+              className={`${styles.customSortBtn} ${isSortOpen ? styles.customSortBtnActive : ""}`}
+              onClick={() => setIsSortOpen(!isSortOpen)}
+              aria-haspopup="listbox"
+              aria-expanded={isSortOpen}
+            >
+              <span>{SORT_OPTIONS.find((o) => o.value === sortBy)?.label || sortBy}</span>
+              <svg
+                className={`${styles.sortChevron} ${isSortOpen ? styles.sortChevronOpen : ""}`}
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+
+            {isSortOpen && (
+              <ul className={styles.sortDropdownMenu} role="listbox">
+                {SORT_OPTIONS.map((opt) => {
+                  const isActive = opt.value === sortBy;
+                  return (
+                    <li
+                      key={opt.value}
+                      role="option"
+                      aria-selected={isActive}
+                      className={`${styles.sortOptionItem} ${isActive ? styles.sortOptionItemActive : ""}`}
+                      onClick={() => {
+                        setSortBy(opt.value);
+                        setIsSortOpen(false);
+                      }}
+                    >
+                      <span>{opt.label}</span>
+                      {isActive && (
+                        <svg
+                          className={styles.checkIcon}
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+>>>>>>> dev
           </div>
         </div>
       </section>
@@ -666,7 +759,7 @@ function ShopContent() {
                   <div className={styles.productImageWrapper}>
                     <Link
                       href={`/product/${pId}`}
-                      style={{ display: "block", width: "100%", height: "100%", position: "relative", overflow: "hidden", borderRadius: "10px" }}
+                      className={styles.productImageLink}
                     >
                       <Image
                         src={
@@ -676,7 +769,7 @@ function ShopContent() {
                         alt={product.product_title}
                         fill
                         sizes="(max-width: 768px) 50vw, 33vw"
-                        style={{ objectFit: "cover" }}
+                        className={styles.productImage}
                       />
                     </Link>
 
@@ -691,6 +784,7 @@ function ShopContent() {
                     ) : cartItem ? (
                       <div className={styles.cartQuantityControl}>
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.preventDefault();
                             if (cartItem.quantity === 1) {
@@ -700,10 +794,11 @@ function ShopContent() {
                             }
                           }}
                         >
-                          -
+                          −
                         </button>
                         <span>{cartItem.quantity}</span>
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.preventDefault();
                             if (!isAuthenticated) {
@@ -718,6 +813,7 @@ function ShopContent() {
                       </div>
                     ) : (
                       <button
+                        type="button"
                         className={styles.addToCartBtn}
                         onClick={(e) => {
                           e.preventDefault();
@@ -733,13 +829,17 @@ function ShopContent() {
                         aria-label="Add to cart"
                       >
                         <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          height="24"
+                          width="18"
+                          height="18"
                           viewBox="0 0 24 24"
-                          width="24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         >
-                          <path d="M0 0h24v24H0V0z" fill="none" />
-                          <path d="M11 9h2V6h3V4h-3V1h-2v3H8v2h3v3zm-4 9c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zm-8.9-5h7.45c.75 0 1.41-.41 1.75-1.03l3.86-7.01L19.42 4l-3.87 7H8.53L4.27 2H1v2h2l3.6 7.59L3.62 17H19v-2H7l1.1-2z" />
+                          <line x1="12" y1="5" x2="12" y2="19"></line>
+                          <line x1="5" y1="12" x2="19" y2="12"></line>
                         </svg>
                       </button>
                     )}
@@ -747,20 +847,22 @@ function ShopContent() {
 
                   <div className={styles.productInfo}>
                     <div className={styles.productInfoRow}>
-                      <h4 className={styles.productName}>{product.product_title}</h4>
+                      <Link href={`/product/${pId}`} className={styles.productNameLink}>
+                        <h4 className={styles.productName}>{product.product_title}</h4>
+                      </Link>
                       <div className={styles.productPrice}>₹{product.product_price}</div>
                     </div>
                     <div className={styles.productRating}>
                       <svg
                         className={styles.starIcon}
-                        width="12"
-                        height="12"
+                        width="14"
+                        height="14"
                         viewBox="0 0 24 24"
                         fill="currentColor"
                       >
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                       </svg>
-                      {product.product_rating || 4.8} ({35} Reviews)
+                      <span>{product.product_rating || 4.8} ( 300 Reviews )</span>
                     </div>
                   </div>
                 </div>

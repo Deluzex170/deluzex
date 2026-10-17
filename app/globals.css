@@ -8,34 +8,82 @@
 @source "../app";
 
 
+@font-face {
+  font-family: 'Adobe Arabic';
+  src: local('Adobe Arabic Regular'), local('Adobe Arabic'), url('/fonts/AdobeArabic-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Adobe Arabic';
+  src: local('Adobe Arabic Bold'), local('Adobe Arabic'), url('/fonts/AdobeArabic-Regular.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Adobe Arabic';
+  src: local('Adobe Arabic Bold'), local('Adobe Arabic'), url('/fonts/AdobeArabic-Regular.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Adobe Arabic';
+  src: local('Adobe Arabic Regular'), local('Adobe Arabic'), url('/fonts/AdobeArabic-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
 :root {
-  --color-primary: #C89B60;
-  --color-primary-hover: #b28850;
+  --color-primary: #D79322;
+  --color-primary-hover: #b87c1c;
   --color-stroke: #d8a56e;
   --color-bg: #f8f1ea;
   --color-bg-dark: #111111;
   --color-text: #000000;
   --color-text-light: #666666;
   --color-white: #ffffff;
+<<<<<<< HEAD
   --font-libre: 'Libre Caslon Display', serif;
   --font-italianno: 'Italianno', cursive;
   --font-inter: 'Inter', sans-serif;
   --font-general-sans: 'General Sans', sans-serif;
   --font-figtree: 'Figtree', sans-serif;
+=======
+  --font-adobe-arabic: 'Adobe Arabic', serif;
+  --font-libre: 'Adobe Arabic', serif;
+  --font-inter: 'Adobe Arabic', sans-serif;
+  --font-general-sans: 'Adobe Arabic', sans-serif;
+  --font-figtree: 'Adobe Arabic', sans-serif;
+  --font-playfair: 'Adobe Arabic', serif;
+  --font-hanken: 'Adobe Arabic', sans-serif;
+>>>>>>> dev
 }
 
 html {
   overflow-x: hidden;
   scroll-behavior: smooth;
+  font-family: 'Adobe Arabic', sans-serif;
+  font-size: 125%;
+  /* Scales 1rem base to 20px for larger Adobe Arabic text */
 }
 
 body {
   margin: 0;
   padding: 0;
-  padding-top: 80px; /* offset for fixed header */
+  padding-top: 68px;
+  /* offset for fixed header */
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-family: 'General Sans', system-ui, -apple-system, sans-serif;
+  font-family: 'Adobe Arabic', sans-serif;
+  font-size: 1.12rem;
+  line-height: 1.55;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
@@ -44,6 +92,7 @@ body:has([data-admin-root]) {
   padding-top: 0 !important;
 }
 
+<<<<<<< HEAD
 body:has([data-coming-soon]) {
   padding-top: 0 !important;
   overflow: hidden;
@@ -60,8 +109,24 @@ body:has([data-coming-soon]) [class*="userLoginModal"] {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-libre), serif;
+=======
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Adobe Arabic', serif;
+>>>>>>> dev
   margin: 0;
   font-weight: normal;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: 'Adobe Arabic', sans-serif;
 }
 
 a {
@@ -69,7 +134,9 @@ a {
   color: inherit;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -89,7 +156,8 @@ button {
   background: none;
 }
 
-ul, ol {
+ul,
+ol {
   list-style: none;
   margin: 0;
   padding: 0;

@@ -111,7 +111,6 @@ export default function Blogs() {
             <Link
               href={`/blogs/${blogs[0].slug || blogs[0].id || blogs[0]._id}`}
               className={styles.btnOutlineHero}
-              style={{ display: "inline-block", textDecoration: "none" }}
             >
               Read Article
             </Link>
@@ -139,25 +138,28 @@ export default function Blogs() {
         <div className={styles.searchAndAdd}>
           <div className={styles.searchBox}>
             <svg
-              width="16"
-              height="16"
+              width="15"
+              height="15"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="currentColor"
+              stroke="#D8A56E"
               strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
             <input
               type="text"
-              placeholder="Search articles ..."
+              placeholder="Search articles..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
-          <Link href="/admin/blogs" className={styles.btnAddBlog} style={{ textDecoration: "none" }}>
-            + Add Your Blog
+          <Link href="/admin/blogs" className={styles.btnAddBlog}>
+            <span>+</span>
+            <span>Add Your Blog</span>
           </Link>
         </div>
       </section>
@@ -205,22 +207,31 @@ export default function Blogs() {
                     />
                   </div>
                   <div className={styles.blogContent}>
-                    <p className={styles.blogCategory}>{blog.category || "Design & Inspiration"}</p>
+                    <div className={styles.authorBadge}>
+                      <div className={styles.authorAvatar}>
+                        <span className={styles.authorMiniLogo}>deluzex</span>
+                      </div>
+                      <span className={styles.authorName}>{blog.author || "De Luzex"}</span>
+                    </div>
                     <h3 className={styles.blogTitle}>{blog.title}</h3>
                     <div className={styles.blogFooter}>
-                      <span>
-                        {formatDate(blog.created_at)} • {blog.read_time || "5 min read"}
+                      <span className={styles.blogMeta}>
+                        {formatDate(blog.created_at)} • {blog.read_time || "6 min read"}
                       </span>
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
+                      <span className={styles.arrowWrap}>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M5 12h14M12 5l7 7-7 7" />
+                        </svg>
+                      </span>
                     </div>
                   </div>
                 </Link>
@@ -244,23 +255,33 @@ export default function Blogs() {
 
       {/* CTA SECTION */}
       <section className={styles.ctaSection}>
+        <div className={styles.ctaBg}>
+          <Image
+            src="/images/cta_bg.jpg"
+            alt="Custom Lighting"
+            fill
+            sizes="100vw"
+            style={{ objectFit: "cover" }}
+          />
+          <div className={styles.ctaOverlay}></div>
+        </div>
         <div className={styles.ctaContent}>
           <h2 className={styles.ctaTitle}>
-            Crafting Light For
+            Custom Lighting For
             <br />
-            Extraordinary Interiors
+            Every Project
           </h2>
-          <p>
-            We Create Timeless Lighting Pieces That Blend Artistry, Craftsmanship, And
+          <p className={styles.ctaDesc}>
+            We Create Custom Chandeliers, Wall, Ceiling, Pendant, And Table Lights For
             <br />
-            Innovation To Elevate Every Space.
+            Homes, Hotels, And Commercial Spaces.
           </p>
           <div className={styles.ctaButtons}>
-            <Link href="/contact" className={styles.btnPrimaryRounded} style={{ textDecoration: "none" }}>
-              Book A Consultation
+            <Link href="/contact" className={styles.btnPrimaryRounded}>
+              Start Your Project
             </Link>
-            <Link href="/shop" className={styles.btnOutlineRounded} style={{ textDecoration: "none" }}>
-              Shop
+            <Link href="/projects" className={styles.btnOutlineRounded}>
+              View Our Projects
             </Link>
           </div>
         </div>
