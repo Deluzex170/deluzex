@@ -45,6 +45,34 @@ export default function UserLoginModal() {
     closeLoginModal();
   };
 
+  const parseErrorDetail = (data: any, fallback: string): string => {
+    if (!data) return fallback;
+    if (typeof data.detail === "string") return data.detail;
+    if (Array.isArray(data.detail) && data.detail.length > 0) {
+      return data.detail.map((e: any) => e.msg || e.message || JSON.stringify(e)).join(", ");
+    }
+    if (typeof data.message === "string") return data.message;
+    return fallback;
+  };
+
+  const authFetch = async (endpoint: string, options: RequestInit): Promise<Response> => {
+    const envUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+    try {
+      const res = await fetch(`${envUrl}${endpoint}`, options);
+      return res;
+    } catch (primaryErr) {
+      if (envUrl.startsWith("http")) {
+        try {
+          const fallbackRes = await fetch(`/api/v1${endpoint}`, options);
+          return fallbackRes;
+        } catch {
+          // rethrow primary error if fallback also fails
+        }
+      }
+      throw primaryErr;
+    }
+  };
+
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
@@ -58,8 +86,7 @@ export default function UserLoginModal() {
     setIsLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-      const response = await fetch(`${apiUrl}/auth/login`, {
+      const response = await authFetch("/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),
@@ -85,7 +112,7 @@ export default function UserLoginModal() {
           handleClose();
         }, 1200);
       } else {
-        setErrorMsg(data.detail || "Invalid email or password. Please try again.");
+        setErrorMsg(parseErrorDetail(data, "Invalid email or password. Please try again."));
       }
     } catch (err: any) {
       setErrorMsg(err.message || "Unable to reach the server. Please try again.");
@@ -113,9 +140,8 @@ export default function UserLoginModal() {
     setIsLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
       const nameFromEmail = emailVal.split("@")[0] || "User";
-      const response = await fetch(`${apiUrl}/auth/register`, {
+      const response = await authFetch("/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -131,16 +157,9 @@ export default function UserLoginModal() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // After register, log user in
-        const loginRes = await fetch(`${apiUrl}/auth/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: emailVal, password }),
-        });
-        const loginData = await loginRes.json();
-
-        if (loginRes.ok && loginData.success) {
-          login(loginData.access_token, loginData.data);
+        // If register returns access_token and user data, log in immediately
+        if (data.access_token && data.data) {
+          login(data.access_token, data.data);
           if (pendingCartProduct) {
             dispatch(addToCart(pendingCartProduct));
             dispatch(openCart());
@@ -152,12 +171,41 @@ export default function UserLoginModal() {
           setTimeout(() => {
             handleClose();
           }, 1200);
-        } else {
-          setActiveTab("login");
-          setSuccessMsg("Account created! Please enter your password to sign in.");
+          return;
         }
+
+        // Fallback: log in via /auth/login
+        try {
+          const loginRes = await authFetch("/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: emailVal, password }),
+          });
+          const loginData = await loginRes.json();
+
+          if (loginRes.ok && loginData.success) {
+            login(loginData.access_token, loginData.data);
+            if (pendingCartProduct) {
+              dispatch(addToCart(pendingCartProduct));
+              dispatch(openCart());
+              clearPendingCartProduct();
+              setSuccessMsg(`Account created! ${pendingCartProduct.product_title || pendingCartProduct.name || "Item"} added to your cart.`);
+            } else {
+              setSuccessMsg("Account created and logged in successfully!");
+            }
+            setTimeout(() => {
+              handleClose();
+            }, 1200);
+            return;
+          }
+        } catch {
+          // ignore
+        }
+
+        setActiveTab("login");
+        setSuccessMsg("Account created! Please enter your password to sign in.");
       } else {
-        setErrorMsg(data.detail || "Registration failed. Please check your details.");
+        setErrorMsg(parseErrorDetail(data, "Registration failed. Please check your details."));
       }
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to create account. Please try again.");

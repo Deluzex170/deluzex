@@ -57,9 +57,37 @@ export default function Login() {
   const handleBlurPassword = () => {
     if (!password.trim()) {
       setPasswordError("Password is required.");
-    } else {
+    } else if (authMode === "register") {
       const pswError = validatePassword(password);
       if (pswError) setPasswordError(pswError);
+    }
+  };
+
+  const parseErrorDetail = (data: any, fallback: string): string => {
+    if (!data) return fallback;
+    if (typeof data.detail === "string") return data.detail;
+    if (Array.isArray(data.detail) && data.detail.length > 0) {
+      return data.detail.map((e: any) => e.msg || e.message || JSON.stringify(e)).join(", ");
+    }
+    if (typeof data.message === "string") return data.message;
+    return fallback;
+  };
+
+  const authFetch = async (endpoint: string, options: RequestInit): Promise<Response> => {
+    const envUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+    try {
+      const res = await fetch(`${envUrl}${endpoint}`, options);
+      return res;
+    } catch (primaryErr) {
+      if (envUrl.startsWith("http")) {
+        try {
+          const fallbackRes = await fetch(`/api/v1${endpoint}`, options);
+          return fallbackRes;
+        } catch {
+          // rethrow primary error if fallback also fails
+        }
+      }
+      throw primaryErr;
     }
   };
 
@@ -101,7 +129,7 @@ export default function Login() {
     if (!password.trim()) {
       setPasswordError("Password is required.");
       isValid = false;
-    } else {
+    } else if (authMode === "register") {
       const pswError = validatePassword(password);
       if (pswError) {
         setPasswordError(pswError);
@@ -117,10 +145,8 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-
       if (authMode === "login") {
-        const response = await fetch(`${apiUrl}/auth/login`, {
+        const response = await authFetch("/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: email.trim(), password }),
@@ -156,12 +182,12 @@ export default function Login() {
             }
           }, 1200);
         } else {
-          setToast({ type: "error", message: data.detail || "Invalid email or password. Please try again." });
+          setToast({ type: "error", message: parseErrorDetail(data, "Invalid email or password. Please try again.") });
         }
       } else {
         // Sign up (register)
         const nameFromEmail = email.trim().split("@")[0] || "User";
-        const response = await fetch(`${apiUrl}/auth/register`, {
+        const response = await authFetch("/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -176,32 +202,46 @@ export default function Login() {
         const data = await response.json();
         
         if (response.ok && data.success) {
-          // Auto login after successful register
-          const loginRes = await fetch(`${apiUrl}/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: email.trim(), password }),
-          });
-          const loginData = await loginRes.json();
-
-          if (loginRes.ok && loginData.success) {
+          // If register returns access_token and user data, log in immediately
+          if (data.access_token && data.data) {
             setToast({ type: "success", message: "Account created and logged in successfully!" });
-            localStorage.setItem("authToken", loginData?.access_token);
-            login(loginData.access_token, loginData.data);
+            localStorage.setItem("authToken", data.access_token);
+            login(data.access_token, data.data);
             setTimeout(() => {
               router.push("/");
             }, 1200);
           } else {
+            // Fallback: auto login via login endpoint
+            try {
+              const loginRes = await authFetch("/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: email.trim(), password }),
+              });
+              const loginData = await loginRes.json();
+
+              if (loginRes.ok && loginData.success) {
+                setToast({ type: "success", message: "Account created and logged in successfully!" });
+                localStorage.setItem("authToken", loginData?.access_token);
+                login(loginData.access_token, loginData.data);
+                setTimeout(() => {
+                  router.push("/");
+                }, 1200);
+                return;
+              }
+            } catch {
+              // ignore
+            }
             setToast({ type: "success", message: "Registration successful! You can now log in." });
             setAuthMode("login");
             setPassword("");
           }
         } else {
-          setToast({ type: "error", message: data.detail || data.message || "Registration failed. Please check your details." });
+          setToast({ type: "error", message: parseErrorDetail(data, "Registration failed. Please check your details.") });
         }
       }
-    } catch {
-      setToast({ type: "error", message: "Something went wrong, please try again." });
+    } catch (err: any) {
+      setToast({ type: "error", message: err?.message || "Unable to reach the server. Please try again." });
     } finally {
       setIsLoading(false);
     }

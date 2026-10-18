@@ -175,6 +175,7 @@ function ShopContent() {
   }, [isSortOpen]);
 
   // Sync category and search params from URL
+
   useEffect(() => {
     setSelectedCategory(categoryParam);
     setCurrentPage(1);

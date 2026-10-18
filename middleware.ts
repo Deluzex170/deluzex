@@ -65,12 +65,20 @@ export function middleware(request: NextRequest) {
   }
 
   if (token && isAuthRoute) {
-    // Redirect away from user login if already authenticated
     const payload = decodeJwtPayload(token);
-    if (payload?.is_admin === true) {
-      return NextResponse.redirect(new URL('/admin', request.url));
+    const isExpired = payload?.exp ? Date.now() >= payload.exp * 1000 : false;
+    if (payload && !isExpired) {
+      if (payload.is_admin === true) {
+        return NextResponse.redirect(new URL('/admin', request.url));
+      }
+      return NextResponse.redirect(new URL('/', request.url));
     }
-    return NextResponse.redirect(new URL('/', request.url));
+    // Stale or expired token: remove invalid cookies and allow user to access login/signup
+    const response = NextResponse.next();
+    response.cookies.delete('access_token');
+    response.cookies.delete('accessToken');
+    response.cookies.delete('session');
+    return response;
   }
 
   return NextResponse.next();

@@ -3,7 +3,7 @@ from .product import Product, ProductCreate
 from .project import Project, ProjectCreate
 from .testimonial import Testimonial, TestimonialCreate
 from .newsletter import NewsletterSubscriber, NewsletterSubscriberCreate
-from .cart import CartItemCreate
+from .cart import CartItemCreate, CartItemUpdate, CartSyncRequest, CartItemResponse
 from .user import UserRegister, UserLogin, UserData, UserProfileUpdate, UserPasswordUpdate, StandardResponse
 from .order import (
     OrderCreateRequest,
