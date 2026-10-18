@@ -49,6 +49,8 @@ const DEFAULT_CATEGORIES = [
   },
 ];
 
+export const dynamic = "force-dynamic";
+
 export default async function CategoriesPage() {
   const apiCategories = await fetchCategories();
 
