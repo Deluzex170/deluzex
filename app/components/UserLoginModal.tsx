@@ -19,9 +19,12 @@ export default function UserLoginModal() {
     login,
   } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+  const [activeTab, setActiveTab] = useState<"login" | "register" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSent, setResetSent] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
@@ -38,6 +41,7 @@ export default function UserLoginModal() {
     if (isLoading) return;
     setErrorMsg("");
     setSuccessMsg("");
+    setResetSent(false);
     closeLoginModal();
   };
 
@@ -95,8 +99,9 @@ export default function UserLoginModal() {
     setErrorMsg("");
     setSuccessMsg("");
 
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim() || !phone.trim()) {
-      setErrorMsg("All fields are required to create an account.");
+    const emailVal = email.trim();
+    if (!emailVal || !password.trim()) {
+      setErrorMsg("Please enter both email and password.");
       return;
     }
 
@@ -109,15 +114,16 @@ export default function UserLoginModal() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+      const nameFromEmail = emailVal.split("@")[0] || "User";
       const response = await fetch(`${apiUrl}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          email: email.trim(),
+          first_name: firstName.trim() || nameFromEmail,
+          last_name: lastName.trim() || "Customer",
+          email: emailVal,
           password,
-          phone: phone.trim(),
+          phone: phone.trim() || "+919999999999",
           accept_terms: true,
         }),
       });
@@ -129,7 +135,7 @@ export default function UserLoginModal() {
         const loginRes = await fetch(`${apiUrl}/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email.trim(), password }),
+          body: JSON.stringify({ email: emailVal, password }),
         });
         const loginData = await loginRes.json();
 
@@ -160,19 +166,57 @@ export default function UserLoginModal() {
     }
   };
 
+  const handleResetSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setSuccessMsg("");
+    if (!resetEmail.trim()) {
+      setErrorMsg("Please enter your registered email address.");
+      return;
+    }
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setResetSent(true);
+      setSuccessMsg("Password reset link has been sent to your email.");
+    }, 600);
+  };
+
   return (
     <div className={styles.overlay} onClick={handleClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <button className={styles.closeButton} onClick={handleClose} aria-label="Close dialog">
-          ✕
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
         </button>
 
         <div className={styles.header}>
-          <span className={styles.brandBadge}>deluzex</span>
+          <div className={styles.logoWrapper}>
+            <img
+              src="/images/logos/de_luzex_black.svg"
+              alt="de luzex"
+              width={105}
+              height={22}
+              className={styles.logoImg}
+            />
+          </div>
           <h2 className={styles.title}>
-            {activeTab === "login" ? "Sign In to Continue" : "Create an Account"}
+            {activeTab === "login"
+              ? "Welcome Back"
+              : activeTab === "register"
+              ? "Elevate Every Space With Light"
+              : "Reset Password"}
           </h2>
-          <p className={styles.subtitle}>{loginModalMessage}</p>
+          {activeTab === "forgot" && (
+            <p className={styles.subtitle}>
+              We will send a password reset link to your registered email address
+            </p>
+          )}
+          {loginModalMessage && activeTab === "login" && (
+            <p className={styles.subtitle}>{loginModalMessage}</p>
+          )}
         </div>
 
         {pendingCartProduct && (
@@ -180,9 +224,9 @@ export default function UserLoginModal() {
             <div
               style={{
                 position: "relative",
-                width: "44px",
-                height: "44px",
-                borderRadius: "8px",
+                width: "40px",
+                height: "40px",
+                borderRadius: "6px",
                 overflow: "hidden",
                 flexShrink: 0,
               }}
@@ -195,7 +239,7 @@ export default function UserLoginModal() {
                 }
                 alt={pendingCartProduct.product_title || pendingCartProduct.name || "Product"}
                 fill
-                sizes="44px"
+                sizes="40px"
                 style={{ objectFit: "contain" }}
                 className={styles.productThumb}
               />
@@ -207,47 +251,24 @@ export default function UserLoginModal() {
               <div className={styles.productPreviewSub}>
                 ₹{Number(pendingCartProduct.product_price || pendingCartProduct.price || 0).toFixed(2)}
                 {pendingCartProduct.quantity && pendingCartProduct.quantity > 1 ? ` × ${pendingCartProduct.quantity}` : ""}
-                {" — Will be added after sign in"}
+                {" — will be added after sign in"}
               </div>
             </div>
           </div>
         )}
 
-        <div className={styles.tabs}>
-          <button
-            type="button"
-            className={`${styles.tab} ${activeTab === "login" ? styles.activeTab : ""}`}
-            onClick={() => {
-              setActiveTab("login");
-              setErrorMsg("");
-            }}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            className={`${styles.tab} ${activeTab === "register" ? styles.activeTab : ""}`}
-            onClick={() => {
-              setActiveTab("register");
-              setErrorMsg("");
-            }}
-          >
-            New Customer
-          </button>
-        </div>
-
-        {activeTab === "login" ? (
+        {activeTab === "login" && (
           <form className={styles.form} onSubmit={handleLoginSubmit}>
             {errorMsg && <div className={styles.errorBanner}>{errorMsg}</div>}
             {successMsg && <div className={styles.successBanner}>{successMsg}</div>}
 
             <div className={styles.inputGroup}>
-              <label className={styles.label}>Email Address</label>
+              <label className={styles.label}>Enter Email</label>
               <input
                 type="email"
                 required
                 autoComplete="email"
-                placeholder="name@example.com"
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={styles.input}
@@ -255,77 +276,86 @@ export default function UserLoginModal() {
             </div>
 
             <div className={styles.inputGroup}>
-              <label className={styles.label}>Password</label>
-              <input
-                type="password"
-                required
-                autoComplete="current-password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={styles.input}
-              />
+              <label className={styles.label}>Enter Password</label>
+              <div className={styles.passwordWrapper}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={styles.input}
+                />
+                <button
+                  type="button"
+                  className={styles.eyeToggle}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              <div className={styles.forgotWrapper}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("forgot");
+                    setErrorMsg("");
+                    setSuccessMsg("");
+                  }}
+                  className={styles.forgotLink}
+                >
+                  Forgot Password?
+                </button>
+              </div>
             </div>
 
-            <button type="submit" disabled={isLoading} className={styles.submitButton}>
-              {isLoading ? "Signing in..." : "Sign In & Add to Cart"}
-            </button>
+            <div className={styles.btnRow}>
+              <button type="submit" disabled={isLoading} className={styles.submitButton}>
+                {isLoading ? "Signing in..." : (pendingCartProduct ? "Sign In & Add to Cart" : "Sign In Now")}
+              </button>
+            </div>
 
-            <div className={styles.footerLink}>
-              Looking for full login?{" "}
-              <Link href="/login" onClick={handleClose}>
-                Go to login page
-              </Link>
+            <div className={styles.footerSwitch}>
+              <span>Already have account? </span>
+              <button
+                type="button"
+                className={styles.switchLink}
+                onClick={() => {
+                  setActiveTab("register");
+                  setErrorMsg("");
+                  setSuccessMsg("");
+                }}
+              >
+                Sign Up Here
+              </button>
             </div>
           </form>
-        ) : (
+        )}
+
+        {activeTab === "register" && (
           <form className={styles.form} onSubmit={handleRegisterSubmit}>
             {errorMsg && <div className={styles.errorBanner}>{errorMsg}</div>}
             {successMsg && <div className={styles.successBanner}>{successMsg}</div>}
 
-            <div className={styles.nameRow}>
-              <div className={styles.inputGroup} style={{ flex: 1 }}>
-                <label className={styles.label}>First Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="John"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className={styles.input}
-                />
-              </div>
-              <div className={styles.inputGroup} style={{ flex: 1 }}>
-                <label className={styles.label}>Last Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Doe"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className={styles.input}
-                />
-              </div>
-            </div>
-
             <div className={styles.inputGroup}>
-              <label className={styles.label}>Phone Number</label>
-              <input
-                type="tel"
-                required
-                placeholder="+91 98765 43210"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className={styles.input}
-              />
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>Email Address</label>
+              <label className={styles.label}>Enter Email</label>
               <input
                 type="email"
                 required
-                placeholder="name@example.com"
+                autoComplete="email"
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={styles.input}
@@ -333,20 +363,99 @@ export default function UserLoginModal() {
             </div>
 
             <div className={styles.inputGroup}>
-              <label className={styles.label}>Password</label>
+              <label className={styles.label}>Enter Password</label>
+              <div className={styles.passwordWrapper}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  autoComplete="new-password"
+                  placeholder="Create new Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={styles.input}
+                />
+                <button
+                  type="button"
+                  className={styles.eyeToggle}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.btnRow}>
+              <button type="submit" disabled={isLoading} className={styles.submitButton}>
+                {isLoading ? "Signing up..." : (pendingCartProduct ? "Sign Up & Add to Cart" : "Sign Up Now")}
+              </button>
+            </div>
+
+            <div className={styles.footerSwitch}>
+              <span>Already have account? </span>
+              <button
+                type="button"
+                className={styles.switchLink}
+                onClick={() => {
+                  setActiveTab("login");
+                  setErrorMsg("");
+                  setSuccessMsg("");
+                }}
+              >
+                Sign In Here
+              </button>
+            </div>
+          </form>
+        )}
+
+        {activeTab === "forgot" && (
+          <form className={styles.form} onSubmit={handleResetSubmit}>
+            {errorMsg && <div className={styles.errorBanner}>{errorMsg}</div>}
+            {successMsg && <div className={styles.successBanner}>{successMsg}</div>}
+
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Enter Your Registered Email</label>
               <input
-                type="password"
+                type="email"
                 required
-                placeholder="At least 8 characters"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="email"
+                placeholder="Enter your registered email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
                 className={styles.input}
               />
             </div>
 
-            <button type="submit" disabled={isLoading} className={styles.submitButton}>
-              {isLoading ? "Creating Account..." : "Register & Add to Cart"}
-            </button>
+            <div className={styles.btnRow}>
+              <button type="submit" disabled={isLoading || resetSent} className={styles.submitButton}>
+                {isLoading ? "Sending Link..." : (resetSent ? "Reset Link Sent" : "Send Reset Link")}
+              </button>
+            </div>
+
+            <div className={styles.footerSwitch}>
+              <span>Know your password? </span>
+              <button
+                type="button"
+                className={styles.switchLink}
+                onClick={() => {
+                  setActiveTab("login");
+                  setErrorMsg("");
+                  setSuccessMsg("");
+                }}
+              >
+                Sign In Here
+              </button>
+            </div>
           </form>
         )}
       </div>

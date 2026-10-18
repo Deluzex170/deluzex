@@ -32,6 +32,7 @@ export default function MainSidebar() {
           <Link href="/" onClick={() => setSidebarOpen(false)}>Home</Link>
           <Link href="/shop" onClick={() => setSidebarOpen(false)}>Shop</Link>
           <Link href="/projects" onClick={() => setSidebarOpen(false)}>Projects</Link>
+          <Link href="/collaborate" onClick={() => setSidebarOpen(false)}>Collaborate</Link>
           <Link href="/about" onClick={() => setSidebarOpen(false)}>About</Link>
           <Link href="/contact" onClick={() => setSidebarOpen(false)}>Contact</Link>
           <Link href="/blogs" onClick={() => setSidebarOpen(false)}>Blogs</Link>

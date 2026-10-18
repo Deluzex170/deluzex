@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { name: "Home", href: "/" },
   { name: "Shop", href: "/shop" },
   { name: "Projects", href: "/projects" },
+  { name: "Collaborate", href: "/collaborate" },
   { name: "About", href: "/about" },
   { name: "Contact", href: "/contact" },
   { name: "Blogs", href: "/blogs" },
@@ -57,6 +58,17 @@ export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = 
   // Reset scroll and recheck scroll state on pathname change
   useEffect(() => {
     if (typeof window !== "undefined") {
+      if (window.location.hash) {
+        // If navigating to an anchor hash (like #submission-form), don't force reset to top
+        const id = window.location.hash.replace("#", "");
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 80);
+        return;
+      }
       window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
       setScrolled(false);
     }
@@ -117,6 +129,9 @@ export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = 
 
   const isItemActive = (href: string) => {
     if (href === "/") return pathname === "/";
+    if (href === "/collaborate") {
+      return pathname === "/collaborate" || pathname.startsWith("/collaborate/");
+    }
     if (href === "/shop") {
       return (
         pathname === "/shop" ||
@@ -132,6 +147,10 @@ export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = 
       return pathname === "/projects" || pathname.startsWith("/projects/");
     }
     return pathname === href || pathname.startsWith(href + "/");
+  };
+
+  const handleNavClick = (_e: React.MouseEvent<HTMLAnchorElement>, _href: string) => {
+    // Normal client routing
   };
 
   const isState1 = pageHasBg && !scrolled;
@@ -236,6 +255,7 @@ export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = 
               key={item.name}
               href={item.href}
               className={styles.navLink}
+              onClick={(e) => handleNavClick(e, item.href)}
             >
               {item.name}
             </Link>

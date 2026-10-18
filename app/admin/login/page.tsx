@@ -125,9 +125,9 @@ export default function AdminLogin() {
 
       <div className={styles.loginCard}>
         <div className={styles.header}>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.25rem" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "0.75rem" }}>
             <Link href="/" title="Back to De Luzex Storefront">
-              <img src="/images/logos/de_luzex_white.svg" alt="De Luzex" height="34" style={{ height: "34px", width: "auto" }} />
+              <img src="/images/logos/de_luzex_black.svg" alt="De Luzex" height="25" style={{ height: "25px", width: "auto" }} />
             </Link>
           </div>
           <div className={styles.badge}>

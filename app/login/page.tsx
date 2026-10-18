@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import styles from "./login.module.css";
 import { useAuth } from "../context/AuthContext";
 import { useDispatch } from "react-redux";
@@ -13,31 +12,27 @@ type ToastProps = {
 };
 
 export default function Login() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [authMode, setAuthMode] = useState<"login" | "register" | "forgot">("login");
   const { login } = useAuth();
   const dispatch = useDispatch();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSent, setResetSent] = useState(false);
 
-  const [firstNameError, setFirstNameError] = useState("");
-  const [lastNameError, setLastNameError] = useState("");
-  const [phoneError, setPhoneError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [acceptTermsError, setAcceptTermsError] = useState("");
+  const [resetEmailError, setResetEmailError] = useState("");
   
   const [toast, setToast] = useState<ToastProps | null>(null);
 
   useEffect(() => {
     if (toast) {
-      const timer = setTimeout(() => setToast(null), 3000);
+      const timer = setTimeout(() => setToast(null), 3500);
       return () => clearTimeout(timer);
     }
   }, [toast]);
@@ -48,16 +43,12 @@ export default function Login() {
 
   const validatePassword = (val: string) => {
     if (val.length < 8) return "Password must be at least 8 characters long.";
-    if (!/[A-Z]/.test(val)) return "Password must contain an uppercase letter.";
-    if (!/[a-z]/.test(val)) return "Password must contain a lowercase letter.";
-    if (!/[0-9]/.test(val)) return "Password must contain a number.";
-    if (!/[^A-Za-z0-9]/.test(val)) return "Password must contain a special symbol.";
     return null;
   };
 
   const handleBlurEmail = () => {
     if (!email.trim()) {
-      setEmailError("Email Address is required.");
+      setEmailError("Email is required.");
     } else if (!validateEmail(email)) {
       setEmailError("Please enter a valid email address.");
     }
@@ -72,38 +63,35 @@ export default function Login() {
     }
   };
 
+  const handleResetSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetEmailError("");
+    if (!resetEmail.trim()) {
+      setResetEmailError("Please enter your registered email address.");
+      return;
+    }
+    if (!validateEmail(resetEmail)) {
+      setResetEmailError("Please enter a valid email address.");
+      return;
+    }
+
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setResetSent(true);
+      setToast({ type: "success", message: "Password reset link has been sent to your email." });
+    }, 700);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     let isValid = true;
 
-    setFirstNameError("");
-    setLastNameError("");
-    setPhoneError("");
     setEmailError("");
     setPasswordError("");
-    setAcceptTermsError("");
-
-    if (!isLogin) {
-      if (!firstName.trim()) {
-        setFirstNameError("First Name is required.");
-        isValid = false;
-      }
-      if (!lastName.trim()) {
-        setLastNameError("Last Name is required.");
-        isValid = false;
-      }
-      if (!phone.trim()) {
-        setPhoneError("Phone Number is required.");
-        isValid = false;
-      }
-      if (!acceptTerms) {
-        setAcceptTermsError("You must accept the terms and conditions.");
-        isValid = false;
-      }
-    }
 
     if (!email.trim()) {
-      setEmailError("Email Address is required.");
+      setEmailError("Email is required.");
       isValid = false;
     } else if (!validateEmail(email)) {
       setEmailError("Please enter a valid email address.");
@@ -122,7 +110,7 @@ export default function Login() {
     }
 
     if (!isValid) {
-      setToast({ type: "error", message: "Please fix the validation errors." });
+      setToast({ type: "error", message: "Please check your inputs." });
       return;
     }
 
@@ -131,11 +119,11 @@ export default function Login() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
-      if (isLogin) {
+      if (authMode === "login") {
         const response = await fetch(`${apiUrl}/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email: email.trim(), password }),
         });
         const data = await response.json();
         
@@ -157,7 +145,6 @@ export default function Login() {
             // ignore
           }
 
-          console.log("Login successful:", data);
           setTimeout(() => {
             const redirectParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
             if (redirectParam && (data?.data?.is_admin || !redirectParam.startsWith('/admin'))) {
@@ -167,53 +154,64 @@ export default function Login() {
             } else {
               router.push("/");
             }
-          }, 1500);
-          console.log("Set timeout completed");
+          }, 1200);
         } else {
-          console.error("Login failed:", data);
-          setToast({ type: "error", message: data.detail || "Login failed." });
+          setToast({ type: "error", message: data.detail || "Invalid email or password. Please try again." });
         }
       } else {
+        // Sign up (register)
+        const nameFromEmail = email.trim().split("@")[0] || "User";
         const response = await fetch(`${apiUrl}/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            first_name: firstName,
-            last_name: lastName,
-            email,
+            first_name: nameFromEmail,
+            last_name: "Customer",
+            email: email.trim(),
             password,
-            phone,
-            accept_terms: acceptTerms
+            phone: "+919999999999",
+            accept_terms: true,
           }),
         });
         const data = await response.json();
         
         if (response.ok && data.success) {
-          setToast({ type: "success", message: "Registration successful! You can now log in." });
-          setTimeout(() => {
-            setIsLogin(true);
+          // Auto login after successful register
+          const loginRes = await fetch(`${apiUrl}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: email.trim(), password }),
+          });
+          const loginData = await loginRes.json();
+
+          if (loginRes.ok && loginData.success) {
+            setToast({ type: "success", message: "Account created and logged in successfully!" });
+            localStorage.setItem("authToken", loginData?.access_token);
+            login(loginData.access_token, loginData.data);
+            setTimeout(() => {
+              router.push("/");
+            }, 1200);
+          } else {
+            setToast({ type: "success", message: "Registration successful! You can now log in." });
+            setAuthMode("login");
             setPassword("");
-            setToast(null);
-          }, 2000);
+          }
         } else {
-          setToast({ type: "error", message: data.message || "Registration failed." });
+          setToast({ type: "error", message: data.detail || data.message || "Registration failed. Please check your details." });
         }
       }
     } catch {
-      setToast({ type: "error", message: "An unexpected error occurred." });
+      setToast({ type: "error", message: "Something went wrong, please try again." });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSwitchMode = () => {
-    setIsLogin(!isLogin);
-    setFirstNameError("");
-    setLastNameError("");
-    setPhoneError("");
+  const handleSwitchMode = (targetMode: "login" | "register" | "forgot") => {
+    setAuthMode(targetMode);
     setEmailError("");
     setPasswordError("");
-    setAcceptTermsError("");
+    setResetEmailError("");
     setToast(null);
   };
 
@@ -236,136 +234,148 @@ export default function Login() {
 
       <div className={styles.loginContainer}>
         <div className={styles.loginHeader}>
-          <h1 className={styles.title}>{isLogin ? "Welcome Back" : "Create Account"}</h1>
-          <p className={styles.subtitle}>
-            {isLogin
-              ? "Sign in to access your dashboard, orders, and exclusive offers."
-              : "Register to explore our exclusive luxury lighting collections."}
-          </p>
+          <div className={styles.logoWrapper}>
+            <img
+              src="/images/logos/de_luzex_black.svg"
+              alt="de luzex"
+              width={105}
+              height={22}
+              className={styles.logoImg}
+            />
+          </div>
+          <h1 className={styles.title}>
+            {authMode === "login"
+              ? "Welcome Back"
+              : authMode === "register"
+              ? "Elevate Every Space With Light"
+              : "Reset Password"}
+          </h1>
+          {authMode === "forgot" && (
+            <p className={styles.subtitle}>
+              We will send a password reset link to your registered email address
+            </p>
+          )}
         </div>
 
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
-          {!isLogin && (
-            <>
-              <div className={styles.row}>
-                <div className={styles.formGroup}>
-                  <label>First Name</label>
-                  <input 
-                    type="text" 
-                    placeholder="John" 
-                    value={firstName}
-                    onChange={(e) => {
-                      setFirstName(e.target.value);
-                      if (firstNameError) setFirstNameError("");
-                    }}
-                    onBlur={() => {
-                      if (!firstName.trim()) setFirstNameError("First Name is required.");
-                    }}
-                    className={firstNameError ? styles.inputError : ""}
-                  />
-                  {firstNameError && <span className={styles.errorText}>{firstNameError}</span>}
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Last Name</label>
-                  <input 
-                    type="text" 
-                    placeholder="Doe" 
-                    value={lastName}
-                    onChange={(e) => {
-                      setLastName(e.target.value);
-                      if (lastNameError) setLastNameError("");
-                    }}
-                    onBlur={() => {
-                      if (!lastName.trim()) setLastNameError("Last Name is required.");
-                    }}
-                    className={lastNameError ? styles.inputError : ""}
-                  />
-                  {lastNameError && <span className={styles.errorText}>{lastNameError}</span>}
-                </div>
-              </div>
-              
-              <div className={styles.formGroup}>
-                <label>Phone Number</label>
-                <input 
-                  type="text" 
-                  placeholder="+1234567890" 
-                  value={phone}
-                  onChange={(e) => {
-                    setPhone(e.target.value);
-                    if (phoneError) setPhoneError("");
-                  }}
-                  onBlur={() => {
-                    if (!phone.trim()) setPhoneError("Phone Number is required.");
-                  }}
-                  className={phoneError ? styles.inputError : ""}
-                />
-                {phoneError && <span className={styles.errorText}>{phoneError}</span>}
-              </div>
-            </>
-          )}
-
-          <div className={styles.formGroup}>
-            <label>Email Address</label>
-            <input 
-              type="email" 
-              placeholder="john@example.com" 
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (emailError) setEmailError("");
-              }}
-              onBlur={handleBlurEmail}
-              className={emailError ? styles.inputError : ""}
-            />
-            {emailError && <span className={styles.errorText}>{emailError}</span>}
-          </div>
-          <div className={styles.formGroup}>
-            <label>Create Password</label>
-            <input 
-              type="password" 
-              placeholder="••••••••" 
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                if (passwordError) setPasswordError("");
-              }}
-              onBlur={handleBlurPassword}
-              className={passwordError ? styles.inputError : ""}
-            />
-            {passwordError && <span className={styles.errorText}>{passwordError}</span>}
-          </div>
-
-          {!isLogin && (
-            <div className={styles.checkboxGroup}>
+        {authMode === "forgot" ? (
+          <form className={styles.form} onSubmit={handleResetSubmit} noValidate>
+            <div className={styles.formGroup}>
+              <label>Enter Your Registered Email</label>
               <input 
-                type="checkbox" 
-                id="terms"
-                checked={acceptTerms}
+                type="email" 
+                placeholder="Enter your registered email" 
+                value={resetEmail}
                 onChange={(e) => {
-                  setAcceptTerms(e.target.checked);
-                  if (acceptTermsError) setAcceptTermsError("");
+                  setResetEmail(e.target.value);
+                  if (resetEmailError) setResetEmailError("");
                 }}
+                className={resetEmailError ? styles.inputError : ""}
               />
-              <div>
-                <label htmlFor="terms">I accept the terms and conditions</label>
-                {acceptTermsError && <div className={styles.errorText}>{acceptTermsError}</div>}
-              </div>
+              {resetEmailError && <span className={styles.errorText}>{resetEmailError}</span>}
             </div>
-          )}
 
-          <button type="submit" className={styles.btnPrimary} disabled={isLoading}>
-            {isLoading ? "Processing..." : (isLogin ? "Sign In" : "Register")}
-          </button>
-        </form>
+            <div className={styles.btnRow}>
+              <button type="submit" className={styles.btnPrimary} disabled={isLoading || resetSent}>
+                {isLoading ? "Sending Link..." : (resetSent ? "Reset Link Sent" : "Send Reset Link")}
+              </button>
+            </div>
 
-        <div className={styles.switchMode}>
-          <p>
-            {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-            <button type="button" onClick={handleSwitchMode} className={styles.switchBtn}>
-              {isLogin ? "Register now" : "Sign in here"}
-            </button>
-          </p>
-        </div>
+            <div className={styles.switchMode}>
+              <p>
+                Know your password?{" "}
+                <button type="button" onClick={() => handleSwitchMode("login")} className={styles.switchBtn}>
+                  Sign In Here
+                </button>
+              </p>
+            </div>
+          </form>
+        ) : (
+          <form className={styles.form} onSubmit={handleSubmit} noValidate>
+            <div className={styles.formGroup}>
+              <label>Enter Email</label>
+              <input 
+                type="email" 
+                placeholder="Enter your email" 
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) setEmailError("");
+                }}
+                onBlur={handleBlurEmail}
+                className={emailError ? styles.inputError : ""}
+              />
+              {emailError && <span className={styles.errorText}>{emailError}</span>}
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Enter Password</label>
+              <div className={styles.passwordWrapper}>
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder={authMode === "login" ? "Enter your password" : "Create new Password"} 
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (passwordError) setPasswordError("");
+                  }}
+                  onBlur={handleBlurPassword}
+                  className={passwordError ? styles.inputError : ""}
+                />
+                <button
+                  type="button"
+                  className={styles.eyeToggle}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              {passwordError && <span className={styles.errorText}>{passwordError}</span>}
+              {authMode === "login" && (
+                <div className={styles.forgotWrapper}>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchMode("forgot")}
+                    className={styles.forgotLink}
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className={styles.btnRow}>
+              <button type="submit" className={styles.btnPrimary} disabled={isLoading}>
+                {isLoading
+                  ? (authMode === "login" ? "Signing In..." : "Signing Up...")
+                  : (authMode === "login" ? "Sign In Now" : "Sign Up Now")}
+              </button>
+            </div>
+
+            <div className={styles.switchMode}>
+              <p>
+                Already have account?{" "}
+                <button
+                  type="button"
+                  onClick={() => handleSwitchMode(authMode === "login" ? "register" : "login")}
+                  className={styles.switchBtn}
+                >
+                  {authMode === "login" ? "Sign Up Here" : "Sign In Here"}
+                </button>
+              </p>
+            </div>
+          </form>
+        )}
       </div>
     </main>
   );

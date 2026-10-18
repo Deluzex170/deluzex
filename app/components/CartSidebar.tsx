@@ -37,9 +37,10 @@ export default function CartSidebar() {
       <div className={styles.sidebar}>
         {/* Header */}
         <div className={styles.header}>
-<<<<<<< HEAD
           <div>
-            <h2>{cartItems.length} ITEM{cartItems.length !== 1 ? 'S' : ''} IN CART</h2>
+            <h2 className={styles.headerTitle}>
+              {cartItems.length} ITEM{cartItems.length !== 1 ? "S" : ""} IN CART
+            </h2>
             {cartItems.length > 0 && (
               <button
                 type="button"
@@ -50,12 +51,6 @@ export default function CartSidebar() {
               </button>
             )}
           </div>
-          <button className={styles.closeBtn} onClick={() => dispatch(closeCart())}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-=======
-          <h2 className={styles.headerTitle}>
-            {cartItems.length} ITEM{cartItems.length !== 1 ? "S" : ""} IN CART
-          </h2>
           <button
             className={styles.closeBtn}
             onClick={() => dispatch(closeCart())}
@@ -65,7 +60,6 @@ export default function CartSidebar() {
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
->>>>>>> dev
           </button>
         </div>
 

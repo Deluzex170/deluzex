@@ -8,6 +8,7 @@ import HeroProductWidget from "./components/HeroProductWidget";
 import AnimatedCounter from "./components/animations/AnimatedCounter";
 import NewArrivalsCarousel from "./components/NewArrivalsCarousel";
 import CustomerStoriesCarousel from "./components/CustomerStoriesCarousel";
+import CollaborateSection from "./components/CollaborateSection";
 
 export default async function Home() {
   const [categories, products, newArrivalProducts, testimonials, featuredProjects, cmsHome] = await Promise.all([
@@ -344,6 +345,9 @@ export default async function Home() {
           })}
         </div>
       </section>
+
+      {/* ===================== COLLABORATE SECTION ===================== */}
+      <CollaborateSection />
 
       {/* ===================== CUSTOMER STORIES SECTION ===================== */}
       {/* Figma: 1440x856, large Libre Caslon title, 3 testimonial cards, nav arrows */}

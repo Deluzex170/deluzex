@@ -49,13 +49,6 @@
   --color-text: #000000;
   --color-text-light: #666666;
   --color-white: #ffffff;
-<<<<<<< HEAD
-  --font-libre: 'Libre Caslon Display', serif;
-  --font-italianno: 'Italianno', cursive;
-  --font-inter: 'Inter', sans-serif;
-  --font-general-sans: 'General Sans', sans-serif;
-  --font-figtree: 'Figtree', sans-serif;
-=======
   --font-adobe-arabic: 'Adobe Arabic', serif;
   --font-libre: 'Adobe Arabic', serif;
   --font-inter: 'Adobe Arabic', sans-serif;
@@ -63,7 +56,7 @@
   --font-figtree: 'Adobe Arabic', sans-serif;
   --font-playfair: 'Adobe Arabic', serif;
   --font-hanken: 'Adobe Arabic', sans-serif;
->>>>>>> dev
+  --font-italianno: 'Italianno', cursive;
 }
 
 html {
@@ -92,7 +85,6 @@ body:has([data-admin-root]) {
   padding-top: 0 !important;
 }
 
-<<<<<<< HEAD
 body:has([data-coming-soon]) {
   padding-top: 0 !important;
   overflow: hidden;
@@ -107,9 +99,6 @@ body:has([data-coming-soon]) [class*="userLoginModal"] {
   display: none !important;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-libre), serif;
-=======
 h1,
 h2,
 h3,
@@ -117,7 +106,6 @@ h4,
 h5,
 h6 {
   font-family: 'Adobe Arabic', serif;
->>>>>>> dev
   margin: 0;
   font-weight: normal;
 }

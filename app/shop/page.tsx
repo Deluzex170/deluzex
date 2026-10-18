@@ -152,7 +152,6 @@ function ShopContent() {
   const [loading, setLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-<<<<<<< HEAD
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (selectedCategory && selectedCategory.toLowerCase() !== "all") count += 1;
@@ -160,8 +159,6 @@ function ShopContent() {
     return count;
   }, [selectedCategory, priceRange]);
 
-  // Sync category and search params from URL
-=======
   // Close sort dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -177,8 +174,7 @@ function ShopContent() {
     };
   }, [isSortOpen]);
 
-  // Sync category param from URL
->>>>>>> dev
+  // Sync category and search params from URL
   useEffect(() => {
     setSelectedCategory(categoryParam);
     setCurrentPage(1);
@@ -457,7 +453,6 @@ function ShopContent() {
           )}
         </div>
 
-<<<<<<< HEAD
         {/* Right: Filter trigger button & Sort dropdown */}
         <div className={styles.compactActions}>
           <button
@@ -496,70 +491,6 @@ function ShopContent() {
               <option>NEWEST ARRIVALS</option>
               <option>RATING: HIGH TO LOW</option>
             </select>
-=======
-        <div className={styles.sortBy}>
-          <span className={styles.sortByLabel}>SORT BY :</span>
-          <div className={styles.customSortWrapper} ref={sortRef}>
-            <button
-              type="button"
-              className={`${styles.customSortBtn} ${isSortOpen ? styles.customSortBtnActive : ""}`}
-              onClick={() => setIsSortOpen(!isSortOpen)}
-              aria-haspopup="listbox"
-              aria-expanded={isSortOpen}
-            >
-              <span>{SORT_OPTIONS.find((o) => o.value === sortBy)?.label || sortBy}</span>
-              <svg
-                className={`${styles.sortChevron} ${isSortOpen ? styles.sortChevronOpen : ""}`}
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
-
-            {isSortOpen && (
-              <ul className={styles.sortDropdownMenu} role="listbox">
-                {SORT_OPTIONS.map((opt) => {
-                  const isActive = opt.value === sortBy;
-                  return (
-                    <li
-                      key={opt.value}
-                      role="option"
-                      aria-selected={isActive}
-                      className={`${styles.sortOptionItem} ${isActive ? styles.sortOptionItemActive : ""}`}
-                      onClick={() => {
-                        setSortBy(opt.value);
-                        setIsSortOpen(false);
-                      }}
-                    >
-                      <span>{opt.label}</span>
-                      {isActive && (
-                        <svg
-                          className={styles.checkIcon}
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
->>>>>>> dev
           </div>
         </div>
       </section>

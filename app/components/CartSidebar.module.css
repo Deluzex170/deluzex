@@ -42,13 +42,13 @@
   border-bottom: 1px solid #E8DFD5;
 }
 
-<<<<<<< HEAD
-.header h2 {
-  font-family: var(--font-libre), serif;
-  font-size: 1.5rem;
-  font-weight: 400;
-  color: #2B2B2B;
-  letter-spacing: 0.02em;
+.headerTitle {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #4A4B54;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   margin: 0;
 }
 
@@ -66,16 +66,6 @@
 
 .clearCartBtn:hover {
   color: #C19A6B;
-=======
-.headerTitle {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #4A4B54;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  margin: 0;
->>>>>>> dev
 }
 
 .closeBtn {
