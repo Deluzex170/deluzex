@@ -210,6 +210,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     if (typeof document !== "undefined") {
       document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax";
+      document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax";
+      document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax";
     }
     if (typeof window !== "undefined") {
       localStorage.removeItem("authToken");

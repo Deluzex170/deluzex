@@ -12,7 +12,8 @@ router = APIRouter()
 @router.post("/register", response_model=schemas.StandardResponse)
 def register_user(user_in: schemas.UserRegister, request: Request):
     # Check if email exists (case-insensitive)
-    existing_user = db.users.find_one({"email": {"$regex": f"^{re.escape(str(user_in.email).strip())}$", "$options": "i"}})
+    clean_email = str(user_in.email).strip().lower()
+    existing_user = db.users.find_one({"email": {"$regex": f"^{re.escape(clean_email)}$", "$options": "i"}})
     if existing_user:
         raise HTTPException(
             status_code=400,
@@ -20,14 +21,18 @@ def register_user(user_in: schemas.UserRegister, request: Request):
         )
     
     # Create user
+    first_name = (user_in.first_name or "").strip() or clean_email.split("@")[0]
+    last_name = (user_in.last_name or "").strip() or "Customer"
+    accept_terms = bool(user_in.accept_terms) if user_in.accept_terms is not None else True
     hashed_password = get_password_hash(user_in.password)
+
     new_user = models.User(
-        first_name=user_in.first_name,
-        last_name=user_in.last_name,
-        email=user_in.email,
+        first_name=first_name,
+        last_name=last_name,
+        email=clean_email,
         hashed_password=hashed_password,
-        phone=user_in.phone,
-        accept_terms=user_in.accept_terms,
+        phone=user_in.phone.strip() if user_in.phone else None,
+        accept_terms=accept_terms,
         is_admin=False # Default to false for public registration
     )
     
@@ -239,7 +244,8 @@ def update_password(
 
 @router.post("/admin/login", response_model=schemas.StandardResponse)
 def login_admin(user_in: schemas.UserLogin, request: Request):
-    user_data = db.users.find_one({"email": user_in.email})
+    clean_email = str(user_in.email).strip()
+    user_data = db.users.find_one({"email": {"$regex": f"^{re.escape(clean_email)}$", "$options": "i"}})
 
     if not user_data:
         record_audit_event(

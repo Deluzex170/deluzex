@@ -3,12 +3,12 @@ from typing import Optional, Any
 from datetime import datetime
 
 class UserRegister(BaseModel):
-    first_name: str
-    last_name: str
+    first_name: Optional[str] = "User"
+    last_name: Optional[str] = "Customer"
     email: EmailStr
     password: str
-    phone: str
-    accept_terms: bool
+    phone: Optional[str] = None
+    accept_terms: Optional[bool] = True
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -16,13 +16,13 @@ class UserLogin(BaseModel):
 
 class UserData(BaseModel):
     id: str
-    first_name: str
-    last_name: str
+    first_name: Optional[str] = ""
+    last_name: Optional[str] = ""
     email: EmailStr
     phone: Optional[str] = None
     city: Optional[str] = None
     country: Optional[str] = None
-    is_verified: bool
+    is_verified: bool = False
     is_admin: bool = False
     created_at: datetime
 

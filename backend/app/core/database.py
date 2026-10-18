@@ -1,13 +1,26 @@
-from pymongo import MongoClient
 import os
 import time
+from pathlib import Path
+from dotenv import load_dotenv
+from pymongo import MongoClient
 from app.core.logger import app_logger
+
+# Ensure environment variables are loaded from root or backend directory
+_root_env = Path(__file__).resolve().parents[3] / ".env"
+_backend_env = Path(__file__).resolve().parents[2] / ".env"
+if _root_env.exists():
+    load_dotenv(_root_env)
+elif _backend_env.exists():
+    load_dotenv(_backend_env)
+else:
+    load_dotenv()
 
 MONGO_URI = os.getenv("MONGODB_URI") or os.getenv("MONGO_URI") or "mongodb://localhost:27017"
 DATABASE_NAME = os.getenv("MONGODB_DATABASE", "Deluzex")
 
-client = MongoClient(MONGO_URI)
+client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
 db = client[DATABASE_NAME]
+
 
 def init_db():
     """Validates MongoDB connection, logs latency, and returns (db, ping_ms, is_connected)."""

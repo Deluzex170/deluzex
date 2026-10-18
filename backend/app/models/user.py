@@ -5,14 +5,14 @@ from app.models.common import PyObjectId
 
 class User(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
-    first_name: str
-    last_name: str
+    first_name: Optional[str] = ""
+    last_name: Optional[str] = ""
     email: EmailStr
     hashed_password: str
     phone: Optional[str] = None
     city: Optional[str] = None
     country: Optional[str] = None
-    accept_terms: bool
+    accept_terms: bool = True
     is_active: bool = True
     is_verified: bool = False
     is_admin: bool = False

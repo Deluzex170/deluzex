@@ -1,10 +1,20 @@
 import sys
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 
 # Prioritize backend directory in sys.path to avoid collision with root Next.js 'app' directory
 _backend_dir = os.path.dirname(os.path.abspath(__file__))
 if _backend_dir not in sys.path:
     sys.path.insert(0, _backend_dir)
+
+# Load root .env
+_root_env = Path(_backend_dir).parent / ".env"
+if _root_env.exists():
+    load_dotenv(_root_env)
+else:
+    load_dotenv()
+
 
 import uuid
 import time
