@@ -5,15 +5,15 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 from app.core.logger import app_logger
 
-# Ensure environment variables are loaded from root or backend directory
-_root_env = Path(__file__).resolve().parents[3] / ".env"
-_backend_env = Path(__file__).resolve().parents[2] / ".env"
-if _root_env.exists():
-    load_dotenv(_root_env)
-elif _backend_env.exists():
-    load_dotenv(_backend_env)
-else:
-    load_dotenv()
+# Ensure environment variables are loaded from root or backend directory (.env.local or .env)
+for _candidate in [
+    Path(__file__).resolve().parents[3] / ".env.local",
+    Path(__file__).resolve().parents[3] / ".env",
+    Path(__file__).resolve().parents[2] / ".env.local",
+    Path(__file__).resolve().parents[2] / ".env",
+]:
+    if _candidate.exists():
+        load_dotenv(_candidate)
 
 MONGO_URI = os.getenv("MONGODB_URI") or os.getenv("MONGO_URI") or "mongodb://localhost:27017"
 DATABASE_NAME = os.getenv("MONGODB_DATABASE", "Deluzex")
