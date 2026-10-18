@@ -216,7 +216,7 @@ export default function Login() {
   };
 
   return (
-    <main className={styles.main}>
+    <main className={styles.main} data-auth-page="true">
       {toast && (
         <div className={`${styles.toast} ${toast.type === "success" ? styles.toastSuccess : styles.toastError}`}>
           {toast.type === "success" ? (
@@ -364,7 +364,7 @@ export default function Login() {
 
             <div className={styles.switchMode}>
               <p>
-                Already have account?{" "}
+                {authMode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
                 <button
                   type="button"
                   onClick={() => handleSwitchMode(authMode === "login" ? "register" : "login")}

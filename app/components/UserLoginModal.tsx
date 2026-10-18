@@ -328,7 +328,7 @@ export default function UserLoginModal() {
             </div>
 
             <div className={styles.footerSwitch}>
-              <span>Already have account? </span>
+              <span>Don&apos;t have an account? </span>
               <button
                 type="button"
                 className={styles.switchLink}
@@ -402,7 +402,7 @@ export default function UserLoginModal() {
             </div>
 
             <div className={styles.footerSwitch}>
-              <span>Already have account? </span>
+              <span>Already have an account? </span>
               <button
                 type="button"
                 className={styles.switchLink}

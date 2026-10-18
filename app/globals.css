@@ -81,6 +81,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+body:has([data-auth-page]),
 body:has([data-admin-root]) {
   padding-top: 0 !important;
 }

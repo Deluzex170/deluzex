@@ -114,7 +114,7 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-auth-page="true" data-admin-root="true">
       <div className={styles.ambientGlow} />
 
       {toast && (
