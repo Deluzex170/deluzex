@@ -5,6 +5,8 @@ import styles from "./login.module.css";
 import { useAuth } from "../context/AuthContext";
 import { useDispatch } from "react-redux";
 import { addToCart, openCart } from "../store/cartSlice";
+import WhatsAppAuthSection from "../components/WhatsAppAuthSection";
+import { verifyEmailOtp, resendEmailOtp } from "../services/api";
 
 type ToastProps = {
   type: "success" | "error";
@@ -12,7 +14,7 @@ type ToastProps = {
 };
 
 export default function Login() {
-  const [authMode, setAuthMode] = useState<"login" | "register" | "forgot">("login");
+  const [authMode, setAuthMode] = useState<"login" | "register" | "forgot" | "email_otp">("login");
   const { login } = useAuth();
   const dispatch = useDispatch();
   const router = useRouter();
@@ -24,11 +26,26 @@ export default function Login() {
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
 
+  // Email OTP state
+  const [emailOtp, setEmailOtp] = useState("");
+  const [emailOtpError, setEmailOtpError] = useState("");
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isResendingOtp, setIsResendingOtp] = useState(false);
+
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [resetEmailError, setResetEmailError] = useState("");
   
   const [toast, setToast] = useState<ToastProps | null>(null);
+
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
   useEffect(() => {
     if (toast) {
@@ -152,6 +169,15 @@ export default function Login() {
           body: JSON.stringify({ email: email.trim(), password }),
         });
         const data = await response.json();
+
+        // Check if email verification is required
+        if (response.status === 403 && (data?.detail?.includes("EMAIL_NOT_VERIFIED") || data?.detail?.includes("verify your email"))) {
+          setPendingEmail(email.trim());
+          setAuthMode("email_otp");
+          setResendCooldown(45);
+          setToast({ type: "error", message: "Please verify your email address. A 6-digit code has been sent to your inbox." });
+          return;
+        }
         
         if (response.ok && data.success) {
           setToast({ type: "success", message: "Successfully logged in!" });
@@ -202,7 +228,14 @@ export default function Login() {
         const data = await response.json();
         
         if (response.ok && data.success) {
-          // If register returns access_token and user data, log in immediately
+          if (data.requires_verification) {
+            setPendingEmail(email.trim());
+            setAuthMode("email_otp");
+            setResendCooldown(45);
+            setToast({ type: "success", message: "Registration successful! A 6-digit verification code has been sent to your email." });
+            return;
+          }
+
           if (data.access_token && data.data) {
             setToast({ type: "success", message: "Account created and logged in successfully!" });
             localStorage.setItem("authToken", data.access_token);
@@ -211,27 +244,6 @@ export default function Login() {
               router.push("/");
             }, 1200);
           } else {
-            // Fallback: auto login via login endpoint
-            try {
-              const loginRes = await authFetch("/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: email.trim(), password }),
-              });
-              const loginData = await loginRes.json();
-
-              if (loginRes.ok && loginData.success) {
-                setToast({ type: "success", message: "Account created and logged in successfully!" });
-                localStorage.setItem("authToken", loginData?.access_token);
-                login(loginData.access_token, loginData.data);
-                setTimeout(() => {
-                  router.push("/");
-                }, 1200);
-                return;
-              }
-            } catch {
-              // ignore
-            }
             setToast({ type: "success", message: "Registration successful! You can now log in." });
             setAuthMode("login");
             setPassword("");
@@ -247,11 +259,74 @@ export default function Login() {
     }
   };
 
-  const handleSwitchMode = (targetMode: "login" | "register" | "forgot") => {
+  const handleVerifyEmailOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailOtpError("");
+    if (!emailOtp.trim() || emailOtp.trim().length !== 6) {
+      setEmailOtpError("Please enter the 6-digit verification code.");
+      return;
+    }
+    setIsVerifyingOtp(true);
+    try {
+      const targetEmail = pendingEmail || email.trim();
+      const data = await verifyEmailOtp(targetEmail, emailOtp.trim());
+      if (data.success && data.access_token) {
+        setToast({ type: "success", message: "Email verified successfully! Logging you in..." });
+        localStorage.setItem("authToken", data.access_token);
+        login(data.access_token, data.data);
+
+        try {
+          const pending = window.sessionStorage.getItem("pending_cart_product");
+          if (pending) {
+            const product = JSON.parse(pending);
+            dispatch(addToCart(product));
+            dispatch(openCart());
+            window.sessionStorage.removeItem("pending_cart_product");
+          }
+        } catch {
+          // ignore
+        }
+
+        setTimeout(() => {
+          const redirectParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
+          if (redirectParam && (data?.data?.is_admin || !redirectParam.startsWith('/admin'))) {
+            router.push(redirectParam);
+          } else if (data?.data?.is_admin) {
+            router.push("/admin");
+          } else {
+            router.push("/");
+          }
+        }, 1200);
+      }
+    } catch (err: any) {
+      setEmailOtpError(err?.message || "Invalid or expired verification code.");
+      setToast({ type: "error", message: err?.message || "Verification failed." });
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  const handleResendEmailOtp = async () => {
+    if (resendCooldown > 0 || isResendingOtp) return;
+    setIsResendingOtp(true);
+    try {
+      const targetEmail = pendingEmail || email.trim();
+      const res = await resendEmailOtp(targetEmail);
+      setToast({ type: "success", message: res.message || "A new 6-digit code has been sent to your email." });
+      setResendCooldown(45);
+    } catch (err: any) {
+      setToast({ type: "error", message: err?.message || "Failed to resend code. Please try again." });
+    } finally {
+      setIsResendingOtp(false);
+    }
+  };
+
+  const handleSwitchMode = (targetMode: "login" | "register" | "forgot" | "email_otp") => {
     setAuthMode(targetMode);
     setEmailError("");
     setPasswordError("");
     setResetEmailError("");
+    setEmailOtpError("");
     setToast(null);
   };
 
@@ -288,8 +363,15 @@ export default function Login() {
               ? "Welcome Back"
               : authMode === "register"
               ? "Elevate Every Space With Light"
+              : authMode === "email_otp"
+              ? "Verify Your Email"
               : "Reset Password"}
           </h1>
+          {authMode === "email_otp" && (
+            <p className={styles.subtitle}>
+              Enter the 6-digit security code sent to your inbox
+            </p>
+          )}
           {authMode === "forgot" && (
             <p className={styles.subtitle}>
               We will send a password reset link to your registered email address
@@ -297,7 +379,65 @@ export default function Login() {
           )}
         </div>
 
-        {authMode === "forgot" ? (
+        {authMode === "email_otp" ? (
+          <form className={styles.form} onSubmit={handleVerifyEmailOtp} noValidate>
+            <div className={styles.otpInfoBox}>
+              <p className={styles.otpInfoText}>
+                We sent a 6-digit security code from <strong>support@deluzexlighting.com</strong> to:
+                <br />
+                <strong style={{ color: "#D4AF37", fontSize: "14px" }}>{pendingEmail || email}</strong>
+              </p>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Enter 6-Digit Code</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                placeholder="••••••"
+                value={emailOtp}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                  setEmailOtp(val);
+                  if (emailOtpError) setEmailOtpError("");
+                }}
+                className={`${styles.otpInput} ${emailOtpError ? styles.inputError : ""}`}
+                autoFocus
+              />
+              {emailOtpError && <span className={styles.errorText}>{emailOtpError}</span>}
+            </div>
+
+            <div className={styles.resendRow}>
+              <span>Didn&apos;t receive code?</span>
+              <button
+                type="button"
+                onClick={handleResendEmailOtp}
+                disabled={resendCooldown > 0 || isResendingOtp}
+                className={styles.switchBtn}
+                style={{ cursor: resendCooldown > 0 ? "not-allowed" : "pointer", opacity: resendCooldown > 0 ? 0.6 : 1 }}
+              >
+                {isResendingOtp ? "Sending..." : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend Code"}
+              </button>
+            </div>
+
+            <div className={styles.btnRow}>
+              <button type="submit" className={styles.btnPrimary} disabled={isVerifyingOtp || emailOtp.length !== 6}>
+                {isVerifyingOtp ? "Verifying..." : "Verify & Complete Sign In"}
+              </button>
+            </div>
+
+            <div className={styles.switchMode}>
+              <p>
+                Wrong email or need to sign in?{" "}
+                <button type="button" onClick={() => handleSwitchMode("login")} className={styles.switchBtn}>
+                  Back to Sign In
+                </button>
+              </p>
+            </div>
+          </form>
+        ) : authMode === "forgot" ? (
           <form className={styles.form} onSubmit={handleResetSubmit} noValidate>
             <div className={styles.formGroup}>
               <label>Enter Your Registered Email</label>
@@ -401,6 +541,18 @@ export default function Login() {
                   : (authMode === "login" ? "Sign In Now" : "Sign Up Now")}
               </button>
             </div>
+
+            <WhatsAppAuthSection
+              onSuccess={(token, userData) => {
+                setToast({ type: "success", message: "Logged in successfully via WhatsApp!" });
+                localStorage.setItem("authToken", token);
+                login(token, userData);
+                setTimeout(() => {
+                  router.push("/");
+                }, 1200);
+              }}
+              onError={(msg) => setToast({ type: "error", message: msg })}
+            />
 
             <div className={styles.switchMode}>
               <p>

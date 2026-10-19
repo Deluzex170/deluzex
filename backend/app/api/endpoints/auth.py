@@ -1,13 +1,38 @@
 import re
-from datetime import timedelta
+import random
+from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends, status, Request
 from app import models, schemas
 from app.api import deps
 from app.core.security import verify_password, get_password_hash, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.core.database import db
 from app.core.audit import record_audit_event
+from app.services import whatsapp as whatsapp_service
+from app.services.email import send_verification_email
 
 router = APIRouter()
+
+def _issue_and_send_email_otp(clean_email: str, user_name: str = "") -> dict:
+    otp = f"{random.randint(100000, 999999)}"
+    now = datetime.utcnow()
+    expires_at = now + timedelta(minutes=10)
+
+    db.email_otps.update_one(
+        {"email": clean_email},
+        {
+            "$set": {
+                "email": clean_email,
+                "otp": otp,
+                "created_at": now,
+                "expires_at": expires_at,
+                "attempts": 0
+            }
+        },
+        upsert=True
+    )
+
+    send_res = send_verification_email(to_email=clean_email, otp=otp, user_name=user_name)
+    return {"otp": otp, "send_res": send_res}
 
 @router.post("/register", response_model=schemas.StandardResponse)
 def register_user(user_in: schemas.UserRegister, request: Request):
@@ -33,6 +58,7 @@ def register_user(user_in: schemas.UserRegister, request: Request):
         hashed_password=hashed_password,
         phone=user_in.phone.strip() if user_in.phone else None,
         accept_terms=accept_terms,
+        is_verified=False, # Must verify email OTP before full activation & login
         is_admin=False # Default to false for public registration
     )
     
@@ -50,28 +76,27 @@ def register_user(user_in: schemas.UserRegister, request: Request):
         target_type="auth",
         target_id=str(new_user.id),
         target_name="User Registration",
-        description=f"New user registered: {new_user.email}",
-        details="Customer completed registration and accepted terms",
+        description=f"New user registered (pending email verification): {new_user.email}",
+        details="Customer completed registration form, awaiting OTP verification",
         request=request
     )
 
-    # Generate token automatically (optional, but good for UX)
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        subject=str(new_user.id), expires_delta=access_token_expires, is_admin=False
-    )
+    # Dispatch Email Verification OTP via GoDaddy SMTP
+    _issue_and_send_email_otp(clean_email=clean_email, user_name=new_user.first_name)
 
     return schemas.StandardResponse(
         success=True,
-        message="User registered successfully.",
-        access_token=access_token,
-        token_type="bearer",
+        message="Registration successful! We have sent a 6-digit verification code to your email. Please verify your email to log in.",
+        requires_verification=True,
+        pending_email=clean_email,
+        access_token=None,
+        token_type=None,
         data=schemas.UserData(
             id=str(new_user.id),
             first_name=new_user.first_name,
             last_name=new_user.last_name,
             email=new_user.email,
-            is_verified=new_user.is_verified,
+            is_verified=False,
             is_admin=False,
             created_at=new_user.created_at
         )
@@ -114,6 +139,22 @@ def login_user(user_in: schemas.UserLogin, request: Request):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+
+    # Enforce Email Verification: Block login until email OTP is verified
+    if not user.is_verified and not user.is_admin:
+        # Check if fresh OTP is needed
+        otp_record = db.email_otps.find_one({"email": user.email.lower()})
+        should_send = True
+        if otp_record and otp_record.get("created_at"):
+            if (datetime.utcnow() - otp_record["created_at"]).total_seconds() < 45:
+                should_send = False
+        if should_send:
+            _issue_and_send_email_otp(clean_email=user.email.lower(), user_name=user.first_name)
+
+        raise HTTPException(
+            status_code=403,
+            detail=f"EMAIL_NOT_VERIFIED: Please verify your email ({user.email}) before logging in. A 6-digit verification code has been sent to your email."
+        )
     
     # Log action
     record_audit_event(
@@ -149,6 +190,126 @@ def login_user(user_in: schemas.UserLogin, request: Request):
             is_admin=bool(user.is_admin),
             created_at=user.created_at
         )
+    )
+
+@router.post("/verify-email-otp", response_model=schemas.StandardResponse)
+def verify_email_otp(req: schemas.VerifyEmailOtpRequest, request: Request):
+    clean_email = str(req.email).strip().lower()
+    otp_input = str(req.otp).strip()
+
+    if not clean_email or not otp_input:
+        raise HTTPException(status_code=400, detail="Email and 6-digit verification code are required.")
+
+    # Find OTP document
+    otp_record = db.email_otps.find_one({"email": clean_email})
+    now = datetime.utcnow()
+
+    if not otp_record:
+        raise HTTPException(status_code=400, detail="No active verification code found for this email. Please request a new code.")
+
+    if otp_record.get("expires_at") and otp_record["expires_at"] < now:
+        db.email_otps.delete_one({"email": clean_email})
+        raise HTTPException(status_code=400, detail="Verification code has expired. Please click 'Resend Code'.")
+
+    # Check attempts
+    attempts = otp_record.get("attempts", 0)
+    if attempts >= 5:
+        db.email_otps.delete_one({"email": clean_email})
+        raise HTTPException(status_code=400, detail="Too many invalid attempts. Please request a fresh verification code.")
+
+    # Check OTP equality
+    if str(otp_record.get("otp", "")).strip() != otp_input:
+        db.email_otps.update_one({"email": clean_email}, {"$inc": {"attempts": 1}})
+        remaining = 4 - attempts
+        raise HTTPException(status_code=400, detail=f"Invalid verification code. {max(0, remaining)} attempts remaining.")
+
+    # Successfully verified! Remove OTP record
+    db.email_otps.delete_one({"email": clean_email})
+
+    # Find and update user
+    user_data = db.users.find_one({"email": {"$regex": f"^{re.escape(clean_email)}$", "$options": "i"}})
+    if not user_data:
+        raise HTTPException(status_code=404, detail="No registered account found for this email address.")
+
+    db.users.update_one({"_id": user_data["_id"]}, {"$set": {"is_verified": True}})
+    user_data["is_verified"] = True
+    user = models.User(**user_data)
+
+    # Issue JWT session
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        subject=str(user.id),
+        expires_delta=access_token_expires,
+        is_admin=bool(user.is_admin)
+    )
+
+    record_audit_event(
+        action="EMAIL_VERIFY_SUCCESS",
+        action_category="auth",
+        actor_id=str(user.id),
+        actor_email=user.email,
+        actor_name=f"{user.first_name} {user.last_name}".strip() or user.email,
+        actor_role="Admin" if user.is_admin else "Customer",
+        target_type="auth",
+        target_id=str(user.id),
+        target_name="Email Verification",
+        description=f"User email verified successfully via OTP: {user.email}",
+        request=request
+    )
+
+    return schemas.StandardResponse(
+        success=True,
+        message="Email verified successfully! Welcome to Deluzex.",
+        access_token=access_token,
+        token_type="bearer",
+        data=schemas.UserData(
+            id=str(user.id),
+            first_name=user.first_name,
+            last_name=user.last_name,
+            email=user.email,
+            phone=user.phone,
+            city=user.city,
+            country=user.country,
+            is_verified=True,
+            is_admin=bool(user.is_admin),
+            created_at=user.created_at
+        )
+    )
+
+@router.post("/resend-email-otp", response_model=schemas.StandardResponse)
+def resend_email_otp(req: schemas.ResendEmailOtpRequest, request: Request):
+    clean_email = str(req.email).strip().lower()
+    if not clean_email:
+        raise HTTPException(status_code=400, detail="Email address is required.")
+
+    user_data = db.users.find_one({"email": {"$regex": f"^{re.escape(clean_email)}$", "$options": "i"}})
+    if not user_data:
+        raise HTTPException(status_code=404, detail="No account registered with this email address.")
+
+    user = models.User(**user_data)
+    if user.is_verified:
+        return schemas.StandardResponse(
+            success=True,
+            message="Your email is already verified. You can sign in directly."
+        )
+
+    # Rate limiting: 45 seconds between resends
+    otp_record = db.email_otps.find_one({"email": clean_email})
+    now = datetime.utcnow()
+    if otp_record and otp_record.get("created_at"):
+        elapsed = (now - otp_record["created_at"]).total_seconds()
+        if elapsed < 45:
+            remaining = int(45 - elapsed)
+            raise HTTPException(status_code=429, detail=f"Please wait {remaining} seconds before requesting another code.")
+
+    res = _issue_and_send_email_otp(clean_email=clean_email, user_name=user.first_name)
+    if not res.get("send_res", {}).get("success", False):
+        err = res.get("send_res", {}).get("error", "Email service error")
+        raise HTTPException(status_code=500, detail=f"Unable to send verification email: {err}")
+
+    return schemas.StandardResponse(
+        success=True,
+        message="A new 6-digit verification code has been sent to your email."
     )
 
 @router.get("/me", response_model=schemas.StandardResponse)
@@ -336,5 +497,199 @@ def login_admin(user_in: schemas.UserLogin, request: Request):
             created_at=user.created_at
         )
     )
+
+
+# ---------------------------------------------------------------------------
+# WhatsApp Authentication & Passwordless OTP Login
+# ---------------------------------------------------------------------------
+
+@router.post("/whatsapp/send-otp", response_model=schemas.StandardResponse)
+def send_whatsapp_otp_endpoint(req: schemas.WhatsAppSendOtpRequest, request: Request):
+    phone_clean = (req.phone or "").strip()
+    if not phone_clean:
+        raise HTTPException(status_code=400, detail="Phone number is required.")
+
+    normalized_phone = whatsapp_service.normalize_phone_number(phone_clean)
+    if len(normalized_phone) < 10:
+        raise HTTPException(status_code=400, detail="Invalid mobile number format.")
+
+    # Rate limiting: 60-second cooldown between OTP requests for the same number
+    now = datetime.utcnow()
+    existing_otp = db.whatsapp_otps.find_one({"phone": normalized_phone})
+    if existing_otp:
+        created_at = existing_otp.get("created_at")
+        if created_at and (now - created_at).total_seconds() < 60:
+            remaining = int(60 - (now - created_at).total_seconds())
+            raise HTTPException(
+                status_code=429,
+                detail=f"Please wait {remaining} seconds before requesting a new OTP."
+            )
+
+    # Generate 6-digit cryptographic OTP
+    otp_code = f"{random.randint(100000, 999999)}"
+
+    # Send OTP via Meta WhatsApp Cloud API
+    delivery_res = whatsapp_service.send_whatsapp_otp(normalized_phone, otp_code)
+    if not delivery_res.get("success"):
+        raise HTTPException(
+            status_code=502,
+            detail=delivery_res.get("error") or "Failed to deliver WhatsApp message."
+        )
+
+    # Persist OTP in database with 5-minute validity window
+    db.whatsapp_otps.update_one(
+        {"phone": normalized_phone},
+        {
+            "$set": {
+                "phone": normalized_phone,
+                "otp": otp_code,
+                "created_at": now,
+                "expires_at": now + timedelta(minutes=5),
+                "verified": False,
+                "attempts": 0
+            }
+        },
+        upsert=True
+    )
+
+    record_audit_event(
+        action="WHATSAPP_OTP_SENT",
+        action_category="auth",
+        actor_email=f"phone:{normalized_phone}",
+        actor_role="Guest",
+        target_type="auth",
+        target_name="WhatsApp OTP",
+        description=f"Dispatched login OTP to {normalized_phone}",
+        status="SUCCESS",
+        request=request
+    )
+
+    msg = "Verification code dispatched via WhatsApp."
+    if delivery_res.get("mock"):
+        msg = f"[Dev Mode] Verification code: {otp_code} (token not configured yet)"
+
+    return schemas.StandardResponse(
+        success=True,
+        message=msg
+    )
+
+
+@router.post("/whatsapp/verify-otp", response_model=schemas.StandardResponse)
+def verify_whatsapp_otp_endpoint(req: schemas.WhatsAppVerifyOtpRequest, request: Request):
+    phone_clean = (req.phone or "").strip()
+    otp_clean = (req.otp or "").strip()
+
+    if not phone_clean or not otp_clean:
+        raise HTTPException(status_code=400, detail="Phone number and OTP code are required.")
+
+    normalized_phone = whatsapp_service.normalize_phone_number(phone_clean)
+    now = datetime.utcnow()
+
+    # Retrieve active OTP record
+    otp_record = db.whatsapp_otps.find_one({"phone": normalized_phone})
+    if not otp_record:
+        raise HTTPException(status_code=400, detail="No active OTP found. Please request a new verification code.")
+
+    # Check expiration
+    if otp_record.get("expires_at") and now > otp_record["expires_at"]:
+        db.whatsapp_otps.delete_one({"phone": normalized_phone})
+        raise HTTPException(status_code=400, detail="Verification code has expired. Please request a new code.")
+
+    # Guard against brute force (Max 5 attempts)
+    current_attempts = otp_record.get("attempts", 0)
+    if current_attempts >= 5:
+        db.whatsapp_otps.delete_one({"phone": normalized_phone})
+        raise HTTPException(status_code=429, detail="Too many invalid attempts. Please request a new verification code.")
+
+    # Verify matching code
+    if str(otp_record.get("otp")) != otp_clean:
+        db.whatsapp_otps.update_one(
+            {"phone": normalized_phone},
+            {"$inc": {"attempts": 1}}
+        )
+        remaining = 4 - current_attempts
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid verification code. {max(0, remaining)} attempts remaining."
+        )
+
+    # Invalidate OTP on successful verification
+    db.whatsapp_otps.delete_one({"phone": normalized_phone})
+
+    # Search for existing user by phone
+    phone_variants = [normalized_phone, phone_clean, f"+{normalized_phone}"]
+    user_doc = db.users.find_one({"phone": {"$in": phone_variants}})
+
+    is_new_user = False
+    if not user_doc:
+        # Seamless Passwordless Auto-Registration for new WhatsApp users
+        is_new_user = True
+        first_name = (req.first_name or "").strip() or f"User {normalized_phone[-4:]}"
+        last_name = (req.last_name or "").strip() or "Customer"
+        default_email = f"{normalized_phone}@deluzex.com"
+
+        user = models.User(
+            first_name=first_name,
+            last_name=last_name,
+            email=default_email,
+            phone=normalized_phone,
+            accept_terms=True,
+            is_active=True,
+            is_verified=True,
+            is_admin=False,
+            created_at=now
+        )
+        insert_res = db.users.insert_one(user.model_dump(by_alias=True, exclude_none=True))
+        user.id = str(insert_res.inserted_id)
+    else:
+        # User already exists
+        user = models.User(**dict(user_doc))
+        # Mark phone as verified if not already
+        if not user.is_verified:
+            db.users.update_one({"_id": user_doc["_id"]}, {"$set": {"is_verified": True}})
+            user.is_verified = True
+
+    # Generate JWT Session
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        subject=str(user.id),
+        expires_delta=access_token_expires,
+        is_admin=bool(user.is_admin)
+    )
+
+    record_audit_event(
+        action="WHATSAPP_LOGIN_SUCCESS",
+        action_category="auth",
+        actor_id=str(user.id),
+        actor_email=user.email or f"phone:{user.phone}",
+        actor_name=f"{user.first_name} {user.last_name}".strip(),
+        actor_role="Customer",
+        target_type="auth",
+        target_id=str(user.id),
+        target_name="WhatsApp Login",
+        description=f"Customer authenticated via WhatsApp: {user.phone}",
+        status="SUCCESS",
+        request=request
+    )
+
+    action_label = "Account created and logged in" if is_new_user else "Logged in successfully"
+
+    return schemas.StandardResponse(
+        success=True,
+        message=f"{action_label} via WhatsApp.",
+        access_token=access_token,
+        token_type="bearer",
+        data=schemas.UserData(
+            id=str(user.id),
+            first_name=user.first_name,
+            last_name=user.last_name,
+            email=user.email,
+            phone=user.phone,
+            is_verified=user.is_verified,
+            is_admin=bool(user.is_admin),
+            created_at=user.created_at
+        )
+    )
+
 
 

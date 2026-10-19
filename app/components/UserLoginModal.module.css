@@ -361,3 +361,35 @@
     gap: 1rem;
   }
 }
+
+.otpInput {
+  text-align: center !important;
+  letter-spacing: 0.32em !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  height: 46px !important;
+}
+
+.otpInfoBox {
+  background: rgba(216, 165, 110, 0.08);
+  border: 1px solid rgba(216, 165, 110, 0.3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+
+.otpInfoText {
+  margin: 0;
+  font-size: 13px;
+  color: #4B5563;
+  line-height: 1.4;
+}
+
+.resendRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #6B7280;
+}
