@@ -4,7 +4,8 @@
 
 ---
 
-## 🌟 સિસ્ટમ આર્કિટેક્ચર (System Overview)
+
+## 🌟 સિસ્ટમ આર્કિટેક્ચર (System Overview) Check
 
 1. **Coming Soon Frontend (`index.html`)**
    - **Real-Time API Integration**: જ્યારે યુઝર ઇમેઇલ નાખીને `Notify Me` પર ક્લિક કરે છે ત્યારે સીધો બેકએન્ડ એન્ડપોઇન્ટ `POST http://localhost:8000/api/v1/newsletter/subscribe` પર રિક્વેસ્ટ જાય છે.
