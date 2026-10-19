@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: process.env.VERCEL ? undefined : "standalone",
   images: {
+    // The Services deployment currently returns 404 for /_next/image even
+    // when the source image exists. Serve originals on Vercel until that
+    // optimizer route is available; keep local/self-hosted optimization.
+    unoptimized: Boolean(process.env.VERCEL),
     remotePatterns: [
       {
         protocol: "https",

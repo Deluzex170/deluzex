@@ -1,11 +1,61 @@
 import logging
 import smtplib
+import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Dict, Any
 from app.core.config import settings
 
 logger = logging.getLogger("deluzex.email")
+
+def _send_smtp_message(msg: MIMEMultipart, to_email: str) -> Dict[str, Any]:
+    host = settings.SMTP_HOST.strip() or "smtpout.secureserver.net"
+    port = int(settings.SMTP_PORT or 465)
+    user = settings.SMTP_USER.strip()
+    password = settings.SMTP_PASSWORD
+    if not user or not password:
+        return {"success": False, "error": "SMTP_USER and SMTP_PASSWORD must be configured on the server."}
+
+    server = None
+    stage = "connection"
+    try:
+        context = ssl.create_default_context()
+        if port == 465:
+            server = smtplib.SMTP_SSL(host, port, timeout=12, context=context)
+            stage = "greeting"
+            server.ehlo()
+        else:
+            server = smtplib.SMTP(host, port, timeout=12)
+            stage = "greeting"
+            server.ehlo()
+            stage = "STARTTLS"
+            server.starttls(context=context)
+            server.ehlo()
+        stage = "authentication"
+        server.login(user, password)
+        stage = "message delivery"
+        refused = server.sendmail(user, [to_email], msg.as_string())
+        if refused:
+            raise smtplib.SMTPRecipientsRefused(refused)
+        return {"success": True}
+    except Exception as exc:
+        logger.warning("SMTP failure host=%s port=%s stage=%s type=%s", host, port, stage, type(exc).__name__)
+        if isinstance(exc, smtplib.SMTPAuthenticationError):
+            error = "SMTP authentication failed. Check the mailbox credentials and provider SMTP access."
+        elif isinstance(exc, smtplib.SMTPServerDisconnected):
+            error = f"SMTP connection closed during {stage}. Check SMTP_HOST, SMTP_PORT and provider access."
+        else:
+            error = f"SMTP failed during {stage} ({type(exc).__name__}). Check the server email configuration."
+        return {"success": False, "error": error}
+    finally:
+        if server is not None:
+            # A disconnect during QUIT must not report an already accepted email
+            # as failed and prompt the user to request another OTP.
+            try:
+                server.quit()
+            except Exception:
+                server.close()
+
 
 def build_otp_email_html(otp: str, user_name: str = "") -> str:
     greeting_name = user_name.strip() if user_name else "Valued Client"
@@ -99,27 +149,8 @@ def send_verification_email(to_email: str, otp: str, user_name: str = "") -> Dic
     msg.attach(text_part)
     msg.attach(html_part)
 
-    host = settings.SMTP_HOST.strip() or "smtpout.secureserver.net"
-    port = int(settings.SMTP_PORT or 465)
-    user = settings.SMTP_USER.strip()
-    password = settings.SMTP_PASSWORD.strip()
+    return _send_smtp_message(msg, to_clean)
 
-    try:
-        if port == 465:
-            with smtplib.SMTP_SSL(host, port, timeout=12) as server:
-                server.login(user, password)
-                server.sendmail(user, [to_clean], msg.as_string())
-        else:
-            with smtplib.SMTP(host, port, timeout=12) as server:
-                server.starttls()
-                server.login(user, password)
-                server.sendmail(user, [to_clean], msg.as_string())
-
-        logger.info(f"Verification email sent successfully to {to_clean} via SMTP ({host}:{port})")
-        return {"success": True}
-    except Exception as e:
-        logger.exception(f"SMTP failed to send verification email to {to_clean}: {e}")
-        return {"success": False, "error": str(e)}
 
 def build_password_reset_email_html(otp: str, user_name: str = "") -> str:
     greeting_name = user_name.strip() if user_name else "Valued Client"
@@ -213,25 +244,5 @@ def send_password_reset_email(to_email: str, otp: str, user_name: str = "") -> D
     msg.attach(text_part)
     msg.attach(html_part)
 
-    host = settings.SMTP_HOST.strip() or "smtpout.secureserver.net"
-    port = int(settings.SMTP_PORT or 465)
-    user = settings.SMTP_USER.strip()
-    password = settings.SMTP_PASSWORD.strip()
-
-    try:
-        if port == 465:
-            with smtplib.SMTP_SSL(host, port, timeout=12) as server:
-                server.login(user, password)
-                server.sendmail(user, [to_clean], msg.as_string())
-        else:
-            with smtplib.SMTP(host, port, timeout=12) as server:
-                server.starttls()
-                server.login(user, password)
-                server.sendmail(user, [to_clean], msg.as_string())
-
-        logger.info(f"Password reset email sent successfully to {to_clean} via SMTP ({host}:{port})")
-        return {"success": True}
-    except Exception as e:
-        logger.exception(f"SMTP failed to send password reset email to {to_clean}: {e}")
-        return {"success": False, "error": str(e)}
+    return _send_smtp_message(msg, to_clean)
 

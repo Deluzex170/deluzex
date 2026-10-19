@@ -1,5 +1,6 @@
 """Deployment smoke checks without external database or provider access."""
 import asyncio
+from datetime import datetime
 import importlib.util
 import os
 from pathlib import Path
@@ -13,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "backend"))
 with patch.dict(os.environ, {"MONGODB_URI": "mongodb://127.0.0.1:27017"}):
     import main
-from app.api.endpoints import cart
+from app.api.endpoints import auth, cart
 
 
 class DeploymentTests(unittest.TestCase):
@@ -55,6 +56,24 @@ class DeploymentTests(unittest.TestCase):
         with patch.dict(sys.modules, {"main": None}):
             with self.assertRaises(ModuleNotFoundError):
                 spec.loader.exec_module(module)
+
+    def test_unverified_login_explains_403_without_issuing_token(self):
+        database = MagicMock()
+        database.users.find_one.return_value = {
+            "email": "test@example.com", "hashed_password": "test-hash",
+            "is_active": True, "is_verified": False, "is_admin": False,
+        }
+        database.email_otps.find_one.return_value = {"created_at": datetime.utcnow()}
+        with patch.object(auth, "db", database), \
+             patch.object(auth, "verify_password", return_value=True), \
+             patch.object(auth, "_issue_and_send_email_otp") as send_otp:
+            response = self.request("POST", "/api/v1/auth/login", json={
+                "email": "test@example.com", "password": "test-password",
+            })
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("EMAIL_NOT_VERIFIED", response.json()["detail"])
+        self.assertNotIn("access_token", response.json())
+        send_otp.assert_not_called()
 
 if __name__ == "__main__":
     unittest.main()
