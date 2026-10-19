@@ -63,7 +63,7 @@ class DeploymentTests(unittest.TestCase):
             "email": "test@example.com", "hashed_password": "test-hash",
             "is_active": True, "is_verified": False, "is_admin": False,
         }
-        database.email_otps.find_one.return_value = {"created_at": datetime.utcnow()}
+        database.email_otps.find_one.return_value = {"created_at": datetime.utcnow(), "sent_at": datetime.utcnow()}
         with patch.object(auth, "db", database), \
              patch.object(auth, "verify_password", return_value=True), \
              patch.object(auth, "_issue_and_send_email_otp") as send_otp:

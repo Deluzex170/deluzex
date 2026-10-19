@@ -9,39 +9,12 @@ from app.core.database import db
 
 router = APIRouter()
 
-DEFAULT_LAMPS = [
-    {
-        "image": "/images/lamp_modern_tall_1784107732736.jpg",
-        "name": "Cylindrical Floor Lamp",
-        "price": 231.0,
-        "alt": "Modern gold cylinder floor lamp",
-        "created_at": datetime.utcnow()
-    },
-    {
-        "image": "/images/lamp_black_gold_1784107745696.jpg",
-        "name": "Modern Black Desk Lamp",
-        "price": 231.0,
-        "alt": "Modern brass desk lamp with black lampshade",
-        "created_at": datetime.utcnow()
-    },
-    {
-        "image": "/images/lamp_classic_1784107722127.jpg",
-        "name": "Vintage Pleated Lamp",
-        "price": 231.0,
-        "alt": "Vintage gold lamp with pleated shade",
-        "created_at": datetime.utcnow()
-    }
-]
 
 @router.get("", response_model=List[models.HeroProduct])
 def get_hero_products():
     """
     Fetch all hero products for the homepage carousel.
-    Auto-seeds default products if database collection is empty.
     """
-    count = db.hero_products.count_documents({})
-    if count == 0:
-        db.hero_products.insert_many([dict(item) for item in DEFAULT_LAMPS])
 
     docs = list(db.hero_products.find().sort("created_at", 1))
     return [models.HeroProduct(**doc) for doc in docs]

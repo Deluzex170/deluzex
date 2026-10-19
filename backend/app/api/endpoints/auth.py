@@ -1,5 +1,7 @@
 import re
 import random
+import secrets
+from fastapi.responses import JSONResponse
 from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends, status, Request
 from app import models, schemas
@@ -13,7 +15,7 @@ from app.services.email import send_verification_email, send_password_reset_emai
 router = APIRouter()
 
 def _issue_and_send_email_otp(clean_email: str, user_name: str = "") -> dict:
-    otp = f"{random.randint(100000, 999999)}"
+    otp = f"{secrets.randbelow(900000) + 100000}"
     now = datetime.utcnow()
     expires_at = now + timedelta(minutes=10)
 
@@ -26,13 +28,26 @@ def _issue_and_send_email_otp(clean_email: str, user_name: str = "") -> dict:
                 "created_at": now,
                 "expires_at": expires_at,
                 "attempts": 0
-            }
+            },
+            "$unset": {"sent_at": ""},
         },
         upsert=True
     )
 
     send_res = send_verification_email(to_email=clean_email, otp=otp, user_name=user_name)
+    if send_res.get("success"):
+        db.email_otps.update_one({"email": clean_email, "otp": otp}, {"$set": {"sent_at": datetime.utcnow()}})
+    else:
+        # A failed delivery must not force a 45-second wait or validate a code
+        # that never left the server. Match this attempt to protect newer codes.
+        db.email_otps.delete_one({"email": clean_email, "otp": otp})
     return {"otp": otp, "send_res": send_res}
+
+
+def _email_otp_cooldown(record) -> int:
+    if not record or not isinstance(record.get("sent_at"), datetime):
+        return 0
+    return max(0, 45 - int((datetime.utcnow() - record["sent_at"]).total_seconds()))
 
 @router.post("/register", response_model=schemas.StandardResponse)
 def register_user(user_in: schemas.UserRegister, request: Request):
@@ -82,11 +97,16 @@ def register_user(user_in: schemas.UserRegister, request: Request):
     )
 
     # Dispatch Email Verification OTP via GoDaddy SMTP
-    _issue_and_send_email_otp(clean_email=clean_email, user_name=new_user.first_name)
+    delivery = _issue_and_send_email_otp(clean_email=clean_email, user_name=new_user.first_name)
+    otp_sent = bool(delivery.get("send_res", {}).get("success"))
 
     return schemas.StandardResponse(
         success=True,
-        message="Registration successful! We have sent a 6-digit verification code to your email. Please verify your email to log in.",
+        message=("Account created. A verification code has been sent to your email." if otp_sent else
+                 "Account created, but the verification email could not be sent. Use Resend Code to try again. "
+                 + delivery.get("send_res", {}).get("error", "Email service unavailable.")),
+        otp_sent=otp_sent,
+        retry_after=45 if otp_sent else 0,
         requires_verification=True,
         pending_email=clean_email,
         access_token=None,
@@ -147,10 +167,8 @@ def login_user(user_in: schemas.UserLogin, request: Request):
     if not user.is_verified and not user.is_admin:
         # Check if fresh OTP is needed
         otp_record = db.email_otps.find_one({"email": user.email.lower()})
-        should_send = True
-        if otp_record and otp_record.get("created_at"):
-            if (datetime.utcnow() - otp_record["created_at"]).total_seconds() < 45:
-                should_send = False
+        retry_after = _email_otp_cooldown(otp_record)
+        should_send = retry_after == 0
         if should_send:
             result = _issue_and_send_email_otp(clean_email=user.email.lower(), user_name=user.first_name)
             if not result.get("send_res", {}).get("success", False):
@@ -160,10 +178,11 @@ def login_user(user_in: schemas.UserLogin, request: Request):
                     detail=f"Unable to send verification email: {error}",
                 )
 
-        raise HTTPException(
-            status_code=403,
-            detail=f"EMAIL_NOT_VERIFIED: Please verify your email ({user.email}) before logging in. Enter your verification code or use Resend Code if it has not arrived."
-        )
+            retry_after = 45
+        return JSONResponse(status_code=403, content={
+            "detail": f"EMAIL_NOT_VERIFIED: Please verify your email ({user.email}) before logging in. Check your inbox and spam for the verification code.",
+            "otp_sent": True, "retry_after": retry_after,
+        })
     
     # Log action
     record_audit_event(
@@ -304,12 +323,9 @@ def resend_email_otp(req: schemas.ResendEmailOtpRequest, request: Request):
 
     # Rate limiting: 45 seconds between resends
     otp_record = db.email_otps.find_one({"email": clean_email})
-    now = datetime.utcnow()
-    if otp_record and otp_record.get("created_at"):
-        elapsed = (now - otp_record["created_at"]).total_seconds()
-        if elapsed < 45:
-            remaining = int(45 - elapsed)
-            raise HTTPException(status_code=429, detail=f"Please wait {remaining} seconds before requesting another code.")
+    remaining = _email_otp_cooldown(otp_record)
+    if remaining:
+        raise HTTPException(status_code=429, detail=f"Please wait {remaining} seconds before requesting another code.")
 
     res = _issue_and_send_email_otp(clean_email=clean_email, user_name=user.first_name)
     if not res.get("send_res", {}).get("success", False):
@@ -574,8 +590,6 @@ def send_whatsapp_otp_endpoint(req: schemas.WhatsAppSendOtpRequest, request: Req
     )
 
     msg = "Verification code dispatched via WhatsApp."
-    if delivery_res.get("mock"):
-        msg = f"[Dev Mode] Verification code: {otp_code} (token not configured yet)"
 
     return schemas.StandardResponse(
         success=True,

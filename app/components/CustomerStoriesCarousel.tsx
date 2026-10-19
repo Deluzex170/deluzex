@@ -5,45 +5,6 @@ import Image from "next/image";
 import styles from "../page.module.css";
 import { fetchTestimonials, Testimonial } from "../services/api";
 
-const DEFAULT_TESTIMONIALS: Testimonial[] = [
-  {
-    _id: "story_1",
-    id: "story_1",
-    author_name: "Anna Clark",
-    author_title: "Interior Designer",
-    text: "The quality and craftsmanship are truly exceptional. The chandelier we chose became the highlight of our home.",
-    rating: 5,
-    avatar_url: "/images/avatar_woman_1784107804209.jpg",
-  },
-  {
-    _id: "story_2",
-    id: "story_2",
-    author_name: "David Miller",
-    author_title: "Architect, Studio Form",
-    text: "De Luzex fixtures provide the exact color temperature and architectural finish our luxury residential clients demand.",
-    rating: 5,
-    avatar_url: "/images/avatar_woman_1784107804209.jpg",
-  },
-  {
-    _id: "story_3",
-    id: "story_3",
-    author_name: "Sophia Reynolds",
-    author_title: "Homeowner, Mumbai",
-    text: "From packaging to final installation, the experience was seamless. The warm illumination completely transformed our living room.",
-    rating: 5,
-    avatar_url: "/images/avatar_woman_1784107804209.jpg",
-  },
-  {
-    _id: "story_4",
-    id: "story_4",
-    author_name: "Marcus Vance",
-    author_title: "Hospitality Consultant",
-    text: "We specified De Luzex COB and pendant luminaires for a boutique hotel lobby. The feedback from guests has been phenomenal.",
-    rating: 4.5,
-    avatar_url: "/images/avatar_woman_1784107804209.jpg",
-  },
-];
-
 interface CustomerStoriesCarouselProps {
   initialStories?: Testimonial[];
 }
@@ -52,7 +13,7 @@ export default function CustomerStoriesCarousel({
   initialStories,
 }: CustomerStoriesCarouselProps) {
   const [stories, setStories] = useState<Testimonial[]>(
-    initialStories && initialStories.length > 0 ? initialStories : DEFAULT_TESTIMONIALS
+    initialStories || []
   );
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -65,16 +26,14 @@ export default function CustomerStoriesCarousel({
   useEffect(() => {
     fetchTestimonials()
       .then((data) => {
-        if (data && data.length > 0) {
-          setStories(data);
-        }
+        setStories(data);
       })
       .catch(() => {
-        // Keep initial or fallback stories
+        // Keep the last API-provided stories.
       });
   }, []);
 
-  const items = stories.length < 4 ? [...stories, ...stories] : stories;
+  const items = stories;
 
   const handleScroll = (direction: "left" | "right") => {
     if (!containerRef.current) return;
@@ -193,7 +152,7 @@ export default function CustomerStoriesCarousel({
                     }}
                   >
                     <Image
-                      src={story.avatar_url || "/images/avatar_woman_1784107804209.jpg"}
+                      src={story.avatar_url || "/images/logos/de_luzex_black.svg"}
                       alt={story.author_name}
                       fill
                       draggable={false}

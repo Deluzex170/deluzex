@@ -48,8 +48,8 @@ export default function NewBlog() {
       return;
     }
 
-    if (!title.trim()) {
-      alert("Please enter a blog title.");
+    if (!title.trim() || !content.trim()) {
+      alert("Please enter a blog title and article content.");
       return;
     }
 
@@ -67,16 +67,15 @@ export default function NewBlog() {
         title: title.trim(),
         category,
         excerpt: excerpt.trim() || title.trim(),
-        content: content.trim() || "A captivating insight into luxury architectural lighting.",
+        content: content.trim(),
         author: authorName,
         read_time: "5 min read",
         status,
         image: coverImage.startsWith("blob:") ? undefined : coverImage,
       });
       router.push("/dashboard/blogs");
-    } catch {
-      // If unauthorized or local simulation, navigate with success feedback
-      router.push("/dashboard/blogs");
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "Unable to save your article. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

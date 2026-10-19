@@ -256,7 +256,7 @@ function getAuthToken(): string | null {
 }
 
 // Helper to build headers
-function getAuthHeaders(isFormData = false): Record<string, string> {
+export function getAuthHeaders(isFormData = false): Record<string, string> {
   const headers: Record<string, string> = {};
   const token = getAuthToken();
   if (token) {
@@ -967,7 +967,6 @@ export async function createPaymentOrder(
     key_id: string;
     is_resumed?: boolean;
     is_already_paid?: boolean;
-    is_sandbox?: boolean;
   };
 }
 
@@ -1001,67 +1000,6 @@ export async function createCodOrder(
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || "Failed to place order");
   return data as { success: boolean; order_id: string; message: string };
-}
-
-export interface ServerPaymentPayload {
-  email: string;
-  phone: string;
-  shipping_address: {
-    first_name: string;
-    last_name: string;
-    street: string;
-    city: string;
-    state: string;
-    pin_code: string;
-  };
-  items: Array<{
-    product_id: string;
-    title: string;
-    price: number;
-    quantity: number;
-    image?: string;
-  }>;
-  subtotal: number;
-  gst: number;
-  delivery: number;
-  total: number;
-  payment_method: "card" | "upi" | "cod" | "netbanking" | "wallet";
-  idempotency_key?: string;
-  existing_order_id?: string;
-  card?: {
-    number: string;
-    name: string;
-    expiry: string;
-    cvv: string;
-  };
-  upi_vpa?: string;
-  bank_code?: string;
-}
-
-export interface ServerPaymentResponse {
-  success: boolean;
-  order_id: string;
-  payment_id?: string;
-  status: string;
-  message: string;
-  is_resumed?: boolean;
-  is_already_paid?: boolean;
-  error_code?: string;
-  error_description?: string;
-  can_resume?: boolean;
-}
-
-export async function processServerPayment(payload: ServerPaymentPayload): Promise<ServerPaymentResponse> {
-  const res = await fetch(`${API_BASE_URL}/payments/process-server-payment`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.detail || data.message || "Failed to process payment on server.");
-  }
-  return data;
 }
 
 export interface InitiateUpiPayload {
@@ -1133,16 +1071,6 @@ export async function checkPaymentStatus(orderId: string): Promise<PaymentStatus
   return data;
 }
 
-export async function confirmUpiApproval(orderId: string, simulatedStatus: "approved" | "declined" = "approved"): Promise<PaymentStatusCheckResponse> {
-  const res = await fetch(`${API_BASE_URL}/payments/confirm-upi-approval`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ order_id: orderId, simulated_status: simulatedStatus }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || "Failed to confirm payment.");
-  return data;
-}
 
 export interface PaymentFailurePayload {
   order_id: string;
@@ -1246,7 +1174,7 @@ export async function fetchUserAddresses(email?: string): Promise<SavedAddress[]
 
 export async function saveUserAddress(address: SavedAddress): Promise<SavedAddress> {
   const payload = {
-    user_email: address.user_email || "customer@deluzex.com",
+    user_email: address.user_email,
     type: address.type || "Home",
     first_name: address.first_name,
     last_name: address.last_name || "",
@@ -2033,14 +1961,6 @@ export async function fetchMemberVisitors(): Promise<MemberActivity[]> {
   }
 }
 
-export async function seedAnalyticsSample(): Promise<{ message: string; count: number }> {
-  const res = await fetch(`${API_BASE_URL}/analytics/seed-sample`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-  });
-  if (!res.ok) throw new Error("Failed to seed sample analytics data");
-  return await res.json();
-}
 
 // ==========================================
 // AUDIT LOG & TELEMETRY API
@@ -2137,14 +2057,6 @@ export async function fetchAuditLogDetail(logId: string): Promise<AuditLogItem |
   }
 }
 
-export async function seedAuditSample(): Promise<{ message: string; count: number }> {
-  const res = await fetch(`${API_BASE_URL}/audit/seed-sample`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-  });
-  if (!res.ok) throw new Error("Failed to seed sample audit data");
-  return await res.json();
-}
 
 export interface ProductReviewItem {
   id: string;
@@ -2187,43 +2099,11 @@ export async function fetchProductReviews(productId: string): Promise<ProductRev
     return await res.json();
   } catch (error) {
     logger.error("API", "Error fetching product reviews:", error);
-    // Return graceful fallback matching baseline 4.8 / 35 reviews
     return {
-      average_rating: 4.8,
-      total_reviews: 35,
-      breakdown: {
-        "5": { count: 30, pct: 86 },
-        "4": { count: 3, pct: 9 },
-        "3": { count: 2, pct: 5 },
-        "2": { count: 0, pct: 0 },
-        "1": { count: 0, pct: 0 },
-      },
-      reviews: [
-        {
-          id: "seed-1",
-          product_id: productId,
-          author_name: "Sarah Williams",
-          rating: 5,
-          text: "Absolutely stunning quality. The finish and weight exceeded our expectations for our boutique hotel project. Highly recommended.",
-          created_at: "2025-10-12T14:30:00Z",
-        },
-        {
-          id: "seed-2",
-          product_id: productId,
-          author_name: "Paul Sanderson",
-          rating: 5,
-          text: "Very high quality materials. The earthy slip finish looks incredibly premium in person. Safe packaging ensured zero breakage.",
-          created_at: "2025-09-28T11:15:00Z",
-        },
-        {
-          id: "seed-3",
-          product_id: productId,
-          author_name: "Elena Rostova",
-          rating: 5,
-          text: "Exceeded all our design expectations! The clay firing durability is top-notch for high-frequency dining service.",
-          created_at: "2025-08-15T09:45:00Z",
-        },
-      ],
+      average_rating: 0, total_reviews: 0,
+      breakdown: { "5": { count: 0, pct: 0 }, "4": { count: 0, pct: 0 },
+        "3": { count: 0, pct: 0 }, "2": { count: 0, pct: 0 }, "1": { count: 0, pct: 0 } },
+      reviews: [],
     };
   }
 }

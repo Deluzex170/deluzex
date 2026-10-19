@@ -17,68 +17,6 @@ def slugify(text: str) -> str:
     text = re.sub(r"[\s_-]+", "-", text)
     return text.strip("-")
 
-DEFAULT_BLOGS = [
-    {
-        "title": "How To Choose The Perfect Chandelier For Your Home",
-        "slug": "how-to-choose-the-perfect-chandelier-for-your-home",
-        "category": "Design & Inspiration",
-        "author": "De Luzex",
-        "read_time": "5 min read",
-        "excerpt": "A comprehensive guide on selecting the right scale, luminescence warmth, and crystal finish for grand foyers and dining areas.",
-        "content": "One of the most defining design choices in a luxury residence is selecting the perfect chandelier. Scale, ceiling proportion, and illumination temperature must harmonize seamlessly. When choosing a centerpiece, calculate the combined room dimensions to determine appropriate diameter, and ensure fixture drop leaves optimal clearance above dining or gathering surfaces.",
-        "image": "/images/category_chandelier_1784107756268.jpg",
-        "is_featured": True,
-        "status": "Published",
-        "sequence": 1,
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
-    },
-    {
-        "title": "The Art Of Layered Lighting in Modern Interiors",
-        "slug": "the-art-of-layered-lighting-in-modern-interiors",
-        "category": "Architectural Blogs",
-        "author": "De Luzex",
-        "read_time": "6 min read",
-        "excerpt": "Learn how architectural downlights, accent sconces, and ambient pendants combine to create depth and emotional warmth.",
-        "content": "Mastering architectural lighting requires balancing three core tiers: ambient, task, and accent. Diffused ambient illumination sets the visual baseline, task-oriented spots highlight functional zones, and warm grazing sconces reveal textured stonework and curated art pieces.",
-        "image": "/images/about_chandelier_1784107790569.jpg",
-        "is_featured": False,
-        "status": "Published",
-        "sequence": 2,
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
-    },
-    {
-        "title": "Architectural COB vs Decorative Lighting: Finding Equilibrium",
-        "slug": "architectural-cob-vs-decorative-lighting-finding-equilibrium",
-        "category": "Products Blogs",
-        "author": "De Luzex",
-        "read_time": "4 min read",
-        "excerpt": "Understand beam angles, color rendering index (CRI 95+), and recessed baffle integration in high-end living spaces.",
-        "content": "While decorative fixtures provide sculptural identity, architectural COB luminaires ensure functional illumination without visual glare. Specifying high CRI (>95) chips reproduces fabric hues, wood grains, and marble veining in their purest natural brilliance.",
-        "image": "/images/lamp_classic_1784107722127.jpg",
-        "is_featured": False,
-        "status": "Published",
-        "sequence": 3,
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
-    },
-    {
-        "title": "Lighting Scale & Proportion for Vaulted Ceilings",
-        "slug": "lighting-scale-and-proportion-for-vaulted-ceilings",
-        "category": "Design & Inspiration",
-        "author": "De Luzex",
-        "read_time": "5 min read",
-        "excerpt": "How to suspend grand luminaires in double-height living rooms and stairwells without overwhelming sightlines.",
-        "content": "Double-height spaces demand fixtures with vertical presence. A tiered silhouette anchored with bespoke brass rods draws the gaze upward, celebrating structural grandeur while casting a comforting, intimate perimeter glow below.",
-        "image": "/images/project_lounge_1784107767735.jpg",
-        "is_featured": False,
-        "status": "Published",
-        "sequence": 4,
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
-    }
-]
 
 class ReorderItem(BaseModel):
     id: str
@@ -94,11 +32,7 @@ def get_blogs(
 ):
     """
     Fetch all blogs ordered strictly by sequence ascending, then created_at descending.
-    Auto-seeds default blogs if collection is empty.
     """
-    count = db.blogs.count_documents({})
-    if count == 0:
-        db.blogs.insert_many([dict(item) for item in DEFAULT_BLOGS])
 
     query: Dict[str, Any] = {}
     if category and category != "All" and category != "All Blogs":

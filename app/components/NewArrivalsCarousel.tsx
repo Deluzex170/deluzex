@@ -7,75 +7,12 @@ import styles from "../page.module.css";
 import AddToCartButton from "./AddToCartButton";
 import { Product, fetchProducts } from "../services/api";
 
-const DEFAULT_PRODUCTS: Product[] = [
-  {
-    _id: "arrival_1",
-    id: "arrival_1",
-    product_title: "AURORA CHANDELIER",
-    product_price: "300",
-    product_description: "Suspended minimalist natural oak linear fixture with warm LED glow.",
-    product_category: "Pendant Lights",
-    product_rating: 4.8,
-    product_main_image: "/images/category_chandelier_1784107756268.jpg",
-  },
-  {
-    _id: "arrival_2",
-    id: "arrival_2",
-    product_title: "AURORA CHANDELIER",
-    product_price: "300",
-    product_description: "Grand tiered crystal chandelier with radiant hand-cut optical facets.",
-    product_category: "Chandeliers",
-    product_rating: 4.8,
-    product_main_image: "/images/about_chandelier_1784107790569.jpg",
-  },
-  {
-    _id: "arrival_3",
-    id: "arrival_3",
-    product_title: "AURORA CHANDELIER",
-    product_price: "300",
-    product_description: "Articulating satin brass task lamp with matte black metal shade.",
-    product_category: "Table Lamps",
-    product_rating: 4.8,
-    product_main_image: "/images/lamp_black_gold_1784107745696.jpg",
-  },
-  {
-    _id: "arrival_4",
-    id: "arrival_4",
-    product_title: "AURORA CHANDELIER",
-    product_price: "300",
-    product_description: "Vertical diffused cylinder column lamp set on a weighted base.",
-    product_category: "Floor Lamps",
-    product_rating: 4.8,
-    product_main_image: "/images/lamp_modern_tall_1784107732736.jpg",
-  },
-  {
-    _id: "arrival_5",
-    id: "arrival_5",
-    product_title: "AURORA CHANDELIER",
-    product_price: "300",
-    product_description: "Recessed architectural spot with anti-glare baffle.",
-    product_category: "COB",
-    product_rating: 4.8,
-    product_main_image: "/images/project_lobby_1784107778993.jpg",
-  },
-  {
-    _id: "arrival_6",
-    id: "arrival_6",
-    product_title: "AURORA CHANDELIER",
-    product_price: "300",
-    product_description: "Cast antique brass pedestal lamp with pleated silk shade.",
-    product_category: "Table Lamps",
-    product_rating: 4.8,
-    product_main_image: "/images/lamp_classic_1784107722127.jpg",
-  },
-];
-
 interface NewArrivalsCarouselProps {
   products?: Product[];
 }
 
 const formatPrice = (price?: string | number) => {
-  if (!price && price !== 0) return "₹300";
+  if (!price && price !== 0) return "Price on request";
   const str = String(price).trim();
   if (str.startsWith("$") || str.startsWith("₹")) return str;
   const num = Number(str.replace(/[^\d.-]/g, ""));
@@ -87,7 +24,7 @@ const formatPrice = (price?: string | number) => {
 
 export default function NewArrivalsCarousel({ products }: NewArrivalsCarouselProps) {
   const [activeProducts, setActiveProducts] = useState<Product[]>(
-    products && products.length > 0 ? products : DEFAULT_PRODUCTS
+    products || []
   );
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -102,15 +39,13 @@ export default function NewArrivalsCarousel({ products }: NewArrivalsCarouselPro
     }
     fetchProducts("is_new_arrival=true")
       .then((data) => {
-        if (data && data.length > 0) {
-          setActiveProducts(data);
-        }
+        setActiveProducts(data);
       })
       .catch(() => { });
   }, [products]);
 
   // Keep up to 6 products to display the grid/carousel as shown in design
-  const displayList = (activeProducts && activeProducts.length > 0 ? activeProducts : DEFAULT_PRODUCTS).slice(0, 6);
+  const displayList = activeProducts.slice(0, 6);
 
   const handleScroll = (direction: "left" | "right") => {
     if (!scrollRef.current) return;
@@ -165,9 +100,9 @@ export default function NewArrivalsCarousel({ products }: NewArrivalsCarouselPro
       >
         {displayList.map((product, idx) => {
           const pId = String(product._id || product.id || idx);
-          const title = product.product_title || product.name || "AURORA CHANDELIER";
+          const title = product.product_title || product.name || "Product";
           const price = formatPrice(product.product_price);
-          const rating = product.product_rating || "4.8";
+          const rating = product.product_rating;
 
           return (
             <div
@@ -216,7 +151,7 @@ export default function NewArrivalsCarousel({ products }: NewArrivalsCarouselPro
                 <div className={styles.newArrivalRating}>
                   <span className={styles.newArrivalStar}>★</span>
                   <span className={styles.newArrivalRatingText}>
-                    {rating} ( 300 Reviews )
+                    {rating ? `${rating} / 5` : "Not rated yet"}
                   </span>
                 </div>
               </div>

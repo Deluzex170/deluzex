@@ -73,3 +73,5 @@ class StandardResponse(BaseModel):
     data: Optional[UserData] = None
     requires_verification: Optional[bool] = False
     pending_email: Optional[str] = None
+    otp_sent: Optional[bool] = None
+    retry_after: int = 0

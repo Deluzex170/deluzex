@@ -130,7 +130,7 @@ export default function PaymentsPage() {
     const masked = `${rawCard.slice(0, 4)}  ${rawCard.length >= 8 ? rawCard.slice(4, 8) : "••••"}  ${rawCard.length >= 12 ? rawCard.slice(8, 12) : "••••"}  ${last4}`;
 
     const newCard: SavedCard = {
-      user_email: userEmail || "customer@deluzex.com",
+      user_email: userEmail,
       card_holder: cardHolder.trim().toUpperCase(),
       card_number_masked: masked,
       card_last4: last4,

@@ -9,50 +9,12 @@ from app.core.database import db
 
 router = APIRouter()
 
-DEFAULT_TESTIMONIALS = [
-    {
-        "author_name": "Anna Clark",
-        "author_title": "Interior Designer",
-        "text": "The quality and craftsmanship are truly exceptional. The chandelier we chose became the highlight of our home.",
-        "rating": 5.0,
-        "avatar_url": "/images/avatar_woman_1784107804209.jpg",
-        "created_at": datetime.utcnow()
-    },
-    {
-        "author_name": "David Miller",
-        "author_title": "Architect, Studio Form",
-        "text": "De Luzex fixtures provide the exact color temperature and architectural finish our luxury residential clients demand.",
-        "rating": 5.0,
-        "avatar_url": "/images/avatar_woman_1784107804209.jpg",
-        "created_at": datetime.utcnow()
-    },
-    {
-        "author_name": "Sophia Reynolds",
-        "author_title": "Homeowner, Mumbai",
-        "text": "From packaging to final installation, the experience was seamless. The warm illumination completely transformed our living room.",
-        "rating": 5.0,
-        "avatar_url": "/images/avatar_woman_1784107804209.jpg",
-        "created_at": datetime.utcnow()
-    },
-    {
-        "author_name": "Marcus Vance",
-        "author_title": "Hospitality Consultant",
-        "text": "We specified De Luzex COB and pendant luminaires for a boutique hotel lobby. The feedback from guests has been phenomenal.",
-        "rating": 4.8,
-        "avatar_url": "/images/avatar_woman_1784107804209.jpg",
-        "created_at": datetime.utcnow()
-    }
-]
 
 @router.get("", response_model=List[models.Testimonial])
 def get_testimonials(skip: int = 0, limit: int = 100):
     """
     Fetch all customer testimonials for the home page.
-    Auto-seeds default testimonials if database collection is empty.
     """
-    count = db.testimonials.count_documents({})
-    if count == 0:
-        db.testimonials.insert_many([dict(item) for item in DEFAULT_TESTIMONIALS])
 
     docs = list(db.testimonials.find().sort("created_at", -1).skip(skip).limit(limit))
     return [models.Testimonial(**doc) for doc in docs]

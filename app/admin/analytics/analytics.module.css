@@ -69,27 +69,6 @@
   to { transform: rotate(360deg); }
 }
 
-.seedBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.1rem;
-  background: linear-gradient(135deg, #C49A45, #b38938);
-  border: 1px solid #b38938;
-  border-radius: 10px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #ffffff;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(196, 154, 69, 0.25);
-}
-
-.seedBtn:hover {
-  filter: brightness(1.06);
-  transform: translateY(-1px);
-}
-
 /* KPI CARDS */
 .kpiGrid {
   display: grid;

@@ -16,33 +16,9 @@ export type HeroLamp = {
   alt: string;
 };
 
-const DEFAULT_LAMPS: HeroLamp[] = [
-  {
-    image: "/images/lamp_modern_tall_1784107732736.jpg",
-    name: "Cylindrical Floor Lamp",
-    price: 231,
-    count: 231,
-    alt: "Modern gold cylinder floor lamp",
-  },
-  {
-    image: "/images/lamp_black_gold_1784107745696.jpg",
-    name: "Modern Black Desk Lamp",
-    price: 231,
-    count: 231,
-    alt: "Modern brass desk lamp with black lampshade",
-  },
-  {
-    image: "/images/lamp_classic_1784107722127.jpg",
-    name: "Vintage Pleated Lamp",
-    price: 231,
-    count: 231,
-    alt: "Vintage gold lamp with pleated shade",
-  },
-];
-
 export default function HeroProductWidget() {
-  const [lamps, setLamps] = useState<HeroLamp[]>(DEFAULT_LAMPS);
-  const [carouselPosition, setCarouselPosition] = useState(DEFAULT_LAMPS.length * 2 + 1);
+  const [lamps, setLamps] = useState<HeroLamp[]>([]);
+  const [carouselPosition, setCarouselPosition] = useState(0);
   const [isResetting, setIsResetting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -52,7 +28,7 @@ export default function HeroProductWidget() {
     let isMounted = true;
     fetchHeroProducts()
       .then((data) => {
-        if (isMounted && data && data.length > 0) {
+        if (isMounted && data) {
           const formatted: HeroLamp[] = data.map((item) => ({
             _id: item._id || item.id,
             id: item.id || item._id,
@@ -85,17 +61,17 @@ export default function HeroProductWidget() {
   const mouseStartXRef = useRef<number | null>(null);
   const isMouseDraggingRef = useRef(false);
 
-  const lampCount = lamps.length || 1;
+  const lampCount = lamps.length;
   const carouselLamps = Array.from(
     { length: lampCount * 5 },
-    (_, index) => lamps[index % lampCount] || DEFAULT_LAMPS[0]
+    (_, index) => lamps[index % lampCount]
   );
-  const activeIndex = ((carouselPosition % lampCount) + lampCount) % lampCount;
-  const activeLamp = lamps[activeIndex] || DEFAULT_LAMPS[0];
+  const activeIndex = lampCount ? ((carouselPosition % lampCount) + lampCount) % lampCount : 0;
+  const activeLamp = lamps[activeIndex];
 
   // Auto-rotation timer
   useEffect(() => {
-    if (isPaused || isDragging) {
+    if (lampCount < 2 || isPaused || isDragging) {
       return;
     }
 
@@ -104,10 +80,11 @@ export default function HeroProductWidget() {
     }, 2000);
 
     return () => window.clearInterval(timer);
-  }, [isPaused, isDragging]);
+  }, [lampCount, isPaused, isDragging]);
 
   // Seamless wrap-around boundaries
   useEffect(() => {
+    if (!lamps.length) return;
     if (carouselPosition >= lamps.length * 4) {
       const resetTimer = window.setTimeout(() => {
         setIsResetting(true);
@@ -125,7 +102,7 @@ export default function HeroProductWidget() {
 
       return () => window.clearTimeout(resetTimer);
     }
-  }, [carouselPosition]);
+  }, [carouselPosition, lamps.length]);
 
   const selectLamp = useCallback((targetIndex: number) => {
     const currentNormalized = ((carouselPosition % lamps.length) + lamps.length) % lamps.length;
@@ -133,7 +110,7 @@ export default function HeroProductWidget() {
     if (diff > lamps.length / 2) diff -= lamps.length;
     if (diff < -lamps.length / 2) diff += lamps.length;
     setCarouselPosition((prev) => prev + diff);
-  }, [carouselPosition]);
+  }, [carouselPosition, lamps.length]);
 
   // Touch handlers for mobile swipe with bare finger
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -266,6 +243,8 @@ export default function HeroProductWidget() {
     }
     setIsPaused(false);
   };
+
+  if (!activeLamp) return null;
 
   return (
     <div

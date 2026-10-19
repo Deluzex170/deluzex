@@ -7,14 +7,6 @@ import { useParams } from "next/navigation";
 import { fetchProjectById, Project } from "../../services/api";
 import styles from "./projectDetail.module.css";
 
-const FALLBACK_PROJECT_IMAGES = [
-  "/images/project_lounge_1784107767735.jpg",
-  "/images/category_chandelier_1784107756268.jpg",
-  "/images/about_chandelier_1784107790569.jpg",
-  "/images/project_lobby_1784107778993.jpg",
-  "/images/hero_bg_1784107713316.jpg",
-];
-
 function getEmbedVideoUrl(url: string): { isEmbed: boolean; src: string } {
   if (!url) return { isEmbed: false, src: "" };
   const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
@@ -55,20 +47,9 @@ export default function ProjectDetailPage() {
     load();
   }, [id]);
 
-  const currentProject = project || {
-    title: "Luxury Villa Residence.",
-    category: "HOMES & VILLAS",
-    subtitle: "Residential | 2024",
-    description:
-      "Custom Lighting Design Crafted To Enhance Elegance, Comfort, And A Natural Warmth Throughout The Residence.",
-    location: "London, UK",
-    year: "2024",
-    scope: "Architectural Lighting Design",
-    installations_count: "18 Bespoke Fixtures",
-    image_url: "/images/project_lounge_1784107767735.jpg",
-    gallery_images: FALLBACK_PROJECT_IMAGES,
-    videos: [],
-  };
+  if (loading) return <main className={styles.main}><p role="status">Loading project…</p></main>;
+  if (!project) return <main className={styles.main}><h1>Project not found</h1><Link href="/projects">View all projects</Link></main>;
+  const currentProject = project;
 
   // Compile unique gallery images
   const rawGallery = [
@@ -76,7 +57,7 @@ export default function ProjectDetailPage() {
     ...(currentProject.image_url ? [currentProject.image_url] : []),
   ];
   const uniqueGallery = Array.from(new Set(rawGallery.filter(Boolean)));
-  const displayGallery = uniqueGallery.length > 0 ? uniqueGallery : FALLBACK_PROJECT_IMAGES;
+  const displayGallery = uniqueGallery;
 
   // Compile project videos
   const projectVideos = Array.isArray(currentProject.videos)
@@ -126,16 +107,16 @@ export default function ProjectDetailPage() {
           </p>
 
           <h1 className={styles.cardTitle}>
-            {currentProject.title ? (currentProject.title.endsWith(".") ? currentProject.title : `${currentProject.title}.`) : "Luxury Villa Residence."}
+            {currentProject.title ? (currentProject.title.endsWith(".") ? currentProject.title : `${currentProject.title}.`) : "Project"}
           </h1>
 
           <p className={styles.cardLocation}>
-            {currentProject.location || "Ahmedabad , India"}
+            {currentProject.location || ""}
           </p>
 
           <p className={styles.cardDescription}>
             {currentProject.description ||
-              "Custom Lighting Design Crafted To Enhance Elegance, Comfort, And Ambiance Throughout The Residence."}
+              ""}
           </p>
 
           {/* Horizontal Divider Line */}
@@ -145,18 +126,18 @@ export default function ProjectDetailPage() {
           <div className={styles.metaGrid}>
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Year</span>
-              <span className={styles.metaValue}>{currentProject.year || "2025"}</span>
+              <span className={styles.metaValue}>{currentProject.year || "Not provided"}</span>
             </div>
 
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Project Type</span>
-              <span className={styles.metaValue}>{currentProject.category || "Residential"}</span>
+              <span className={styles.metaValue}>{currentProject.category || "Not provided"}</span>
             </div>
 
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Scope</span>
               <span className={styles.metaValue}>
-                {currentProject.scope || currentProject.installations_count || "Complete Lighting Design"}
+                {currentProject.scope || currentProject.installations_count || "Not provided"}
               </span>
             </div>
           </div>

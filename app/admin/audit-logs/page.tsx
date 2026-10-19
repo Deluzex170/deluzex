@@ -5,7 +5,6 @@ import styles from "./audit.module.css";
 import {
   fetchAuditLogs,
   fetchAuditStats,
-  seedAuditSample,
   AuditLogItem,
   AuditStats,
 } from "../../services/api";
@@ -71,14 +70,6 @@ export default function AuditLogsPage() {
     loadData(false);
   };
 
-  const handleSeedDemo = async () => {
-    if (confirm("Populate realistic audit activity logs for demonstration?")) {
-      setIsRefreshing(true);
-      await seedAuditSample();
-      await loadData(false);
-    }
-  };
-
   const formatTimeAgo = (dateStr: string) => {
     if (!dateStr) return "N/A";
     const date = new Date(dateStr.endsWith("Z") ? dateStr : dateStr + "Z");
@@ -132,12 +123,7 @@ export default function AuditLogsPage() {
             <span>{isRefreshing ? "Refreshing..." : "Refresh"}</span>
           </button>
 
-          <button className={styles.seedBtn} onClick={handleSeedDemo} title="Seed demo audit data">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
-            <span>Seed Sample Trail</span>
-          </button>
+
         </div>
       </div>
 

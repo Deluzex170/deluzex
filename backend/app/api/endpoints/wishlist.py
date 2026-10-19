@@ -7,38 +7,6 @@ from app.schemas.wishlist import WishlistItemCreate, WishlistItemResponse
 
 router = APIRouter()
 
-DEFAULT_SAMPLE_WISHLIST = [
-    {
-        "product_title": "Aurora Crystal Chandelier",
-        "product_price": "₹194,900",
-        "product_image": "https://ik.imagekit.io/2s78gfu2x/products/COBlight_kcR6OkNlF.jpeg",
-        "product_slug": "aurora-crystal-chandelier",
-    },
-    {
-        "product_title": "Linear Wood LED Pendant",
-        "product_price": "₹42,500",
-        "product_image": "https://ik.imagekit.io/2s78gfu2x/products/pendentlight_ZONyYE1-K.jpeg",
-        "product_slug": "linear-wood-led-pendant",
-    },
-    {
-        "product_title": "Smoked Glass Drop Pendant",
-        "product_price": "₹28,900",
-        "product_image": "https://ik.imagekit.io/2s78gfu2x/products/1__Axis_Final__xlpSxVcJB_.jpg",
-        "product_slug": "smoked-glass-drop-pendant",
-    },
-    {
-        "product_title": "Architectural Deep COB Downlight",
-        "product_price": "₹8,500",
-        "product_image": "https://ik.imagekit.io/2s78gfu2x/products/COBlight_kcR6OkNlF.jpeg",
-        "product_slug": "architectural-deep-cob-downlight",
-    },
-    {
-        "product_title": "Modern Brass Desk Lamp",
-        "product_price": "₹23,100",
-        "product_image": "https://ik.imagekit.io/2s78gfu2x/products/pendentlight_ZONyYE1-K.jpeg",
-        "product_slug": "modern-brass-desk-lamp",
-    },
-]
 
 def serialize_wishlist_item(doc: dict) -> dict:
     if not doc:
@@ -51,24 +19,11 @@ def serialize_wishlist_item(doc: dict) -> dict:
 def get_user_wishlist(email: Optional[str] = Query(None)):
     """
     Fetch all saved wishlist items for a user from MongoDB.
-    Auto-seeds realistic items for the user if database collection is empty.
     """
-    email_clean = email.strip().lower() if email else "customer@deluzex.com"
+    email_clean = email.strip().lower() if email else ""
+    if not email_clean:
+        return []
     query = {"user_email": email_clean}
-
-    count = db.wishlist_items.count_documents(query)
-    if count == 0 and db.wishlist_items.count_documents({}) == 0:
-        # Seed initial sample items for the user into MongoDB
-        for sample in DEFAULT_SAMPLE_WISHLIST:
-            db.wishlist_items.insert_one({
-                "user_email": email_clean,
-                "product_id": None,
-                "product_title": sample["product_title"],
-                "product_price": sample["product_price"],
-                "product_image": sample["product_image"],
-                "product_slug": sample["product_slug"],
-                "created_at": datetime.utcnow(),
-            })
 
     docs = list(db.wishlist_items.find(query).sort("created_at", -1))
     return [WishlistItemResponse(**serialize_wishlist_item(d)) for d in docs]

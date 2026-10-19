@@ -167,49 +167,7 @@ export default async function Home() {
                 </div>
               </Link>
             ))
-          ) : (
-            <>
-              <Link href="/projects" className={styles.projectCard}>
-                <Image
-                  src="/images/project_lounge_1784107767735.jpg"
-                  alt="Luxury Villa Residence"
-                  fill
-                  sizes="(max-width: 768px) 50vw, 50vw"
-                  style={{ objectFit: "cover" }}
-                />
-                <div className={styles.projectCardLabel}>
-                  <div className={styles.projectCardLabelText}>
-                    <span className={styles.projectCardLabelTitle}>Luxury Villa Residence</span>
-                    <span className={styles.projectCardLabelSub}>London, UK</span>
-                  </div>
-                  <span className={styles.projectArrowBtn}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                  </span>
-                </div>
-              </Link>
-              <Link href="/projects" className={styles.projectCard}>
-                <Image
-                  src="/images/project_lobby_1784107778993.jpg"
-                  alt="Grand Hotel Lobby"
-                  fill
-                  sizes="(max-width: 768px) 50vw, 50vw"
-                  style={{ objectFit: "cover" }}
-                />
-                <div className={styles.projectCardLabel}>
-                  <div className={styles.projectCardLabelText}>
-                    <span className={styles.projectCardLabelTitle}>The Grand Hotel Lobby</span>
-                    <span className={styles.projectCardLabelSub}>Paris, France</span>
-                  </div>
-                  <span className={styles.projectArrowBtn}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                  </span>
-                </div>
-              </Link>
-            </>
+          ) : (<p>No projects available yet.</p>
           )}
         </div>
         <Link href="/projects" className={styles.btnExploreProjects}>
@@ -316,16 +274,8 @@ export default async function Home() {
 
         {/* Stats Row - 4 image cards with overlaid text */}
         <div className={styles.statsRow}>
-          {(cmsHome?.story?.stats && cmsHome.story.stats.length === 4
-            ? cmsHome.story.stats
-            : [
-              { number: "10+", label: "Years Of Excellence", image: "/images/project_lounge_1784107767735.jpg" },
-              { number: "98%", label: "Client Satisfaction", image: "/images/about_chandelier_1784107790569.jpg" },
-              { number: "500+", label: "Lighting Installations", image: "/images/project_lobby_1784107778993.jpg" },
-              { number: "50K+", label: "Happy Customers", image: "/images/project_lounge_1784107767735.jpg" }
-            ]
-          ).map((st: any, idx: number) => {
-            const numVal = parseInt(st.number.replace(/\D/g, ""), 10) || 10;
+          {(cmsHome?.story?.stats || []).map((st: any, idx: number) => {
+            const numVal = parseInt(st.number.replace(/\D/g, ""), 10) || 0;
             const suffixVal = st.number.replace(/[0-9]/g, "") || "+";
             return (
               <div key={idx} className={styles.statCard}>

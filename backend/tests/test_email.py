@@ -46,3 +46,19 @@ class SmtpTests(unittest.TestCase):
             result = email._send_smtp_message(MIMEMultipart(), "test@example.com")
         self.assertFalse(result["success"])
         connect.assert_not_called()
+
+    def test_first_connection_disconnect_retries_before_sending(self):
+        server = MagicMock()
+        server.sendmail.return_value = {}
+        with patch.object(email.smtplib, "SMTP_SSL", side_effect=[smtplib.SMTPServerDisconnected(), server]):
+            result = email._send_smtp_message(MIMEMultipart(), "test@example.com")
+        self.assertTrue(result["success"])
+        server.sendmail.assert_called_once()
+
+    def test_does_not_retry_after_delivery_has_started(self):
+        server = MagicMock()
+        server.sendmail.side_effect = smtplib.SMTPServerDisconnected()
+        with patch.object(email.smtplib, "SMTP_SSL", return_value=server) as connect:
+            result = email._send_smtp_message(MIMEMultipart(), "test@example.com")
+        self.assertFalse(result["success"])
+        connect.assert_called_once()

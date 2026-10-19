@@ -8,7 +8,7 @@ from app.core.config import settings
 
 logger = logging.getLogger("deluzex.email")
 
-def _send_smtp_message(msg: MIMEMultipart, to_email: str) -> Dict[str, Any]:
+def _send_smtp_attempt(msg: MIMEMultipart, to_email: str) -> Dict[str, Any]:
     host = settings.SMTP_HOST.strip() or "smtpout.secureserver.net"
     port = int(settings.SMTP_PORT or 465)
     user = settings.SMTP_USER.strip()
@@ -46,7 +46,7 @@ def _send_smtp_message(msg: MIMEMultipart, to_email: str) -> Dict[str, Any]:
             error = f"SMTP connection closed during {stage}. Check SMTP_HOST, SMTP_PORT and provider access."
         else:
             error = f"SMTP failed during {stage} ({type(exc).__name__}). Check the server email configuration."
-        return {"success": False, "error": error}
+        return {"success": False, "error": error, "retryable": isinstance(exc, (smtplib.SMTPServerDisconnected, TimeoutError)) and stage in ("connection", "greeting", "STARTTLS", "authentication")}
     finally:
         if server is not None:
             # A disconnect during QUIT must not report an already accepted email
@@ -54,7 +54,10 @@ def _send_smtp_message(msg: MIMEMultipart, to_email: str) -> Dict[str, Any]:
             try:
                 server.quit()
             except Exception:
-                server.close()
+                try:
+                    server.close()
+                except OSError:
+                    pass
 
 
 def build_otp_email_html(otp: str, user_name: str = "") -> str:
@@ -127,29 +130,29 @@ def build_otp_email_html(otp: str, user_name: str = "") -> str:
 </html>
 """
 
-def send_verification_email(to_email: str, otp: str, user_name: str = "") -> Dict[str, Any]:
-    """
-    Sends an OTP verification email using GoDaddy / Titan SMTP (support@deluzexlighting.com).
-    """
-    to_clean = to_email.strip().lower()
-    subject = f"Your Deluzex Verification Code: {otp}"
-    html_content = build_otp_email_html(otp=otp, user_name=user_name)
+def _send_smtp_message(msg: MIMEMultipart, to_email: str) -> Dict[str, Any]:
+    result = _send_smtp_attempt(msg, to_email)
+    # Retry only before message delivery; retrying after DATA can send
+    # duplicate codes when a server accepted the first message but lost its reply.
+    if not result.get("success") and result.get("retryable"):
+        result = _send_smtp_attempt(msg, to_email)
+    return result
 
+
+def _send_template_email(event: str, to_email: str, otp: str, user_name: str):
+    from app.services.email_templates import render_email
+    content = render_email(event, otp, user_name)
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
+    msg["Subject"] = content["subject"]
     msg["From"] = settings.SMTP_FROM_EMAIL
-    msg["To"] = to_clean
+    msg["To"] = to_email.strip().lower()
+    msg.attach(MIMEText(content["text_body"], "plain", "utf-8"))
+    msg.attach(MIMEText(content["html_body"], "html", "utf-8"))
+    return _send_smtp_message(msg, to_email.strip().lower())
 
-    text_part = MIMEText(
-        f"Your Deluzex Verification Code is: {otp}\nValid for 10 minutes. Please enter this code to verify your account.",
-        "plain"
-    )
-    html_part = MIMEText(html_content, "html")
 
-    msg.attach(text_part)
-    msg.attach(html_part)
-
-    return _send_smtp_message(msg, to_clean)
+def send_verification_email(to_email: str, otp: str, user_name: str = "") -> Dict[str, Any]:
+    return _send_template_email("verification", to_email, otp, user_name)
 
 
 def build_password_reset_email_html(otp: str, user_name: str = "") -> str:
@@ -223,26 +226,4 @@ def build_password_reset_email_html(otp: str, user_name: str = "") -> str:
 """
 
 def send_password_reset_email(to_email: str, otp: str, user_name: str = "") -> Dict[str, Any]:
-    """
-    Sends a Password Reset OTP email using GoDaddy SMTP.
-    """
-    to_clean = to_email.strip().lower()
-    subject = f"Your Deluzex Password Reset Code: {otp}"
-    html_content = build_password_reset_email_html(otp=otp, user_name=user_name)
-
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = settings.SMTP_FROM_EMAIL
-    msg["To"] = to_clean
-
-    text_part = MIMEText(
-        f"Your Deluzex Password Reset Code is: {otp}\nValid for 10 minutes. If you did not request this, please ignore.",
-        "plain"
-    )
-    html_part = MIMEText(html_content, "html")
-
-    msg.attach(text_part)
-    msg.attach(html_part)
-
-    return _send_smtp_message(msg, to_clean)
-
+    return _send_template_email("password_reset", to_email, otp, user_name)

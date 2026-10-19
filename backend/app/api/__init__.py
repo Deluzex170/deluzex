@@ -2,7 +2,10 @@ from fastapi import APIRouter
 
 from app.api.endpoints import health, categories, products, projects, testimonials, newsletter, cart, auth, contact, payments, orders, hero_products, blogs, content, addresses, cards, wishlist, analytics, audit, reviews
 
+from app.api.endpoints import email_templates
+
 api_router = APIRouter()
+api_router.include_router(email_templates.router, prefix="/email-templates", tags=["email templates"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(health.router, prefix="/health", tags=["health"])
 api_router.include_router(categories.router, prefix="/categories", tags=["categories"])

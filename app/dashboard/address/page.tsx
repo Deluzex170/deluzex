@@ -54,7 +54,7 @@ export default function AddressPage() {
     }
 
     const newAddr: SavedAddress = {
-      user_email: userEmail || "customer@deluzex.com",
+      user_email: userEmail,
       type,
       first_name: firstName,
       last_name: lastName,

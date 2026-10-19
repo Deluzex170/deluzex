@@ -6,7 +6,6 @@ import {
   fetchAnalyticsStats,
   fetchVisitorLogs,
   fetchMemberVisitors,
-  seedAnalyticsSample,
   AnalyticsStats,
   VisitorLogItem,
   MemberActivity,
@@ -71,14 +70,6 @@ export default function VisitorAnalyticsPage() {
     loadData(false);
   };
 
-  const handleSeedDemo = async () => {
-    if (confirm("Populate analytics with realistic visitor and member traffic?")) {
-      setIsRefreshing(true);
-      await seedAnalyticsSample();
-      await loadData(false);
-    }
-  };
-
   const formatTimeAgo = (dateStr: string) => {
     if (!dateStr) return "N/A";
     const date = new Date(dateStr.endsWith("Z") ? dateStr : dateStr + "Z");
@@ -121,12 +112,7 @@ export default function VisitorAnalyticsPage() {
             <span>{isRefreshing ? "Refreshing..." : "Refresh"}</span>
           </button>
 
-          <button className={styles.seedBtn} onClick={handleSeedDemo} title="Seed demo visitor data">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
-            <span>Seed Sample Traffic</span>
-          </button>
+
         </div>
       </div>
 

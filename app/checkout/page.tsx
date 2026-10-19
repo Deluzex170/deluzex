@@ -84,17 +84,6 @@ export default function CheckoutPage() {
   // Payment Selection: 'razorpay' (Default) | 'cod'
   const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">("razorpay");
 
-  // Razorpay Sandbox Simulator Modal State
-  const [sandboxModalOrder, setSandboxModalOrder] = useState<{
-    order_id: string;
-    razorpay_order_id: string;
-    amount: number;
-    currency: string;
-    key_id: string;
-  } | null>(null);
-  const [sandboxTab, setSandboxTab] = useState<"card" | "upi" | "netbanking">("card");
-  const [isSimulating, setIsSimulating] = useState(false);
-
   // Contact & Shipping Form Fields
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -229,7 +218,7 @@ export default function CheckoutPage() {
         }).catch((err) => console.warn("Failed to persist address:", err));
       }
 
-      // Reusable verification handler for both Official Razorpay & Sandbox Simulation
+      // Verify the payment returned by the official gateway.
       const completePaymentVerification = async (params: {
         order_id: string;
         razorpay_order_id: string;
@@ -237,7 +226,7 @@ export default function CheckoutPage() {
         razorpay_signature: string;
       }) => {
         setIsProcessing(true);
-        setIsSimulating(true);
+
         try {
           const verifyRes = await verifyPayment({
             order_id: params.order_id,
@@ -282,7 +271,7 @@ export default function CheckoutPage() {
               sessionStorage.removeItem("deluzex_checkout_idem");
             }
             setFailedOrder(null);
-            setSandboxModalOrder(null);
+
             dispatch(clearCart());
             router.push(`/checkout/success?orderId=${encodeURIComponent(params.order_id)}`);
           } else {
@@ -292,7 +281,7 @@ export default function CheckoutPage() {
           const errMsg = err instanceof Error ? err.message : "Payment verification failed. Please contact Deluzex support.";
           setErrorMessage(errMsg);
           setIsProcessing(false);
-          setIsSimulating(false);
+
           scrollToError();
         }
       };
@@ -336,24 +325,14 @@ export default function CheckoutPage() {
           return;
         }
 
-        // Test/Sandbox mode detected or test key in use: open interactive Sandbox simulator
-        if (orderRes.is_sandbox || orderRes.razorpay_order_id.startsWith("order_test_")) {
-          setIsProcessing(false);
-          setSandboxModalOrder(orderRes);
-          return;
-        }
-
         const isLoaded = await loadRazorpayScript();
-        if (!isLoaded) {
-          // If Razorpay CDN blocked or failed, fallback gracefully to test simulator
-          setIsProcessing(false);
-          setSandboxModalOrder(orderRes);
-          return;
-        }
+        if (!isLoaded) throw new Error("Payment gateway could not load. Please try again.");
+        const gatewayKey = orderRes.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+        if (!gatewayKey) throw new Error("Payment gateway is not configured.");
 
         // Configure and open Razorpay Official Modal
         const options = {
-          key: orderRes.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_TpVQEuXPqCh2wV",
+          key: gatewayKey,
           amount: orderRes.amount,
           currency: orderRes.currency || "INR",
           name: "Deluzex Lighting",
@@ -423,9 +402,7 @@ export default function CheckoutPage() {
 
           rzp.open();
         } catch (openErr) {
-          console.warn("Razorpay official popup open failed, using test simulator:", openErr);
-          setIsProcessing(false);
-          setSandboxModalOrder(orderRes);
+          throw new Error(openErr instanceof Error ? openErr.message : "Payment gateway could not open. Please try again.");
         }
         return;
       }
@@ -1034,228 +1011,6 @@ export default function CheckoutPage() {
         </div>
       </form>
 
-      {/* =========================================================================
-          RAZORPAY TEST / SANDBOX SIMULATOR MODAL
-          ========================================================================= */}
-      {sandboxModalOrder && (
-        <div className={styles.sandboxOverlay} onClick={() => !isSimulating && setSandboxModalOrder(null)}>
-          <div className={styles.sandboxModal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.sandboxHeader}>
-              <div className={styles.sandboxBrand}>
-                <div className={styles.sandboxLogoIcon}>D</div>
-                <div>
-                  <h3 className={styles.sandboxBrandTitle}>Deluzex Lighting</h3>
-                  <p className={styles.sandboxBrandSubtitle}>Razorpay Gateway (Test Simulator)</p>
-                </div>
-              </div>
-              <div className={styles.sandboxHeaderRight}>
-                <div className={styles.sandboxTotalAmount}>
-                  <span className={styles.sandboxTotalLabel}>Total Due</span>
-                  <span className={styles.sandboxTotalValue}>₹{(sandboxModalOrder.amount / 100).toFixed(2)}</span>
-                </div>
-                <button
-                  type="button"
-                  className={styles.sandboxCloseBtn}
-                  onClick={() => !isSimulating && setSandboxModalOrder(null)}
-                  disabled={isSimulating}
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-
-            <div className={styles.sandboxBanner}>
-              <span className={styles.sandboxBadge}>Sandbox</span>
-              <span>Test Mode active. Dummy payment without actual charges.</span>
-            </div>
-
-            <div className={styles.sandboxContent}>
-              <div className={styles.sandboxTabs}>
-                <button
-                  type="button"
-                  className={`${styles.sandboxTab} ${sandboxTab === "card" ? styles.sandboxTabActive : ""}`}
-                  onClick={() => setSandboxTab("card")}
-                >
-                  <span>💳</span>
-                  <span>Test Card</span>
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.sandboxTab} ${sandboxTab === "upi" ? styles.sandboxTabActive : ""}`}
-                  onClick={() => setSandboxTab("upi")}
-                >
-                  <span>📱</span>
-                  <span>Test UPI</span>
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.sandboxTab} ${sandboxTab === "netbanking" ? styles.sandboxTabActive : ""}`}
-                  onClick={() => setSandboxTab("netbanking")}
-                >
-                  <span>🏦</span>
-                  <span>NetBanking</span>
-                </button>
-              </div>
-
-              {sandboxTab === "card" && (
-                <div className={styles.sandboxCardPreview}>
-                  <div className={styles.sandboxCardTop}>
-                    <div className={styles.sandboxCardChip} />
-                    <span className={styles.sandboxCardType}>RAZORPAY TEST VISA</span>
-                  </div>
-                  <div className={styles.sandboxCardNumber}>4111 •••• •••• 1111</div>
-                  <div className={styles.sandboxCardBottom}>
-                    <div>
-                      <span>Cardholder</span>
-                      <div className={styles.sandboxCardVal}>{`${firstName || "Deluzex"} ${lastName || "Customer"}`}</div>
-                    </div>
-                    <div>
-                      <span>Expires</span>
-                      <div className={styles.sandboxCardVal}>12 / 28</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {sandboxTab === "upi" && (
-                <div className={styles.sandboxUpiBox}>
-                  <p style={{ margin: 0, fontSize: "0.82rem", color: "#64748B" }}>
-                    Simulating one-tap approval from Google Pay / PhonePe / Paytm
-                  </p>
-                  <div className={styles.sandboxUpiHandle}>deluzex.test@okhdfcbank</div>
-                  <span style={{ fontSize: "0.75rem", color: "#059669", fontWeight: 600 }}>
-                    ✓ Auto-approval authorized in Sandbox
-                  </span>
-                </div>
-              )}
-
-              {sandboxTab === "netbanking" && (
-                <div className={styles.sandboxNetbankingGrid}>
-                  <div className={styles.sandboxBankBtn}>🏛️ HDFC Bank (Test)</div>
-                  <div className={styles.sandboxBankBtn}>🏛️ ICICI Bank (Test)</div>
-                  <div className={styles.sandboxBankBtn}>🏛️ SBI (Test)</div>
-                  <div className={styles.sandboxBankBtn}>🏛️ Axis Bank (Test)</div>
-                </div>
-              )}
-
-              <div className={styles.sandboxActions}>
-                <button
-                  type="button"
-                  className={styles.btnSimulateSuccess}
-                  disabled={isSimulating}
-                  onClick={async () => {
-                    setIsSimulating(true);
-                    setIsProcessing(true);
-                    try {
-                      const testPaymentId = `pay_test_${Date.now()}`;
-                      const testSignature = `sig_test_${sandboxModalOrder.razorpay_order_id.slice(-8)}`;
-
-                      const verifyRes = await verifyPayment({
-                        order_id: sandboxModalOrder.order_id,
-                        razorpay_order_id: sandboxModalOrder.razorpay_order_id,
-                        razorpay_payment_id: testPaymentId,
-                        razorpay_signature: testSignature,
-                      });
-
-                      if (verifyRes.success) {
-                        await savePlacedOrder({
-                          order_id: sandboxModalOrder.order_id,
-                          razorpay_order_id: sandboxModalOrder.razorpay_order_id,
-                          razorpay_payment_id: testPaymentId,
-                          user_email: email.trim(),
-                          user_phone: phone.trim(),
-                          customer_name: `${firstName.trim()} ${lastName.trim()}`,
-                          shipping_address: {
-                            first_name: firstName.trim(),
-                            last_name: lastName.trim(),
-                            street: street.trim(),
-                            city: city.trim(),
-                            state: state.trim(),
-                            pin_code: pinCode.trim(),
-                          },
-                          items: cartItems.map((item) => ({
-                            product_id: String(item.id),
-                            title: item.title,
-                            price: item.price,
-                            quantity: item.quantity,
-                            image: item.image,
-                          })),
-                          subtotal,
-                          gst,
-                          delivery,
-                          total: grandTotal,
-                          status: "Processing",
-                          payment_method: "Razorpay (Test Simulation)",
-                          payment_status: "Paid",
-                        }).catch(console.warn);
-
-                        if (typeof window !== "undefined") {
-                          sessionStorage.removeItem("deluzex_checkout_idem");
-                        }
-                        setFailedOrder(null);
-                        setSandboxModalOrder(null);
-                        dispatch(clearCart());
-                        router.push(`/checkout/success?orderId=${encodeURIComponent(sandboxModalOrder.order_id)}`);
-                      } else {
-                        throw new Error(verifyRes.message || "Payment verification could not be confirmed.");
-                      }
-                    } catch (simErr: unknown) {
-                      const errMsg = simErr instanceof Error ? simErr.message : "Payment simulation failed.";
-                      setErrorMessage(errMsg);
-                      setIsProcessing(false);
-                      setIsSimulating(false);
-                      scrollToError();
-                    }
-                  }}
-                >
-                  {isSimulating ? (
-                    <>
-                      <div className={styles.spinner} style={{ width: "16px", height: "16px" }} />
-                      <span>Verifying & Recording Payment...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>✓</span>
-                      <span>Simulate Successful Payment</span>
-                    </>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  className={styles.btnSimulateFailure}
-                  disabled={isSimulating}
-                  onClick={() => {
-                    const failReason = "Card authorization was declined by customer bank (Sandbox simulation)";
-                    setErrorMessage(failReason);
-                    setFailedOrder({
-                      orderId: sandboxModalOrder.order_id,
-                      rzpOrderId: sandboxModalOrder.razorpay_order_id,
-                      errorReason: failReason,
-                      errorCode: "BANK_DECLINED",
-                    });
-                    recordPaymentFailure({
-                      order_id: sandboxModalOrder.order_id,
-                      razorpay_order_id: sandboxModalOrder.razorpay_order_id,
-                      status: "failed",
-                      error_code: "BANK_DECLINED",
-                      error_description: failReason,
-                      error_source: "customer",
-                      error_step: "payment_authentication",
-                      error_reason: "payment_declined",
-                    }).catch(console.warn);
-                    setSandboxModalOrder(null);
-                    setIsProcessing(false);
-                    scrollToError();
-                  }}
-                >
-                  ✕ Simulate Payment Decline (Test Retry Flow)
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

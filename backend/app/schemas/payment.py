@@ -93,43 +93,6 @@ class PaymentFailureResponse(BaseModel):
     can_resume: bool = True
 
 
-class CardPaymentInput(BaseModel):
-    number: str
-    name: str
-    expiry: str
-    cvv: str
-
-
-class ServerPaymentRequest(BaseModel):
-    email: EmailStr
-    phone: str
-    shipping_address: ShippingAddress
-    items: List[OrderItem]
-    subtotal: float
-    gst: float
-    delivery: float
-    total: float
-    payment_method: str = "upi"
-    idempotency_key: Optional[str] = None
-    existing_order_id: Optional[str] = None
-    card: Optional[CardPaymentInput] = None
-    upi_vpa: Optional[str] = None
-    bank_code: Optional[str] = None
-
-
-class ServerPaymentResponse(BaseModel):
-    success: bool
-    order_id: str
-    payment_id: Optional[str] = None
-    status: str
-    message: str
-    is_resumed: bool = False
-    is_already_paid: bool = False
-    error_code: Optional[str] = None
-    error_description: Optional[str] = None
-    can_resume: bool = True
-
-
 class InitiateUpiRequest(BaseModel):
     email: EmailStr
     phone: str
@@ -163,9 +126,3 @@ class PaymentStatusResponse(BaseModel):
     payment_id: Optional[str] = None
     message: str
     error_description: Optional[str] = None
-
-
-class ConfirmUpiApprovalRequest(BaseModel):
-    order_id: str
-    simulated_status: Optional[str] = "approved"  # "approved" or "declined"
-

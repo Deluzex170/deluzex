@@ -9,71 +9,6 @@ from app.core.database import db
 
 router = APIRouter()
 
-DEFAULT_PROJECTS = [
-    {
-        "title": "Luxury Villa Residence",
-        "location": "London, UK",
-        "category": "Residential",
-        "subtitle": "Bespoke Residential Lighting",
-        "description": "Comprehensive architectural and decorative lighting plan featuring custom hand-blown chandeliers, perimeter COB downlights, and warm brass wall sconces across a private three-story villa.",
-        "installations_count": "18 Bespoke Fixtures",
-        "image_url": "/images/project_lounge_1784107767735.jpg",
-        "gallery_images": [
-            "/images/project_lounge_1784107767735.jpg",
-            "/images/category_chandelier_1784107756268.jpg",
-            "/images/about_chandelier_1784107790569.jpg"
-        ],
-        "is_featured": True,
-        "sequence": 1,
-        "created_at": datetime.utcnow()
-    },
-    {
-        "title": "The Grand Hotel Lobby",
-        "location": "Paris, France",
-        "category": "Hospitality",
-        "subtitle": "Grand Hospitality Illumination",
-        "description": "Dramatic monumental crystal chandelier installation paired with anti-glare recessed architectural fixtures, elevating the double-height arrival lobby of a premier five-star destination.",
-        "installations_count": "32 Architectural Fixtures",
-        "image_url": "/images/project_lobby_1784107778993.jpg",
-        "gallery_images": [
-            "/images/project_lobby_1784107778993.jpg",
-            "/images/lamp_modern_tall_1784107732736.jpg"
-        ],
-        "is_featured": True,
-        "sequence": 2,
-        "created_at": datetime.utcnow()
-    },
-    {
-        "title": "Modern Penthouse",
-        "location": "New York, USA",
-        "category": "Residential",
-        "subtitle": "Contemporary Sky Residence",
-        "description": "Sculptural linear LED pendants and dimmable cove illumination harmonizing panoramic skyline views with warm, gallery-grade residential illumination.",
-        "installations_count": "14 Custom Fixtures",
-        "image_url": "/images/hero_bg_1784107713316.jpg",
-        "gallery_images": [
-            "/images/hero_bg_1784107713316.jpg"
-        ],
-        "is_featured": False,
-        "sequence": 3,
-        "created_at": datetime.utcnow()
-    },
-    {
-        "title": "Boutique Restaurant",
-        "location": "Milan, Italy",
-        "category": "Commercial",
-        "subtitle": "Intimate Fine Dining Lighting",
-        "description": "Low-glare pinpoint tableside luminaires and bespoke brass fixtures cultivating an atmosphere of refined indulgence for Milanese gastronomes.",
-        "installations_count": "20 Ambient Fixtures",
-        "image_url": "/images/lamp_classic_1784107722127.jpg",
-        "gallery_images": [
-            "/images/lamp_classic_1784107722127.jpg"
-        ],
-        "is_featured": False,
-        "sequence": 4,
-        "created_at": datetime.utcnow()
-    }
-]
 
 @router.get("", response_model=List[models.Project])
 def read_projects(
@@ -84,11 +19,7 @@ def read_projects(
 ):
     """
     Fetch all projects sorted by sequence and creation date.
-    Auto-seeds default projects if database collection is empty.
     """
-    count = db.projects.count_documents({})
-    if count == 0:
-        db.projects.insert_many([dict(item) for item in DEFAULT_PROJECTS])
 
     query: Dict[str, Any] = {}
     if is_featured is not None:

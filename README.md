@@ -33,6 +33,20 @@ npm run dev
 
 ---
 
+## Email verification and templates
+
+Signup and unverified signin send a verification code automatically. Delivery failures
+are shown explicitly and do not start a resend cooldown. The sender retries one
+transient connection failure before message delivery; SMTP acceptance does not
+guarantee inbox delivery.
+
+Administrators can use `/admin/email-templates` to create, edit, preview, assign,
+and delete verification and password-reset templates. Assign one template per
+email type; deleting it restores the built-in default. Custom content is stored
+in MongoDB (`email_templates` and `email_template_bindings`). Preview substitutes
+sample values without sending mail. Supported placeholders: `{{otp}}`,
+`{{user_name}}`, `{{expires_minutes}}`, `{{brand_name}}`, `{{support_email}}`.
+
 ## Monorepo NPM Scripts
 
 | Command | Description |

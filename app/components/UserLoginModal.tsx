@@ -146,8 +146,8 @@ export default function UserLoginModal() {
       // Check if email verification is required
       if (response.status === 403 && (data?.detail?.includes("EMAIL_NOT_VERIFIED") || data?.detail?.includes("verify your email"))) {
         setActiveTab("email_otp");
-        setResendCooldown(45);
-        setErrorMsg("Please verify your email address. A 6-digit code has been sent to your inbox.");
+        setResendCooldown(data.retry_after ?? 0);
+        setSuccessMsg("Enter the verification code sent to your email. Check your spam folder too.");
         return;
       }
 
@@ -206,7 +206,7 @@ export default function UserLoginModal() {
           last_name: lastName.trim() || "Customer",
           email: emailVal,
           password,
-          phone: phone.trim() || "+919999999999",
+          phone: phone.trim() || undefined,
           accept_terms: true,
         }),
       });
@@ -216,8 +216,9 @@ export default function UserLoginModal() {
       if (response.ok && data.success) {
         if (data.requires_verification) {
           setActiveTab("email_otp");
-          setResendCooldown(45);
-          setSuccessMsg("Account registered! A 6-digit verification code has been sent to your email.");
+          setResendCooldown(data.retry_after ?? 0);
+          if (data.otp_sent) setSuccessMsg(data.message);
+          else setErrorMsg(data.message);
           return;
         }
 

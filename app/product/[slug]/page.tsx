@@ -131,48 +131,33 @@ export default function ProductDetail() {
     }
     // Fallback placeholder if no images
     if (images.length === 0) {
-      images.push("/images/lamp_modern_tall_1784107732736.jpg");
+      images.push("/images/logos/de_luzex_black.svg");
     }
     return images;
   }, [product]);
 
-  // Ensure 4 thumbnails matching Figma 4-box grid
-  const displayThumbs = useMemo(() => {
-    if (!galleryImages || galleryImages.length === 0) {
-      const fallback = "/images/lamp_modern_tall_1784107732736.jpg";
-      return [fallback, fallback, fallback, fallback];
-    }
-    if (galleryImages.length === 1) {
-      return [galleryImages[0], galleryImages[0], galleryImages[0], galleryImages[0]];
-    }
-    if (galleryImages.length === 2) {
-      return [galleryImages[0], galleryImages[1], galleryImages[0], galleryImages[1]];
-    }
-    if (galleryImages.length === 3) {
-      return [galleryImages[0], galleryImages[1], galleryImages[2], galleryImages[0]];
-    }
-    return galleryImages.slice(0, 4);
-  }, [galleryImages]);
+  const displayThumbs = galleryImages.slice(0, 4);
+
 
   // Estimated delivery range matching Figma design
   const estimatedDeliveryText = useMemo(() => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    
+
     const start = new Date();
     start.setDate(start.getDate() + 5);
-    
+
     const end = new Date();
     end.setDate(end.getDate() + 14);
-    
+
     const startDay = days[start.getDay()];
     const startMonth = months[start.getMonth()];
     const startDate = start.getDate();
-    
+
     const endDay = days[end.getDay()];
     const endMonth = months[end.getMonth()];
     const endDate = end.getDate();
-    
+
     return `${startDay}, ${startMonth} ${startDate} - ${endDay} , ${endMonth} ${endDate}`;
   }, []);
 
@@ -213,14 +198,14 @@ export default function ProductDetail() {
 
   // Technical Specifications data
   const specRows = [
-    { key: "Dimensions", value: product.dimensions || "10.5 inch (26.7 cm) Diameter" },
-    { key: "Finish", value: product.finish || product.product_finishing || "Earthy Matte Clay Slip (Fingerprint Resistant)" },
-    { key: "Material", value: product.material || product.product_material || "High-Alumina Vitrified Stoneware" },
-    { key: "Colorway", value: product.colorway || product.product_style || "Warm Terracotta Basalt" },
-    { key: "Piece Weight", value: product.piece_weight || "380g" },
-    { key: "Care", value: product.care || "Oven, Microwave, & High-Temp Dishwasher Safe" },
-    { key: "MOQ Rule", value: product.moq_rule || "50 Pieces per order" },
-    { key: "Replenishment", value: product.replenishment || "Guaranteed available for 5 years minimum" },
+    { key: "Dimensions", value: product.dimensions || "Not provided" },
+    { key: "Finish", value: product.finish || product.product_finishing || "Not provided" },
+    { key: "Material", value: product.material || product.product_material || "Not provided" },
+    { key: "Colorway", value: product.colorway || product.product_style || "Not provided" },
+    { key: "Piece Weight", value: product.piece_weight || "Not provided" },
+    { key: "Care", value: product.care || "Not provided" },
+    { key: "MOQ Rule", value: product.moq_rule || "Not provided" },
+    { key: "Replenishment", value: product.replenishment || "Not provided" },
   ];
 
   // Additional dynamic specs configured by admin
@@ -430,7 +415,7 @@ export default function ProductDetail() {
               <div className={styles.ratingBadge}>
                 <span className={styles.starIcon}>★</span>
                 <span className={styles.ratingText}>
-                  {(reviewsStats?.average_rating ?? (product.product_rating || 4.8)).toFixed(1)} ( {reviewsStats?.total_reviews ?? 300} Reviews )
+                  {(reviewsStats?.average_rating ?? 0).toFixed(1)} ( {reviewsStats?.total_reviews ?? 0} Reviews )
                 </span>
               </div>
             </div>
@@ -530,7 +515,7 @@ export default function ProductDetail() {
                     galleryImages[1] ||
                     currentImage ||
                     product.product_main_image ||
-                    "/images/lamp_modern_tall_1784107732736.jpg"
+                    "/images/logos/de_luzex_black.svg"
                   }
                   alt={product.product_title}
                   fill
@@ -607,15 +592,11 @@ export default function ProductDetail() {
                 {accordionsOpen.specs && (
                   <div className={styles.accordionContent}>
                     <p className={styles.specItem}>
-                      Material: {product.material || product.product_material || "Premium Crystal & Brushed Brass"}
+                      Material: {product.material || product.product_material || "Not provided"}
                     </p>
-                    <p className={styles.specItem}>Light Source: Integrated LED</p>
-                    <p className={styles.specItem}>Color Temperature: 2700K / 3000K / 4000K</p>
-                    <p className={styles.specItem}>Voltage: {product.product_voltage || "220–240V"}</p>
-                    <p className={styles.specItem}>Dimming: Compatible with Smart Dimming Systems</p>
-                    <p className={styles.specItem}>Warranty: 5 Years</p>
-                    <p className={styles.specItem}>Installation: Professional Installation Recommended</p>
-                    <p className={styles.specItem}>Certification: CE & RoHS Certified</p>
+
+                    <p className={styles.specItem}>Voltage: {product.product_voltage || "Not provided"}</p>
+
                   </div>
                 )}
               </div>
@@ -643,10 +624,8 @@ export default function ProductDetail() {
                 </button>
                 {accordionsOpen.dimensions && (
                   <div className={styles.accordionContent}>
-                    <p className={styles.specItem}>Diameter: 32&quot;</p>
-                    <p className={styles.specItem}>Height: 48&quot;</p>
-                    <p className={styles.specItem}>Suspension Length: Adjustable up to 150cm</p>
-                    <p className={styles.specItem}>Weight: {product.piece_weight || "18kg"}</p>
+
+                    <p className={styles.specItem}>Weight: {product.piece_weight || "Not provided"}</p>
                   </div>
                 )}
               </div>
@@ -733,7 +712,7 @@ export default function ProductDetail() {
                         {product.product_title}
                       </div>
                       <div style={{ fontSize: "0.8rem", color: "#6B7280" }}>
-                        SKU: {product.sku || "ME-DP-105"} · {product.price_prefix || "From"} ₹
+                        SKU: {product.sku || "Not provided"} · {product.price_prefix || "From"} ₹
                         {Number(product.product_price || 0).toLocaleString()}
                       </div>
                     </div>
@@ -967,20 +946,18 @@ export default function ProductDetail() {
 
           <div className={styles.ratingSummary}>
             <div className={styles.ratingScore}>
-              <h3>{(reviewsStats?.average_rating ?? (product.product_rating || 4.8)).toFixed(1)}</h3>
+              <h3>{(reviewsStats?.average_rating ?? 0).toFixed(1)}</h3>
               <div className={styles.stars}>
-                {"★".repeat(Math.round(reviewsStats?.average_rating ?? (product.product_rating || 4.8)))}
-                {"☆".repeat(5 - Math.round(reviewsStats?.average_rating ?? (product.product_rating || 4.8)))}
+                {"★".repeat(Math.round(reviewsStats?.average_rating ?? 0))}
+                {"☆".repeat(5 - Math.round(reviewsStats?.average_rating ?? 0))}
               </div>
-              <p>{reviewsStats?.total_reviews ? `${reviewsStats.total_reviews} Ratings` : "35k Ratings"}</p>
+              <p>{reviewsStats?.total_reviews ? `${reviewsStats.total_reviews} Ratings` : "No ratings yet"}</p>
             </div>
             <div className={styles.ratingBars}>
-              {[
-                { score: "5.0", count: "14k Reviews", pct: 46 },
-                { score: "3.0", count: "10k Reviews", pct: 62 },
-                { score: "3.0", count: "10k Reviews", pct: 78 },
-                { score: "3.0", count: "10k Reviews", pct: 39 },
-              ].map((bar, idx) => (
+              {[5, 4, 3, 2, 1].map((score) => ({
+                score: String(score), count: `${reviewsStats?.breakdown?.[String(score)]?.count ?? 0} Reviews`,
+                pct: reviewsStats?.breakdown?.[String(score)]?.pct ?? 0,
+              })).map((bar, idx) => (
                 <div key={idx} className={styles.ratingBarRow}>
                   <div className={styles.barTrack}>
                     <div className={styles.barFill} style={{ width: `${bar.pct}%` }}></div>
@@ -1010,30 +987,7 @@ export default function ProductDetail() {
                   text: rev.text,
                   photos: [],
                 }))
-              : [
-                  {
-                    id: "figma-1",
-                    author_name: "Soni Patel",
-                    time_ago: "2 weeks ago",
-                    rating: 5,
-                    text: "The chandelier exceeded my expectations. The crystal finish is stunning, the lighting is warm and elegant, and it has completely transformed our living room. Highly recommended!",
-                    photos: [
-                      "/images/category_chandelier_1784107756268.jpg",
-                      "/images/lamp_black_gold_1784107745696.jpg",
-                      "/images/about_chandelier_1784107790569.jpg",
-                      "/images/project_lobby_1784107778993.jpg",
-                      "/images/lamp_classic_1784107722127.jpg",
-                    ],
-                  },
-                  {
-                    id: "figma-2",
-                    author_name: "Soni Patel",
-                    time_ago: "2 weeks ago",
-                    rating: 5,
-                    text: "The chandelier exceeded my expectations. The crystal finish is stunning, the lighting is warm and elegant, and it has completely transformed our living room. Highly recommended!",
-                    photos: [],
-                  },
-                ]
+              : []
             ).map((rev: any, i: number) => {
               const starCount = Math.max(1, Math.min(5, rev.rating || 5));
 
@@ -1082,7 +1036,7 @@ export default function ProductDetail() {
             })}
           </div>
 
-          {((reviewsStats?.reviews?.length ?? 2) > 3) && (
+          {((reviewsStats?.reviews?.length ?? 0) > 3) && (
             <button
               className={styles.readAllBtn}
               type="button"
@@ -1118,26 +1072,7 @@ export default function ProductDetail() {
           <h2 className={styles.sectionTitle}>COMPLETE THE LOOK</h2>
 
           <div ref={ctlGridRef} className={styles.ctlGrid}>
-            {(relatedProducts.length > 0 ? relatedProducts : [
-              {
-                id: "1",
-                product_title: "AURORA CHANDELIER",
-                product_price: 300,
-                product_main_image: "/images/lamp_modern_tall_1784107732736.jpg",
-              },
-              {
-                id: "2",
-                product_title: "AURORA CHANDELIER",
-                product_price: 300,
-                product_main_image: "/images/lamp_modern_tall_1784107732736.jpg",
-              },
-              {
-                id: "3",
-                product_title: "AURORA CHANDELIER",
-                product_price: 300,
-                product_main_image: "/images/lamp_modern_tall_1784107732736.jpg",
-              },
-            ]).map((prod: any, i: number) => {
+            {relatedProducts.map((prod: any, i: number) => {
               const prodId = prod._id || prod.id || i;
               const isSelected = activeCtlId === prodId;
               return (
@@ -1155,7 +1090,7 @@ export default function ProductDetail() {
                       }}
                     >
                       <Image
-                        src={prod.product_main_image || "/images/lamp_modern_tall_1784107732736.jpg"}
+                        src={prod.product_main_image || "/images/logos/de_luzex_black.svg"}
                         alt={prod.product_title}
                         fill
                         sizes="350px"
@@ -1174,7 +1109,7 @@ export default function ProductDetail() {
                             id: String(prod.id || prod._id || Math.random()),
                             name: prod.product_title,
                             price: Number(prod.product_price) || 0,
-                            product_main_image: prod.product_main_image || "/images/lamp_modern_tall_1784107732736.jpg",
+                            product_main_image: prod.product_main_image || "/images/logos/de_luzex_black.svg",
                             quantity: 1,
                           })
                         );
@@ -1211,8 +1146,8 @@ export default function ProductDetail() {
                   </div>
                   <div className={styles.ctlProductRating}>
                     <span className={styles.ctlRatingStar}>★</span>
-                    <span className={styles.ctlRatingScore}>4.8</span>
-                    <span className={styles.ctlRatingCount}> ( 300 Reviews )</span>
+                    <span className={styles.ctlRatingScore}>{prod.product_rating ? `${prod.product_rating} / 5` : "Not rated yet"}</span>
+
                   </div>
                 </div>
               );

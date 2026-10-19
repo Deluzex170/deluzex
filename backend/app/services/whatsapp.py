@@ -24,7 +24,7 @@ def send_whatsapp_otp(phone: str, otp: str) -> Dict[str, Any]:
     Dispatches an OTP verification message via Meta WhatsApp Cloud API using
     the pre-approved Authentication template (e.g. 'auth').
     
-    If WHATSAPP_ACCESS_TOKEN is not yet set, runs in mock dev mode and prints the OTP.
+    Missing credentials produce a delivery error.
     """
     recipient = normalize_phone_number(phone)
     if not recipient or len(recipient) < 10:
@@ -34,17 +34,8 @@ def send_whatsapp_otp(phone: str, otp: str) -> Dict[str, Any]:
     phone_number_id = (settings.WHATSAPP_PHONE_NUMBER_ID or "").strip()
     template_name = (settings.WHATSAPP_TEMPLATE_NAME or "auth").strip()
 
-    # MOCK MODE: When token is not yet configured, log for effortless developer testing
-    if not access_token:
-        app_logger.warning(
-            f"[WHATSAPP MOCK MODE] Access token not configured. OTP for {recipient} is: >>> {otp} <<<"
-        )
-        return {
-            "success": True,
-            "mock": True,
-            "message": f"Dev mode: OTP '{otp}' generated (WhatsApp token not set yet)",
-            "recipient": recipient
-        }
+    if not access_token or not phone_number_id:
+        return {"success": False, "error": "WhatsApp messaging is not configured on the server."}
 
     url = f"https://graph.facebook.com/{META_GRAPH_API_VERSION}/{phone_number_id}/messages"
     headers = {
@@ -106,16 +97,15 @@ def send_whatsapp_otp(phone: str, otp: str) -> Dict[str, Any]:
             if resp.is_success:
                 data = resp.json()
                 app_logger.info(f"WhatsApp OTP dispatched to {recipient}. Msg ID: {data.get('messages', [{}])[0].get('id')}")
-                return {"success": True, "mock": False, "data": data}
+                return {"success": True, "data": data}
             else:
                 error_body = resp.text
                 app_logger.error(f"WhatsApp Cloud API error ({resp.status_code}): {error_body}")
                 return {
                     "success": False,
-                    "mock": False,
-                    "error": f"Meta API error ({resp.status_code})",
+                        "error": f"Meta API error ({resp.status_code})",
                     "details": error_body
                 }
     except Exception as exc:
         app_logger.error(f"Failed to communicate with WhatsApp Cloud API: {exc}")
-        return {"success": False, "mock": False, "error": str(exc)}
+        return {"success": False, "error": str(exc)}

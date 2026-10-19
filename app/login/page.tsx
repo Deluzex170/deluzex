@@ -288,8 +288,8 @@ export default function Login() {
         if (response.status === 403 && (data?.detail?.includes("EMAIL_NOT_VERIFIED") || data?.detail?.includes("verify your email"))) {
           setPendingEmail(email.trim());
           setAuthMode("email_otp");
-          setResendCooldown(45);
-          setToast({ type: "error", message: "Please verify your email address. A 6-digit code has been sent to your inbox." });
+          setResendCooldown(data.retry_after ?? 0);
+          setToast({ type: "success", message: "Enter the verification code sent to your email. Check your spam folder too." });
           return;
         }
         
@@ -335,8 +335,7 @@ export default function Login() {
             last_name: "Customer",
             email: email.trim(),
             password,
-            phone: "+919999999999",
-            accept_terms: true,
+              accept_terms: true,
           }),
         });
         const data = await safeParseResponse(response);
@@ -345,8 +344,8 @@ export default function Login() {
           if (data.requires_verification) {
             setPendingEmail(email.trim());
             setAuthMode("email_otp");
-            setResendCooldown(45);
-            setToast({ type: "success", message: "Registration successful! A 6-digit verification code has been sent to your email." });
+            setResendCooldown(data.retry_after ?? 0);
+            setToast({ type: data.otp_sent ? "success" : "error", message: data.message });
             return;
           }
 

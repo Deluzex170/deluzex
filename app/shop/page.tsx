@@ -18,118 +18,6 @@ const SORT_OPTIONS = [
   { label: "Newest Arrivals", value: "NEWEST ARRIVALS" },
 ];
 
-const FALLBACK_CATEGORIES: Category[] = [
-  { id: "chandeliers", name: "Chandeliers", image_url: "/images/about_chandelier_1784107790569.jpg" },
-  { id: "pendant-lights", name: "Pendant Lights", image_url: "/images/category_chandelier_1784107756268.jpg" },
-  { id: "cob", name: "COB", image_url: "/images/project_lobby_1784107778993.jpg" },
-  { id: "table-lamps", name: "Table Lamps", image_url: "/images/lamp_black_gold_1784107745696.jpg" },
-  { id: "floor-lamps", name: "Floor Lamps", image_url: "/images/lamp_modern_tall_1784107732736.jpg" },
-  { id: "wall-lights", name: "Wall Lights", image_url: "/images/lamp_classic_1784107722127.jpg" },
-];
-
-const FALLBACK_PRODUCTS: Product[] = [
-  {
-    _id: "prod_pendant_1",
-    id: "prod_pendant_1",
-    product_title: "Linear Wood LED Pendant",
-    product_price: "42500",
-    product_description: "Minimalist natural oak LED linear suspension bar for dining islands and conference tables.",
-    product_category: "Pendant Lights",
-    product_rating: 4.9,
-    product_main_image: "/images/category_chandelier_1784107756268.jpg",
-  },
-  {
-    _id: "prod_pendant_2",
-    id: "prod_pendant_2",
-    product_title: "Smoked Glass Drop Pendant",
-    product_price: "28900",
-    product_description: "Handblown smoked glass globe with brushed brass hardware and warm filament glow.",
-    product_category: "Pendant Lights",
-    product_rating: 4.8,
-    product_main_image: "/images/category_chandelier_1784107756268.jpg",
-  },
-  {
-    _id: "prod_chandelier_1",
-    id: "prod_chandelier_1",
-    product_title: "Vera Tiered Crystal Chandelier",
-    product_price: "194900",
-    product_description: "Grand multi-tier faceted crystal fixture with hand-finished electroplated gold framework.",
-    product_category: "Chandeliers",
-    product_rating: 5.0,
-    product_main_image: "/images/about_chandelier_1784107790569.jpg",
-  },
-  {
-    _id: "prod_chandelier_2",
-    id: "prod_chandelier_2",
-    product_title: "Aurora Modern Radial Chandelier",
-    product_price: "135000",
-    product_description: "Contemporary radial brass arms extending into frosted optical glass diffusers.",
-    product_category: "Chandeliers",
-    product_rating: 4.9,
-    product_main_image: "/images/about_chandelier_1784107790569.jpg",
-  },
-  {
-    _id: "prod_cob_1",
-    id: "prod_cob_1",
-    product_title: "Architectural Deep COB Downlight",
-    product_price: "8500",
-    product_description: "Anti-glare recessed architectural spotlight with 24-degree narrow beam and high CRI 95+.",
-    product_category: "COB",
-    product_rating: 4.7,
-    product_main_image: "/images/project_lobby_1784107778993.jpg",
-  },
-  {
-    _id: "prod_cob_2",
-    id: "prod_cob_2",
-    product_title: "Surface-Mounted Cylindrical COB",
-    product_price: "11200",
-    product_description: "Matte black and champagne gold directional spot spotlight for gallery ceilings.",
-    product_category: "COB",
-    product_rating: 4.8,
-    product_main_image: "/images/project_lobby_1784107778993.jpg",
-  },
-  {
-    _id: "prod_table_1",
-    id: "prod_table_1",
-    product_title: "Modern Brass Desk Lamp",
-    product_price: "23100",
-    product_description: "Precision-turned brass articulating arm with matte black shade and touch dimmer.",
-    product_category: "Table Lamps",
-    product_rating: 4.8,
-    product_main_image: "/images/lamp_black_gold_1784107745696.jpg",
-  },
-  {
-    _id: "prod_table_2",
-    id: "prod_table_2",
-    product_title: "Vintage Pleated Silk Lamp",
-    product_price: "19500",
-    product_description: "Warm antique gold cast base paired with a pleated ivory silk shade.",
-    product_category: "Table Lamps",
-    product_rating: 4.9,
-    product_main_image: "/images/lamp_classic_1784107722127.jpg",
-  },
-  {
-    _id: "prod_floor_1",
-    id: "prod_floor_1",
-    product_title: "Cylindrical Architectural Floor Lamp",
-    product_price: "34900",
-    product_description: "Minimalist vertical column diffuser with warm white LED light and marble base.",
-    product_category: "Floor Lamps",
-    product_rating: 4.9,
-    product_main_image: "/images/lamp_modern_tall_1784107732736.jpg",
-  },
-  {
-    _id: "prod_wall_1",
-    id: "prod_wall_1",
-    product_title: "Luxe Minimalist Dual Sconce",
-    product_price: "18500",
-    product_description: "Up-and-down ambient wall wash fixture in brushed champagne bronze.",
-    product_category: "Wall Lights",
-    product_rating: 4.8,
-    product_main_image: "/images/lamp_classic_1784107722127.jpg",
-  },
-];
-
 function ShopContent() {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -141,8 +29,8 @@ function ShopContent() {
   const { isAuthenticated, openLoginModal } = useAuth();
   const cartItems = useSelector((state: RootState) => state.cart.cartItems);
 
-  const [categories, setCategories] = useState<Category[]>(FALLBACK_CATEGORIES);
-  const [products, setProducts] = useState<Product[]>(FALLBACK_PRODUCTS);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryParam);
   const [searchQuery, setSearchQuery] = useState<string>(searchParam);
   const [priceRange, setPriceRange] = useState<string>(priceParam);
@@ -197,19 +85,8 @@ function ShopContent() {
           fetchCategories(),
           fetchProducts(),
         ]);
-        if (cats && cats.length > 0) {
-          setCategories(cats);
-        }
-        if (prods && prods.length > 0) {
-          // Merge MongoDB products with catalog defaults so all luxury categories remain rich
-          const merged = [...prods];
-          FALLBACK_PRODUCTS.forEach((fb) => {
-            if (!merged.some((p) => String(p._id || p.id) === String(fb._id || fb.id) || p.product_title === fb.product_title)) {
-              merged.push(fb);
-            }
-          });
-          setProducts(merged);
-        }
+        setCategories(Array.isArray(cats) ? cats : []);
+        setProducts(Array.isArray(prods) ? prods : []);
       } catch (error) {
         console.error("Failed to load shop data:", error);
       } finally {
@@ -794,7 +671,7 @@ function ShopContent() {
                       >
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                       </svg>
-                      <span>{product.product_rating || 4.8} ( 300 Reviews )</span>
+                      <span>{product.product_rating ? `${product.product_rating} / 5` : "Not rated yet"}</span>
                     </div>
                   </div>
                 </div>

@@ -2,12 +2,12 @@ import styles from "./about.module.css";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
-import { fetchSiteContent } from "../services/api";
+import { fetchSiteContent, fetchProjects } from "../services/api";
 
 export const dynamic = "force-dynamic";
 
 export default async function About() {
-  const cmsAbout = await fetchSiteContent("about");
+  const [cmsAbout, projects] = await Promise.all([fetchSiteContent("about"), fetchProjects("is_featured=true")]);
 
   const heroTitle = cmsAbout?.hero?.title || "Crafting Light For\nExtraordinary Interiors";
   const storyTitle = cmsAbout?.story?.title || "A Passion For Light.\nA Commitment To Excellence.";
@@ -21,14 +21,7 @@ export default async function About() {
 
   const features = cmsAbout?.story?.features || defaultFeatures;
 
-  const defaultStats = [
-    { number: "10+", label: "Years Of Excellence" },
-    { number: "98%", label: "Client Satisfaction" },
-    { number: "500+", label: "Lighting Installations" },
-    { number: "50K", label: "Happy Customers" },
-  ];
-
-  const stats = cmsAbout?.stats || defaultStats;
+  const stats = cmsAbout?.stats || [];
 
   const defaultPillars = [
     {
@@ -227,64 +220,14 @@ export default async function About() {
       <section className={styles.projectsSection}>
         <h2 className={styles.sectionTitleCenter}>Our Featured Projects.</h2>
         <div className={styles.projectGrid}>
-          <Link href="/projects" className={styles.projectCard}>
-            <Image
-              src="/images/project_lounge_1784107767735.jpg"
-              alt="Luxury Villa Residence"
-              fill
-              style={{ objectFit: "cover" }}
-            />
-            <div className={styles.projectLabelBox}>
-              <div>
-                <span className={styles.plbTitle}>Luxury Villa Residence</span>
-                <span className={styles.plbSub}>View Details &gt;</span>
-              </div>
-              <span
-                className={styles.iconBtnRoundWhite}
-                aria-label="View Project"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </span>
-            </div>
-          </Link>
-          <Link href="/projects" className={styles.projectCard}>
-            <Image
-              src="/images/project_lobby_1784107778993.jpg"
-              alt="The Grand Hotel Lobby"
-              fill
-              style={{ objectFit: "cover" }}
-            />
-            <div className={styles.projectLabelBox}>
-              <div>
-                <span className={styles.plbTitle}>The Grand Hotel Lobby</span>
-                <span className={styles.plbSub}>View Details &gt;</span>
-              </div>
-              <span
-                className={styles.iconBtnRoundWhite}
-                aria-label="View Project"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </span>
-            </div>
-          </Link>
+          {projects.slice(0, 2).map((project) => <Link key={project.id || project._id} href={`/projects/${project.id || project._id}`} className={styles.projectCard}>
+            {project.image_url && <Image src={project.image_url} alt={project.title} fill style={{ objectFit: "cover" }} />}
+            <div className={styles.projectLabelBox}><div>
+              <span className={styles.plbTitle}>{project.title}</span>
+              <span className={styles.plbSub}>View Details &gt;</span>
+            </div></div>
+          </Link>)}
+          {projects.length === 0 && <p>No projects available yet.</p>}
         </div>
         <div className={styles.centerBtn}>
           <Link href="/projects" className={styles.btnExploreProjects}>

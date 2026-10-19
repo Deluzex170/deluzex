@@ -10,64 +10,12 @@ export const metadata: Metadata = {
     "Explore our complete portfolio of luxury architectural and decorative lighting fixtures: chandeliers, pendant lights, COB, table lamps, and custom installations.",
 };
 
-const DEFAULT_CATEGORIES = [
-  {
-    id: "pendant-lights",
-    name: "Pendant Lights",
-    description: "Suspended sculptural illumination designed to anchor dining rooms, kitchen islands, and contemporary living spaces.",
-    image_url: "/images/category_chandelier_1784107756268.jpg",
-  },
-  {
-    id: "chandeliers",
-    name: "Chandeliers",
-    description: "Grand, breathtaking statement centerpieces blending handcrafted crystal, brushed brass, and radiant light.",
-    image_url: "/images/about_chandelier_1784107790569.jpg",
-  },
-  {
-    id: "cob",
-    name: "COB Lighting",
-    description: "Precision-engineered chip-on-board architectural spots and recessed downlights delivering clean, focused beam angles.",
-    image_url: "/images/project_lobby_1784107778993.jpg",
-  },
-  {
-    id: "table-lamps",
-    name: "Table Lamps",
-    description: "Refined bedside and desk lighting combining rich bronze, marble bases, and textured fabric shades.",
-    image_url: "/images/lamp_black_gold_1784107745696.jpg",
-  },
-  {
-    id: "floor-lamps",
-    name: "Floor Lamps",
-    description: "Tall, slender silhouettes crafted with brushed gold and cylindrical diffusers to brighten reading corners and lounges.",
-    image_url: "/images/lamp_modern_tall_1784107732736.jpg",
-  },
-  {
-    id: "wall-lights",
-    name: "Wall Lights & Sconces",
-    description: "Sophisticated ambient sconces designed to highlight architectural textures, hallways, and gallery walls.",
-    image_url: "/images/lamp_classic_1784107722127.jpg",
-  },
-];
-
 export const dynamic = "force-dynamic";
 
 export default async function CategoriesPage() {
   const apiCategories = await fetchCategories();
 
-  // Merge API categories with fallback categories ensuring rich catalog display
-  const categoriesList: (Category & { description?: string | null })[] =
-    apiCategories && apiCategories.length > 0
-      ? apiCategories.map((cat, idx) => ({
-          ...cat,
-          image_url: cat.image_url || DEFAULT_CATEGORIES[idx % DEFAULT_CATEGORIES.length].image_url,
-          description:
-            cat.description ||
-            DEFAULT_CATEGORIES.find(
-              (d) => d.name.toLowerCase() === cat.name.toLowerCase()
-            )?.description ||
-            "Exceptional craftsmanship and warm illumination to transform every space.",
-        }))
-      : DEFAULT_CATEGORIES;
+  const categoriesList: (Category & { description?: string | null })[] = apiCategories || [];
 
   return (
     <main className={styles.main}>
