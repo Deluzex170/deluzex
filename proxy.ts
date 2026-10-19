@@ -14,7 +14,7 @@ function decodeJwtPayload(token: string): { sub?: string; is_admin?: boolean; ex
   }
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   const isAdminLogin = pathname === '/admin/login';
