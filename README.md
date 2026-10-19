@@ -48,6 +48,6 @@ npm run dev
 
 ---
 
-## Comprehensive Documentatio
+## Comprehensive Documentation
 
 For complete operational details, Vercel multi-environment deployment configurations, API proxy rewrites, and environment variable references, consult the [Monorepo Guide](MONOREPO_GUIDE.md).
