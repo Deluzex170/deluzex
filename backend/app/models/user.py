@@ -7,8 +7,8 @@ class User(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     first_name: Optional[str] = ""
     last_name: Optional[str] = ""
-    email: EmailStr
-    hashed_password: str
+    email: Optional[str] = None
+    hashed_password: Optional[str] = None
     phone: Optional[str] = None
     city: Optional[str] = None
     country: Optional[str] = None

@@ -52,3 +52,5 @@ backend/.venv/
 venv/
 .venv/
 .pytest_cache/
+backend/set_admin.py
+backend/make_admin.py

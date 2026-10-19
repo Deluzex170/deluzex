@@ -2382,5 +2382,90 @@ export async function syncBackendCart(
   }
 }
 
+export async function sendWhatsAppOtp(phone: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/whatsapp/send-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.detail || data.message || "Failed to send WhatsApp verification code.");
+    }
+    return data;
+  } catch (error: any) {
+    logger.error("API", "Error sending WhatsApp OTP:", error);
+    throw error;
+  }
+}
 
+export async function verifyWhatsAppOtp(
+  phone: string,
+  otp: string,
+  firstName?: string,
+  lastName?: string
+): Promise<{ success: boolean; message: string; access_token: string; data: any }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/whatsapp/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        phone,
+        otp,
+        first_name: firstName,
+        last_name: lastName,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.detail || data.message || "Invalid verification code.");
+    }
+    return data;
+  } catch (error: any) {
+    logger.error("API", "Error verifying WhatsApp OTP:", error);
+    throw error;
+  }
+}
+
+export async function verifyEmailOtp(
+  email: string,
+  otp: string
+): Promise<{ success: boolean; message: string; access_token?: string; data?: any }> {
+  try {
+    const res = await fetch(${API_BASE_URL}/auth/verify-email-otp, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim().toLowerCase(), otp: otp.trim() }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.detail || data.message || 'Failed to verify email code.');
+    }
+    return data;
+  } catch (error: any) {
+    logger.error('API', 'Error verifying email OTP:', error);
+    throw error;
+  }
+}
+
+export async function resendEmailOtp(
+  email: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const res = await fetch(${API_BASE_URL}/auth/resend-email-otp, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.detail || data.message || 'Failed to resend verification code.');
+    }
+    return data;
+  } catch (error: any) {
+    logger.error('API', 'Error resending email OTP:', error);
+    throw error;
+  }
+}
 
