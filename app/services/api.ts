@@ -2433,7 +2433,7 @@ export async function verifyEmailOtp(
   otp: string
 ): Promise<{ success: boolean; message: string; access_token?: string; data?: any }> {
   try {
-    const res = await fetch(${API_BASE_URL}/auth/verify-email-otp, {
+    const res = await fetch(`${API_BASE_URL}/auth/verify-email-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email.trim().toLowerCase(), otp: otp.trim() }),
@@ -2453,7 +2453,7 @@ export async function resendEmailOtp(
   email: string
 ): Promise<{ success: boolean; message: string }> {
   try {
-    const res = await fetch(${API_BASE_URL}/auth/resend-email-otp, {
+    const res = await fetch(`${API_BASE_URL}/auth/resend-email-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email.trim().toLowerCase() }),
