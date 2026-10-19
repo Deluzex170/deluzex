@@ -6,7 +6,7 @@
     "dev": "concurrently -n \"next,fastapi\" -c \"cyan,magenta\" \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "next dev",
     "dev:backend": "python -m uvicorn main:app --app-dir backend --reload --host 0.0.0.0 --port 8000",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "install:backend": "python -m pip install -r backend/requirements.txt",

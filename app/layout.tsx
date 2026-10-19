@@ -24,7 +24,6 @@ const italianno = Italianno({
 });
 
 const hanken = Hanken_Grotesk({
-  weight: ["400", "600"],
   subsets: ["latin"],
   variable: "--font-hanken",
 });
