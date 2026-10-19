@@ -4,6 +4,8 @@ import Link from "next/link";
 import React from "react";
 import { fetchSiteContent } from "../services/api";
 
+export const dynamic = "force-dynamic";
+
 export default async function About() {
   const cmsAbout = await fetchSiteContent("about");
 

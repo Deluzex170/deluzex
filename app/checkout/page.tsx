@@ -353,7 +353,7 @@ export default function CheckoutPage() {
 
         // Configure and open Razorpay Official Modal
         const options = {
-          key: orderRes.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_TMTdBccApgaZzL",
+          key: orderRes.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_TpVQEuXPqCh2wV",
           amount: orderRes.amount,
           currency: orderRes.currency || "INR",
           name: "Deluzex Lighting",

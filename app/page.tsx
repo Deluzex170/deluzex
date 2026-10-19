@@ -14,6 +14,8 @@ import StoreHome from "./page.store.backup";
  */
 const SHOW_COMING_SOON = false;
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Deluzex Lighting — Where Lights Become Art",
   description: "Crafted with exceptional materials and refined details to elevate modern living spaces. Explore chandeliers, wall lights, ceiling lights, lamps, and more.",

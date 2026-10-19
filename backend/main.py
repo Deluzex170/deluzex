@@ -8,12 +8,15 @@ _backend_dir = os.path.dirname(os.path.abspath(__file__))
 if _backend_dir not in sys.path:
     sys.path.insert(0, _backend_dir)
 
-# Load root .env
-_root_env = Path(_backend_dir).parent / ".env"
-if _root_env.exists():
-    load_dotenv(_root_env)
-else:
-    load_dotenv()
+# Load root .env.local or .env
+for _env_candidate in [
+    Path(_backend_dir).parent / ".env.local",
+    Path(_backend_dir).parent / ".env",
+    Path(_backend_dir) / ".env.local",
+    Path(_backend_dir) / ".env",
+]:
+    if _env_candidate.exists():
+        load_dotenv(_env_candidate)
 
 
 import uuid
@@ -131,8 +134,11 @@ import os
 from fastapi.staticfiles import StaticFiles
 
 uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
-os.makedirs(uploads_dir, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+try:
+    os.makedirs(uploads_dir, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+except Exception:
+    pass
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
