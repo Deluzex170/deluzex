@@ -75,5 +75,24 @@ class DeploymentTests(unittest.TestCase):
         self.assertNotIn("access_token", response.json())
         send_otp.assert_not_called()
 
+    def test_login_reports_email_delivery_failure(self):
+        database = MagicMock()
+        database.users.find_one.return_value = {
+            "email": "test@example.com", "hashed_password": "test-hash",
+            "is_active": True, "is_verified": False, "is_admin": False,
+        }
+        database.email_otps.find_one.return_value = None
+        with patch.object(auth, "db", database), \
+             patch.object(auth, "verify_password", return_value=True), \
+             patch.object(auth, "_issue_and_send_email_otp", return_value={
+                 "send_res": {"success": False, "error": "SMTP connection closed during authentication."}
+             }):
+            response = self.request("POST", "/api/v1/auth/login", json={
+                "email": "test@example.com", "password": "test-password",
+            })
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("SMTP connection closed during authentication", response.json()["detail"])
+        self.assertNotIn("access_token", response.json())
+
 if __name__ == "__main__":
     unittest.main()

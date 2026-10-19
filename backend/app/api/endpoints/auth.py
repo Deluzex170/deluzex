@@ -152,11 +152,17 @@ def login_user(user_in: schemas.UserLogin, request: Request):
             if (datetime.utcnow() - otp_record["created_at"]).total_seconds() < 45:
                 should_send = False
         if should_send:
-            _issue_and_send_email_otp(clean_email=user.email.lower(), user_name=user.first_name)
+            result = _issue_and_send_email_otp(clean_email=user.email.lower(), user_name=user.first_name)
+            if not result.get("send_res", {}).get("success", False):
+                error = result.get("send_res", {}).get("error", "Email service error")
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"Unable to send verification email: {error}",
+                )
 
         raise HTTPException(
             status_code=403,
-            detail=f"EMAIL_NOT_VERIFIED: Please verify your email ({user.email}) before logging in. A 6-digit verification code has been sent to your email."
+            detail=f"EMAIL_NOT_VERIFIED: Please verify your email ({user.email}) before logging in. Enter your verification code or use Resend Code if it has not arrived."
         )
     
     # Log action
