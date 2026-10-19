@@ -23,7 +23,12 @@ const nextConfig: NextConfig = {
         },
       ];
     }
-    return [];
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: "/api/index",
+      },
+    ];
   },
 };
 
