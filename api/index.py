@@ -14,3 +14,8 @@ try:
     from backend.main import app  # type: ignore[import-not-found] # noqa: E402
 except ImportError:
     from main import app  # type: ignore[import-not-found] # noqa: E402
+
+@app.get("/api/v1/health-check")
+def vercel_health():
+    return {"status": "ok", "runtime": "vercel-python", "framework": "fastapi"}
+

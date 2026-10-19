@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  output: process.env.VERCEL ? undefined : "standalone",
   images: {
     remotePatterns: [
       {
@@ -23,12 +23,7 @@ const nextConfig: NextConfig = {
         },
       ];
     }
-    return [
-      {
-        source: "/api/v1/:path*",
-        destination: "/api/index",
-      },
-    ];
+    return [];
   },
 };
 
