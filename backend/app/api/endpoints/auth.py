@@ -8,7 +8,7 @@ from app.core.security import verify_password, get_password_hash, create_access_
 from app.core.database import db
 from app.core.audit import record_audit_event
 from app.services import whatsapp as whatsapp_service
-from app.services.email import send_verification_email
+from app.services.email import send_verification_email, send_password_reset_email
 
 router = APIRouter()
 
@@ -118,7 +118,10 @@ def login_user(user_in: schemas.UserLogin, request: Request):
             status="FAILED",
             request=request
         )
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
+        raise HTTPException(
+            status_code=404,
+            detail="ACCOUNT_NOT_FOUND: No account found with this email. Please sign up to create an account."
+        )
         
     user = models.User(**user_data)
         
@@ -690,6 +693,115 @@ def verify_whatsapp_otp_endpoint(req: schemas.WhatsAppVerifyOtpRequest, request:
             created_at=user.created_at
         )
     )
+
+@router.post("/forgot-password", response_model=schemas.StandardResponse)
+def forgot_password(payload: schemas.ForgotPasswordRequest, request: Request):
+    clean_email = str(payload.email).strip().lower()
+    user_doc = db.users.find_one({"email": {"$regex": f"^{re.escape(clean_email)}$", "$options": "i"}})
+    
+    if not user_doc:
+        raise HTTPException(
+            status_code=404,
+            detail="ACCOUNT_NOT_FOUND: No account registered with this email. Please check your email or sign up."
+        )
+
+    user_name = f"{user_doc.get('first_name', '')} {user_doc.get('last_name', '')}".strip()
+    otp = f"{random.randint(100000, 999999)}"
+    now = datetime.utcnow()
+    expires_at = now + timedelta(minutes=10)
+
+    db.password_reset_otps.update_one(
+        {"email": clean_email},
+        {
+            "$set": {
+                "email": clean_email,
+                "otp": otp,
+                "created_at": now,
+                "expires_at": expires_at,
+                "attempts": 0
+            }
+        },
+        upsert=True
+    )
+
+    send_res = send_password_reset_email(to_email=clean_email, otp=otp, user_name=user_name)
+    if not send_res.get("success"):
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to dispatch password reset email: {send_res.get('error', 'SMTP dispatch failed')}"
+        )
+
+    record_audit_event(
+        action="FORGOT_PASSWORD_REQUESTED",
+        action_category="auth",
+        actor_email=clean_email,
+        actor_role="Customer",
+        target_type="auth",
+        target_name="Password Reset OTP",
+        description=f"Password reset OTP sent to {clean_email}",
+        status="SUCCESS",
+        request=request
+    )
+
+    return schemas.StandardResponse(
+        success=True,
+        message="A 6-digit password reset code has been sent to your email address."
+    )
+
+@router.post("/reset-password", response_model=schemas.StandardResponse)
+def reset_password(payload: schemas.ResetPasswordRequest, request: Request):
+    clean_email = str(payload.email).strip().lower()
+    clean_otp = str(payload.otp).strip()
+    new_password = str(payload.new_password)
+
+    if len(new_password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters long.")
+
+    otp_record = db.password_reset_otps.find_one({"email": clean_email})
+    if not otp_record:
+        raise HTTPException(status_code=400, detail="No active password reset request found for this email. Please request a new code.")
+
+    # Check expiration
+    if datetime.utcnow() > otp_record.get("expires_at", datetime.min):
+        db.password_reset_otps.delete_one({"email": clean_email})
+        raise HTTPException(status_code=400, detail="The verification code has expired. Please request a new one.")
+
+    # Check OTP match
+    if str(otp_record.get("otp")).strip() != clean_otp:
+        attempts = otp_record.get("attempts", 0) + 1
+        if attempts >= 5:
+            db.password_reset_otps.delete_one({"email": clean_email})
+            raise HTTPException(status_code=400, detail="Too many invalid attempts. Please request a new reset code.")
+        db.password_reset_otps.update_one({"email": clean_email}, {"$set": {"attempts": attempts}})
+        raise HTTPException(status_code=400, detail="Invalid verification code. Please check and try again.")
+
+    # Update password in db
+    user_doc = db.users.find_one({"email": {"$regex": f"^{re.escape(clean_email)}$", "$options": "i"}})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User account not found.")
+
+    hashed_pw = get_password_hash(new_password)
+    db.users.update_one({"_id": user_doc["_id"]}, {"$set": {"hashed_password": hashed_pw, "is_verified": True}})
+    db.password_reset_otps.delete_one({"email": clean_email})
+
+    record_audit_event(
+        action="PASSWORD_RESET_SUCCESS",
+        action_category="auth",
+        actor_id=str(user_doc["_id"]),
+        actor_email=clean_email,
+        actor_role="Customer",
+        target_type="auth",
+        target_name="Password Reset",
+        description=f"Password successfully reset for {clean_email}",
+        status="SUCCESS",
+        request=request
+    )
+
+    return schemas.StandardResponse(
+        success=True,
+        message="Your password has been successfully reset! You can now log in with your new password."
+    )
+
 
 
 

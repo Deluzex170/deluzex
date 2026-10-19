@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { useDispatch } from "react-redux";
 import { addToCart, openCart } from "../store/cartSlice";
 import WhatsAppAuthSection from "../components/WhatsAppAuthSection";
-import { verifyEmailOtp, resendEmailOtp } from "../services/api";
+import { verifyEmailOtp, resendEmailOtp, requestPasswordReset, resetPasswordWithOtp } from "../services/api";
 
 type ToastProps = {
   type: "success" | "error";
@@ -25,6 +25,17 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
+
+  // Forgot password OTP + new password state
+  const [forgotStep, setForgotStep] = useState<"email" | "otp_password">("email");
+  const [resetOtp, setResetOtp] = useState("");
+  const [resetOtpError, setResetOtpError] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordError, setNewPasswordError] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   // Email OTP state
   const [emailOtp, setEmailOtp] = useState("");
@@ -90,8 +101,25 @@ export default function Login() {
     return fallback;
   };
 
+  const safeParseResponse = async (response: Response): Promise<any> => {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      try {
+        return await response.json();
+      } catch {
+        return { detail: "Failed to parse server response." };
+      }
+    }
+    const text = await response.text();
+    return {
+      detail: response.status === 404
+        ? "Service endpoint not reachable (404)."
+        : text || "Server communication error.",
+    };
+  };
+
   const authFetch = async (endpoint: string, options: RequestInit): Promise<Response> => {
-    const envUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+    const envUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
     try {
       const res = await fetch(`${envUrl}${endpoint}`, options);
       return res;
@@ -108,7 +136,7 @@ export default function Login() {
     }
   };
 
-  const handleResetSubmit = (e: React.FormEvent) => {
+  const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setResetEmailError("");
     if (!resetEmail.trim()) {
@@ -121,11 +149,85 @@ export default function Login() {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const res = await requestPasswordReset(resetEmail.trim());
       setResetSent(true);
-      setToast({ type: "success", message: "Password reset link has been sent to your email." });
-    }, 700);
+      setForgotStep("otp_password");
+      setToast({
+        type: "success",
+        message: res.message || "A 6-digit reset code has been sent to your email.",
+      });
+    } catch (err: any) {
+      const msg = err?.message || "Failed to send reset code. Please try again.";
+      if (msg.includes("ACCOUNT_NOT_FOUND") || msg.toLowerCase().includes("no account")) {
+        setResetEmailError("No account found with this email. Please check your email or sign up.");
+        setToast({
+          type: "error",
+          message: "No account found with this email. You can sign up below.",
+        });
+      } else {
+        setResetEmailError(msg);
+        setToast({ type: "error", message: msg });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPasswordWithOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetOtpError("");
+    setNewPasswordError("");
+    setConfirmPasswordError("");
+
+    let valid = true;
+    if (!resetOtp.trim() || resetOtp.trim().length !== 6) {
+      setResetOtpError("Please enter the 6-digit code.");
+      valid = false;
+    }
+
+    if (!newPassword.trim()) {
+      setNewPasswordError("New password is required.");
+      valid = false;
+    } else {
+      const pswErr = validatePassword(newPassword);
+      if (pswErr) {
+        setNewPasswordError(pswErr);
+        valid = false;
+      }
+    }
+
+    if (newPassword !== confirmPassword) {
+      setConfirmPasswordError("Passwords do not match.");
+      valid = false;
+    }
+
+    if (!valid) return;
+
+    setIsResettingPassword(true);
+    try {
+      const res = await resetPasswordWithOtp(resetEmail.trim(), resetOtp.trim(), newPassword);
+      setToast({
+        type: "success",
+        message: res.message || "Password reset successfully! Please sign in with your new password.",
+      });
+      // Switch to login mode
+      setTimeout(() => {
+        setEmail(resetEmail.trim());
+        setPassword("");
+        setResetOtp("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setForgotStep("email");
+        setAuthMode("login");
+      }, 1400);
+    } catch (err: any) {
+      const msg = err?.message || "Failed to reset password. Please check your code.";
+      setResetOtpError(msg);
+      setToast({ type: "error", message: msg });
+    } finally {
+      setIsResettingPassword(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -168,7 +270,19 @@ export default function Login() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: email.trim(), password }),
         });
-        const data = await response.json();
+        const data = await safeParseResponse(response);
+
+        // Check if email is not registered -> Offer & switch to sign up
+        if (response.status === 404 || data?.detail?.includes("ACCOUNT_NOT_FOUND")) {
+          setToast({
+            type: "error",
+            message: "No account found with this email. Switching to Sign Up...",
+          });
+          setTimeout(() => {
+            setAuthMode("register");
+          }, 1500);
+          return;
+        }
 
         // Check if email verification is required
         if (response.status === 403 && (data?.detail?.includes("EMAIL_NOT_VERIFIED") || data?.detail?.includes("verify your email"))) {
@@ -225,7 +339,7 @@ export default function Login() {
             accept_terms: true,
           }),
         });
-        const data = await response.json();
+        const data = await safeParseResponse(response);
         
         if (response.ok && data.success) {
           if (data.requires_verification) {
@@ -326,7 +440,11 @@ export default function Login() {
     setEmailError("");
     setPasswordError("");
     setResetEmailError("");
+    setResetOtpError("");
+    setNewPasswordError("");
+    setConfirmPasswordError("");
     setEmailOtpError("");
+    setForgotStep("email");
     setToast(null);
   };
 
@@ -374,7 +492,9 @@ export default function Login() {
           )}
           {authMode === "forgot" && (
             <p className={styles.subtitle}>
-              We will send a password reset link to your registered email address
+              {forgotStep === "email"
+                ? "Enter your registered email to receive a 6-digit verification code"
+                : "Enter the verification code and your new password"}
             </p>
           )}
         </div>
@@ -438,37 +558,137 @@ export default function Login() {
             </div>
           </form>
         ) : authMode === "forgot" ? (
-          <form className={styles.form} onSubmit={handleResetSubmit} noValidate>
-            <div className={styles.formGroup}>
-              <label>Enter Your Registered Email</label>
-              <input 
-                type="email" 
-                placeholder="Enter your registered email" 
-                value={resetEmail}
-                onChange={(e) => {
-                  setResetEmail(e.target.value);
-                  if (resetEmailError) setResetEmailError("");
-                }}
-                className={resetEmailError ? styles.inputError : ""}
-              />
-              {resetEmailError && <span className={styles.errorText}>{resetEmailError}</span>}
-            </div>
+          forgotStep === "email" ? (
+            <form className={styles.form} onSubmit={handleResetSubmit} noValidate>
+              <div className={styles.formGroup}>
+                <label>Enter Your Registered Email</label>
+                <input 
+                  type="email" 
+                  placeholder="Enter your registered email" 
+                  value={resetEmail}
+                  onChange={(e) => {
+                    setResetEmail(e.target.value);
+                    if (resetEmailError) setResetEmailError("");
+                  }}
+                  className={resetEmailError ? styles.inputError : ""}
+                  autoFocus
+                />
+                {resetEmailError && <span className={styles.errorText}>{resetEmailError}</span>}
+              </div>
 
-            <div className={styles.btnRow}>
-              <button type="submit" className={styles.btnPrimary} disabled={isLoading || resetSent}>
-                {isLoading ? "Sending Link..." : (resetSent ? "Reset Link Sent" : "Send Reset Link")}
-              </button>
-            </div>
-
-            <div className={styles.switchMode}>
-              <p>
-                Know your password?{" "}
-                <button type="button" onClick={() => handleSwitchMode("login")} className={styles.switchBtn}>
-                  Sign In Here
+              <div className={styles.btnRow}>
+                <button type="submit" className={styles.btnPrimary} disabled={isLoading}>
+                  {isLoading ? "Sending Code..." : "Send Verification Code"}
                 </button>
-              </p>
-            </div>
-          </form>
+              </div>
+
+              <div className={styles.switchMode}>
+                <p>
+                  Know your password?{" "}
+                  <button type="button" onClick={() => handleSwitchMode("login")} className={styles.switchBtn}>
+                    Sign In Here
+                  </button>
+                </p>
+              </div>
+            </form>
+          ) : (
+            <form className={styles.form} onSubmit={handleResetPasswordWithOtp} noValidate>
+              <div className={styles.otpInfoBox}>
+                <p className={styles.otpInfoText}>
+                  We sent a 6-digit verification code from <strong>support@deluzexlighting.com</strong> to:
+                  <br />
+                  <strong style={{ color: "#D4AF37", fontSize: "14px" }}>{resetEmail}</strong>
+                </p>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>6-Digit Reset Code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  placeholder="••••••"
+                  value={resetOtp}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                    setResetOtp(val);
+                    if (resetOtpError) setResetOtpError("");
+                  }}
+                  className={`${styles.otpInput} ${resetOtpError ? styles.inputError : ""}`}
+                  autoFocus
+                />
+                {resetOtpError && <span className={styles.errorText}>{resetOtpError}</span>}
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>New Password</label>
+                <div className={styles.passwordWrapper}>
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    placeholder="At least 8 characters"
+                    value={newPassword}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      if (newPasswordError) setNewPasswordError("");
+                    }}
+                    className={newPasswordError ? styles.inputError : ""}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className={styles.eyeBtn}
+                    aria-label="Toggle password visibility"
+                  >
+                    {showNewPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+                {newPasswordError && <span className={styles.errorText}>{newPasswordError}</span>}
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Confirm New Password</label>
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (confirmPasswordError) setConfirmPasswordError("");
+                  }}
+                  className={confirmPasswordError ? styles.inputError : ""}
+                />
+                {confirmPasswordError && <span className={styles.errorText}>{confirmPasswordError}</span>}
+              </div>
+
+              <div className={styles.resendRow}>
+                <span>Didn&apos;t receive code?</span>
+                <button
+                  type="button"
+                  onClick={handleResetSubmit}
+                  disabled={isLoading}
+                  className={styles.switchBtn}
+                >
+                  {isLoading ? "Sending..." : "Resend Code"}
+                </button>
+              </div>
+
+              <div className={styles.btnRow}>
+                <button type="submit" className={styles.btnPrimary} disabled={isResettingPassword || resetOtp.length !== 6}>
+                  {isResettingPassword ? "Updating Password..." : "Reset Password & Sign In"}
+                </button>
+              </div>
+
+              <div className={styles.switchMode}>
+                <p>
+                  Need to change email?{" "}
+                  <button type="button" onClick={() => setForgotStep("email")} className={styles.switchBtn}>
+                    Back to Email
+                  </button>
+                </p>
+              </div>
+            </form>
+          )
         ) : (
           <form className={styles.form} onSubmit={handleSubmit} noValidate>
             <div className={styles.formGroup}>

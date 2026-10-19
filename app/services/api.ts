@@ -2469,3 +2469,63 @@ export async function resendEmailOtp(
   }
 }
 
+export async function requestPasswordReset(
+  email: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    });
+    const contentType = res.headers.get("content-type") || "";
+    let data: any = {};
+    if (contentType.includes("application/json")) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      data = { detail: res.status === 404 ? "Account not found with this email." : text };
+    }
+    if (!res.ok || !data.success) {
+      throw new Error(data.detail || data.message || "Failed to send password reset code.");
+    }
+    return data;
+  } catch (error: any) {
+    logger.error("API", "Error requesting password reset:", error);
+    throw error;
+  }
+}
+
+export async function resetPasswordWithOtp(
+  email: string,
+  otp: string,
+  newPassword: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        otp: otp.trim(),
+        new_password: newPassword,
+      }),
+    });
+    const contentType = res.headers.get("content-type") || "";
+    let data: any = {};
+    if (contentType.includes("application/json")) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      data = { detail: text };
+    }
+    if (!res.ok || !data.success) {
+      throw new Error(data.detail || data.message || "Failed to reset password.");
+    }
+    return data;
+  } catch (error: any) {
+    logger.error("API", "Error resetting password with OTP:", error);
+    throw error;
+  }
+}
+

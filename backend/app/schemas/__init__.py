@@ -15,6 +15,8 @@ from .user import (
     WhatsAppVerifyOtpRequest,
     VerifyEmailOtpRequest,
     ResendEmailOtpRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
 )
 from .order import (
     OrderCreateRequest,
