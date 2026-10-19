@@ -37,20 +37,9 @@ export default function CartSidebar() {
       <div className={styles.sidebar}>
         {/* Header */}
         <div className={styles.header}>
-          <div>
-            <h2 className={styles.headerTitle}>
-              {cartItems.length} ITEM{cartItems.length !== 1 ? "S" : ""} IN CART
-            </h2>
-            {cartItems.length > 0 && (
-              <button
-                type="button"
-                className={styles.clearCartBtn}
-                onClick={() => dispatch(clearCart())}
-              >
-                Clear Cart
-              </button>
-            )}
-          </div>
+          <h2 className={styles.headerTitle}>
+            {cartItems.length} ITEM{cartItems.length !== 1 ? "S" : ""} IN CART
+          </h2>
           <button
             className={styles.closeBtn}
             onClick={() => dispatch(closeCart())}
