@@ -59,7 +59,19 @@ class Logger {
     return d.toTimeString().split(" ")[0] + "." + String(d.getMilliseconds()).padStart(3, "0");
   }
 
+  private shouldLog(): boolean {
+    if (isBrowser) {
+      try {
+        return window.localStorage.getItem("DELUZEX_DEBUG") === "true";
+      } catch {
+        return false;
+      }
+    }
+    return process.env.NODE_ENV !== "production";
+  }
+
   private print(level: LogLevel, tag: string, message: string, ...args: unknown[]) {
+    if (!this.shouldLog()) return;
     const time = this.formatTimestamp();
 
     if (isBrowser) {
@@ -103,7 +115,7 @@ class Logger {
   }
 
   debug(tag: string, message: string, ...args: unknown[]) {
-    if (process.env.NODE_ENV !== "production") {
+    if (this.shouldLog()) {
       this.print("DEBUG", tag, message, ...args);
     }
   }
@@ -112,6 +124,7 @@ class Logger {
    * Log an API request/response with visual badges and expandable group payload
    */
   api({ method, url, status, durationMs, reqData, resData, error }: ApiLogOptions) {
+    if (!this.shouldLog()) return;
     const isError = status >= 400 || !!error;
     const groupFn = isError ? console.group : console.groupCollapsed;
 
@@ -157,7 +170,7 @@ class Logger {
    * Prints the luxury Deluzex developer banner on client initialization
    */
   banner() {
-    if (!isBrowser) return;
+    if (!isBrowser || !this.shouldLog()) return;
 
     const bannerTitle = "  ✦ DELUZEX LIGHTING — Where Light Becomes Design ✦  ";
     const bannerSubtitle = "  Luxury Architectural Lighting • Developer Console Logger Active  ";
