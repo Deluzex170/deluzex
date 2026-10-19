@@ -11,29 +11,7 @@ if _backend_dir not in sys.path:
 if _root_dir not in sys.path:
     sys.path.append(_root_dir)
 
-# Import the FastAPI application (supports IDE static analyzer and runtime)
-try:
-    from main import app  # type: ignore[import-not-found] # noqa: E402
-except Exception as e1:
-    try:
-        from backend.main import app  # type: ignore[import-not-found] # noqa: E402
-    except Exception as e2:
-        from fastapi import FastAPI
-        app = FastAPI(title="deluzex-fallback")
-        @app.get("/api/v1/health-check")
-        @app.get("/health-check")
-        def debug_err():
-            return {
-                "status": "error",
-                "e1": str(e1),
-                "e2": str(e2),
-                "sys_path": sys.path,
-                "current_dir": _current_dir,
-                "dir_contents": os.listdir(_root_dir) if os.path.exists(_root_dir) else []
-            }
-
-@app.get("/api/v1/health-check")
-@app.get("/health-check")
-def vercel_health():
-    return {"status": "ok", "runtime": "vercel-python", "framework": "fastapi"}
+# Compatibility entrypoint. Import failures must reach deployment logs instead
+# of serving an empty application that turns every real API request into a 404.
+from main import app  # type: ignore[import-not-found] # noqa: E402, F401
 

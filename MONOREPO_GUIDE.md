@@ -18,7 +18,7 @@ Previously, the backend was deployed separately at `api.deluzexlighting.com`. In
 - All frontend API calls use **relative routing (`/api/v1`)**.
 - No external API server or separate subdomain is required.
 - In **Local Development**, Next.js seamlessly proxies `/api/v1/*` requests to the local FastAPI process (`http://127.0.0.1:8000`).
-- In **Vercel Deployments**, Vercel routes `/api/v1/*` requests directly to the embedded Python Serverless Function (`/backend/main.py`).
+- In **Vercel Deployments**, Vercel Services builds Next.js and FastAPI separately and routes `/api/v1/*` to the backend service.
 
 ---
 
@@ -90,49 +90,49 @@ npm run dev
 
 ---
 
-## 4. API Routing & Proxy Mechanism
+## 4. API Routing & Deployment
 
-### Client-Side (Browser)
-The frontend API client (`app/services/api.ts`) constructs API endpoints relative to the current origin:
-```typescript
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+The browser uses `NEXT_PUBLIC_API_URL=/api/v1` (also the default).
+`npm run dev` starts both processes; `next.config.ts` proxies `/api/v1/*`
+to `http://127.0.0.1:8000` only in local development.
+
+Production uses [Vercel Services](https://vercel.com/docs/services), currently
+in beta on all plans. The root `vercel.json` declares:
+
+- `frontend`: Next.js in the repository root, built with `npm run build`.
+- `backend`: FastAPI in `backend/`, with entrypoint `main:app` and its own Python dependencies.
+- `/api/v1/:path*` goes to the backend service with the original path preserved.
+- All remaining requests go to Next.js, including `/api/upload`.
+
+The old rewrite to `/api/index.py` did not ensure that a Python function
+was built. That file is now only a compatibility entrypoint; import failures
+propagate to runtime logs rather than creating a route-less fallback app.
+
+### Test deployment checklist
+
+1. Deploy from the repository root with the committed `vercel.json`.
+2. Keep `NEXT_PUBLIC_API_URL=/api/v1`. Configure `MONGODB_URI`,
+   `MONGODB_DATABASE`, and the required provider credentials in the test project.
+3. In build output, confirm that **both** services were built. A Next.js-only
+   build is insufficient. If the configuration is rejected, check Services
+   availability and the deployment tooling version; do not remove the backend declaration.
+4. Check `GET /api/v1/health-check`: expect HTTP 200 JSON with `status: ok`.
+   This checks application loading, **not** database connectivity.
+5. Check `GET /api/v1/openapi.json`: expect HTTP 200 JSON containing cart,
+   analytics, and auth routes.
+6. Check `GET /api/v1/cart/<test-session>` against the deployed database, then
+   verify login with a designated test account. Local smoke tests use a mocked
+   database and do not prove that deployed credentials or MongoDB access work.
+
+A response with `Content-Type: text/html` and `X-Matched-Path: /404` means
+API traffic is still reaching Next.js. Check the domain's active deployment,
+service build output, and public routing before debugging login credentials.
+
+Run isolated backend checks with:
+
+```bash
+python -m unittest discover -s backend/tests -v
 ```
-When a user visits any page, calls like `fetch('/api/v1/products')` target the active domain.
-
-### Local Development Proxy (`next.config.ts`)
-Next.js redirects local requests matching `/api/v1/:path*` to port 8000:
-```typescript
-async rewrites() {
-  return [
-    {
-      source: "/api/v1/:path*",
-      destination:
-        process.env.NODE_ENV === "development"
-          ? "http://127.0.0.1:8000/api/v1/:path*"
-          : "/backend/main.py",
-    },
-  ];
-}
-```
-
-### Production Vercel Rewrites (`vercel.json`)
-Vercel handles `/api/v1/*` requests natively using serverless Python execution:
-```json
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
-    {
-      "source": "/api/v1/:path*",
-      "destination": "/backend/main.py"
-    }
-  ]
-}
-```
-
-### Server-Side Rendering (SSR) Host Resolution
-During SSR in Next.js, Node.js requires an absolute URL. The telemetry fetcher in `app/services/api.ts` automatically prepends:
-- On Vercel: `https://${process.env.VERCEL_URL}`
-- In local development: `http://127.0.0.1:8000`
 
 ---
 

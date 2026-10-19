@@ -143,6 +143,12 @@ except Exception:
 app.include_router(api_router, prefix=settings.API_V1_STR)
 app.include_router(api_router)
 
+@app.get(f"{settings.API_V1_STR}/health-check", tags=["health"])
+@app.get("/health-check", tags=["health"])
+def application_health():
+    """Confirm the real API loaded; this does not check database connectivity."""
+    return {"status": "ok", "framework": "fastapi"}
+
 @app.get("/")
 def root():
     return {"message": "Welcome to deluzex-backend"}

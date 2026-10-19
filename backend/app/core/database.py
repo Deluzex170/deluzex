@@ -18,7 +18,9 @@ for _candidate in [
 MONGO_URI = os.getenv("MONGODB_URI") or os.getenv("MONGO_URI") or "mongodb://localhost:27017"
 DATABASE_NAME = os.getenv("MONGODB_DATABASE", "Deluzex")
 
-client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+# Defer DNS/connection work until startup or the first database operation, so
+# a temporary database outage cannot prevent the API routes from importing.
+client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000, connect=False)
 db = client[DATABASE_NAME]
 
 
