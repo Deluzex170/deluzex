@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from bson import ObjectId
 from app import models
+from app.api import deps
 from app.core.database import db
 from datetime import datetime
 from typing import Optional, List, Dict, Any
@@ -56,7 +57,8 @@ def get_subscribers(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     notified: Optional[bool] = None,
-    search: Optional[str] = None
+    search: Optional[str] = None,
+    admin: models.User = Depends(deps.get_current_active_admin),
 ):
     query: Dict[str, Any] = {}
     if notified is not None:
@@ -92,7 +94,11 @@ def get_subscribers(
     }
 
 @router.patch("/subscribers/{subscriber_id}/notified")
-def update_subscriber_notified(subscriber_id: str, payload: SubscriberNotifiedUpdateRequest):
+def update_subscriber_notified(
+    subscriber_id: str,
+    payload: SubscriberNotifiedUpdateRequest,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
     try:
         obj_id = ObjectId(subscriber_id)
     except Exception:
@@ -114,7 +120,10 @@ def update_subscriber_notified(subscriber_id: str, payload: SubscriberNotifiedUp
     return {"message": "Subscriber notification status updated", "subscriber": updated}
 
 @router.delete("/subscribers/{subscriber_id}")
-def delete_subscriber(subscriber_id: str):
+def delete_subscriber(
+    subscriber_id: str,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
     try:
         obj_id = ObjectId(subscriber_id)
     except Exception:
@@ -127,7 +136,7 @@ def delete_subscriber(subscriber_id: str):
     return {"message": "Subscriber removed successfully"}
 
 @router.get("/export-csv")
-def export_subscribers_csv():
+def export_subscribers_csv(admin: models.User = Depends(deps.get_current_active_admin)):
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["ID", "Email", "Subscribed At (UTC)", "Is Notified", "Notified At", "Source"])

@@ -11,6 +11,9 @@ from app.core.database import db
 
 client = TestClient(app)
 
+from types import SimpleNamespace
+from app.api import deps
+
 @pytest.fixture
 def review_setup():
     # Insert a dummy product
@@ -25,9 +28,21 @@ def review_setup():
 
     created_review_ids = []
 
+    admin_user = SimpleNamespace(
+        id=str(ObjectId()),
+        email="admin@deluzex.com",
+        first_name="Admin",
+        last_name="Tester",
+        is_admin=True,
+        is_active=True,
+        is_verified=True,
+    )
+    app.dependency_overrides[deps.get_current_active_admin] = lambda: admin_user
+
     yield prod_id, created_review_ids
 
     # Cleanup
+    app.dependency_overrides.clear()
     db.products.delete_one({"_id": ObjectId(prod_id)})
     for rid in created_review_ids:
         try:
@@ -38,7 +53,7 @@ def review_setup():
 def test_review_lifecycle_and_moderation(review_setup):
     prod_id, created_review_ids = review_setup
 
-    # 1. Submit review
+    # 1. Submit review (public storefront endpoint)
     post_res = client.post("/api/v1/reviews", json={
         "product_id": prod_id,
         "author_name": "Alexander Sterling",
@@ -58,13 +73,13 @@ def test_review_lifecycle_and_moderation(review_setup):
     assert storefront_res.json()["total_reviews"] == 1
     assert storefront_res.json()["average_rating"] == 5.0
 
-    # 2. Check stats endpoint
+    # 2. Check stats endpoint (admin only)
     stats_res = client.get("/api/v1/reviews/stats")
     assert stats_res.status_code == 200
     assert "approved" in stats_res.json()
     assert "pending" in stats_res.json()
 
-    # 3. Check admin listing
+    # 3. Check admin listing (admin only)
     all_res = client.get(f"/api/v1/reviews/all?product_id={prod_id}")
     assert all_res.status_code == 200
     items = all_res.json()
@@ -97,3 +112,13 @@ def test_review_lifecycle_and_moderation(review_setup):
     # Storefront after deletion
     storefront_deleted = client.get(f"/api/v1/reviews?product_id={prod_id}")
     assert storefront_deleted.json()["total_reviews"] == 0
+
+def test_reviews_admin_unauthorized(review_setup):
+    prod_id, _ = review_setup
+    app.dependency_overrides.clear()
+    assert client.get("/api/v1/reviews/stats").status_code == 401
+    assert client.get(f"/api/v1/reviews/all?product_id={prod_id}").status_code == 401
+    fake_id = str(ObjectId())
+    assert client.patch(f"/api/v1/reviews/{fake_id}/approval", json={"is_approved": True}).status_code == 401
+    assert client.delete(f"/api/v1/reviews/{fake_id}").status_code == 401
+

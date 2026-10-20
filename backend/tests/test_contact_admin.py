@@ -1,17 +1,35 @@
 import unittest
 import sys
 import os
+from types import SimpleNamespace
 from bson import ObjectId
 from fastapi.testclient import TestClient
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from main import app
+from app.api import deps
 from app.core.database import db
 
 client = TestClient(app)
 
 class TestAdminContactInquiries(unittest.TestCase):
+    def setUp(self):
+        self.admin_user = SimpleNamespace(
+            id=str(ObjectId()),
+            email="admin@deluzex.com",
+            first_name="Admin",
+            last_name="Tester",
+            is_admin=True,
+            is_active=True,
+            is_verified=True,
+        )
+        app.dependency_overrides[deps.get_current_active_admin] = lambda: self.admin_user
+        app.dependency_overrides[deps.get_current_active_user] = lambda: self.admin_user
+
+    def tearDown(self):
+        app.dependency_overrides.clear()
+
     def test_01_stats_endpoint(self):
         """Positive test: GET /api/v1/contact/stats returns proper breakdown"""
         response = client.get("/api/v1/contact/stats")
@@ -91,6 +109,22 @@ class TestAdminContactInquiries(unittest.TestCase):
 
         res5 = client.delete(f"/api/v1/contact/{fake_id}")
         self.assertEqual(res5.status_code, 404)
+
+    def test_04_unauthorized_contact_endpoints(self):
+        """Negative test: Unauthenticated access to contact stats/inquiries returns 401 Unauthorized"""
+        app.dependency_overrides.clear()
+        res1 = client.get("/api/v1/contact/stats")
+        self.assertEqual(res1.status_code, 401)
+
+        res2 = client.get("/api/v1/contact")
+        self.assertEqual(res2.status_code, 401)
+
+        fake_id = str(ObjectId())
+        res3 = client.patch(f"/api/v1/contact/{fake_id}/status", json={"status": "contacted"})
+        self.assertEqual(res3.status_code, 401)
+
+        res4 = client.delete(f"/api/v1/contact/{fake_id}")
+        self.assertEqual(res4.status_code, 401)
 
 if __name__ == "__main__":
     unittest.main()

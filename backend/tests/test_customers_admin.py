@@ -11,6 +11,9 @@ from app.core.database import db
 
 client = TestClient(app)
 
+from types import SimpleNamespace
+from app.api import deps
+
 @pytest.fixture
 def customer_setup():
     test_email = "lord.sterling.test@deluzex.com"
@@ -42,9 +45,22 @@ def customer_setup():
         "status": "delivered"
     })
 
+    admin_user = SimpleNamespace(
+        id=str(ObjectId()),
+        email="admin@deluzex.com",
+        first_name="Admin",
+        last_name="Tester",
+        is_admin=True,
+        is_active=True,
+        is_verified=True,
+    )
+    app.dependency_overrides[deps.get_current_active_admin] = lambda: admin_user
+    app.dependency_overrides[deps.get_current_active_user] = lambda: admin_user
+
     yield user_id, test_email
 
     # Cleanup
+    app.dependency_overrides.clear()
     db.users.delete_many({"email": test_email})
     db.orders.delete_many({"customer.email": test_email})
 
@@ -89,3 +105,12 @@ def test_customers_admin_endpoints(customer_setup):
     role_res = client.patch(f"/api/v1/auth/users/{user_id}/role", json={"is_admin": True})
     assert role_res.status_code == 200
     assert role_res.json()["is_admin"] is True
+
+def test_customers_admin_unauthorized(customer_setup):
+    user_id, _ = customer_setup
+    app.dependency_overrides.clear()
+    assert client.get("/api/v1/auth/users/stats").status_code == 401
+    assert client.get("/api/v1/auth/users").status_code == 401
+    assert client.patch(f"/api/v1/auth/users/{user_id}/status", json={"is_active": False}).status_code == 401
+    assert client.patch(f"/api/v1/auth/users/{user_id}/role", json={"is_admin": True}).status_code == 401
+

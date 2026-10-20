@@ -30,24 +30,36 @@ const FAQ_DATA: FAQItem[] = [
     question: "When will I hear back?",
     answer:
       "Our design and engineering panel reviews submissions every fortnight. You will receive an initial review status and manufacturing feasibility feedback within 10 to 14 business days.",
+    category: "collaborate",
+    sequence: 3,
+    is_active: true,
   },
   {
     id: 4,
     question: "Who owns the design?",
     answer:
       "You retain moral authorship and credit rights as the creator. Deluzex acquires an exclusive manufacturing and worldwide distribution license for the realized commercial product line.",
+    category: "collaborate",
+    sequence: 4,
+    is_active: true,
   },
   {
     id: 5,
     question: "Can I submit a light designed for a client?",
     answer:
       "Yes, provided that your client agreement allows you to retain or license the design concept, or if written commercialization permission has been granted.",
+    category: "collaborate",
+    sequence: 5,
+    is_active: true,
   },
   {
     id: 6,
     question: "What happens if my design is not selected?",
     answer:
       "Your concept remains your sole intellectual property. With your permission, we keep it in our archive for future thematic collections, or provide guidance on refining it for future consideration.",
+    category: "collaborate",
+    sequence: 6,
+    is_active: true,
   },
 ];
 

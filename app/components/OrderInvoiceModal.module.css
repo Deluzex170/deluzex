@@ -307,20 +307,13 @@
 
 /* Print Overrides */
 @media print {
-  body * {
-    visibility: hidden;
-  }
-
-  .invoiceSheet, .invoiceSheet * {
-    visibility: visible;
-  }
-
   .modalOverlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
-    background: transparent;
+    background: #ffffff;
     padding: 0;
     margin: 0;
+    z-index: 999999;
   }
 
   .modalContainer {

@@ -836,8 +836,8 @@ class UserRoleUpdateRequest(BaseModel):
     is_admin: bool
 
 @router.get("/users/stats")
-def get_user_stats():
-    """Aggregated user and customer statistics for the Admin Dashboard."""
+def get_user_stats(admin: models.User = Depends(deps.get_current_active_admin)):
+    """Aggregated user and customer statistics for the Admin Dashboard (Admin only)."""
     total_users = db.users.count_documents({})
     admin_count = db.users.count_documents({"is_admin": True})
     customer_count = db.users.count_documents({"$or": [{"is_admin": False}, {"is_admin": {"$exists": False}}]})
@@ -868,9 +868,10 @@ def get_users_admin(
     role: Optional[str] = Query(None, description="Filter by role: all, customer, admin"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
+    admin: models.User = Depends(deps.get_current_active_admin),
 ):
     """
-    Fetch all registered users and customers with order counts and lifetime spend.
+    Fetch all registered users and customers with order counts and lifetime spend (Admin only).
     """
     query: Dict[str, Any] = {}
 
@@ -965,8 +966,12 @@ def get_users_admin(
     return formatted
 
 @router.patch("/users/{user_id}/status")
-def update_user_status(user_id: str, payload: UserStatusUpdateRequest):
-    """Activate or deactivate a customer account."""
+def update_user_status(
+    user_id: str,
+    payload: UserStatusUpdateRequest,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
+    """Activate or deactivate a customer account (Admin only)."""
     try:
         obj_id = ObjectId(user_id)
     except Exception:
@@ -980,8 +985,12 @@ def update_user_status(user_id: str, payload: UserStatusUpdateRequest):
     return {"message": "User status updated successfully", "is_active": payload.is_active}
 
 @router.patch("/users/{user_id}/role")
-def update_user_role(user_id: str, payload: UserRoleUpdateRequest):
-    """Change user role to Admin or Customer."""
+def update_user_role(
+    user_id: str,
+    payload: UserRoleUpdateRequest,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
+    """Change user role to Admin or Customer (Admin only)."""
     try:
         obj_id = ObjectId(user_id)
     except Exception:
@@ -995,8 +1004,11 @@ def update_user_role(user_id: str, payload: UserRoleUpdateRequest):
     return {"message": "User role updated successfully", "is_admin": payload.is_admin}
 
 @router.get("/users/{user_id}/orders")
-def get_user_orders_admin(user_id: str):
-    """Fetch order history for a specific customer in admin customer drawer."""
+def get_user_orders_admin(
+    user_id: str,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
+    """Fetch order history for a specific customer in admin customer drawer (Admin only)."""
     try:
         obj_id = ObjectId(user_id)
     except Exception:

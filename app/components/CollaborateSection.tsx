@@ -238,6 +238,8 @@ export default function CollaborateSection() {
                       onChange={handleChange}
                       placeholder="Describe the materials, lighting effect, and inspiration behind your concept..."
                     />
+                  </div>
+
                   {errorMsg && (
                     <div style={{ color: "#ef4444", fontSize: "0.85rem", padding: "0.6rem 0.8rem", background: "rgba(239, 68, 68, 0.1)", borderRadius: "6px", marginBottom: "0.8rem" }}>
                       {errorMsg}

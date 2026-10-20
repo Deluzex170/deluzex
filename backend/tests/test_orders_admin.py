@@ -1,6 +1,7 @@
 import unittest
 import sys
 import os
+from types import SimpleNamespace
 
 # Add backend directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -8,11 +9,29 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from bson import ObjectId
 from fastapi.testclient import TestClient
 from main import app
+from app.api import deps
 from app.core.database import db
 
 client = TestClient(app)
 
 class TestAdminOrders(unittest.TestCase):
+    def setUp(self):
+        self.admin_user = SimpleNamespace(
+            id=str(ObjectId()),
+            email="admin@deluzex.com",
+            first_name="Admin",
+            last_name="Tester",
+            is_admin=True,
+            is_active=True,
+            is_verified=True,
+        )
+        app.dependency_overrides[deps.get_current_active_admin] = lambda: self.admin_user
+        app.dependency_overrides[deps.get_current_active_user] = lambda: self.admin_user
+        app.dependency_overrides[deps.get_current_user_optional] = lambda: self.admin_user
+
+    def tearDown(self):
+        app.dependency_overrides.clear()
+
     def test_01_order_stats_endpoint(self):
         """Positive test: GET /api/v1/orders/stats returns status dictionary"""
         response = client.get("/api/v1/orders/stats")
@@ -129,6 +148,22 @@ class TestAdminOrders(unittest.TestCase):
 
         res3 = client.delete(f"/api/v1/orders/{fake_id}")
         self.assertEqual(res3.status_code, 404)
+
+    def test_05_unauthorized_order_endpoints(self):
+        """Negative test: Unauthenticated requests to admin stats and orders return 401 Unauthorized"""
+        app.dependency_overrides.clear()
+        res1 = client.get("/api/v1/orders/stats")
+        self.assertEqual(res1.status_code, 401)
+
+        res2 = client.get("/api/v1/orders")
+        self.assertEqual(res2.status_code, 401)
+
+        fake_id = str(ObjectId())
+        res3 = client.patch(f"/api/v1/orders/{fake_id}/status", json={"status": "shipped"})
+        self.assertEqual(res3.status_code, 401)
+
+        res4 = client.delete(f"/api/v1/orders/{fake_id}")
+        self.assertEqual(res4.status_code, 401)
 
 if __name__ == "__main__":
     unittest.main()

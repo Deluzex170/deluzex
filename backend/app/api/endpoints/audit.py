@@ -1,9 +1,11 @@
 import re
 from datetime import datetime, timedelta
 from typing import List, Optional
-from fastapi import APIRouter, Query, HTTPException, status
+from fastapi import APIRouter, Query, HTTPException, status, Depends
 from bson import ObjectId
 
+from app import models
+from app.api import deps
 from app.core.database import db
 from app.schemas.audit import AuditLogResponse, AuditStatsResponse
 
@@ -53,7 +55,8 @@ def get_audit_logs(
     search: Optional[str] = Query(None, description="Search by actor name, email, target, or action"),
     status: Optional[str] = Query(None, description="Filter status: SUCCESS, FAILED"),
     limit: int = Query(50, ge=1, le=200),
-    skip: int = Query(0, ge=0)
+    skip: int = Query(0, ge=0),
+    admin: models.User = Depends(deps.get_current_active_admin),
 ):
     query: dict = {}
 
@@ -109,7 +112,7 @@ def get_audit_logs(
 
 
 @router.get("/stats", response_model=AuditStatsResponse)
-def get_audit_stats():
+def get_audit_stats(admin: models.User = Depends(deps.get_current_active_admin)):
     total_events = db.audit_logs.count_documents({})
     
     # 24h count
@@ -172,7 +175,10 @@ def get_audit_stats():
 
 
 @router.get("/logs/{log_id}", response_model=AuditLogResponse)
-def get_audit_log_detail(log_id: str):
+def get_audit_log_detail(
+    log_id: str,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
     if not ObjectId.is_valid(log_id):
         raise HTTPException(status_code=400, detail="Invalid log ID")
     doc = db.audit_logs.find_one({"_id": ObjectId(log_id)})

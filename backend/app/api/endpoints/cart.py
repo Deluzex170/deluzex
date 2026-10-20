@@ -181,9 +181,17 @@ def sync_cart(payload: CartSyncRequest):
         p_id = str(g_item.get("product_id", "")).strip()
         user_item = db.cart_items.find_one({"user_email": user_email, "product_id": p_id})
 
+        prod_doc = None
+        if ObjectId.is_valid(p_id):
+            prod_doc = db.products.find_one({"_id": ObjectId(p_id)})
+        if not prod_doc:
+            prod_doc = db.products.find_one({"_id": p_id})
+
+        stock_limit = int(prod_doc.get("stock_count", 99)) if prod_doc else 99
+
         if user_item:
-            # Item already exists in user's cart: add quantities together
-            merged_qty = user_item.get("quantity", 1) + g_item.get("quantity", 1)
+            # Item already exists in user's cart: add quantities together, clamped to available stock
+            merged_qty = min(user_item.get("quantity", 1) + g_item.get("quantity", 1), max(1, stock_limit))
             db.cart_items.update_one(
                 {"_id": user_item["_id"]},
                 {"$set": {"quantity": merged_qty, "updated_at": now}}
@@ -191,10 +199,11 @@ def sync_cart(payload: CartSyncRequest):
             # Remove guest duplicate
             db.cart_items.delete_one({"_id": g_item["_id"]})
         else:
-            # Reassign guest item to the authenticated user
+            # Reassign guest item to the authenticated user, clamped to available stock
+            guest_qty = min(g_item.get("quantity", 1), max(1, stock_limit))
             db.cart_items.update_one(
                 {"_id": g_item["_id"]},
-                {"$set": {"user_email": user_email, "updated_at": now}}
+                {"$set": {"user_email": user_email, "quantity": guest_qty, "updated_at": now}}
             )
 
     # Return the full hydrated cart for this user

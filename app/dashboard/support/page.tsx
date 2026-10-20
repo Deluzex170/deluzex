@@ -11,6 +11,27 @@ const DEFAULT_SUPPORT_FAQS = [
   { question: "What is your warranty and returns coverage?", answer: "Every DeLuzex fixture comes backed by our 5-year structural warranty and 30-day architectural return policy." },
 ];
 
+const TOPICS = [
+  {
+    title: "Orders & Shipping",
+    desc: "Track dispatch, delivery updates, and courier details",
+    href: "/dashboard/orders",
+    icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
+  },
+  {
+    title: "Addresses & Delivery",
+    desc: "Manage saved shipping addresses and default locations",
+    href: "/dashboard/address",
+    icon: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+  },
+  {
+    title: "Wishlist & Favorites",
+    desc: "Review your curated architectural lighting selection",
+    href: "/dashboard/wishlist",
+    icon: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z",
+  },
+];
+
 export default function Support() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [faqs, setFaqs] = useState<{ question: string; answer: string }[]>(DEFAULT_SUPPORT_FAQS);
@@ -35,7 +56,7 @@ export default function Support() {
       </div>
 
       <div className={styles.topicsGrid}>
-        {topics.map((topic, i) => (
+        {TOPICS.map((topic, i) => (
           <Link key={i} href={topic.href} className={styles.topicCard} style={{ textDecoration: "none", color: "inherit" }}>
             <div className={styles.topicIconWrapper}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

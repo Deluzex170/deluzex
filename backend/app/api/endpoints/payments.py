@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 from app.core.config import settings
 from app.core.database import db
 from app import models
-from app.services.inventory import decrement_product_stock
+from app.services.inventory import decrement_product_stock, validate_stock_availability
 from app.services.email import send_order_confirmation_email
 from app.schemas.payment import (
     CodOrderRequest,
@@ -103,6 +103,9 @@ def create_order(payload: CreateOrderRequest, request: Request = None):
     amount_paise = round(payload.total * 100)
     if amount_paise < 100:
         raise HTTPException(status_code=400, detail="Order amount must be at least ₹1")
+
+    # Pre-flight stock availability check before creating payment session
+    validate_stock_availability(payload.items)
 
     now = datetime.utcnow()
 
@@ -421,6 +424,9 @@ def record_payment_failure(payload: PaymentFailurePayload, request: Request = No
 
 @router.post("/cod", response_model=CodOrderResponse)
 def create_cod_order(payload: CodOrderRequest, request: Request = None):
+    # Pre-flight stock availability check before placing COD order
+    validate_stock_availability(payload.items)
+
     now = datetime.utcnow()
 
     # Check if resuming an existing order with COD

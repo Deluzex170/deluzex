@@ -1,9 +1,11 @@
 import re
 from datetime import datetime, timedelta
 from typing import List, Optional
-from fastapi import APIRouter, Request, Query, status
+from fastapi import APIRouter, Request, Query, status, Depends
 from bson import ObjectId
 
+from app import models
+from app.api import deps
 from app.core.database import db
 from app.schemas.visitor_log import (
     VisitEventCreate,
@@ -113,10 +115,10 @@ def record_visitor(event: VisitEventCreate, request: Request):
 
 
 @router.get("/stats", response_model=AnalyticsStatsResponse)
-def get_analytics_stats():
+def get_analytics_stats(admin: models.User = Depends(deps.get_current_active_admin)):
     """
     Get aggregated analytics: total views, unique visitors, member visits,
-    active now, device breakdown, top visited pages, and 7-day trend.
+    active now, device breakdown, top visited pages, and 7-day trend (Admin only).
     """
     total_views = db.visitor_logs.count_documents({})
 
@@ -184,9 +186,10 @@ def get_visitor_logs(
     search: Optional[str] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
+    admin: models.User = Depends(deps.get_current_active_admin),
 ):
     """
-    Get detailed visitor logs with filtering and search.
+    Get detailed visitor logs with filtering and search (Admin only).
     """
     query = {}
     if filter == "members":
@@ -214,10 +217,10 @@ def get_visitor_logs(
 
 
 @router.get("/members", response_model=List[MemberActivity])
-def get_member_visitors():
+def get_member_visitors(admin: models.User = Depends(deps.get_current_active_admin)):
     """
     Get all registered members who have visited the website,
-    with their visit frequency, last seen time, and last visited path.
+    with their visit frequency, last seen time, and last visited path (Admin only).
     """
     pipeline = [
         {"$match": {"is_member": True, "user_email": {"$ne": None}}},
@@ -252,10 +255,10 @@ def get_member_visitors():
 
 
 @router.get("/dashboard-summary")
-def get_dashboard_summary():
+def get_dashboard_summary(admin: models.User = Depends(deps.get_current_active_admin)):
     """
     High-level executive dashboard summary combining revenue, orders, inventory,
-    customer, inquiry, review, and traffic metrics.
+    customer, inquiry, review, and traffic metrics (Admin only).
     """
     # 1. Revenue & Orders
     pipeline_rev = [

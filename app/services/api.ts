@@ -1618,27 +1618,7 @@ export async function fetchUserOrders(email?: string): Promise<UserOrder[]> {
     }
   }
 
-  // 3. Global Attempt: GET /api/v1/orders
-  try {
-    const res = await fetch(`${API_BASE_URL}/orders`, {
-      headers: getAuthHeaders(),
-      cache: "no-store",
-    });
-    if (res.ok) {
-      const data = await res.json();
-      const rawList = (Array.isArray(data)
-        ? data
-        : data.data || data.orders || data.items || []) as Record<string, unknown>[];
-      if (Array.isArray(rawList) && rawList.length > 0) {
-        const normalizedList = rawList.map(normalizeUserOrder);
-        return normalizedList;
-      }
-    }
-  } catch (error) {
-    console.warn("Error calling GET /orders global fallback:", error);
-  }
-
-  // 4. Fallback to cached local orders if available
+  // 3. Fallback to cached local orders for this email if available
   if (localData.length > 0) {
     return localData.map((d) => normalizeUserOrder(d as unknown as Record<string, unknown>));
   }

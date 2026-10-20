@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, Depends
 from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
+from app import models
+from app.api import deps
 from app.core.database import db
 from app.schemas.wishlist import WishlistItemCreate, WishlistItemResponse
 
@@ -16,25 +18,50 @@ def serialize_wishlist_item(doc: dict) -> dict:
     return doc_copy
 
 @router.get("", response_model=List[WishlistItemResponse])
-def get_user_wishlist(email: Optional[str] = Query(None)):
+def get_user_wishlist(
+    email: Optional[str] = Query(None),
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+):
     """
     Fetch all saved wishlist items for a user from MongoDB.
+    Enforces privacy boundaries.
     """
-    email_clean = email.strip().lower() if email else ""
+    if current_user and not getattr(current_user, "is_admin", False):
+        user_email = (current_user.email or "").strip().lower()
+        if email and email.strip().lower() != user_email:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to access wishlist of another user",
+            )
+        email_clean = user_email
+    else:
+        email_clean = email.strip().lower() if email else ""
+
     if not email_clean:
         return []
-    query = {"user_email": email_clean}
 
+    query = {"user_email": email_clean}
     docs = list(db.wishlist_items.find(query).sort("created_at", -1))
     return [WishlistItemResponse(**serialize_wishlist_item(d)) for d in docs]
 
 
 @router.post("", response_model=WishlistItemResponse, status_code=status.HTTP_201_CREATED)
-def add_to_wishlist(item_in: WishlistItemCreate):
+def add_to_wishlist(
+    item_in: WishlistItemCreate,
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+):
     """
     Add a product to user's wishlist in MongoDB.
     """
     email_clean = item_in.user_email.strip().lower()
+
+    if current_user and not getattr(current_user, "is_admin", False):
+        user_clean = (current_user.email or "").strip().lower()
+        if email_clean != user_clean:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Cannot add to wishlist of another user",
+            )
 
     # Check for duplicate
     duplicate_query = {"user_email": email_clean}
@@ -61,13 +88,21 @@ def check_wishlist_status(
     email: str = Query(...),
     product_id: Optional[str] = Query(None),
     product_title: Optional[str] = Query(None),
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
 ):
     """
     Check if a product is in the user's wishlist.
     """
     email_clean = email.strip().lower()
-    query = {"user_email": email_clean}
+    if current_user and not getattr(current_user, "is_admin", False):
+        user_clean = (current_user.email or "").strip().lower()
+        if email_clean != user_clean:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to check wishlist of another user",
+            )
 
+    query = {"user_email": email_clean}
     if product_id:
         query["product_id"] = product_id
     elif product_title:
@@ -82,7 +117,10 @@ def check_wishlist_status(
 
 
 @router.delete("/{item_id}")
-def delete_wishlist_item(item_id: str):
+def delete_wishlist_item(
+    item_id: str,
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+):
     """
     Remove an item from MongoDB wishlist.
     """
@@ -93,15 +131,35 @@ def delete_wishlist_item(item_id: str):
     if not existing:
         raise HTTPException(status_code=404, detail="Wishlist item not found")
 
+    if current_user and not getattr(current_user, "is_admin", False):
+        user_clean = (current_user.email or "").strip().lower()
+        item_email = (existing.get("user_email") or "").strip().lower()
+        if item_email != user_clean:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to delete wishlist item of another user",
+            )
+
     db.wishlist_items.delete_one({"_id": ObjectId(item_id)})
     return {"success": True, "message": "Item removed from wishlist"}
 
 
 @router.delete("")
-def clear_user_wishlist(email: str = Query(...)):
+def clear_user_wishlist(
+    email: str = Query(...),
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+):
     """
     Clear all items in user's wishlist.
     """
     email_clean = email.strip().lower()
+    if current_user and not getattr(current_user, "is_admin", False):
+        user_clean = (current_user.email or "").strip().lower()
+        if email_clean != user_clean:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to clear wishlist of another user",
+            )
+
     db.wishlist_items.delete_many({"user_email": email_clean})
     return {"success": True, "message": "Wishlist cleared successfully"}

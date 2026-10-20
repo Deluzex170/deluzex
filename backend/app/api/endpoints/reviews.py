@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, Depends
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from bson import ObjectId
 from pydantic import BaseModel, Field
 
 from app import models
+from app.api import deps
 from app.models.review import Review, ReviewCreate
 from app.core.database import db
 
@@ -60,8 +61,8 @@ def calculate_stats(product_id: str, only_approved: bool = True) -> Dict[str, An
     }
 
 @router.get("/stats")
-def get_review_stats():
-    """Get aggregated statistics across all reviews for admin moderation."""
+def get_review_stats(admin: models.User = Depends(deps.get_current_active_admin)):
+    """Get aggregated statistics across all reviews for admin moderation (Admin only)."""
     total = db.reviews.count_documents({})
     approved = db.reviews.count_documents({"is_approved": {"$ne": False}})
     pending = db.reviews.count_documents({"is_approved": False})
@@ -87,9 +88,10 @@ def get_all_reviews_admin(
     product_id: Optional[str] = Query(None),
     skip: int = 0,
     limit: int = 100,
+    admin: models.User = Depends(deps.get_current_active_admin),
 ):
     """
-    Fetch all reviews across products for admin moderation with product metadata lookup.
+    Fetch all reviews across products for admin moderation with product metadata lookup (Admin only).
     """
     query: Dict[str, Any] = {}
     if status == "approved":
@@ -148,9 +150,13 @@ def get_all_reviews_admin(
     return formatted
 
 @router.patch("/{review_id}/approval")
-def update_review_approval(review_id: str, payload: ReviewApprovalRequest):
+def update_review_approval(
+    review_id: str,
+    payload: ReviewApprovalRequest,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
     """
-    Approve or reject/hide a customer review. Recalculates product average rating and count.
+    Approve or reject/hide a customer review. Recalculates product average rating and count (Admin only).
     """
     try:
         obj_id = ObjectId(review_id)
@@ -183,9 +189,12 @@ def update_review_approval(review_id: str, payload: ReviewApprovalRequest):
     return {"message": "Review approval status updated", "review": updated}
 
 @router.delete("/{review_id}")
-def delete_review(review_id: str):
+def delete_review(
+    review_id: str,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
     """
-    Delete a review permanently. Recalculates product average rating and count.
+    Delete a review permanently. Recalculates product average rating and count (Admin only).
     """
     try:
         obj_id = ObjectId(review_id)

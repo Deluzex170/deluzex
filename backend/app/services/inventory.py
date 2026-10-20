@@ -2,9 +2,44 @@ import logging
 from typing import List, Union, Dict, Any
 from bson import ObjectId
 from pymongo import ReturnDocument
+from fastapi import HTTPException
 from app.core.database import db
 
 logger = logging.getLogger("deluzex.inventory")
+
+def validate_stock_availability(items: List[Union[Dict[str, Any], Any]]) -> None:
+    """
+    Validate that each product in items exists and has sufficient stock available.
+    Raises HTTPException(400) if any product is out of stock or requested quantity exceeds available stock.
+    """
+    if not items:
+        return
+
+    for item in items:
+        pid = item.get("product_id") if isinstance(item, dict) else getattr(item, "product_id", None)
+        qty = int(item.get("quantity", 1) if isinstance(item, dict) else getattr(item, "quantity", 1))
+        title = item.get("title") if isinstance(item, dict) else getattr(item, "title", "Product")
+        if not pid:
+            continue
+
+        is_valid_oid = ObjectId.is_valid(str(pid))
+        try:
+            prod_query = {"_id": ObjectId(pid)} if is_valid_oid else {"_id": str(pid)}
+        except Exception:
+            prod_query = {"_id": str(pid)}
+
+        product = db.products.find_one(prod_query)
+        if not product and is_valid_oid:
+            raise HTTPException(status_code=400, detail=f"Product '{title}' is no longer available.")
+
+        if product:
+            if product.get("in_stock") is False or int(product.get("stock_count", 0)) <= 0:
+                raise HTTPException(status_code=400, detail=f"Product '{title}' is currently out of stock.")
+
+            avail = int(product.get("stock_count", 0))
+            if avail < qty:
+                raise HTTPException(status_code=400, detail=f"Only {avail} unit(s) of '{title}' available in stock.")
+
 
 def decrement_product_stock(items: List[Union[Dict[str, Any], Any]]) -> None:
     """

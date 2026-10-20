@@ -11,19 +11,34 @@ from app.core.database import db
 
 client = TestClient(app)
 
+from types import SimpleNamespace
+from app.api import deps
+
 @pytest.fixture
 def subscriber_setup():
     test_email = "test.luxury.subscriber@deluzex.com"
     db.newsletter_subscribers.delete_many({"email": test_email})
 
+    admin_user = SimpleNamespace(
+        id=str(ObjectId()),
+        email="admin@deluzex.com",
+        first_name="Admin",
+        last_name="Tester",
+        is_admin=True,
+        is_active=True,
+        is_verified=True,
+    )
+    app.dependency_overrides[deps.get_current_active_admin] = lambda: admin_user
+
     yield test_email
 
+    app.dependency_overrides.clear()
     db.newsletter_subscribers.delete_many({"email": test_email})
 
 def test_newsletter_admin_lifecycle(subscriber_setup):
     test_email = subscriber_setup
 
-    # 1. Subscribe
+    # 1. Subscribe (public endpoint)
     sub_res = client.post("/api/v1/newsletter/subscribe", json={
         "email": test_email,
         "source": "admin_test_suite"
@@ -62,3 +77,12 @@ def test_newsletter_admin_lifecycle(subscriber_setup):
     # Verify deleted
     verify_res = client.get(f"/api/v1/newsletter/subscribers?search={test_email}")
     assert not any(s["email"] == test_email for s in verify_res.json()["subscribers"])
+
+def test_newsletter_admin_unauthorized():
+    app.dependency_overrides.clear()
+    assert client.get("/api/v1/newsletter/subscribers").status_code == 401
+    assert client.get("/api/v1/newsletter/export-csv").status_code == 401
+    fake_id = str(ObjectId())
+    assert client.patch(f"/api/v1/newsletter/subscribers/{fake_id}/notified", json={"is_notified": True}).status_code == 401
+    assert client.delete(f"/api/v1/newsletter/subscribers/{fake_id}").status_code == 401
+

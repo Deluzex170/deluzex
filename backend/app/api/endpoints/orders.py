@@ -6,7 +6,7 @@ from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 
 from app import models
-from app.api.deps import get_current_active_user
+from app.api import deps
 from app.core.database import db
 from app.core.audit import record_audit_event
 from app.services.inventory import decrement_product_stock, restore_product_stock
@@ -34,7 +34,7 @@ def _format_order(doc: dict) -> dict:
 def get_my_orders(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
-    current_user: models.User = Depends(get_current_active_user),
+    current_user: models.User = Depends(deps.get_current_active_user),
 ):
     """
     Get all orders for the currently authenticated user.
@@ -70,9 +70,9 @@ def get_my_orders(
 
 
 @router.get("/stats")
-def get_order_stats():
+def get_order_stats(admin: models.User = Depends(deps.get_current_active_admin)):
     """
-    Get aggregated counts and revenue metrics for orders.
+    Get aggregated counts and revenue metrics for orders (Admin only).
     """
     total_orders = db.orders.count_documents({})
     pending_count = db.orders.count_documents({"status": {"$in": ["pending", "cod"]}})
@@ -103,45 +103,70 @@ def get_order_stats():
 def list_orders(
     email: Optional[str] = Query(None, description="Filter by customer email"),
     phone: Optional[str] = Query(None, description="Filter by customer phone"),
-    status: Optional[str] = Query(None, description="Filter by order status"),
+    order_status: Optional[str] = Query(None, alias="status", description="Filter by order status"),
     search: Optional[str] = Query(None, description="Search by ID, email, or phone"),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
 ):
     """
     Get orders with optional filters (email, phone, status, search) and pagination.
-    Sorted newest first.
+    Authenticated customers can only view their own orders. Admins can view and search all orders.
     """
-    logger.info(f"[GET /orders] Listing orders with params: email={email}, phone={phone}, status={status}, search={search}, skip={skip}, limit={limit}")
-    query = {}
-    if search:
-        search_clean = search.strip()
-        search_or = [
-            {"email": {"$regex": re.escape(search_clean), "$options": "i"}},
-            {"phone": {"$regex": re.escape(search_clean)}},
-            {"shipping_address.first_name": {"$regex": re.escape(search_clean), "$options": "i"}},
-            {"shipping_address.last_name": {"$regex": re.escape(search_clean), "$options": "i"}},
-            {"tracking_number": {"$regex": re.escape(search_clean), "$options": "i"}},
-        ]
-        if ObjectId.is_valid(search_clean):
-            search_or.append({"_id": ObjectId(search_clean)})
-        query["$or"] = search_or
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required to view orders",
+        )
 
-    if email:
-        clean_email = email.strip()
-        prefix = clean_email.split("@")[0]
-        query["$or"] = [
-            {"email": {"$regex": f"^{re.escape(clean_email)}$", "$options": "i"}},
-            {"email": {"$regex": f"^{re.escape(prefix)}", "$options": "i"}},
-        ]
-    if phone:
-        clean_phone = re.sub(r"\D", "", phone.strip())
-        if len(clean_phone) >= 10:
-            query["phone"] = {"$regex": f"{re.escape(clean_phone[-10:])}$"}
-        else:
-            query["phone"] = phone.strip()
-    if status and status.lower() != "all":
-        query["status"] = {"$regex": f"^{re.escape(status.strip())}$", "$options": "i"}
+    logger.info(f"[GET /orders] Listing orders with params: email={email}, phone={phone}, status={order_status}, search={search}, skip={skip}, limit={limit}")
+    query = {}
+
+    if not getattr(current_user, "is_admin", False):
+        user_clean_email = (current_user.email or "").strip().lower()
+        if email and email.strip().lower() != user_clean_email:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to access orders of another user",
+            )
+        user_conditions = []
+        if current_user.id:
+            user_conditions.append({"user_id": str(current_user.id)})
+        if user_clean_email:
+            user_conditions.append({"email": {"$regex": f"^{re.escape(user_clean_email)}$", "$options": "i"}})
+        query["$or"] = user_conditions
+
+    else:
+        # Admin search & filters
+        if search:
+            search_clean = search.strip()
+            search_or = [
+                {"email": {"$regex": re.escape(search_clean), "$options": "i"}},
+                {"phone": {"$regex": re.escape(search_clean)}},
+                {"shipping_address.first_name": {"$regex": re.escape(search_clean), "$options": "i"}},
+                {"shipping_address.last_name": {"$regex": re.escape(search_clean), "$options": "i"}},
+                {"tracking_number": {"$regex": re.escape(search_clean), "$options": "i"}},
+            ]
+            if ObjectId.is_valid(search_clean):
+                search_or.append({"_id": ObjectId(search_clean)})
+            query["$or"] = search_or
+
+        if email:
+            clean_email = email.strip()
+            prefix = clean_email.split("@")[0]
+            query["$or"] = [
+                {"email": {"$regex": f"^{re.escape(clean_email)}$", "$options": "i"}},
+                {"email": {"$regex": f"^{re.escape(prefix)}", "$options": "i"}},
+            ]
+        if phone:
+            clean_phone = re.sub(r"\D", "", phone.strip())
+            if len(clean_phone) >= 10:
+                query["phone"] = {"$regex": f"{re.escape(clean_phone[-10:])}$"}
+            else:
+                query["phone"] = phone.strip()
+
+    if order_status and order_status.lower() != "all":
+        query["status"] = {"$regex": f"^{re.escape(order_status.strip())}$", "$options": "i"}
 
     docs = list(
         db.orders.find(query)
@@ -154,9 +179,13 @@ def list_orders(
 
 
 @router.get("/{order_id}", response_model=models.Order)
-def get_order(order_id: str):
+def get_order(
+    order_id: str,
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+):
     """
     Get full details of a specific order by its MongoDB Order ID.
+    Enforces privacy: only the order owner or an admin can view order details.
     """
     logger.info(f"[GET /orders/{order_id}] Fetching order details")
     try:
@@ -175,6 +204,24 @@ def get_order(order_id: str):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Order not found",
         )
+
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required to view order details",
+        )
+
+    if not getattr(current_user, "is_admin", False):
+        user_email = (current_user.email or "").strip().lower()
+        order_email = (doc.get("email") or "").strip().lower()
+        user_id_str = str(current_user.id) if current_user.id else None
+        order_uid = str(doc.get("user_id") or "")
+        is_owner = (order_email and order_email == user_email) or (user_id_str and order_uid == user_id_str)
+        if not is_owner:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to view this order",
+            )
 
     logger.info(f"[GET /orders/{order_id}] Successfully retrieved order")
     return models.Order(**doc)
@@ -224,11 +271,16 @@ def create_order(payload: OrderCreateRequest):
 
 
 @router.patch("/{order_id}/status", response_model=models.Order)
-def update_order_status(order_id: str, payload: OrderStatusUpdateRequest, request: Request = None):
+def update_order_status(
+    order_id: str,
+    payload: OrderStatusUpdateRequest,
+    request: Request = None,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
     """
-    Update the status, tracking number, courier partner, or notes of an existing order.
+    Update the status, tracking number, courier partner, or notes of an existing order (Admin only).
     """
-    logger.info(f"[PATCH /orders/{order_id}/status] Updating status to '{payload.status}'")
+    logger.info(f"[PATCH /orders/{order_id}/status] Updating status to '{payload.status}' by {admin.email}")
     try:
         obj_id = ObjectId(order_id)
     except Exception:
@@ -270,7 +322,7 @@ def update_order_status(order_id: str, payload: OrderStatusUpdateRequest, reques
     record_audit_event(
         action="ORDER_STATUS_UPDATE",
         action_category="orders",
-        actor_email=doc.get("email") or "admin@deluzex.com",
+        actor_email=admin.email,
         actor_role="Admin",
         target_type="order",
         target_id=order_id,
@@ -291,7 +343,11 @@ def update_order_status(order_id: str, payload: OrderStatusUpdateRequest, reques
 
 
 @router.delete("/{order_id}")
-def delete_order(order_id: str, request: Request = None):
+def delete_order(
+    order_id: str,
+    request: Request = None,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
     """
     Delete an order (Admin only).
     """
@@ -314,7 +370,7 @@ def delete_order(order_id: str, request: Request = None):
     record_audit_event(
         action="ORDER_DELETED",
         action_category="orders",
-        actor_email="admin@deluzex.com",
+        actor_email=admin.email,
         actor_role="Admin",
         target_type="order",
         target_id=order_id,
@@ -326,11 +382,16 @@ def delete_order(order_id: str, request: Request = None):
 
 
 @router.post("/{order_id}/cancel", response_model=OrderCancelResponse)
-def cancel_order(order_id: str):
+@router.put("/{order_id}/cancel", response_model=OrderCancelResponse)
+def cancel_order(
+    order_id: str,
+    current_user: models.User = Depends(deps.get_current_active_user),
+):
     """
     Cancel an order if it is in a cancellable state (pending, paid, cod, processing).
+    Enforces authorization: Only the customer who owns the order or an Admin can cancel it.
     """
-    logger.info(f"[POST /orders/{order_id}/cancel] Attempting to cancel order")
+    logger.info(f"[POST /orders/{order_id}/cancel] Attempting to cancel order by {current_user.email}")
     try:
         obj_id = ObjectId(order_id)
     except Exception:
@@ -346,6 +407,20 @@ def cancel_order(order_id: str):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Order not found",
+        )
+
+    # Check ownership or admin
+    order_email = (doc.get("email") or "").strip().lower()
+    user_email = (current_user.email or "").strip().lower()
+    order_uid = str(doc.get("user_id") or "")
+    user_id_str = str(current_user.id) if current_user.id else None
+    is_owner = (order_email and order_email == user_email) or (user_id_str and order_uid == user_id_str)
+
+    if not is_owner and not getattr(current_user, "is_admin", False):
+        logger.warning(f"[POST /orders/{order_id}/cancel] User {current_user.email} unauthorized to cancel order #{order_id}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to cancel this order",
         )
 
     current_status = doc.get("status")

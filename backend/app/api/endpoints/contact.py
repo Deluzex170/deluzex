@@ -1,10 +1,11 @@
 from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, Depends
 from pydantic import BaseModel, Field
 
 from app import models
+from app.api import deps
 from app.core.database import db
 
 router = APIRouter()
@@ -18,6 +19,7 @@ def read_contacts(
     search: Optional[str] = Query(None, description="Search by name, email, phone or message"),
     skip: int = 0,
     limit: int = 100,
+    admin: models.User = Depends(deps.get_current_active_admin),
 ):
     query = {}
     if status and status != "all":
@@ -41,7 +43,7 @@ def read_contacts(
     return results
 
 @router.get("/stats")
-def read_contact_stats():
+def read_contact_stats(admin: models.User = Depends(deps.get_current_active_admin)):
     total = db.contacts.count_documents({})
     new_count = db.contacts.count_documents({"$or": [{"status": "new"}, {"status": {"$exists": False}}]})
     contacted_count = db.contacts.count_documents({"status": "contacted"})
@@ -65,7 +67,11 @@ def create_contact(contact: models.ContactMessage):
     return contact
 
 @router.patch("/{id}/status", response_model=models.ContactMessage)
-def update_contact_status(id: str, payload: InquiryStatusUpdateRequest):
+def update_contact_status(
+    id: str,
+    payload: InquiryStatusUpdateRequest,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
     valid_statuses = ["new", "contacted", "resolved", "archived"]
     normalized_status = payload.status.strip().lower()
     if normalized_status not in valid_statuses:
@@ -91,7 +97,10 @@ def update_contact_status(id: str, payload: InquiryStatusUpdateRequest):
     return models.ContactMessage(**res)
 
 @router.delete("/{id}")
-def delete_contact(id: str):
+def delete_contact(
+    id: str,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
     try:
         obj_id = ObjectId(id)
     except Exception:
