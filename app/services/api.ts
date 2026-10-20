@@ -873,27 +873,86 @@ export async function submitContactForm(contactData: JsonObject) {
 }
 
 export interface Inquiry {
-  _id: string | number;
-  name: string;
+  _id: string;
+  id?: string;
+  name?: string;
   email: string;
   phone?: string;
   message: string;
+  status?: "new" | "contacted" | "resolved" | "archived" | string;
+  created_at?: string;
   createdAt?: string;
+  updated_at?: string;
 }
 
-export async function fetchInquiries(): Promise<Inquiry[]> {
+export interface InquiryStats {
+  total: number;
+  new: number;
+  contacted: number;
+  resolved: number;
+  archived: number;
+}
+
+export async function fetchInquiries(params?: { status?: string; search?: string }): Promise<Inquiry[]> {
   try {
-    const res = await fetch(`${API_BASE_URL}/contact`, {
+    const query = new URLSearchParams();
+    if (params?.status && params.status !== "all") query.append("status", params.status);
+    if (params?.search && params.search.trim()) query.append("search", params.search.trim());
+
+    const qs = query.toString() ? `?${query.toString()}` : "";
+    const res = await fetch(`${API_BASE_URL}/contact${qs}`, {
       headers: getAuthHeaders(),
-      next: { revalidate: 60 }
+      cache: "no-store",
     });
     if (!res.ok) throw new Error("Failed to fetch inquiries");
     const data = await res.json();
-    return data.data || data || [];
+    return Array.isArray(data) ? data : data.data || [];
   } catch (error) {
     logger.error("API", "Error fetching inquiries:", error);
     return [];
   }
+}
+
+export async function fetchInquiryStats(): Promise<InquiryStats> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/contact/stats`, {
+      headers: getAuthHeaders(),
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error("Failed to fetch inquiry statistics");
+    return await res.json();
+  } catch (error) {
+    logger.error("API", "Error fetching inquiry stats:", error);
+    return { total: 0, new: 0, contacted: 0, resolved: 0, archived: 0 };
+  }
+}
+
+export async function updateInquiryStatus(id: string, status: string): Promise<Inquiry> {
+  const res = await fetch(`${API_BASE_URL}/contact/${id}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || errorData.message || "Failed to update inquiry status");
+  }
+  return res.json();
+}
+
+export async function deleteInquiry(id: string): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${API_BASE_URL}/contact/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || errorData.message || "Failed to delete inquiry");
+  }
+  return res.json();
 }
 
 // --- PAYMENTS ---

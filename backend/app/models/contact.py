@@ -9,7 +9,9 @@ class ContactMessage(BaseModel):
     email: EmailStr
     phone: Optional[str] = None
     message: str
+    status: str = Field(default="new")
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: Optional[datetime] = None
 
     class Config:
         populate_by_name = True
