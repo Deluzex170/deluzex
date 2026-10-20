@@ -2409,3 +2409,237 @@ export async function resetPasswordWithOtp(
   }
 }
 
+/* ==========================================================================
+   COLLABORATION & DESIGN SUBMISSION APIS
+   ========================================================================== */
+
+export interface CollaborationSubmission {
+  _id?: string;
+  id?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  city?: string;
+  role?: string;
+  studio_or_college?: string;
+  has_made_before?: string;
+  concept_title: string;
+  description?: string;
+  portfolio_link?: string;
+  file_url?: string;
+  status: string; // "pending" | "reviewed" | "shortlisted" | "archived"
+  source?: string; // "collaborate_page" | "homepage_modal"
+  created_at?: string;
+}
+
+export async function submitCollaboration(
+  data: FormData | Record<string, unknown>
+): Promise<{ success: boolean; id: string; message: string; data?: any }> {
+  try {
+    const isFormData = typeof FormData !== "undefined" && data instanceof FormData;
+    const res = await fetch(`${API_BASE_URL}/collaborations`, {
+      method: "POST",
+      headers: isFormData ? undefined : { "Content-Type": "application/json" },
+      body: isFormData ? data : JSON.stringify(data),
+    });
+
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok || !result.success) {
+      throw new Error(result.detail || result.message || "Failed to submit design concept.");
+    }
+    return result;
+  } catch (error: any) {
+    logger.error("API", "Error submitting collaboration concept:", error);
+    throw error;
+  }
+}
+
+export async function fetchCollaborations(
+  queryString: string = ""
+): Promise<{ total: number; items: CollaborationSubmission[]; skip: number; limit: number }> {
+  try {
+    const query = queryString ? (queryString.startsWith("?") ? queryString : `?${queryString}`) : "";
+    const res = await fetch(`${API_BASE_URL}/collaborations${query}`, {
+      headers: getAuthHeaders(),
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || err.message || "Failed to fetch collaborations.");
+    }
+    return res.json();
+  } catch (error: any) {
+    logger.error("API", "Error fetching collaborations:", error);
+    throw error;
+  }
+}
+
+export async function updateCollaborationStatus(
+  id: string,
+  status: string
+): Promise<{ success: boolean; status: string; id: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/collaborations/${id}/status`, {
+      method: "PATCH",
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || err.message || "Failed to update submission status.");
+    }
+    return res.json();
+  } catch (error: any) {
+    logger.error("API", "Error updating collaboration status:", error);
+    throw error;
+  }
+}
+
+export async function deleteCollaboration(
+  id: string
+): Promise<{ success: boolean; id: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/collaborations/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || err.message || "Failed to delete collaboration.");
+    }
+    return res.json();
+  } catch (error: any) {
+    logger.error("API", "Error deleting collaboration:", error);
+    throw error;
+  }
+}
+
+/* ==========================================================================
+   DYNAMIC FAQS APIS
+   ========================================================================== */
+
+export interface FAQItem {
+  _id?: string;
+  id?: string | number;
+  question: string;
+  answer: string;
+  category: string; // "collaborate" | "support" | "general"
+  sequence: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export async function fetchFaqs(
+  category?: string,
+  includeInactive: boolean = false
+): Promise<FAQItem[]> {
+  try {
+    const params = new URLSearchParams();
+    if (category && category !== "all") params.append("category", category);
+    if (includeInactive) params.append("include_inactive", "true");
+
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    const res = await fetch(`${API_BASE_URL}/faqs${qs}`, {
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || err.message || "Failed to fetch FAQs.");
+    }
+    return res.json();
+  } catch (error: any) {
+    logger.error("API", "Error fetching FAQs:", error);
+    return [];
+  }
+}
+
+export async function createFaq(
+  faq: Partial<FAQItem>
+): Promise<FAQItem> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/faqs`, {
+      method: "POST",
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(faq),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || err.message || "Failed to create FAQ.");
+    }
+    return res.json();
+  } catch (error: any) {
+    logger.error("API", "Error creating FAQ:", error);
+    throw error;
+  }
+}
+
+export async function updateFaq(
+  id: string,
+  faq: Partial<FAQItem>
+): Promise<FAQItem> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/faqs/${id}`, {
+      method: "PUT",
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(faq),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || err.message || "Failed to update FAQ.");
+    }
+    return res.json();
+  } catch (error: any) {
+    logger.error("API", "Error updating FAQ:", error);
+    throw error;
+  }
+}
+
+export async function deleteFaq(
+  id: string
+): Promise<{ success: boolean; id: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/faqs/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || err.message || "Failed to delete FAQ.");
+    }
+    return res.json();
+  } catch (error: any) {
+    logger.error("API", "Error deleting FAQ:", error);
+    throw error;
+  }
+}
+
+export async function seedDefaultFaqs(): Promise<{ success: boolean; message: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/faqs/seed`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+    });
+    return res.json();
+  } catch (error: any) {
+    logger.error("API", "Error seeding FAQs:", error);
+    throw error;
+  }
+}
+

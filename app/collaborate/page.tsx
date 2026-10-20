@@ -4,12 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./collaborate.module.css";
-
-interface FAQItem {
-  id: number;
-  question: string;
-  answer: string;
-}
+import { submitCollaboration, fetchFaqs, FAQItem } from "../services/api";
 
 const FAQ_DATA: FAQItem[] = [
   {
@@ -17,12 +12,18 @@ const FAQ_DATA: FAQItem[] = [
     question: "Can I apply if I'm still studying?",
     answer:
       "Yes, Design And Architecture Students Can Apply, Along With Practising Architects, Interior Designers And Lighting Designers.",
+    category: "collaborate",
+    sequence: 1,
+    is_active: true,
   },
   {
     id: 2,
     question: "How are royalties calculated?",
     answer:
       "Royalties are calculated as a fixed percentage on the net selling price of every unit sold across our global e-commerce platform, showroom partner network, and bespoke architectural trade orders.",
+    category: "collaborate",
+    sequence: 2,
+    is_active: true,
   },
   {
     id: 3,
@@ -71,18 +72,34 @@ const ROLES = [
 ];
 
 export default function CollaboratePage() {
-  const [activeFaq, setActiveFaq] = useState<number | null>(1);
+  const [faqs, setFaqs] = useState<FAQItem[]>(FAQ_DATA);
+  const [activeFaq, setActiveFaq] = useState<number | string | null>(1);
   const [hasMadeBefore, setHasMadeBefore] = useState<"no" | "yes">("no");
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isCityOpen, setIsCityOpen] = useState(false);
   const [isRoleOpen, setIsRoleOpen] = useState(false);
   const cityDropdownRef = useRef<HTMLDivElement>(null);
   const roleDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch dynamic FAQs on mount
+  useEffect(() => {
+    fetchFaqs("collaborate")
+      .then((data) => {
+        if (data && data.length > 0) {
+          setFaqs(data);
+          setActiveFaq(data[0]._id || data[0].id || 1);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load FAQs:", err);
+      });
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -137,7 +154,7 @@ export default function CollaboratePage() {
     designDescription: "",
   });
 
-  const toggleFaq = (id: number) => {
+  const toggleFaq = (id: number | string) => {
     setActiveFaq((prev) => (prev === id ? null : id));
   };
 
@@ -160,17 +177,43 @@ export default function CollaboratePage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreedTerms) {
       alert("Please agree to the submission terms to proceed.");
       return;
     }
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setErrorMessage("");
+
+    try {
+      const formData = new FormData();
+      formData.append("name", formFields.fullName);
+      formData.append("email", formFields.email);
+      if (formFields.phone) formData.append("phone", formFields.phone);
+      if (formFields.city) formData.append("city", formFields.city);
+      if (formFields.role) formData.append("role", formFields.role);
+      if (formFields.studioOrCollege) formData.append("studio_or_college", formFields.studioOrCollege);
+      formData.append("has_made_before", hasMadeBefore);
+      formData.append(
+        "concept_title",
+        formFields.designDescription
+          ? formFields.designDescription.slice(0, 60)
+          : "Lighting Design Submission"
+      );
+      if (formFields.designDescription) formData.append("description", formFields.designDescription);
+      formData.append("source", "collaborate_page");
+      if (selectedFile) {
+        formData.append("file", selectedFile);
+      }
+
+      await submitCollaboration(formData);
       setSubmitted(true);
-    }, 800);
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to submit your design. Please check your details and try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetForm = () => {
@@ -180,6 +223,7 @@ export default function CollaboratePage() {
     setIsCityOpen(false);
     setIsRoleOpen(false);
     setHasMadeBefore("no");
+    setErrorMessage("");
     setFormFields({
       fullName: "",
       email: "",
@@ -485,17 +529,18 @@ export default function CollaboratePage() {
           </div>
 
           <div className={styles.accordionList}>
-            {FAQ_DATA.map((item) => {
-              const isOpen = activeFaq === item.id;
+            {faqs.map((item, idx) => {
+              const itemId = item._id || item.id || idx;
+              const isOpen = activeFaq === itemId;
               return (
                 <div
-                  key={item.id}
+                  key={itemId}
                   className={`${styles.accordionItem} ${isOpen ? styles.accordionItemActive : ""}`}
                 >
                   <button
                     type="button"
                     className={styles.accordionHeader}
-                    onClick={() => toggleFaq(item.id)}
+                    onClick={() => toggleFaq(itemId)}
                     aria-expanded={isOpen}
                   >
                     <span>{item.question}</span>
@@ -820,6 +865,12 @@ export default function CollaboratePage() {
                     />
                     <span>I have read and agree to the submission terms.</span>
                   </label>
+
+                  {errorMessage && (
+                    <div style={{ color: "#ef4444", fontSize: "0.85rem", padding: "0.6rem 0.8rem", background: "rgba(239, 68, 68, 0.1)", borderRadius: "6px", marginBottom: "0.8rem" }}>
+                      {errorMessage}
+                    </div>
+                  )}
 
                   <button
                     type="submit"

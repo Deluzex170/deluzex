@@ -1,26 +1,31 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./support.module.css";
+import { fetchFaqs, FAQItem } from "../../services/api";
+
+const DEFAULT_SUPPORT_FAQS = [
+  { question: "How long does custom fixture manufacturing take?", answer: "Typically, bespoke or customized architectural pieces take 4-6 weeks to manufacture, electroplate, and inspect prior to white-glove dispatch." },
+  { question: "Can I inspect orders and tracking status in real time?", answer: "Yes! Navigate to Track Orders in your dashboard to view your real-time processing and shipping milestones." },
+  { question: "What is your warranty and returns coverage?", answer: "Every DeLuzex fixture comes backed by our 5-year structural warranty and 30-day architectural return policy." },
+];
 
 export default function Support() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [faqs, setFaqs] = useState<{ question: string; answer: string }[]>(DEFAULT_SUPPORT_FAQS);
 
-  const topics = [
-    { title: "Track My Order", desc: "Check the latest status of your order.", icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z", href: "/dashboard/orders" },
-    { title: "Wishlist & Cart", desc: "Get help with your saved items and cart.", icon: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z", href: "/dashboard/wishlist" },
-    { title: "Payments & Refunds", desc: "Learn about payment methods and refund process.", icon: "M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M1 10h22", href: "/dashboard/payments" },
-    { title: "Shipping & Delivery", desc: "Delivery timelines and shipping information.", icon: "M5 9l2-2h10l2 2 M5 9v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9 M9 22V12h6v10", href: "/shipping" },
-    { title: "Return & Replacement", desc: "Return eligibility and replacement policy.", icon: "M21 2v6h-6 M3 12a9 9 0 0 1 15-6.7L21 8 M3 22v-6h6 M21 12a9 9 0 0 1-15 6.7L3 16", href: "/shipping" },
-    { title: "Contact Support", desc: "Talk to our customer support team.", icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", href: "/contact" }
-  ];
-
-  const faqs = [
-    { q: "How long does custom fixture manufacturing take?", a: "Typically, bespoke or customized architectural pieces take 4-6 weeks to manufacture, electroplate, and inspect prior to white-glove dispatch." },
-    { q: "Can I inspect orders and tracking status in real time?", a: "Yes! Navigate to Track Orders in your dashboard to view your real-time processing and shipping milestones." },
-    { q: "What is your warranty and returns coverage?", a: "Every DeLuzex fixture comes backed by our 5-year structural warranty and 30-day architectural return policy." },
-  ];
+  useEffect(() => {
+    fetchFaqs("support")
+      .then((data) => {
+        if (data && data.length > 0) {
+          setFaqs(data);
+        }
+      })
+      .catch((err) => {
+        console.error("Error loading support FAQs:", err);
+      });
+  }, []);
 
   return (
     <div className={styles.container}>
@@ -53,11 +58,11 @@ export default function Support() {
             <div key={i} className={`${styles.faqItem} ${openFaq === i ? styles.faqOpen : ""}`}>
               <button className={styles.faqHeader} onClick={() => setOpenFaq(openFaq === i ? null : i)}>
                 <span className={styles.faqToggleIcon}>{openFaq === i ? "—" : "+"}</span>
-                {faq.q}
+                {faq.question || (faq as any).q}
               </button>
               {openFaq === i && (
                 <div className={styles.faqBody}>
-                  <p>{faq.a}</p>
+                  <p>{faq.answer || (faq as any).a}</p>
                 </div>
               )}
             </div>

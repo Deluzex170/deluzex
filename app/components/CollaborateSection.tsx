@@ -5,10 +5,13 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./CollaborateSection.module.css";
+import { submitCollaboration } from "../services/api";
 
 export default function CollaborateSection() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -23,14 +26,34 @@ export default function CollaborateSection() {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormSubmitted(true);
+    setIsSubmitting(true);
+    setErrorMsg("");
+
+    try {
+      await submitCollaboration({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+        concept_title: formData.conceptTitle,
+        description: formData.description,
+        portfolio_link: formData.portfolioLink,
+        source: "homepage_modal",
+      });
+      setFormSubmitted(true);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to submit concept. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setFormSubmitted(false);
+    setErrorMsg("");
   };
 
   return (
@@ -215,10 +238,14 @@ export default function CollaborateSection() {
                       onChange={handleChange}
                       placeholder="Describe the materials, lighting effect, and inspiration behind your concept..."
                     />
-                  </div>
+                  {errorMsg && (
+                    <div style={{ color: "#ef4444", fontSize: "0.85rem", padding: "0.6rem 0.8rem", background: "rgba(239, 68, 68, 0.1)", borderRadius: "6px", marginBottom: "0.8rem" }}>
+                      {errorMsg}
+                    </div>
+                  )}
 
-                  <button type="submit" className={styles.modalSubmitBtn}>
-                    Send Concept for Review
+                  <button type="submit" className={styles.modalSubmitBtn} disabled={isSubmitting}>
+                    {isSubmitting ? "Sending Concept..." : "Send Concept for Review"}
                   </button>
                 </form>
               </>

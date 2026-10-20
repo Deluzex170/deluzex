@@ -16,5 +16,7 @@ from app.models.payment_card import PaymentCard
 from app.models.wishlist import WishlistItem
 from app.models.visitor_log import VisitorLog
 from app.models.review import Review
+from app.models.collaboration import CollaborationSubmission
+from app.models.faq import FAQItem
 
 # For Alembic or Base.metadata.create_all() to discover the models
