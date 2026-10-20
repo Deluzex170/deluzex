@@ -12,8 +12,12 @@ import httpx
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "backend"))
-with patch.dict(os.environ, {"MONGODB_URI": "mongodb://127.0.0.1:27017"}):
-    import main
+from dotenv import load_dotenv
+load_dotenv(ROOT / ".env")
+load_dotenv(ROOT / ".env.local")
+if not os.getenv("MONGODB_URI") and not os.getenv("MONGO_URI"):
+    os.environ["MONGODB_URI"] = "mongodb://127.0.0.1:27017"
+import main
 from app.api.endpoints import auth, cart
 
 

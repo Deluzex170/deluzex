@@ -10,6 +10,7 @@ from app.api.deps import get_current_active_user
 from app.core.database import db
 from app.core.audit import record_audit_event
 from app.services.inventory import decrement_product_stock, restore_product_stock
+from app.services.email import send_order_confirmation_email
 from app.schemas.order import (
     OrderCancelResponse,
     OrderCreateRequest,
@@ -211,6 +212,13 @@ def create_order(payload: OrderCreateRequest):
 
     # Decrement inventory stock
     decrement_product_stock(payload.items)
+
+    # Dispatch luxury order confirmation email safely
+    try:
+        send_order_confirmation_email(db_order)
+        db.orders.update_one({"_id": ObjectId(db_order.id)}, {"$set": {"order_confirmation_email_sent": True}})
+    except Exception as email_err:
+        logger.warning(f"[POST /orders] Order confirmation email dispatch skipped for #{db_order.id}: {email_err}")
 
     return db_order
 

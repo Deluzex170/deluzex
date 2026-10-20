@@ -14,6 +14,7 @@ from app.core.config import settings
 from app.core.database import db
 from app import models
 from app.services.inventory import decrement_product_stock
+from app.services.email import send_order_confirmation_email
 from app.schemas.payment import (
     CodOrderRequest,
     CodOrderResponse,
@@ -329,6 +330,14 @@ def verify_payment(payload: VerifyPaymentRequest, request: Request = None):
     # Decrement inventory stock atomically
     decrement_product_stock(order_doc.get("items", []))
 
+    # Dispatch luxury order confirmation email safely
+    try:
+        confirmed_order = db.orders.find_one({"_id": oid}) or order_doc
+        send_order_confirmation_email(confirmed_order)
+        db.orders.update_one({"_id": oid}, {"$set": {"order_confirmation_email_sent": True}})
+    except Exception as email_err:
+        logger.warning(f"Order confirmation email dispatch skipped on verify for #{payload.order_id}: {email_err}")
+
     record_audit_event(
         action="ORDER_PAYMENT_SUCCESS",
         action_category="orders",
@@ -435,6 +444,15 @@ def create_cod_order(payload: CodOrderRequest, request: Request = None):
                     }
                 },
             )
+            # Dispatch confirmation email for resumed COD order
+            try:
+                cod_order = db.orders.find_one({"_id": oid})
+                if cod_order:
+                    send_order_confirmation_email(cod_order)
+                    db.orders.update_one({"_id": oid}, {"$set": {"order_confirmation_email_sent": True}})
+            except Exception as email_err:
+                logger.warning(f"Order confirmation email dispatch skipped on COD resume: {email_err}")
+
             record_audit_event(
                 action="ORDER_COD_PLACED",
                 action_category="orders",
@@ -484,6 +502,15 @@ def create_cod_order(payload: CodOrderRequest, request: Request = None):
 
     # Decrement inventory stock atomically for COD order
     decrement_product_stock(payload.items)
+
+    # Dispatch luxury order confirmation email safely
+    try:
+        cod_doc = db.orders.find_one({"_id": ObjectId(order_id)})
+        if cod_doc:
+            send_order_confirmation_email(cod_doc)
+            db.orders.update_one({"_id": ObjectId(order_id)}, {"$set": {"order_confirmation_email_sent": True}})
+    except Exception as email_err:
+        logger.warning(f"Order confirmation email dispatch skipped on COD for #{order_id}: {email_err}")
 
     record_audit_event(
         action="ORDER_COD_PLACED",
@@ -1016,6 +1043,13 @@ async def razorpay_webhook(request: Request):
                         }
                     }
                 )
+                try:
+                    paid_doc = db.orders.find_one(query)
+                    if paid_doc and not paid_doc.get("order_confirmation_email_sent"):
+                        send_order_confirmation_email(paid_doc)
+                        db.orders.update_one(query, {"$set": {"order_confirmation_email_sent": True}})
+                except Exception as email_err:
+                    logger.warning(f"Webhook email dispatch skipped for {query}: {email_err}")
                 record_audit_event(
                     action="WEBHOOK_PAYMENT_CAPTURED",
                     action_category="payments",
