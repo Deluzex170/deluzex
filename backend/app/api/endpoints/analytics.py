@@ -249,3 +249,91 @@ def get_member_visitors():
         ))
 
     return result
+
+
+@router.get("/dashboard-summary")
+def get_dashboard_summary():
+    """
+    High-level executive dashboard summary combining revenue, orders, inventory,
+    customer, inquiry, review, and traffic metrics.
+    """
+    # 1. Revenue & Orders
+    pipeline_rev = [
+        {
+            "$group": {
+                "_id": None,
+                "total_revenue": {"$sum": "$total_amount"},
+                "total_orders": {"$sum": 1}
+            }
+        }
+    ]
+    rev_agg = list(db.orders.aggregate(pipeline_rev))
+    total_rev = round(rev_agg[0]["total_revenue"], 2) if rev_agg else 0.0
+    total_orders = rev_agg[0]["total_orders"] if rev_agg else 0
+
+    pending_orders = db.orders.count_documents({
+        "status": {"$in": ["pending", "confirmed", "processing"]}
+    })
+    delivered_orders = db.orders.count_documents({"status": "delivered"})
+
+    # Recent 5 orders
+    recent_orders_docs = list(db.orders.find({}).sort("created_at", -1).limit(5))
+    recent_orders = []
+    for o in recent_orders_docs:
+        c_name = o.get("customer", {}).get("name") if isinstance(o.get("customer"), dict) else "Customer"
+        recent_orders.append({
+            "id": str(o.get("_id", "")),
+            "order_number": o.get("order_number") or f"ORD-{str(o.get('_id', ''))[:6]}",
+            "customer_name": c_name,
+            "total_amount": o.get("total_amount", 0.0),
+            "status": o.get("status", "pending"),
+            "created_at": o.get("created_at").isoformat() if isinstance(o.get("created_at"), datetime) else str(o.get("created_at", ""))
+        })
+
+    # 2. Inventory Alerts
+    total_products = db.products.count_documents({})
+    low_stock_docs = list(db.products.find({"stock": {"$lte": 5}}).limit(6))
+    low_stock_count = db.products.count_documents({"stock": {"$lte": 5}})
+    out_of_stock_count = db.products.count_documents({"stock": {"$lte": 0}})
+
+    low_stock_items = []
+    for p in low_stock_docs:
+        low_stock_items.append({
+            "id": str(p.get("_id", "")),
+            "name": p.get("product_name") or p.get("title") or "Unnamed Piece",
+            "stock": p.get("stock", 0)
+        })
+
+    # 3. Inquiries & Moderation
+    pending_inquiries = db.contacts.count_documents({
+        "$or": [{"status": "new"}, {"status": {"$exists": False}}]
+    })
+    pending_reviews = db.reviews.count_documents({"is_approved": False})
+
+    # 4. Audience
+    total_customers = db.users.count_documents({"$or": [{"is_admin": False}, {"is_admin": {"$exists": False}}]})
+    newsletter_subscribers = db.newsletter_subscribers.count_documents({})
+    total_visits = db.visitor_logs.count_documents({})
+
+    return {
+        "revenue": {
+            "total": total_rev,
+            "orders_count": total_orders,
+            "pending_orders": pending_orders,
+            "delivered_orders": delivered_orders,
+            "recent_orders": recent_orders
+        },
+        "inventory": {
+            "total_products": total_products,
+            "low_stock_count": low_stock_count,
+            "out_of_stock_count": out_of_stock_count,
+            "low_stock_items": low_stock_items
+        },
+        "operations": {
+            "pending_inquiries": pending_inquiries,
+            "pending_reviews": pending_reviews,
+            "total_customers": total_customers,
+            "newsletter_subscribers": newsletter_subscribers,
+            "total_visits": total_visits
+        }
+    }

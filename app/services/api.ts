@@ -3046,3 +3046,45 @@ export async function fetchCustomerOrders(userId: string): Promise<any[]> {
   return await res.json();
 }
 
+export interface DashboardSummaryResponse {
+  revenue: {
+    total: number;
+    orders_count: number;
+    pending_orders: number;
+    delivered_orders: number;
+    recent_orders: Array<{
+      id: string;
+      order_number: string;
+      customer_name: string;
+      total_amount: number;
+      status: string;
+      created_at: string;
+    }>;
+  };
+  inventory: {
+    total_products: number;
+    low_stock_count: number;
+    out_of_stock_count: number;
+    low_stock_items: Array<{
+      id: string;
+      name: string;
+      stock: number;
+    }>;
+  };
+  operations: {
+    pending_inquiries: number;
+    pending_reviews: number;
+    total_customers: number;
+    newsletter_subscribers: number;
+    total_visits: number;
+  };
+}
+
+export async function fetchDashboardSummary(): Promise<DashboardSummaryResponse> {
+  const res = await fetch(`${API_BASE_URL}/analytics/dashboard-summary`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch dashboard summary");
+  return await res.json();
+}
+

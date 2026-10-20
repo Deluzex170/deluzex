@@ -1,0 +1,349 @@
+/* Executive Luxury Admin Dashboard Styles */
+
+.container {
+  padding: 2.5rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 80px);
+  color: #f3f3f3;
+  font-family: inherit;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2.25rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.titleArea h1 {
+  font-size: 2.25rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5rem 0;
+  color: #ffffff;
+}
+
+.goldAccent {
+  color: #c49a45;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: #8c8c8c;
+  margin: 0;
+}
+
+.refreshBtn {
+  background: rgba(196, 154, 69, 0.1);
+  color: #c49a45;
+  border: 1px solid rgba(196, 154, 69, 0.3);
+  padding: 0.65rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.refreshBtn:hover {
+  background: rgba(196, 154, 69, 0.2);
+  border-color: #c49a45;
+  transform: translateY(-1px);
+}
+
+/* Primary KPI Grid */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+.kpiCard {
+  background: #141414;
+  border: 1px solid #242424;
+  border-radius: 12px;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.kpiCard:hover {
+  border-color: rgba(196, 154, 69, 0.4);
+  transform: translateY(-2px);
+}
+
+.kpiTopRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.kpiLabel {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8c8c8c;
+}
+
+.kpiIcon {
+  font-size: 1.2rem;
+  color: #c49a45;
+}
+
+.kpiValue {
+  font-size: 2.25rem;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+
+.goldVal {
+  color: #c49a45;
+}
+
+.kpiFootnote {
+  font-size: 0.8rem;
+  color: #717171;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Quick Nav Grid */
+.quickNavSection {
+  margin-bottom: 2.5rem;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1rem;
+}
+
+.sectionTitle {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #e5e5e5;
+  letter-spacing: -0.01em;
+}
+
+.quickNavGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.navCard {
+  background: #141414;
+  border: 1px solid #222222;
+  border-radius: 10px;
+  padding: 1.15rem 1.25rem;
+  text-decoration: none;
+  color: #e0e0e0;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.navCard:hover {
+  background: #1a1a1a;
+  border-color: rgba(196, 154, 69, 0.4);
+  transform: translateY(-2px);
+  color: #c49a45;
+}
+
+.navCardTitle {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.35rem;
+  color: #ffffff;
+}
+
+.navCardDesc {
+  font-size: 0.8rem;
+  color: #777777;
+}
+
+/* Dual Column Feed */
+.dualFeedGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 1.5rem;
+}
+
+.feedCard {
+  background: #141414;
+  border: 1px solid #242424;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.feedCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #222;
+}
+
+.viewAllLink {
+  color: #c49a45;
+  font-size: 0.825rem;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.viewAllLink:hover {
+  text-decoration: underline;
+}
+
+/* Order Item Row */
+.orderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid #1c1c1c;
+}
+
+.orderRow:last-child {
+  border-bottom: none;
+}
+
+.orderNum {
+  font-weight: 600;
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.orderCust {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.orderRight {
+  text-align: right;
+}
+
+.orderAmount {
+  font-weight: 600;
+  color: #c49a45;
+  font-size: 0.95rem;
+}
+
+/* Status Badges */
+.statusBadge {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.statusPaid {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+}
+
+.statusPending {
+  background: rgba(234, 179, 8, 0.12);
+  color: #facc15;
+}
+
+/* Stock Alert Row */
+.stockRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #1c1c1c;
+}
+
+.stockRow:last-child {
+  border-bottom: none;
+}
+
+.stockName {
+  font-weight: 500;
+  color: #eee;
+  font-size: 0.875rem;
+}
+
+.stockCountBadge {
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.stockCritical {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.stockWarning {
+  background: rgba(234, 179, 8, 0.12);
+  color: #facc15;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+/* Operational Attention Pill */
+.opAlertCard {
+  background: #181818;
+  border: 1px solid #282828;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s;
+}
+
+.opAlertCard:hover {
+  border-color: #c49a45;
+}
+
+.opAlertTitle {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #fff;
+}
+
+.opAlertSubtitle {
+  font-size: 0.775rem;
+  color: #777;
+}
+
+.opBadge {
+  background: rgba(196, 154, 69, 0.15);
+  color: #c49a45;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+@media (max-width: 960px) {
+  .dualFeedGrid {
+    grid-template-columns: 1fr;
+  }
+}
