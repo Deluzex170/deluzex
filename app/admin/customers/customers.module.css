@@ -1,0 +1,474 @@
+/* Luxury Admin Customers Management Styles */
+
+.container {
+  padding: 2.5rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 80px);
+  color: #f3f3f3;
+  font-family: inherit;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.titleArea h1 {
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5rem 0;
+  color: #ffffff;
+}
+
+.goldAccent {
+  color: #c49a45;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: #8c8c8c;
+  margin: 0;
+}
+
+.refreshBtn {
+  background: rgba(196, 154, 69, 0.1);
+  color: #c49a45;
+  border: 1px solid rgba(196, 154, 69, 0.3);
+  padding: 0.65rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.refreshBtn:hover {
+  background: rgba(196, 154, 69, 0.2);
+  border-color: #c49a45;
+  transform: translateY(-1px);
+}
+
+/* KPI Cards */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.kpiCard {
+  background: #141414;
+  border: 1px solid #242424;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.kpiCard:hover {
+  border-color: rgba(196, 154, 69, 0.4);
+  transform: translateY(-2px);
+}
+
+.kpiLabel {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8c8c8c;
+  margin-bottom: 0.5rem;
+}
+
+.kpiValue {
+  font-size: 2.25rem;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.1;
+}
+
+.kpiGoldVal {
+  color: #c49a45;
+}
+
+.kpiDesc {
+  font-size: 0.8rem;
+  color: #717171;
+  margin-top: 0.5rem;
+}
+
+/* Controls Bar */
+.controlsBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.tabs {
+  display: flex;
+  background: #141414;
+  border: 1px solid #242424;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.tabBtn {
+  background: transparent;
+  border: none;
+  color: #8c8c8c;
+  padding: 0.6rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.tabBtn:hover {
+  color: #ffffff;
+}
+
+.activeTab {
+  background: #242424;
+  color: #c49a45;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.tabBadge {
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: inherit;
+}
+
+.searchForm {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+  max-width: 420px;
+}
+
+.searchInput {
+  flex: 1;
+  background: #141414;
+  border: 1px solid #242424;
+  color: #ffffff;
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.searchInput:focus {
+  border-color: #c49a45;
+}
+
+.searchBtn {
+  background: #1f1f1f;
+  color: #ffffff;
+  border: 1px solid #2e2e2e;
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.searchBtn:hover {
+  background: #2a2a2a;
+}
+
+/* Table */
+.tableWrapper {
+  background: #141414;
+  border: 1px solid #242424;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th {
+  background: #191919;
+  color: #8c8c8c;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #242424;
+  font-weight: 500;
+}
+
+.table td {
+  padding: 1.15rem 1.25rem;
+  border-bottom: 1px solid #1e1e1e;
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.table tbody tr:hover {
+  background: #1a1a1a;
+}
+
+/* Customer Name Cell */
+.custCell {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.avatarCircle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #222;
+  border: 1px solid #333;
+  color: #c49a45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.custName {
+  font-weight: 500;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.vipBadge {
+  background: rgba(196, 154, 69, 0.2);
+  color: #c49a45;
+  border: 1px solid rgba(196, 154, 69, 0.4);
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.custEmail {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+/* Status Badges */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statusActive {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.25);
+}
+
+.statusInactive {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.roleBadge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  background: #1f1f1f;
+  color: #bbb;
+  border: 1px solid #2e2e2e;
+}
+
+.roleAdmin {
+  background: rgba(196, 154, 69, 0.15);
+  color: #c49a45;
+  border-color: rgba(196, 154, 69, 0.35);
+  font-weight: 600;
+}
+
+/* Actions */
+.actionBtns {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.btnSecondary {
+  background: #1f1f1f;
+  color: #e0e0e0;
+  border: 1px solid #2e2e2e;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btnSecondary:hover {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+.btnGold {
+  background: rgba(196, 154, 69, 0.15);
+  color: #c49a45;
+  border: 1px solid rgba(196, 154, 69, 0.3);
+}
+
+.btnGold:hover {
+  background: rgba(196, 154, 69, 0.25);
+}
+
+.emptyState {
+  padding: 4rem 2rem;
+  text-align: center;
+  color: #777;
+}
+
+.emptyIcon {
+  font-size: 2.5rem;
+  color: #444;
+  margin-bottom: 1rem;
+}
+
+/* Detail Modal */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modalContent {
+  background: #141414;
+  border: 1px solid #2d2d2d;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  padding: 2rem;
+  position: relative;
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modalClose {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.modalClose:hover {
+  color: #ffffff;
+}
+
+.modalHeader {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #242424;
+}
+
+.modalHeader h2 {
+  font-size: 1.4rem;
+  margin: 0 0 0.5rem 0;
+  color: #ffffff;
+}
+
+.modalSectionLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #777;
+  margin-bottom: 0.5rem;
+}
+
+.customerOrderCard {
+  background: #1a1a1a;
+  border: 1px solid #262626;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.orderNum {
+  font-weight: 600;
+  color: #c49a45;
+}
+
+.orderDate {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.orderAmount {
+  font-weight: 600;
+  color: #fff;
+  font-size: 1rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -2946,3 +2946,103 @@ export async function seedDefaultFaqs(): Promise<{ success: boolean; message: st
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// ADMIN CUSTOMERS & USERS MANAGEMENT API
+// ─────────────────────────────────────────────────────────────
+
+export interface AdminCustomerItem {
+  id: string;
+  _id?: string;
+  first_name: string;
+  last_name: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  city?: string;
+  country?: string;
+  is_admin: boolean;
+  is_verified: boolean;
+  is_active: boolean;
+  created_at?: string;
+  orders_count: number;
+  total_spent: number;
+  last_order_date?: string | null;
+}
+
+export interface AdminCustomerStats {
+  total_users: number;
+  total_customers: number;
+  total_admins: number;
+  verified_users: number;
+  active_users: number;
+  total_orders: number;
+  total_spend: number;
+}
+
+export async function fetchAdminCustomers(filters?: {
+  search?: string;
+  role?: string;
+  skip?: number;
+  limit?: number;
+}): Promise<AdminCustomerItem[]> {
+  const params = new URLSearchParams();
+  if (filters?.search) params.append("search", filters.search);
+  if (filters?.role && filters.role !== "all") params.append("role", filters.role);
+  if (filters?.skip !== undefined) params.append("skip", filters.skip.toString());
+  if (filters?.limit !== undefined) params.append("limit", filters.limit.toString());
+
+  const res = await fetch(`${API_BASE_URL}/auth/users?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch customers");
+  return await res.json();
+}
+
+export async function fetchAdminCustomerStats(): Promise<AdminCustomerStats> {
+  const res = await fetch(`${API_BASE_URL}/auth/users/stats`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch customer statistics");
+  return await res.json();
+}
+
+export async function updateCustomerStatus(
+  userId: string,
+  isActive: boolean
+): Promise<{ message: string; is_active: boolean }> {
+  const res = await fetch(`${API_BASE_URL}/auth/users/${encodeURIComponent(userId)}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ is_active: isActive }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to update customer status");
+  }
+  return await res.json();
+}
+
+export async function updateCustomerRole(
+  userId: string,
+  isAdmin: boolean
+): Promise<{ message: string; is_admin: boolean }> {
+  const res = await fetch(`${API_BASE_URL}/auth/users/${encodeURIComponent(userId)}/role`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ is_admin: isAdmin }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to update customer role");
+  }
+  return await res.json();
+}
+
+export async function fetchCustomerOrders(userId: string): Promise<any[]> {
+  const res = await fetch(`${API_BASE_URL}/auth/users/${encodeURIComponent(userId)}/orders`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch customer orders");
+  return await res.json();
+}
+

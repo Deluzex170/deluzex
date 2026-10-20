@@ -3,7 +3,10 @@ import random
 import secrets
 from fastapi.responses import JSONResponse
 from datetime import datetime, timedelta
-from fastapi import APIRouter, HTTPException, Depends, status, Request
+from typing import Optional, List, Dict, Any
+from bson import ObjectId
+from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Depends, status, Request, Query
 from app import models, schemas
 from app.api import deps
 from app.core.security import verify_password, get_password_hash, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
@@ -822,6 +825,199 @@ def reset_password(payload: schemas.ResetPasswordRequest, request: Request):
         message="Your password has been successfully reset! You can now log in with your new password."
     )
 
+# ─────────────────────────────────────────────────────────────
+# ADMIN CUSTOMER & USER MANAGEMENT ENDPOINTS
+# ─────────────────────────────────────────────────────────────
 
+class UserStatusUpdateRequest(BaseModel):
+    is_active: bool
 
+class UserRoleUpdateRequest(BaseModel):
+    is_admin: bool
 
+@router.get("/users/stats")
+def get_user_stats():
+    """Aggregated user and customer statistics for the Admin Dashboard."""
+    total_users = db.users.count_documents({})
+    admin_count = db.users.count_documents({"is_admin": True})
+    customer_count = db.users.count_documents({"$or": [{"is_admin": False}, {"is_admin": {"$exists": False}}]})
+    verified_count = db.users.count_documents({"is_verified": True})
+    active_count = db.users.count_documents({"$or": [{"is_active": True}, {"is_active": {"$exists": False}}]})
+
+    # Order revenue metrics
+    pipeline = [
+        {"$group": {"_id": None, "total_spend": {"$sum": "$total_amount"}, "total_orders": {"$sum": 1}}}
+    ]
+    agg = list(db.orders.aggregate(pipeline))
+    total_spend = round(agg[0]["total_spend"], 2) if agg and "total_spend" in agg[0] else 0.0
+    total_orders = agg[0]["total_orders"] if agg and "total_orders" in agg[0] else 0
+
+    return {
+        "total_users": total_users,
+        "total_customers": customer_count,
+        "total_admins": admin_count,
+        "verified_users": verified_count,
+        "active_users": active_count,
+        "total_orders": total_orders,
+        "total_spend": total_spend
+    }
+
+@router.get("/users")
+def get_users_admin(
+    search: Optional[str] = Query(None, description="Search by name, email, or phone"),
+    role: Optional[str] = Query(None, description="Filter by role: all, customer, admin"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+):
+    """
+    Fetch all registered users and customers with order counts and lifetime spend.
+    """
+    query: Dict[str, Any] = {}
+
+    if role == "customer":
+        query["$or"] = [{"is_admin": False}, {"is_admin": {"$exists": False}}]
+    elif role == "admin":
+        query["is_admin"] = True
+
+    if search and search.strip():
+        term = search.strip()
+        search_or = [
+            {"first_name": {"$regex": term, "$options": "i"}},
+            {"last_name": {"$regex": term, "$options": "i"}},
+            {"email": {"$regex": term, "$options": "i"}},
+            {"phone": {"$regex": term, "$options": "i"}},
+        ]
+        if "$or" in query:
+            query = {"$and": [query, {"$or": search_or}]}
+        else:
+            query["$or"] = search_or
+
+    users_cursor = list(db.users.find(query).sort("created_at", -1).skip(skip).limit(limit))
+
+    # Fast order aggregation by email and user_id
+    pipeline_email = [
+        {"$match": {"customer.email": {"$exists": True, "$ne": None}}},
+        {
+            "$group": {
+                "_id": {"$toLower": "$customer.email"},
+                "count": {"$sum": 1},
+                "total_spent": {"$sum": "$total_amount"},
+                "last_order": {"$max": "$created_at"}
+            }
+        }
+    ]
+    email_aggs = {item["_id"]: item for item in db.orders.aggregate(pipeline_email) if item.get("_id")}
+
+    pipeline_uid = [
+        {"$match": {"user_id": {"$exists": True, "$ne": None}}},
+        {
+            "$group": {
+                "_id": "$user_id",
+                "count": {"$sum": 1},
+                "total_spent": {"$sum": "$total_amount"},
+                "last_order": {"$max": "$created_at"}
+            }
+        }
+    ]
+    uid_aggs = {str(item["_id"]): item for item in db.orders.aggregate(pipeline_uid) if item.get("_id")}
+
+    formatted = []
+    for u in users_cursor:
+        uid = str(u.get("_id", ""))
+        email_clean = (u.get("email") or "").strip().lower()
+
+        agg_u = uid_aggs.get(uid)
+        agg_e = email_aggs.get(email_clean)
+
+        orders_count = max(agg_u["count"] if agg_u else 0, agg_e["count"] if agg_e else 0)
+        total_spent = round(max(agg_u["total_spent"] if agg_u else 0.0, agg_e["total_spent"] if agg_e else 0.0), 2)
+        last_order = (agg_u.get("last_order") if agg_u else None) or (agg_e.get("last_order") if agg_e else None)
+        if isinstance(last_order, datetime):
+            last_order = last_order.isoformat()
+
+        created_at_val = u.get("created_at")
+        if isinstance(created_at_val, datetime):
+            created_at_val = created_at_val.isoformat()
+
+        first_n = u.get("first_name", "") or ""
+        last_n = u.get("last_name", "") or ""
+        full_name = f"{first_n} {last_n}".strip() or email_clean.split("@")[0]
+
+        formatted.append({
+            "id": uid,
+            "_id": uid,
+            "first_name": first_n,
+            "last_name": last_n,
+            "name": full_name,
+            "email": u.get("email"),
+            "phone": u.get("phone"),
+            "city": u.get("city"),
+            "country": u.get("country"),
+            "is_admin": bool(u.get("is_admin", False)),
+            "is_verified": bool(u.get("is_verified", False)),
+            "is_active": bool(u.get("is_active", True)),
+            "created_at": created_at_val,
+            "orders_count": orders_count,
+            "total_spent": total_spent,
+            "last_order_date": last_order
+        })
+
+    return formatted
+
+@router.patch("/users/{user_id}/status")
+def update_user_status(user_id: str, payload: UserStatusUpdateRequest):
+    """Activate or deactivate a customer account."""
+    try:
+        obj_id = ObjectId(user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+
+    user = db.users.find_one({"_id": obj_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    db.users.update_one({"_id": obj_id}, {"$set": {"is_active": payload.is_active}})
+    return {"message": "User status updated successfully", "is_active": payload.is_active}
+
+@router.patch("/users/{user_id}/role")
+def update_user_role(user_id: str, payload: UserRoleUpdateRequest):
+    """Change user role to Admin or Customer."""
+    try:
+        obj_id = ObjectId(user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+
+    user = db.users.find_one({"_id": obj_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    db.users.update_one({"_id": obj_id}, {"$set": {"is_admin": payload.is_admin}})
+    return {"message": "User role updated successfully", "is_admin": payload.is_admin}
+
+@router.get("/users/{user_id}/orders")
+def get_user_orders_admin(user_id: str):
+    """Fetch order history for a specific customer in admin customer drawer."""
+    try:
+        obj_id = ObjectId(user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+
+    user = db.users.find_one({"_id": obj_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_email = (user.get("email") or "").strip().lower()
+
+    orders_cursor = list(db.orders.find({
+        "$or": [
+            {"user_id": user_id},
+            {"customer.email": {"$regex": f"^{re.escape(user_email)}$", "$options": "i"}}
+        ]
+    }).sort("created_at", -1))
+
+    for o in orders_cursor:
+        o["id"] = str(o.pop("_id", ""))
+        if isinstance(o.get("created_at"), datetime):
+            o["created_at"] = o["created_at"].isoformat()
+
+    return orders_cursor
