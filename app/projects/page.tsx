@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import styles from "./projects.module.css";
 import Image from "next/image";
 import Link from "next/link";
-import { fetchProjects, Project } from "../services/api";
+import { fetchProjects, Project, submitContactForm } from "../services/api";
 
 const CATEGORIES = [
   "All Projects",
@@ -35,6 +35,8 @@ export default function Projects() {
     projectType: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [isProjectTypeOpen, setIsProjectTypeOpen] = useState(false);
   const projectTypeRef = useRef<HTMLDivElement>(null);
 
@@ -67,13 +69,38 @@ export default function Projects() {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
+    if (!formData.email) return;
+    setSubmitting(true);
+    setErrorMessage("");
+
+    const projectScope = formData.projectType
+      ? PROJECT_TYPES.find((p) => p.value === formData.projectType)?.label || formData.projectType
+      : "Custom Lighting Consultation";
+
+    const fullMessage = `[Project Scope: ${projectScope}]\nClient Name: ${formData.name || "N/A"}\nPhone: ${formData.phone || "N/A"}\nInquiry submitted via Projects Page Custom Lighting Consultation section.`;
+
+    try {
+      await submitContactForm({
+        name: formData.name || "Valued Client",
+        email: formData.email,
+        phone: formData.phone || "",
+        message: fullMessage,
+      });
+      setSubmitted(true);
       setFormData({ name: "", email: "", phone: "", projectType: "" });
-    }, 4000);
+      setTimeout(() => {
+        setSubmitted(false);
+      }, 6000);
+    } catch (err: unknown) {
+      console.error("Consultation submission error:", err);
+      setErrorMessage(
+        err instanceof Error ? err.message : "Failed to submit consultation request. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -369,6 +396,19 @@ export default function Projects() {
                   Thank you! Our lighting specialist will contact you shortly.
                 </div>
               )}
+              {errorMessage && (
+                <div style={{
+                  padding: "0.85rem 1rem",
+                  background: "rgba(225, 29, 72, 0.08)",
+                  border: "1px solid rgba(225, 29, 72, 0.3)",
+                  borderRadius: "8px",
+                  color: "#e11d48",
+                  fontSize: "0.85rem",
+                  marginBottom: "1rem",
+                }}>
+                  {errorMessage}
+                </div>
+              )}
 
               <div className={styles.formGroup}>
                 <label className={styles.formLabel} htmlFor="name">
@@ -513,8 +553,8 @@ export default function Projects() {
                 )}
               </div>
 
-              <button type="submit" className={styles.submitBtn}>
-                Start Collaboration
+              <button type="submit" className={styles.submitBtn} disabled={submitting}>
+                {submitting ? "Submitting Request..." : "Start Collaboration"}
               </button>
             </form>
           </div>
