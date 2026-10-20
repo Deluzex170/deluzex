@@ -2233,7 +2233,12 @@ export interface ProductReviewItem {
   rating: number;
   title?: string;
   text: string;
+  is_approved?: boolean;
   created_at: string;
+  product?: {
+    name: string;
+    image?: string | null;
+  };
 }
 
 export interface RatingBreakdownItem {
@@ -2246,6 +2251,13 @@ export interface ProductReviewsResponse {
   total_reviews: number;
   breakdown: Record<string, RatingBreakdownItem>;
   reviews: ProductReviewItem[];
+}
+
+export interface ReviewStats {
+  total: number;
+  approved: number;
+  pending: number;
+  average_rating: number;
 }
 
 export interface ReviewSubmitPayload {
@@ -2286,6 +2298,62 @@ export async function submitProductReview(
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.detail || "Failed to submit review");
+  }
+  return await res.json();
+}
+
+export async function fetchAdminReviews(filters?: {
+  status?: string;
+  search?: string;
+  product_id?: string;
+  skip?: number;
+  limit?: number;
+}): Promise<ProductReviewItem[]> {
+  const params = new URLSearchParams();
+  if (filters?.status && filters.status !== "all") params.append("status", filters.status);
+  if (filters?.search) params.append("search", filters.search);
+  if (filters?.product_id) params.append("product_id", filters.product_id);
+  if (filters?.skip !== undefined) params.append("skip", filters.skip.toString());
+  if (filters?.limit !== undefined) params.append("limit", filters.limit.toString());
+
+  const res = await fetch(`${API_BASE_URL}/reviews/all?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch admin reviews");
+  return await res.json();
+}
+
+export async function fetchReviewStats(): Promise<ReviewStats> {
+  const res = await fetch(`${API_BASE_URL}/reviews/stats`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch review statistics");
+  return await res.json();
+}
+
+export async function updateReviewApproval(
+  reviewId: string,
+  isApproved: boolean
+): Promise<{ message: string; review: ProductReviewItem }> {
+  const res = await fetch(`${API_BASE_URL}/reviews/${encodeURIComponent(reviewId)}/approval`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ is_approved: isApproved }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to update review approval");
+  }
+  return await res.json();
+}
+
+export async function deleteReview(reviewId: string): Promise<{ message: string }> {
+  const res = await fetch(`${API_BASE_URL}/reviews/${encodeURIComponent(reviewId)}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to delete review");
   }
   return await res.json();
 }

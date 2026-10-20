@@ -11,6 +11,7 @@ class Review(BaseModel):
     rating: int = Field(default=5, ge=1, le=5)
     title: Optional[str] = None
     text: str
+    is_approved: bool = Field(default=True)
     created_at: Optional[datetime] = None
 
     class Config:
