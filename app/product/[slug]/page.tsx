@@ -212,19 +212,29 @@ export default function ProductDetail() {
   const extraSpecs = Array.isArray(product.specifications) ? product.specifications : [];
 
   // Stock status text & class
-  const isOutOfStock = product.stock_status?.toLowerCase().includes("out") || product.in_stock === false;
-  const isMadeToOrder = product.stock_status?.toLowerCase().includes("order");
+  const isOutOfStock = product.in_stock === false || 
+    (product.stock_status && product.stock_status.toUpperCase() === "OUT OF STOCK") || 
+    (product.stock_count !== undefined && product.stock_count !== null && Number(product.stock_count) <= 0);
+  const isMadeToOrder = Boolean(product.stock_status?.toLowerCase().includes("order"));
   const stockBadgeClass = isOutOfStock
     ? `${styles.stockBadge} ${styles.stockBadgeOutOfStock}`
     : isMadeToOrder
     ? `${styles.stockBadge} ${styles.stockBadgeMadeToOrder}`
     : styles.stockBadge;
 
-  const stockBadgeLabel = product.stock_status || (product.in_stock === false ? "OUT OF STOCK" : "IN STOCK");
+  const stockCount = product.stock_count !== undefined && product.stock_count !== null ? Number(product.stock_count) : null;
+
+  const stockBadgeLabel = isOutOfStock
+    ? "OUT OF STOCK"
+    : product.stock_status || "IN STOCK";
 
   // Action Button Handlers
   const handleBuyNow = () => {
     if (!product) return;
+    if (isOutOfStock) {
+      alert("This item is currently sold out. You can submit an inquiry below for custom commissioning.");
+      return;
+    }
     dispatch(
       addToCart({
         id: String(product.id || params.slug || ""),
@@ -239,6 +249,10 @@ export default function ProductDetail() {
 
   const handleAddToCart = () => {
     if (!product) return;
+    if (isOutOfStock) {
+      alert("This item is currently out of stock.");
+      return;
+    }
     dispatch(
       addToCart({
         id: String(product.id || params.slug || ""),
@@ -443,22 +457,73 @@ export default function ProductDetail() {
                 "Our signature rustic flat plate crafted from refined red terracotta clays. Extremely low absorption, fired at intense heat to guarantee chip protection."}
             </p>
 
+            {/* Stock Availability Indicator */}
+            {isOutOfStock ? (
+              <div style={{
+                background: "rgba(239, 68, 68, 0.1)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                borderRadius: "8px",
+                padding: "0.6rem 1rem",
+                color: "#f87171",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                marginBottom: "1rem"
+              }}>
+                <span>●</span> Sold Out / Currently Unavailable for Instant Checkout (Inquire Below)
+              </div>
+            ) : stockCount !== null && stockCount <= 5 ? (
+              <div style={{
+                background: "rgba(234, 179, 8, 0.1)",
+                border: "1px solid rgba(234, 179, 8, 0.3)",
+                borderRadius: "8px",
+                padding: "0.6rem 1rem",
+                color: "#facc15",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                marginBottom: "1rem"
+              }}>
+                <span>⚡</span> Low Inventory: Only {stockCount} pieces remaining in studio stock!
+              </div>
+            ) : stockCount !== null ? (
+              <div style={{
+                color: "#4ade80",
+                fontSize: "0.82rem",
+                fontWeight: 500,
+                display: "flex",
+                alignItems: "center",
+                gap: "0.4rem",
+                marginBottom: "0.75rem"
+              }}>
+                <span>✔</span> In Stock ({stockCount} units available for immediate dispatch)
+              </div>
+            ) : null}
+
             {/* 3 Pill Action Buttons */}
             <div className={styles.actionsWrapper}>
               <button
                 type="button"
                 className={styles.btnBuyNow}
                 onClick={handleBuyNow}
+                disabled={isOutOfStock}
+                style={isOutOfStock ? { opacity: 0.45, cursor: "not-allowed", background: "#333" } : undefined}
               >
-                Buy it Now
+                {isOutOfStock ? "Sold Out" : "Buy it Now"}
               </button>
 
               <button
                 type="button"
                 className={styles.btnAddToCart}
                 onClick={handleAddToCart}
+                disabled={isOutOfStock}
+                style={isOutOfStock ? { opacity: 0.45, cursor: "not-allowed" } : undefined}
               >
-                Add to cart
+                {isOutOfStock ? "Out of Stock" : "Add to cart"}
               </button>
 
               <button
@@ -466,7 +531,7 @@ export default function ProductDetail() {
                 className={styles.btnEmailInquiry}
                 onClick={handleOpenInquiryModal}
               >
-                Email and Inquiry
+                {isOutOfStock ? "Inquire for Commission" : "Email and Inquiry"}
               </button>
             </div>
 

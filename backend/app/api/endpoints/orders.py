@@ -9,6 +9,7 @@ from app import models
 from app.api.deps import get_current_active_user
 from app.core.database import db
 from app.core.audit import record_audit_event
+from app.services.inventory import decrement_product_stock, restore_product_stock
 from app.schemas.order import (
     OrderCancelResponse,
     OrderCreateRequest,
@@ -208,6 +209,9 @@ def create_order(payload: OrderCreateRequest):
     db_order.id = str(result.inserted_id)
     logger.info(f"[POST /orders] Created order with ID={db_order.id}")
 
+    # Decrement inventory stock
+    decrement_product_stock(payload.items)
+
     return db_order
 
 
@@ -355,6 +359,9 @@ def cancel_order(order_id: str):
         },
     )
     logger.info(f"[POST /orders/{order_id}/cancel] Order cancelled successfully")
+
+    # Restore inventory stock back to products
+    restore_product_stock(doc.get("items", []))
 
     return OrderCancelResponse(
         success=True,

@@ -25,9 +25,17 @@ export default function AddToCartButton({ product, styleClass, variant = "defaul
     setMounted(true);
   }, []);
 
+  const isOutOfStock = product.in_stock === false || 
+    (product.stock_status && product.stock_status.toUpperCase() === "OUT OF STOCK") || 
+    (product.stock_count !== undefined && product.stock_count !== null && Number(product.stock_count) <= 0);
+
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isOutOfStock) {
+      alert("This item is currently out of stock.");
+      return;
+    }
     if (!isAuthenticated) {
       openLoginModal(
         product,
@@ -53,6 +61,10 @@ export default function AddToCartButton({ product, styleClass, variant = "defaul
     e.preventDefault();
     e.stopPropagation();
     if (!productId) return;
+    if (product.stock_count !== undefined && product.stock_count !== null && cartItem && cartItem.quantity >= Number(product.stock_count)) {
+      alert(`Only ${product.stock_count} units available in inventory.`);
+      return;
+    }
     if (!isAuthenticated) {
       openLoginModal(product, "Please log in to update your cart items.");
       return;
@@ -92,6 +104,63 @@ export default function AddToCartButton({ product, styleClass, variant = "defaul
           +
         </button>
       </div>
+    );
+  }
+
+  if (isOutOfStock && !cartItem) {
+    if (variant === "plus") {
+      return (
+        <div
+          title="Currently Out of Stock"
+          style={{
+            position: 'absolute',
+            right: '16px',
+            bottom: '16px',
+            background: 'rgba(20, 20, 24, 0.9)',
+            border: '1px solid rgba(239, 68, 68, 0.4)',
+            borderRadius: '20px',
+            padding: '4px 10px',
+            fontSize: '10px',
+            fontWeight: 700,
+            color: '#f87171',
+            letterSpacing: '0.05em',
+            zIndex: 10,
+            textTransform: 'uppercase'
+          }}
+        >
+          Sold Out
+        </div>
+      );
+    }
+    return (
+      <button 
+        className={styleClass} 
+        disabled
+        aria-label="Out of stock"
+        style={{
+          position: 'absolute',
+          right: '1rem',
+          bottom: '1rem',
+          width: '32px',
+          height: '32px',
+          borderRadius: '50%',
+          background: '#2A2A2E',
+          color: '#ef4444',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          cursor: 'not-allowed',
+          zIndex: 10,
+          opacity: 0.8
+        }}
+        title="Out of stock"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
     );
   }
 

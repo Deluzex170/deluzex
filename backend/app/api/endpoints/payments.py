@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 from app.core.config import settings
 from app.core.database import db
 from app import models
+from app.services.inventory import decrement_product_stock
 from app.schemas.payment import (
     CodOrderRequest,
     CodOrderResponse,
@@ -325,6 +326,9 @@ def verify_payment(payload: VerifyPaymentRequest, request: Request = None):
         },
     )
 
+    # Decrement inventory stock atomically
+    decrement_product_stock(order_doc.get("items", []))
+
     record_audit_event(
         action="ORDER_PAYMENT_SUCCESS",
         action_category="orders",
@@ -477,6 +481,9 @@ def create_cod_order(payload: CodOrderRequest, request: Request = None):
         db_order.model_dump(by_alias=True, exclude_none=True)
     )
     order_id = str(result.inserted_id)
+
+    # Decrement inventory stock atomically for COD order
+    decrement_product_stock(payload.items)
 
     record_audit_event(
         action="ORDER_COD_PLACED",

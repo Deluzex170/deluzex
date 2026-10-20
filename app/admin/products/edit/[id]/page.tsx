@@ -24,6 +24,7 @@ export default function EditProduct() {
     product_style: "",
     product_finishing: "",
     sku: "",
+    stock_count: "50",
     stock_status: "IN STOCK",
     price_prefix: "From",
     price_note: "per piece (volume contract applicable)",
@@ -86,6 +87,7 @@ export default function EditProduct() {
             product_style: data.product_style || data.colorway || "",
             product_finishing: data.product_finishing || data.finish || "",
             sku: data.sku || "ME-DP-105",
+            stock_count: (data.stock_count ?? 50).toString(),
             stock_status: data.stock_status || "IN STOCK",
             price_prefix: data.price_prefix || "From",
             price_note: data.price_note || "per piece (volume contract applicable)",
@@ -252,6 +254,26 @@ export default function EditProduct() {
                 <option value="MADE TO ORDER">MADE TO ORDER (Amber Badge)</option>
                 <option value="OUT OF STOCK">OUT OF STOCK (Red Badge)</option>
               </select>
+            </div>
+
+            <div>
+              <label style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--color-text)' }}>Stock Quantity (Units Available) *</label>
+              <input
+                type="number"
+                min="0"
+                name="stock_count"
+                value={formData.stock_count}
+                onChange={(e) => {
+                  const count = parseInt(e.target.value) || 0;
+                  setFormData((prev) => ({
+                    ...prev,
+                    stock_count: e.target.value,
+                    stock_status: count > 0 ? "IN STOCK" : "OUT OF STOCK"
+                  }));
+                }}
+                style={inputStyle}
+                placeholder="e.g. 50"
+              />
             </div>
 
             <div>
