@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
 import { fetchUserOrders, cancelUserOrder, UserOrder } from "../../services/api";
+import OrderInvoiceModal from "../../components/OrderInvoiceModal";
 import styles from "./orders.module.css";
 
 const TABS = ["All", "Processing", "Shipped", "Delivered", "Cancelled"];
@@ -67,6 +68,7 @@ export default function OrdersPage() {
 
   // Selected order for tracking & detail modal
   const [selectedOrder, setSelectedOrder] = useState<UserOrder | null>(null);
+  const [invoiceOrder, setInvoiceOrder] = useState<UserOrder | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
 
   const loadOrders = useCallback(async () => {
@@ -278,16 +280,29 @@ export default function OrdersPage() {
                       <StatusBadge status={order.status} />
                     </td>
                     <td>
-                      <button
-                        className={styles.trackLink}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedOrder(order);
-                        }}
-                      >
-                        <span>Track Order</span>
-                        <span>→</span>
-                      </button>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <button
+                          className={styles.trackLink}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedOrder(order);
+                          }}
+                        >
+                          <span>Track Order</span>
+                          <span>→</span>
+                        </button>
+                        <button
+                          className={styles.trackLink}
+                          style={{ color: "#c49a45" }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setInvoiceOrder(order);
+                          }}
+                          title="View and print official GST Tax Invoice"
+                        >
+                          <span>📄 Invoice</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -415,6 +430,13 @@ export default function OrdersPage() {
 
             {/* Modal Actions */}
             <div className={styles.modalActions}>
+              <button
+                className={styles.btnCloseModal}
+                style={{ background: "#C89B60", color: "#111", fontWeight: 600, border: "none" }}
+                onClick={() => setInvoiceOrder(selectedOrder)}
+              >
+                📄 View GST Invoice
+              </button>
               {(selectedOrder.status || "").toLowerCase() === "processing" && (
                 <button
                   className={styles.btnCancelOrder}
@@ -430,6 +452,14 @@ export default function OrdersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Official Tax Invoice Modal */}
+      {invoiceOrder && (
+        <OrderInvoiceModal
+          order={invoiceOrder}
+          onClose={() => setInvoiceOrder(null)}
+        />
       )}
     </div>
   );

@@ -11,6 +11,7 @@ import {
   UserOrder,
   OrderStats,
 } from "../../services/api";
+import OrderInvoiceModal from "../../components/OrderInvoiceModal";
 
 const STATUS_TABS = [
   { key: "All", label: "All Orders" },
@@ -72,6 +73,7 @@ export default function AdminOrdersPage() {
   const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<UserOrder | null>(null);
+  const [invoiceOrder, setInvoiceOrder] = useState<UserOrder | null>(null);
 
   // Fulfillment form state
   const [fulfillStatus, setFulfillStatus] = useState<string>("processing");
@@ -378,6 +380,14 @@ export default function AdminOrdersPage() {
                             Manage
                           </button>
                           <button
+                            className={styles.viewBtn}
+                            onClick={() => setInvoiceOrder(ord)}
+                            title="View and print GST Tax Invoice"
+                            style={{ background: "rgba(196, 154, 69, 0.12)", color: "#c49a45", borderColor: "rgba(196, 154, 69, 0.3)" }}
+                          >
+                            📄 Invoice
+                          </button>
+                          <button
                             className={styles.deleteBtn}
                             onClick={() => handleDeleteOrder(idStr)}
                             title="Delete order record"
@@ -620,6 +630,13 @@ export default function AdminOrdersPage() {
             <div className={styles.drawerFooter}>
               <button
                 className={styles.viewBtn}
+                onClick={() => setInvoiceOrder(selectedOrder)}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(196, 154, 69, 0.15)", color: "#c49a45", borderColor: "rgba(196, 154, 69, 0.4)" }}
+              >
+                📄 View GST Tax Invoice
+              </button>
+              <button
+                className={styles.viewBtn}
                 onClick={() => window.print()}
                 style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
               >
@@ -633,6 +650,14 @@ export default function AdminOrdersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Printable Tax Invoice Modal */}
+      {invoiceOrder && (
+        <OrderInvoiceModal
+          order={invoiceOrder}
+          onClose={() => setInvoiceOrder(null)}
+        />
       )}
     </div>
   );
