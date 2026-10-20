@@ -1402,6 +1402,9 @@ export interface UserOrder {
   total: number;
   amount?: number;
   status: "Processing" | "Shipped" | "Delivered" | "Cancelled" | "Pending" | string;
+  tracking_number?: string;
+  courier_partner?: string;
+  notes?: string;
   payment_method?: string;
   payment_status?: string;
   created_at?: string;
@@ -1481,6 +1484,9 @@ export function normalizeUserOrder(raw: Record<string, unknown>): UserOrder {
     total: numTotal,
     amount: numTotal,
     status: (raw.status || raw.order_status || "Processing") as string,
+    tracking_number: (raw.tracking_number || raw.trackingNumber) as string | undefined,
+    courier_partner: (raw.courier_partner || raw.courierPartner) as string | undefined,
+    notes: (raw.notes || raw.order_notes) as string | undefined,
     payment_method: (raw.payment_method || raw.paymentMethod || "Online") as string,
     payment_status: (raw.payment_status || raw.paymentStatus || "Paid") as string,
     created_at: (raw.created_at || raw.createdAt || new Date().toISOString()) as string,
@@ -1690,6 +1696,108 @@ export async function cancelUserOrder(orderId: string, email?: string): Promise<
   } catch {
     return true;
   }
+}
+
+export interface OrderStats {
+  total_orders: number;
+  pending: number;
+  processing: number;
+  shipped: number;
+  delivered: number;
+  cancelled: number;
+  total_revenue: number;
+}
+
+export async function fetchOrderStats(): Promise<OrderStats> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/orders/stats`, {
+      headers: getAuthHeaders(),
+      cache: "no-store",
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn("Error fetching order stats:", err);
+  }
+  return {
+    total_orders: 0,
+    pending: 0,
+    processing: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+    total_revenue: 0,
+  };
+}
+
+export async function fetchAdminOrders(params?: {
+  status?: string;
+  search?: string;
+  skip?: number;
+  limit?: number;
+}): Promise<UserOrder[]> {
+  try {
+    const q = new URLSearchParams();
+    if (params?.status && params.status !== "All") q.append("status", params.status);
+    if (params?.search) q.append("search", params.search);
+    if (params?.skip !== undefined) q.append("skip", String(params.skip));
+    if (params?.limit !== undefined) q.append("limit", String(params.limit));
+
+    const res = await fetch(`${API_BASE_URL}/orders?${q.toString()}`, {
+      headers: getAuthHeaders(),
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : data.orders || [];
+      return list.map(normalizeUserOrder);
+    }
+  } catch (err) {
+    console.error("Error fetching admin orders:", err);
+  }
+  return [];
+}
+
+export async function updateAdminOrderStatus(
+  orderId: string,
+  payload: { status: string; tracking_number?: string; courier_partner?: string; notes?: string }
+): Promise<{ success: boolean; order?: UserOrder; error?: string }> {
+  try {
+    const cleanId = orderId.replace("#", "").trim();
+    const res = await fetch(`${API_BASE_URL}/orders/${cleanId}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return { success: true, order: normalizeUserOrder(data) };
+    }
+    const errData = await res.json().catch(() => ({}));
+    return { success: false, error: errData.detail || "Failed to update order status" };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Network error" };
+  }
+}
+
+export async function deleteAdminOrder(orderId: string): Promise<{ success: boolean; message?: string }> {
+  try {
+    const cleanId = orderId.replace("#", "").trim();
+    const res = await fetch(`${API_BASE_URL}/orders/${cleanId}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.error("Failed to delete order:", err);
+  }
+  return { success: false };
 }
 
 export async function subscribeNewsletter(email: string): Promise<{ success: boolean; message: string }> {

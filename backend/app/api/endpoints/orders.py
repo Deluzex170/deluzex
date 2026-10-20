@@ -67,20 +67,64 @@ def get_my_orders(
     return [models.Order(**doc) for doc in docs]
 
 
+@router.get("/stats")
+def get_order_stats():
+    """
+    Get aggregated counts and revenue metrics for orders.
+    """
+    total_orders = db.orders.count_documents({})
+    pending_count = db.orders.count_documents({"status": {"$in": ["pending", "cod"]}})
+    processing_count = db.orders.count_documents({"status": {"$in": ["paid", "processing"]}})
+    shipped_count = db.orders.count_documents({"status": {"$in": ["shipped", "out_for_delivery"]}})
+    delivered_count = db.orders.count_documents({"status": "delivered"})
+    cancelled_count = db.orders.count_documents({"status": "cancelled"})
+
+    pipeline = [
+        {"$match": {"status": {"$in": ["paid", "processing", "shipped", "out_for_delivery", "delivered"]}}},
+        {"$group": {"_id": None, "total_revenue": {"$sum": "$total"}}}
+    ]
+    revenue_res = list(db.orders.aggregate(pipeline))
+    total_revenue = revenue_res[0]["total_revenue"] if revenue_res else 0.0
+
+    return {
+        "total_orders": total_orders,
+        "pending": pending_count,
+        "processing": processing_count,
+        "shipped": shipped_count,
+        "delivered": delivered_count,
+        "cancelled": cancelled_count,
+        "total_revenue": round(float(total_revenue), 2),
+    }
+
+
 @router.get("", response_model=List[models.Order])
 def list_orders(
     email: Optional[str] = Query(None, description="Filter by customer email"),
     phone: Optional[str] = Query(None, description="Filter by customer phone"),
     status: Optional[str] = Query(None, description="Filter by order status"),
+    search: Optional[str] = Query(None, description="Search by ID, email, or phone"),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
 ):
     """
-    Get orders with optional filters (email, phone, status) and pagination.
+    Get orders with optional filters (email, phone, status, search) and pagination.
     Sorted newest first.
     """
-    logger.info(f"[GET /orders] Listing orders with params: email={email}, phone={phone}, status={status}, skip={skip}, limit={limit}")
+    logger.info(f"[GET /orders] Listing orders with params: email={email}, phone={phone}, status={status}, search={search}, skip={skip}, limit={limit}")
     query = {}
+    if search:
+        search_clean = search.strip()
+        search_or = [
+            {"email": {"$regex": re.escape(search_clean), "$options": "i"}},
+            {"phone": {"$regex": re.escape(search_clean)}},
+            {"shipping_address.first_name": {"$regex": re.escape(search_clean), "$options": "i"}},
+            {"shipping_address.last_name": {"$regex": re.escape(search_clean), "$options": "i"}},
+            {"tracking_number": {"$regex": re.escape(search_clean), "$options": "i"}},
+        ]
+        if ObjectId.is_valid(search_clean):
+            search_or.append({"_id": ObjectId(search_clean)})
+        query["$or"] = search_or
+
     if email:
         clean_email = email.strip()
         prefix = clean_email.split("@")[0]
@@ -94,7 +138,7 @@ def list_orders(
             query["phone"] = {"$regex": f"{re.escape(clean_phone[-10:])}$"}
         else:
             query["phone"] = phone.strip()
-    if status:
+    if status and status.lower() != "all":
         query["status"] = {"$regex": f"^{re.escape(status.strip())}$", "$options": "i"}
 
     docs = list(
@@ -170,7 +214,7 @@ def create_order(payload: OrderCreateRequest):
 @router.patch("/{order_id}/status", response_model=models.Order)
 def update_order_status(order_id: str, payload: OrderStatusUpdateRequest, request: Request = None):
     """
-    Update the status, tracking number, or notes of an existing order.
+    Update the status, tracking number, courier partner, or notes of an existing order.
     """
     logger.info(f"[PATCH /orders/{order_id}/status] Updating status to '{payload.status}'")
     try:
@@ -191,6 +235,8 @@ def update_order_status(order_id: str, payload: OrderStatusUpdateRequest, reques
     }
     if payload.tracking_number is not None:
         update_fields["tracking_number"] = payload.tracking_number
+    if payload.courier_partner is not None:
+        update_fields["courier_partner"] = payload.courier_partner
     if payload.notes is not None:
         update_fields["notes"] = payload.notes
 
@@ -218,11 +264,53 @@ def update_order_status(order_id: str, payload: OrderStatusUpdateRequest, reques
         target_id=order_id,
         target_name=f"Order #{order_id[:8]}",
         description=f"Changed order status from '{old_status}' to '{payload.status}'",
-        changes={"before": {"status": old_status}, "after": {"status": payload.status, "tracking_number": payload.tracking_number}},
+        changes={
+            "before": {"status": old_status},
+            "after": {
+                "status": payload.status,
+                "tracking_number": payload.tracking_number,
+                "courier_partner": payload.courier_partner
+            }
+        },
         request=request
     )
 
     return models.Order(**doc)
+
+
+@router.delete("/{order_id}")
+def delete_order(order_id: str, request: Request = None):
+    """
+    Delete an order (Admin only).
+    """
+    try:
+        obj_id = ObjectId(order_id)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid order ID format",
+        )
+
+    doc = db.orders.find_one({"_id": obj_id})
+    if doc is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found",
+        )
+
+    db.orders.delete_one({"_id": obj_id})
+    record_audit_event(
+        action="ORDER_DELETED",
+        action_category="orders",
+        actor_email="admin@deluzex.com",
+        actor_role="Admin",
+        target_type="order",
+        target_id=order_id,
+        target_name=f"Order #{order_id[:8]}",
+        description=f"Deleted order #{order_id[:8]} for {doc.get('email')}",
+        request=request
+    )
+    return {"success": True, "message": "Order deleted successfully"}
 
 
 @router.post("/{order_id}/cancel", response_model=OrderCancelResponse)

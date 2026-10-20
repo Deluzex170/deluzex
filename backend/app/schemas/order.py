@@ -22,6 +22,7 @@ class OrderCreateRequest(BaseModel):
 class OrderStatusUpdateRequest(BaseModel):
     status: OrderStatus
     tracking_number: Optional[str] = None
+    courier_partner: Optional[str] = None
     notes: Optional[str] = None
 
 
@@ -42,6 +43,7 @@ class OrderResponse(BaseModel):
     razorpay_payment_id: Optional[str] = None
     status: OrderStatus
     tracking_number: Optional[str] = None
+    courier_partner: Optional[str] = None
     notes: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None

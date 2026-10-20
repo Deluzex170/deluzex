@@ -53,6 +53,7 @@ class Order(BaseModel):
     razorpay_payment_id: Optional[str] = None
     status: OrderStatus = "pending"
     tracking_number: Optional[str] = None
+    courier_partner: Optional[str] = None
     notes: Optional[str] = None
     idempotency_key: Optional[str] = None
     retry_count: int = 0
