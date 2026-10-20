@@ -1,13 +1,18 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+from bson import ObjectId
 from app import models
 from app.core.database import db
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import io
 import csv
 
 router = APIRouter()
+
+class SubscriberNotifiedUpdateRequest(BaseModel):
+    is_notified: bool
 
 @router.post("/subscribe")
 def subscribe_newsletter(subscriber: models.NewsletterSubscriber):
@@ -50,11 +55,19 @@ def subscribe_newsletter(subscriber: models.NewsletterSubscriber):
 def get_subscribers(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    notified: Optional[bool] = None
+    notified: Optional[bool] = None,
+    search: Optional[str] = None
 ):
-    query = {}
+    query: Dict[str, Any] = {}
     if notified is not None:
         query["is_notified"] = notified
+
+    if search and search.strip():
+        term = search.strip()
+        query["$or"] = [
+            {"email": {"$regex": term, "$options": "i"}},
+            {"source": {"$regex": term, "$options": "i"}}
+        ]
         
     total_count = db.newsletter_subscribers.count_documents({})
     pending_count = db.newsletter_subscribers.count_documents({"is_notified": False})
@@ -77,6 +90,41 @@ def get_subscribers(
         "notified": notified_count,
         "subscribers": subscribers
     }
+
+@router.patch("/subscribers/{subscriber_id}/notified")
+def update_subscriber_notified(subscriber_id: str, payload: SubscriberNotifiedUpdateRequest):
+    try:
+        obj_id = ObjectId(subscriber_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid subscriber ID")
+
+    sub = db.newsletter_subscribers.find_one({"_id": obj_id})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscriber not found")
+
+    update_fields = {"is_notified": payload.is_notified}
+    if payload.is_notified:
+        update_fields["notified_at"] = datetime.utcnow()
+    else:
+        update_fields["notified_at"] = None
+
+    db.newsletter_subscribers.update_one({"_id": obj_id}, {"$set": update_fields})
+    updated = db.newsletter_subscribers.find_one({"_id": obj_id})
+    updated["id"] = str(updated.pop("_id"))
+    return {"message": "Subscriber notification status updated", "subscriber": updated}
+
+@router.delete("/subscribers/{subscriber_id}")
+def delete_subscriber(subscriber_id: str):
+    try:
+        obj_id = ObjectId(subscriber_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid subscriber ID")
+
+    res = db.newsletter_subscribers.delete_one({"_id": obj_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Subscriber not found")
+
+    return {"message": "Subscriber removed successfully"}
 
 @router.get("/export-csv")
 def export_subscribers_csv():

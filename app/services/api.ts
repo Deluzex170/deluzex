@@ -1897,6 +1897,74 @@ export async function subscribeNewsletter(email: string): Promise<{ success: boo
   }
 }
 
+export interface NewsletterSubscriberItem {
+  id: string;
+  _id?: string;
+  email: string;
+  subscribed_at: string;
+  is_notified: boolean;
+  notified_at?: string | null;
+  source?: string;
+}
+
+export interface NewsletterSubscribersResponse {
+  total: number;
+  pending: number;
+  notified: number;
+  subscribers: NewsletterSubscriberItem[];
+}
+
+export async function fetchNewsletterSubscribers(filters?: {
+  skip?: number;
+  limit?: number;
+  notified?: boolean;
+  search?: string;
+}): Promise<NewsletterSubscribersResponse> {
+  const params = new URLSearchParams();
+  if (filters?.skip !== undefined) params.append("skip", filters.skip.toString());
+  if (filters?.limit !== undefined) params.append("limit", filters.limit.toString());
+  if (filters?.notified !== undefined) params.append("notified", filters.notified.toString());
+  if (filters?.search) params.append("search", filters.search);
+
+  const res = await fetch(`${API_BASE_URL}/newsletter/subscribers?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch newsletter subscribers");
+  return await res.json();
+}
+
+export async function updateSubscriberNotified(
+  subscriberId: string,
+  isNotified: boolean
+): Promise<{ message: string; subscriber: NewsletterSubscriberItem }> {
+  const res = await fetch(`${API_BASE_URL}/newsletter/subscribers/${encodeURIComponent(subscriberId)}/notified`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ is_notified: isNotified }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to update notification status");
+  }
+  return await res.json();
+}
+
+export async function deleteNewsletterSubscriber(subscriberId: string): Promise<{ message: string }> {
+  const res = await fetch(`${API_BASE_URL}/newsletter/subscribers/${encodeURIComponent(subscriberId)}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to delete subscriber");
+  }
+  return await res.json();
+}
+
+export function getNewsletterCsvExportUrl(): string {
+  return `${API_BASE_URL}/newsletter/export-csv`;
+}
+
+
 // ==========================================
 // SITE CONTENT (CMS) API
 // ==========================================
