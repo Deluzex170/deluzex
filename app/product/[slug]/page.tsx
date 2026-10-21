@@ -212,10 +212,10 @@ export default function ProductDetail() {
   const extraSpecs = Array.isArray(product.specifications) ? product.specifications : [];
 
   // Stock status text & class
+  const isMadeToOrder = Boolean(product.stock_status?.toLowerCase().includes("order"));
   const isOutOfStock = product.in_stock === false || 
     (product.stock_status && product.stock_status.toUpperCase() === "OUT OF STOCK") || 
-    (product.stock_count !== undefined && product.stock_count !== null && Number(product.stock_count) <= 0);
-  const isMadeToOrder = Boolean(product.stock_status?.toLowerCase().includes("order"));
+    (!isMadeToOrder && product.stock_count !== undefined && product.stock_count !== null && Number(product.stock_count) <= 0);
   const stockBadgeClass = isOutOfStock
     ? `${styles.stockBadge} ${styles.stockBadgeOutOfStock}`
     : isMadeToOrder
