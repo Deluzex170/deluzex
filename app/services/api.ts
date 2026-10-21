@@ -988,6 +988,8 @@ export interface OrderPayload {
   shipping_address: ShippingAddressPayload;
   items: OrderItemPayload[];
   subtotal: number;
+  discount?: number;
+  coupon_code?: string;
   gst: number;
   delivery: number;
   total: number;
@@ -3066,5 +3068,175 @@ export async function fetchDashboardSummary(): Promise<DashboardSummaryResponse>
   });
   if (!res.ok) throw new Error("Failed to fetch dashboard summary");
   return await res.json();
+}
+
+// ==========================================
+// COUPON & DISCOUNT PROMOTIONS APIS
+// ==========================================
+
+export interface AvailableCoupon {
+  code: string;
+  title: string;
+  description?: string;
+  discount_type: "percentage" | "flat" | "free_shipping";
+  discount_value: number;
+  max_discount_cap?: number | null;
+  min_order_value: number;
+  is_first_order_only: boolean;
+  expiry_date?: string | null;
+}
+
+export interface CouponValidateResponse {
+  valid: boolean;
+  code: string;
+  reason?: string | null;
+  message: string;
+  discount_type?: "percentage" | "flat" | "free_shipping" | null;
+  discount_value?: number | null;
+  discount_amount: number;
+  discount_breakdown?: Record<string, any> | null;
+  new_subtotal: number;
+  gst: number;
+  delivery: number;
+  grand_total: number;
+  required_more?: number | null;
+}
+
+export interface AdminCoupon {
+  _id: string;
+  code: string;
+  title: string;
+  description?: string;
+  discount_type: "percentage" | "flat" | "free_shipping";
+  discount_value: number;
+  max_discount_cap?: number | null;
+  min_order_value: number;
+  is_active: boolean;
+  is_public: boolean;
+  is_first_order_only: boolean;
+  start_date?: string | null;
+  expiry_date?: string | null;
+  max_uses?: number | null;
+  times_used: number;
+  max_uses_per_user: number;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface CouponCreateInput {
+  code: string;
+  title: string;
+  description?: string;
+  discount_type: "percentage" | "flat" | "free_shipping";
+  discount_value: number;
+  max_discount_cap?: number | null;
+  min_order_value: number;
+  is_active?: boolean;
+  is_public?: boolean;
+  is_first_order_only?: boolean;
+  start_date?: string | null;
+  expiry_date?: string | null;
+  max_uses?: number | null;
+  max_uses_per_user?: number;
+}
+
+export async function fetchAvailableCoupons(): Promise<AvailableCoupon[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/coupons/available`, { cache: "no-store" });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (err) {
+    logger.error("API", "Error fetching available coupons:", err);
+    return [];
+  }
+}
+
+export async function validateCoupon(
+  code: string,
+  subtotal: number,
+  email?: string
+): Promise<CouponValidateResponse> {
+  const res = await fetch(`${API_BASE_URL}/coupons/validate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code, subtotal, email }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    return {
+      valid: false,
+      code,
+      message: err.detail || "Failed to validate coupon.",
+      discount_amount: 0,
+      new_subtotal: subtotal,
+      gst: subtotal * 0.18,
+      delivery: subtotal >= 1999 ? 0 : 99,
+      grand_total: subtotal + subtotal * 0.18 + (subtotal >= 1999 ? 0 : 99),
+    };
+  }
+  return await res.json();
+}
+
+export async function fetchAdminCoupons(): Promise<AdminCoupon[]> {
+  const res = await fetch(`${API_BASE_URL}/admin/coupons`, {
+    headers: { ...getAuthHeaders() },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to fetch admin coupons");
+  }
+  return await res.json();
+}
+
+export async function createAdminCoupon(payload: CouponCreateInput): Promise<AdminCoupon> {
+  const res = await fetch(`${API_BASE_URL}/admin/coupons`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to create coupon");
+  return data;
+}
+
+export async function updateAdminCoupon(
+  id: string,
+  payload: Partial<CouponCreateInput>
+): Promise<AdminCoupon> {
+  const res = await fetch(`${API_BASE_URL}/admin/coupons/${id}`, {
+    method: "PUT",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to update coupon");
+  return data;
+}
+
+export async function toggleAdminCoupon(id: string): Promise<AdminCoupon> {
+  const res = await fetch(`${API_BASE_URL}/admin/coupons/${id}/toggle`, {
+    method: "PATCH",
+    headers: { ...getAuthHeaders() },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to toggle coupon");
+  return data;
+}
+
+export async function deleteAdminCoupon(id: string): Promise<{ success: boolean; message?: string }> {
+  const res = await fetch(`${API_BASE_URL}/admin/coupons/${id}`, {
+    method: "DELETE",
+    headers: { ...getAuthHeaders() },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to delete coupon");
+  return data;
 }
 
