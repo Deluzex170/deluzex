@@ -29,6 +29,76 @@ def _format_coupon(doc: dict) -> dict:
     return doc
 
 
+def ensure_default_coupons_seeded():
+    """Seed default launch promotional coupons if collection is empty."""
+    try:
+        if db.coupons.count_documents({}) == 0:
+            now = datetime.now(timezone.utc).replace(tzinfo=None)
+            default_coupons = [
+                {
+                    "code": "DELUZEXVIP",
+                    "title": "VIP Launch Celebration - 10% Off",
+                    "description": "Exclusive 10% discount on luxury lighting orders over ₹1,999 (Max discount ₹1,000).",
+                    "discount_type": "percentage",
+                    "discount_value": 10.0,
+                    "max_discount_cap": 1000.0,
+                    "min_order_value": 1999.0,
+                    "is_active": True,
+                    "is_public": True,
+                    "is_first_order_only": False,
+                    "start_date": now,
+                    "expiry_date": None,
+                    "max_uses": 500,
+                    "times_used": 0,
+                    "max_uses_per_user": 1,
+                    "created_at": now,
+                    "updated_at": now,
+                },
+                {
+                    "code": "WELCOME500",
+                    "title": "Welcome Reward - ₹500 Flat Off",
+                    "description": "Instant ₹500 privilege discount on your order of ₹2,999 or more.",
+                    "discount_type": "flat",
+                    "discount_value": 500.0,
+                    "max_discount_cap": None,
+                    "min_order_value": 2999.0,
+                    "is_active": True,
+                    "is_public": True,
+                    "is_first_order_only": False,
+                    "start_date": now,
+                    "expiry_date": None,
+                    "max_uses": 250,
+                    "times_used": 0,
+                    "max_uses_per_user": 1,
+                    "created_at": now,
+                    "updated_at": now,
+                },
+                {
+                    "code": "FREEDELUXE",
+                    "title": "Complimentary Insured Delivery",
+                    "description": "Free white-glove insured shipping across India on orders over ₹999.",
+                    "discount_type": "free_shipping",
+                    "discount_value": 0.0,
+                    "max_discount_cap": None,
+                    "min_order_value": 999.0,
+                    "is_active": True,
+                    "is_public": True,
+                    "is_first_order_only": False,
+                    "start_date": now,
+                    "expiry_date": None,
+                    "max_uses": None,
+                    "times_used": 0,
+                    "max_uses_per_user": 3,
+                    "created_at": now,
+                    "updated_at": now,
+                },
+            ]
+            db.coupons.insert_many(default_coupons)
+            logger.info("Successfully seeded default promotional coupons into database.")
+    except Exception as e:
+        logger.warning(f"Could not auto-seed coupons: {e}")
+
+
 # ==========================================
 # PUBLIC STOREFRONT ENDPOINTS
 # ==========================================
@@ -39,6 +109,7 @@ def get_available_coupons():
     Returns active, public coupons that customers can discover and apply in 1 click.
     Excludes private/secret codes and expired/exhausted promotions.
     """
+    ensure_default_coupons_seeded()
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     query = {
         "is_active": True,
@@ -100,6 +171,7 @@ def list_admin_coupons(
     admin: models.User = Depends(deps.get_current_active_admin),
 ):
     """List all coupons in the system with usage metrics (Admin only)."""
+    ensure_default_coupons_seeded()
     docs = list(db.coupons.find().sort("created_at", -1).skip(skip).limit(limit))
     return [CouponResponse(**_format_coupon(d)) for d in docs]
 

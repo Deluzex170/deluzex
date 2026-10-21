@@ -53,3 +53,35 @@ def test_available_coupons_and_validation():
 
     # Cleanup
     db.coupons.delete_many({"code": "TESTVIP"})
+
+
+def test_default_seeded_coupons_present():
+    """Verify that default launch coupons DELUZEXVIP and WELCOME500 are seeded and functional."""
+    res = client.get("/api/v1/coupons/available")
+    assert res.status_code == 200
+    codes = [c["code"] for c in res.json()]
+    assert "DELUZEXVIP" in codes
+    assert "WELCOME500" in codes
+
+    # Test DELUZEXVIP validation
+    val_vip = client.post("/api/v1/coupons/validate", json={
+        "code": "DELUZEXVIP",
+        "subtotal": 2500.0,
+        "email": "vip@deluzex.com"
+    })
+    assert val_vip.status_code == 200
+    vip_data = val_vip.json()
+    assert vip_data["valid"] is True
+    # 10% of 2500 is 250
+    assert vip_data["discount_amount"] == 250.0
+
+    # Test WELCOME500 validation with subtotal below MOV
+    val_below_mov = client.post("/api/v1/coupons/validate", json={
+        "code": "WELCOME500",
+        "subtotal": 2000.0
+    })
+    assert val_below_mov.status_code == 200
+    below_data = val_below_mov.json()
+    assert below_data["valid"] is False
+    assert below_data["reason"] == "MIN_ORDER_NOT_MET"
+
