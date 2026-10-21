@@ -17,6 +17,10 @@ import {
   saveUserAddress,
   savePlacedOrder,
   SavedAddress,
+  fetchAvailableCoupons,
+  validateCoupon,
+  AvailableCoupon,
+  CouponValidateResponse,
 } from "../services/api";
 import styles from "./checkout.module.css";
 
@@ -94,16 +98,91 @@ export default function CheckoutPage() {
   const [state, setState] = useState("");
   const [pinCode, setPinCode] = useState("");
 
+  // Coupon & Promo Code State
+  const [availableOffers, setAvailableOffers] = useState<AvailableCoupon[]>([]);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponValidateResponse | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponSuccessMsg, setCouponSuccessMsg] = useState<string | null>(null);
+
+  // Monetary Totals with Dynamic Discount
   const subtotal = cartTotal;
-  const gst = subtotal * 0.18;
-  const delivery = subtotal > 0 ? 99 : 0;
-  const grandTotal = subtotal + gst + delivery;
+  const discount = appliedCoupon?.discount_amount || 0;
+  const taxableSubtotal = Math.max(0, subtotal - discount);
+  const gst = taxableSubtotal * 0.18;
+  const isFreeShipping = appliedCoupon?.discount_type === "free_shipping" || subtotal >= 1999;
+  const delivery = isFreeShipping ? 0 : (subtotal > 0 ? 99 : 0);
+  const grandTotal = taxableSubtotal + gst + delivery;
 
   // Initialize Idempotency Key & Preload Razorpay Script
   useEffect(() => {
     setIdempotencyKey(getOrCreateIdempotencyKey());
     loadRazorpayScript().catch((err) => console.warn("Razorpay script preload warning:", err));
   }, []);
+
+  // Fetch Available Public Coupons
+  useEffect(() => {
+    fetchAvailableCoupons()
+      .then((res) => {
+        if (Array.isArray(res)) {
+          setAvailableOffers(res);
+        }
+      })
+      .catch((err) => console.warn("Could not load available coupons:", err));
+  }, []);
+
+  // Re-validate coupon if cart total changes
+  useEffect(() => {
+    if (appliedCoupon && subtotal > 0) {
+      validateCoupon(appliedCoupon.code, subtotal, email.trim() || undefined)
+        .then((res) => {
+          if (res.valid) {
+            setAppliedCoupon(res);
+            setCouponError(null);
+          } else {
+            setAppliedCoupon(null);
+            setCouponError(res.message || "Applied coupon no longer meets order criteria.");
+            setCouponSuccessMsg(null);
+          }
+        })
+        .catch(() => {});
+    } else if (subtotal === 0) {
+      setAppliedCoupon(null);
+    }
+  }, [subtotal, email]);
+
+  const handleApplyCoupon = async (codeToApply?: string) => {
+    const code = (codeToApply || couponInput).trim();
+    if (!code) {
+      setCouponError("Please enter a valid coupon code.");
+      return;
+    }
+    setCouponLoading(true);
+    setCouponError(null);
+    setCouponSuccessMsg(null);
+
+    try {
+      const res = await validateCoupon(code, subtotal, email.trim() || undefined);
+      if (res.valid) {
+        setAppliedCoupon(res);
+        setCouponInput("");
+        setCouponSuccessMsg(res.message || `Coupon ${res.code} applied successfully!`);
+      } else {
+        setCouponError(res.message || "Invalid coupon code.");
+      }
+    } catch (err: unknown) {
+      setCouponError(err instanceof Error ? err.message : "Failed to apply coupon. Please try again.");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponSuccessMsg(null);
+    setCouponError(null);
+  };
 
   const applyAddress = useCallback((addr: SavedAddress) => {
     setSelectedAddressId(addr.id || addr._id || null);
@@ -310,6 +389,8 @@ export default function CheckoutPage() {
             image: item.image,
           })),
           subtotal,
+          discount,
+          coupon_code: appliedCoupon?.code,
           gst,
           delivery,
           total: grandTotal,
@@ -430,6 +511,8 @@ export default function CheckoutPage() {
             image: item.image,
           })),
           subtotal,
+          discount,
+          coupon_code: appliedCoupon?.code,
           gst,
           delivery,
           total: grandTotal,
@@ -943,18 +1026,141 @@ export default function CheckoutPage() {
               ))}
             </div>
 
+            {/* Offers & Promo Codes Subsystem */}
+            <div className={styles.couponSection}>
+              <div className={styles.couponTitle}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                  <line x1="7" y1="7" x2="7.01" y2="7" />
+                </svg>
+                <span>Offers & Promo Codes</span>
+              </div>
+
+              {appliedCoupon ? (
+                <div className={styles.appliedCouponBadge}>
+                  <div className={styles.appliedCouponInfo}>
+                    <div className={styles.appliedCouponCodeRow}>
+                      <span className={styles.appliedCouponCode}>{appliedCoupon.code}</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                    <span className={styles.appliedCouponSavings}>
+                      {appliedCoupon.discount_type === "free_shipping"
+                        ? "Free Delivery unlocked"
+                        : `Saved ₹${(appliedCoupon.discount_amount || 0).toFixed(2)}`}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className={styles.btnRemoveCoupon}
+                    aria-label="Remove coupon"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.couponInputRow}>
+                    <input
+                      type="text"
+                      className={styles.couponInput}
+                      placeholder="Enter code (e.g. DELUZEXVIP)"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleApplyCoupon();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className={styles.btnApplyCoupon}
+                      onClick={() => handleApplyCoupon()}
+                      disabled={couponLoading || !couponInput.trim()}
+                    >
+                      {couponLoading ? "Applying..." : "Apply"}
+                    </button>
+                  </div>
+
+                  {couponError && (
+                    <div className={styles.couponFeedbackError}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                      <span>{couponError}</span>
+                    </div>
+                  )}
+
+                  {couponSuccessMsg && (
+                    <div className={styles.couponFeedbackSuccess}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                      </svg>
+                      <span>{couponSuccessMsg}</span>
+                    </div>
+                  )}
+
+                  {availableOffers.length > 0 && (
+                    <div className={styles.availableOffersContainer}>
+                      <div className={styles.availableOffersLabel}>Available Offers</div>
+                      {availableOffers.slice(0, 3).map((offer) => (
+                        <div key={offer.code} className={styles.offerCard}>
+                          <div className={styles.offerCardLeft}>
+                            <span className={styles.offerCode}>{offer.code}</span>
+                            <span className={styles.offerDesc}>{offer.description}</span>
+                          </div>
+                          <button
+                            type="button"
+                            className={styles.btnApplyOffer}
+                            onClick={() => handleApplyCoupon(offer.code)}
+                            disabled={couponLoading}
+                          >
+                            Apply
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
             <div className={styles.totals}>
               <div className={styles.summaryRow}>
                 <span>Subtotal</span>
                 <span>₹{subtotal.toFixed(2)}</span>
               </div>
+              {discount > 0 && (
+                <div className={styles.discountSummaryRow}>
+                  <span>Discount ({appliedCoupon?.code})</span>
+                  <span>-₹{discount.toFixed(2)}</span>
+                </div>
+              )}
               <div className={styles.summaryRow}>
                 <span>GST (18%)</span>
                 <span>₹{gst.toFixed(2)}</span>
               </div>
               <div className={styles.summaryRow}>
                 <span>Express Insured Shipping</span>
-                <span>{delivery > 0 ? `₹${delivery.toFixed(2)}` : "Free"}</span>
+                <span>
+                  {delivery > 0 ? (
+                    `₹${delivery.toFixed(2)}`
+                  ) : (
+                    <span>
+                      Free
+                      {appliedCoupon?.discount_type === "free_shipping" && (
+                        <span className={styles.freeShippingTag}>Coupon</span>
+                      )}
+                    </span>
+                  )}
+                </span>
               </div>
               <div className={styles.grandTotalRow}>
                 <span>Grand Total</span>
