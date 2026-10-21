@@ -476,3 +476,263 @@ def send_order_confirmation_email(order: Any) -> Dict[str, Any]:
         logger.error(f"Failed to send order confirmation email: {exc}")
         return {"success": False, "error": str(exc)}
 
+
+def get_courier_tracking_url(courier: str, tracking_number: str) -> str:
+    """
+    Generate the direct tracking portal URL based on courier name and tracking code.
+    Supports prominent Indian luxury freight and global courier services.
+    """
+    c = (courier or "").lower().strip()
+    t = (tracking_number or "").strip()
+    if not t:
+        return ""
+    if "bluedart" in c:
+        return f"https://www.bluedart.com/tracking?numbers={t}"
+    if "delhivery" in c:
+        return f"https://www.delhivery.com/track/package/{t}"
+    if "shiprocket" in c:
+        return f"https://shiprocket.co/tracking/{t}"
+    if "dtdc" in c:
+        return f"https://www.dtdc.in/tracking.asp?trk_id={t}"
+    if "fedex" in c:
+        return f"https://www.fedex.com/fedextrack/?trknbr={t}"
+    return f"https://www.google.com/search?q={c}+{t}+tracking"
+
+
+def build_shipping_notification_email_html(order: Dict[str, Any], tracking_number: str = "", courier_partner: str = "") -> str:
+    """
+    Build rich luxury responsive HTML email for order shipment dispatch.
+    """
+    order_id = str(order.get("_id") or order.get("id") or "")
+    short_id = order_id[:8].upper() if order_id else "DELUXE"
+    
+    addr = order.get("shipping_address") or {}
+    first_name = addr.get("first_name", "")
+    last_name = addr.get("last_name", "")
+    customer_name = f"{first_name} {last_name}".strip() or "Valued Patron"
+    
+    courier = courier_partner or order.get("courier_partner") or "White-Glove Courier Partner"
+    tracking = tracking_number or order.get("tracking_number") or ""
+    tracking_url = get_courier_tracking_url(courier, tracking)
+
+    items = order.get("items", [])
+    item_rows = []
+    for item in items:
+        title = item.get("title", "Luminaire")
+        qty = item.get("quantity", 1)
+        price = item.get("price", 0.0)
+        item_rows.append(f"""
+            <tr>
+                <td style="padding: 12px 0; border-bottom: 1px solid #262626; color: #e5e5e5; font-size: 14px;">
+                    <strong>{title}</strong>
+                </td>
+                <td style="padding: 12px 0; border-bottom: 1px solid #262626; color: #888888; font-size: 14px; text-align: center;">
+                    &times;{qty}
+                </td>
+                <td style="padding: 12px 0; border-bottom: 1px solid #262626; color: #c49a45; font-size: 14px; text-align: right; font-weight: 500;">
+                    &#8377;{(price * qty):,.2f}
+                </td>
+            </tr>
+        """)
+
+    items_html = "".join(item_rows) if item_rows else "<tr><td colspan='3' style='color:#888;padding:12px 0;'>Bespoke Lighting Order</td></tr>"
+
+    tracking_button_html = f"""
+        <div style="margin: 24px 0 16px; text-align: center;">
+            <a href="{tracking_url}" target="_blank" style="background: #c49a45; color: #0b0b0b; padding: 14px 28px; text-decoration: none; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 2px; display: inline-block;">
+                Track Consignment
+            </a>
+        </div>
+    """ if tracking_url else ""
+
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Your Order Has Shipped</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #0b0b0b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #e5e5e5;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0b0b0b; padding: 40px 10px;">
+            <tr>
+                <td align="center">
+                    <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #141414; border: 1px solid #262626; border-radius: 4px; overflow: hidden; max-width: 600px; width: 100%;">
+                        <!-- Header / Luxury Gold Crest -->
+                        <tr>
+                            <td style="padding: 40px 30px 25px; text-align: center; border-bottom: 1px solid #262626; background: linear-gradient(180deg, #181818 0%, #141414 100%);">
+                                <h1 style="margin: 0; font-family: Georgia, serif; font-size: 26px; font-weight: 400; letter-spacing: 0.2em; color: #c49a45; text-transform: uppercase;">DELUZEX</h1>
+                                <p style="margin: 6px 0 0; font-size: 10px; letter-spacing: 0.3em; color: #888888; text-transform: uppercase;">Atelier of Fine Lighting</p>
+                            </td>
+                        </tr>
+
+                        <!-- Dispatch Announcement -->
+                        <tr>
+                            <td style="padding: 30px 30px 10px;">
+                                <div style="display: inline-block; padding: 4px 10px; background: rgba(196, 154, 69, 0.1); border: 1px solid rgba(196, 154, 69, 0.3); border-radius: 2px; font-size: 11px; letter-spacing: 0.15em; color: #c49a45; text-transform: uppercase; margin-bottom: 15px;">
+                                    Consignment Shipped
+                                </div>
+                                <h2 style="margin: 0 0 10px; font-family: Georgia, serif; font-size: 20px; font-weight: 400; color: #ffffff;">Your Bespoke Luminaire is En Route</h2>
+                                <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #aaaaaa;">
+                                    Dear {customer_name},<br>
+                                    Your order <strong>#{short_id}</strong> has departed our artisanal studio under white-glove courier protection.
+                                </p>
+                            </td>
+                        </tr>
+
+                        <!-- Tracking Dispatch Card -->
+                        <tr>
+                            <td style="padding: 0 30px 20px;">
+                                <table width="100%" cellspacing="0" cellpadding="0" style="background: #1a1a1a; border: 1px solid #2e2e2e; border-radius: 4px; padding: 20px;">
+                                    <tr>
+                                        <td>
+                                            <table width="100%" cellspacing="0" cellpadding="0">
+                                                <tr>
+                                                    <td style="padding: 4px 0; font-size: 11px; letter-spacing: 0.1em; color: #888888; text-transform: uppercase;">Logistics Partner</td>
+                                                    <td style="padding: 4px 0; font-size: 14px; color: #ffffff; text-align: right; font-weight: 600;">{courier}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding: 4px 0; font-size: 11px; letter-spacing: 0.1em; color: #888888; text-transform: uppercase;">Waybill / Tracking No.</td>
+                                                    <td style="padding: 4px 0; font-size: 14px; color: #c49a45; text-align: right; font-family: monospace; font-weight: 700;">{tracking if tracking else "In Transit"}</td>
+                                                </tr>
+                                            </table>
+                                            {tracking_button_html}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <!-- Order Items -->
+                        <tr>
+                            <td style="padding: 10px 30px 20px;">
+                                <h3 style="margin: 0 0 12px; font-size: 12px; letter-spacing: 0.15em; color: #888888; text-transform: uppercase;">Package Contents</h3>
+                                <table width="100%" cellspacing="0" cellpadding="0">
+                                    {items_html}
+                                </table>
+                            </td>
+                        </tr>
+
+                        <!-- Delivery Destination -->
+                        <tr>
+                            <td style="padding: 10px 30px 30px;">
+                                <table width="100%" cellspacing="0" cellpadding="0" style="border-top: 1px solid #262626; padding-top: 20px;">
+                                    <tr>
+                                        <td>
+                                            <h3 style="margin: 0 0 8px; font-size: 11px; letter-spacing: 0.15em; color: #888888; text-transform: uppercase;">Delivery Address</h3>
+                                            <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #bbbbbb;">
+                                                {customer_name}<br>
+                                                {addr.get('street', '')}<br>
+                                                {addr.get('city', '')}, {addr.get('state', '')} - {addr.get('pin_code', '')}<br>
+                                                Phone: {order.get('phone') or addr.get('phone', 'N/A')}
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <!-- Footer -->
+                        <tr>
+                            <td style="padding: 25px 30px; background-color: #0e0e0e; border-top: 1px solid #262626; text-align: center;">
+                                <p style="margin: 0 0 8px; font-size: 12px; color: #666666;">
+                                    For inquiries regarding delivery or white-glove installation, reach our concierge at 
+                                    <a href="mailto:support@deluzexlighting.com" style="color: #c49a45; text-decoration: none;">support@deluzexlighting.com</a>
+                                </p>
+                                <p style="margin: 0; font-size: 10px; color: #444444; letter-spacing: 0.1em; text-transform: uppercase;">
+                                    &copy; 2026 DELUZEX LUXURY LIGHTING. ALL RIGHTS RESERVED.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
+
+
+def build_shipping_notification_email_text(order: Dict[str, Any], tracking_number: str = "", courier_partner: str = "") -> str:
+    """
+    Fallback plaintext version of shipping dispatch notification.
+    """
+    order_id = str(order.get("_id") or order.get("id") or "")
+    short_id = order_id[:8].upper() if order_id else "DELUXE"
+    
+    addr = order.get("shipping_address") or {}
+    first_name = addr.get("first_name", "")
+    last_name = addr.get("last_name", "")
+    customer_name = f"{first_name} {last_name}".strip() or "Valued Patron"
+    
+    courier = courier_partner or order.get("courier_partner") or "White-Glove Courier Partner"
+    tracking = tracking_number or order.get("tracking_number") or "N/A"
+    tracking_url = get_courier_tracking_url(courier, tracking)
+
+    lines = [
+        "DELUZEX - ATELIER OF FINE LIGHTING",
+        "==================================",
+        "",
+        f"YOUR BESPOKE ORDER #{short_id} HAS SHIPPED",
+        "",
+        f"Dear {customer_name},",
+        f"Your order has departed our atelier and is in transit.",
+        "",
+        "SHIPMENT DETAILS:",
+        f"Logistics Partner: {courier}",
+        f"Tracking / Waybill: {tracking}",
+    ]
+    if tracking_url:
+        lines.append(f"Track Consignment Online: {tracking_url}")
+
+    lines.extend([
+        "",
+        "DELIVERY ADDRESS:",
+        f"{customer_name}",
+        f"{addr.get('street', '')}",
+        f"{addr.get('city', '')}, {addr.get('state', '')} - {addr.get('pin_code', '')}",
+        "",
+        "For concierge inquiries, contact support@deluzexlighting.com",
+    ])
+    return "\n".join(lines)
+
+
+def send_shipping_notification_email(order: Any, tracking_number: str = "", courier_partner: str = "") -> Dict[str, Any]:
+    """
+    Send an automated shipment dispatch notification email with courier tracking link to the customer.
+    """
+    try:
+        if hasattr(order, "model_dump"):
+            order_data = order.model_dump(by_alias=True)
+        elif isinstance(order, dict):
+            order_data = order
+        else:
+            order_data = dict(order)
+
+        to_email = (order_data.get("email") or "").strip()
+        if not to_email:
+            return {"success": False, "error": "No recipient email address in order."}
+
+        order_id = str(order_data.get("_id") or order_data.get("id") or "")
+        short_id = order_id[:8].upper() if order_id else "DELUXE"
+
+        tracking = (tracking_number or order_data.get("tracking_number") or "").strip()
+        courier = (courier_partner or order_data.get("courier_partner") or "Courier Partner").strip()
+
+        subject = f"Your Deluzex Order #{short_id} Has Shipped ({courier})"
+        html_body = build_shipping_notification_email_html(order_data, tracking, courier)
+        text_body = build_shipping_notification_email_text(order_data, tracking, courier)
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = settings.SMTP_FROM_EMAIL
+        msg["To"] = to_email.lower()
+        msg.attach(MIMEText(text_body, "plain", "utf-8"))
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+        return _send_smtp_message(msg, to_email.lower())
+    except Exception as exc:
+        logger.error(f"Failed to send shipping notification email: {exc}")
+        return {"success": False, "error": str(exc)}
+
+

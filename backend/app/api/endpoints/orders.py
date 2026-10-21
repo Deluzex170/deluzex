@@ -10,7 +10,7 @@ from app.api import deps
 from app.core.database import db
 from app.core.audit import record_audit_event
 from app.services.inventory import decrement_product_stock, restore_product_stock
-from app.services.email import send_order_confirmation_email
+from app.services.email import send_order_confirmation_email, send_shipping_notification_email
 from app.schemas.order import (
     OrderCancelResponse,
     OrderCreateRequest,
@@ -318,6 +318,18 @@ def update_order_status(
 
     doc = db.orders.find_one({"_id": obj_id})
     logger.info(f"[PATCH /orders/{order_id}/status] Status updated successfully")
+
+    # If transitioning to "shipped", dispatch automated customer email with courier tracking URL
+    if payload.status == "shipped" and old_status != "shipped":
+        try:
+            send_shipping_notification_email(
+                order=doc,
+                tracking_number=payload.tracking_number or doc.get("tracking_number", ""),
+                courier_partner=payload.courier_partner or doc.get("courier_partner", "")
+            )
+            logger.info(f"[PATCH /orders/{order_id}/status] Shipping notification email dispatched")
+        except Exception as exc:
+            logger.warning(f"[PATCH /orders/{order_id}/status] Failed to dispatch shipping notification email: {exc}")
 
     record_audit_event(
         action="ORDER_STATUS_UPDATE",
