@@ -30,9 +30,42 @@ from app.schemas.payment import (
     PaymentStatusResponse,
 )
 from app.services import razorpay as razorpay_service
+from app.services.coupon_service import validate_coupon_code
 from app.core.audit import record_audit_event
 
 router = APIRouter()
+
+def verify_and_calculate_order_totals(items, raw_subtotal, coupon_code, email, claimed_total):
+    calculated_subtotal = round(sum(item.price * item.quantity for item in items), 2)
+    clean_coupon = None
+    expected_discount = 0.0
+
+    if coupon_code and coupon_code.strip():
+        clean_coupon = coupon_code.strip().upper()
+        val_res = validate_coupon_code(clean_coupon, calculated_subtotal, email)
+        if not val_res.valid:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Coupon validation failed: {val_res.message}"
+            )
+        expected_discount = val_res.discount_amount
+        expected_gst = val_res.gst
+        expected_delivery = val_res.delivery
+        expected_total = val_res.grand_total
+    else:
+        expected_discount = 0.0
+        taxable = calculated_subtotal
+        expected_gst = round(taxable * 0.18, 2)
+        expected_delivery = 0.0 if calculated_subtotal >= 1999.0 or calculated_subtotal == 0 else 99.0
+        expected_total = round(taxable + expected_gst + expected_delivery, 2)
+
+    if abs(claimed_total - expected_total) > 0.5:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Price calculation mismatch: expected ₹{expected_total:,.2f}, received ₹{claimed_total:,.2f}"
+        )
+
+    return calculated_subtotal, expected_discount, clean_coupon, expected_gst, expected_delivery, expected_total
 
 PAYMENT_METHODS: list[PaymentMethodInfo] = [
     PaymentMethodInfo(
@@ -103,6 +136,11 @@ def create_order(payload: CreateOrderRequest, request: Request = None):
     amount_paise = round(payload.total * 100)
     if amount_paise < 100:
         raise HTTPException(status_code=400, detail="Order amount must be at least ₹1")
+
+    # Verify and recalculate totals server-side (tamper resistance)
+    calculated_subtotal, expected_discount, clean_coupon, expected_gst, expected_delivery, expected_total = verify_and_calculate_order_totals(
+        payload.items, payload.subtotal, payload.coupon_code, payload.email, payload.total
+    )
 
     # Pre-flight stock availability check before creating payment session
     validate_stock_availability(payload.items)
@@ -218,10 +256,12 @@ def create_order(payload: CreateOrderRequest, request: Request = None):
         phone=payload.phone,
         shipping_address=payload.shipping_address,
         items=payload.items,
-        subtotal=payload.subtotal,
-        gst=payload.gst,
-        delivery=payload.delivery,
-        total=payload.total,
+        subtotal=calculated_subtotal,
+        discount=expected_discount,
+        coupon_code=clean_coupon,
+        gst=expected_gst,
+        delivery=expected_delivery,
+        total=expected_total,
         payment_method=payload.payment_method,
         razorpay_method=payload.razorpay_method,
         razorpay_order_id=razorpay_order["id"],
@@ -333,6 +373,13 @@ def verify_payment(payload: VerifyPaymentRequest, request: Request = None):
     # Decrement inventory stock atomically
     decrement_product_stock(order_doc.get("items", []))
 
+    # Increment coupon usage atomically if coupon was applied
+    if order_doc.get("coupon_code"):
+        db.coupons.update_one(
+            {"code": order_doc["coupon_code"].strip().upper()},
+            {"$inc": {"times_used": 1}}
+        )
+
     # Dispatch luxury order confirmation email safely
     try:
         confirmed_order = db.orders.find_one({"_id": oid}) or order_doc
@@ -424,6 +471,11 @@ def record_payment_failure(payload: PaymentFailurePayload, request: Request = No
 
 @router.post("/cod", response_model=CodOrderResponse)
 def create_cod_order(payload: CodOrderRequest, request: Request = None):
+    # Verify and recalculate totals server-side (tamper resistance)
+    calculated_subtotal, expected_discount, clean_coupon, expected_gst, expected_delivery, expected_total = verify_and_calculate_order_totals(
+        payload.items, payload.subtotal, payload.coupon_code, payload.email, payload.total
+    )
+
     # Pre-flight stock availability check before placing COD order
     validate_stock_availability(payload.items)
 
@@ -440,16 +492,21 @@ def create_cod_order(payload: CodOrderRequest, request: Request = None):
                     "$set": {
                         "shipping_address": payload.shipping_address.model_dump(),
                         "items": [item.model_dump() for item in payload.items],
-                        "subtotal": payload.subtotal,
-                        "gst": payload.gst,
-                        "delivery": payload.delivery,
-                        "total": payload.total,
+                        "subtotal": calculated_subtotal,
+                        "discount": expected_discount,
+                        "coupon_code": clean_coupon,
+                        "gst": expected_gst,
+                        "delivery": expected_delivery,
+                        "total": expected_total,
                         "payment_method": "cod",
                         "status": "cod",
                         "updated_at": now,
                     }
                 },
             )
+            if clean_coupon:
+                db.coupons.update_one({"code": clean_coupon}, {"$inc": {"times_used": 1}})
+
             # Dispatch confirmation email for resumed COD order
             try:
                 cod_order = db.orders.find_one({"_id": oid})
@@ -467,7 +524,7 @@ def create_cod_order(payload: CodOrderRequest, request: Request = None):
                 target_type="order",
                 target_id=payload.existing_order_id,
                 target_name=f"Order #{payload.existing_order_id[:8]}",
-                description=f"Switched order #{payload.existing_order_id[:8]} to Cash on Delivery (₹{payload.total})",
+                description=f"Switched order #{payload.existing_order_id[:8]} to Cash on Delivery (₹{expected_total})",
                 request=request
             )
             return CodOrderResponse(
@@ -491,10 +548,12 @@ def create_cod_order(payload: CodOrderRequest, request: Request = None):
         phone=payload.phone,
         shipping_address=payload.shipping_address,
         items=payload.items,
-        subtotal=payload.subtotal,
-        gst=payload.gst,
-        delivery=payload.delivery,
-        total=payload.total,
+        subtotal=calculated_subtotal,
+        discount=expected_discount,
+        coupon_code=clean_coupon,
+        gst=expected_gst,
+        delivery=expected_delivery,
+        total=expected_total,
         payment_method="cod",
         status="cod",
         idempotency_key=payload.idempotency_key,
@@ -505,6 +564,10 @@ def create_cod_order(payload: CodOrderRequest, request: Request = None):
         db_order.model_dump(by_alias=True, exclude_none=True)
     )
     order_id = str(result.inserted_id)
+
+    # Increment coupon usage atomically if applied
+    if clean_coupon:
+        db.coupons.update_one({"code": clean_coupon}, {"$inc": {"times_used": 1}})
 
     # Decrement inventory stock atomically for COD order
     decrement_product_stock(payload.items)

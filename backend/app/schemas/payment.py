@@ -19,6 +19,8 @@ class CreateOrderRequest(BaseModel):
     shipping_address: ShippingAddress
     items: List[OrderItem]
     subtotal: float
+    discount: float = 0.0
+    coupon_code: Optional[str] = None
     gst: float
     delivery: float
     total: float
@@ -61,6 +63,8 @@ class CodOrderRequest(BaseModel):
     shipping_address: ShippingAddress
     items: List[OrderItem]
     subtotal: float
+    discount: float = 0.0
+    coupon_code: Optional[str] = None
     gst: float
     delivery: float
     total: float
