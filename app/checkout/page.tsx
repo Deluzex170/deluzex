@@ -6,7 +6,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
-import { clearCart } from "../store/cartSlice";
+import {
+  clearCart,
+  setAppliedCoupon as setReduxAppliedCoupon,
+  removeAppliedCoupon as removeReduxAppliedCoupon,
+} from "../store/cartSlice";
 import { useAuth } from "../context/AuthContext";
 import {
   createPaymentOrder,
@@ -65,7 +69,9 @@ export default function CheckoutPage() {
   const dispatch = useDispatch();
   const { user } = useAuth();
   const errorRef = useRef<HTMLDivElement>(null);
-  const { cartItems, cartTotal } = useSelector((state: RootState) => state.cart);
+  const { cartItems, cartTotal, appliedCoupon: reduxCoupon } = useSelector(
+    (state: RootState) => state.cart
+  );
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -132,6 +138,21 @@ export default function CheckoutPage() {
       .catch((err) => console.warn("Could not load available coupons:", err));
   }, []);
 
+  // Sync coupon with Redux store (if applied from Cart Drawer)
+  useEffect(() => {
+    if (reduxCoupon && !appliedCoupon && subtotal > 0) {
+      validateCoupon(reduxCoupon.code, subtotal, email.trim() || undefined)
+        .then((res) => {
+          if (res.valid) {
+            setAppliedCoupon(res);
+          } else {
+            dispatch(removeReduxAppliedCoupon());
+          }
+        })
+        .catch(() => {});
+    }
+  }, [reduxCoupon, subtotal, email, appliedCoupon, dispatch]);
+
   // Re-validate coupon if cart total changes
   useEffect(() => {
     if (appliedCoupon && subtotal > 0) {
@@ -142,6 +163,7 @@ export default function CheckoutPage() {
             setCouponError(null);
           } else {
             setAppliedCoupon(null);
+            dispatch(removeReduxAppliedCoupon());
             setCouponError(res.message || "Applied coupon no longer meets order criteria.");
             setCouponSuccessMsg(null);
           }
@@ -149,8 +171,9 @@ export default function CheckoutPage() {
         .catch(() => {});
     } else if (subtotal === 0) {
       setAppliedCoupon(null);
+      dispatch(removeReduxAppliedCoupon());
     }
-  }, [subtotal, email]);
+  }, [subtotal, email, appliedCoupon, dispatch]);
 
   const handleApplyCoupon = async (codeToApply?: string) => {
     const code = (codeToApply || couponInput).trim();
@@ -166,6 +189,15 @@ export default function CheckoutPage() {
       const res = await validateCoupon(code, subtotal, email.trim() || undefined);
       if (res.valid) {
         setAppliedCoupon(res);
+        dispatch(
+          setReduxAppliedCoupon({
+            code: res.code,
+            discount_amount: res.discount_amount,
+            discount_type: (res.discount_type as "percentage" | "flat" | "free_shipping") || "percentage",
+            discount_value: res.discount_value,
+            message: res.message,
+          })
+        );
         setCouponInput("");
         setCouponSuccessMsg(res.message || `Coupon ${res.code} applied successfully!`);
       } else {
@@ -180,6 +212,7 @@ export default function CheckoutPage() {
 
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null);
+    dispatch(removeReduxAppliedCoupon());
     setCouponSuccessMsg(null);
     setCouponError(null);
   };

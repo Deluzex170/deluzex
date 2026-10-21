@@ -372,3 +372,220 @@
     min-width: 85px;
   }
 }
+
+/* =========================================================================
+   PROMO CODE & COUPON STYLES IN CART DRAWER
+   ========================================================================= */
+.promoSection {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px dashed #E0D6CB;
+}
+
+.promoToggleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0.25rem 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #C39559;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: color 0.2s ease;
+}
+
+.promoToggleBtn:hover {
+  color: #A87A3E;
+}
+
+.promoToggleLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.promoInputWrapper {
+  margin-top: 0.5rem;
+  animation: slideDown 0.2s ease;
+}
+
+.promoInputRow {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.promoInput {
+  flex: 1;
+  padding: 0.45rem 0.65rem;
+  background: #FFFFFF;
+  border: 1px solid #D8CFC5;
+  border-radius: 6px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #353744;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.promoInput:focus {
+  border-color: #CCA068;
+}
+
+.promoInput::placeholder {
+  text-transform: none;
+  font-weight: 400;
+  color: #9C9EA8;
+}
+
+.btnApplyPromo {
+  padding: 0.45rem 0.85rem;
+  background: #353744;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 65px;
+}
+
+.btnApplyPromo:hover:not(:disabled) {
+  background: #CCA068;
+}
+
+.btnApplyPromo:disabled {
+  background: #B0B2BD;
+  cursor: not-allowed;
+}
+
+.appliedPromoBadge {
+  background: #FFFFFF;
+  border: 1px solid #E6D8C8;
+  border-left: 3px solid #CCA068;
+  border-radius: 6px;
+  padding: 0.45rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.appliedPromoLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.appliedPromoCodeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.appliedPromoCode {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #353744;
+}
+
+.appliedPromoSavings {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #059669;
+}
+
+.btnRemovePromo {
+  background: none;
+  border: none;
+  color: #8C8D96;
+  font-size: 0.72rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.2rem;
+  transition: color 0.2s;
+}
+
+.btnRemovePromo:hover {
+  color: #DC2626;
+}
+
+.promoFeedbackError {
+  font-size: 0.75rem;
+  color: #DC2626;
+  margin-top: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.quickOffersRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.quickOfferChip {
+  background: rgba(204, 160, 104, 0.12);
+  border: 1px dashed rgba(204, 160, 104, 0.45);
+  color: #A87A3E;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quickOfferChip:hover {
+  background: #CCA068;
+  color: #FFFFFF;
+}
+
+.discountRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #059669;
+  margin-bottom: 0.2rem;
+}
+
+.freeShippingTag {
+  background: #ECFDF5;
+  color: #059669;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  margin-left: 0.3rem;
+  text-transform: uppercase;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

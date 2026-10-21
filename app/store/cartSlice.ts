@@ -8,16 +8,26 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface AppliedCouponState {
+  code: string;
+  discount_amount: number;
+  discount_type: "percentage" | "flat" | "free_shipping";
+  discount_value?: number | null;
+  message?: string;
+}
+
 export interface CartState {
   cartItems: CartItem[];
   isCartOpen: boolean;
   cartTotal: number;
+  appliedCoupon: AppliedCouponState | null;
 }
 
 const initialState: CartState = {
   cartItems: [],
   isCartOpen: false,
   cartTotal: 0,
+  appliedCoupon: null,
 };
 
 const calculateTotal = (items: CartItem[]) => {
@@ -81,13 +91,30 @@ const cartSlice = createSlice({
     clearCart: (state) => {
       state.cartItems = [];
       state.cartTotal = 0;
+      state.appliedCoupon = null;
     },
     setCartItems: (state, action: PayloadAction<CartItem[]>) => {
       state.cartItems = action.payload;
       state.cartTotal = calculateTotal(state.cartItems);
+    },
+    setAppliedCoupon: (state, action: PayloadAction<AppliedCouponState | null>) => {
+      state.appliedCoupon = action.payload;
+    },
+    removeAppliedCoupon: (state) => {
+      state.appliedCoupon = null;
     }
   }
 });
 
-export const { addToCart, removeFromCart, updateQuantity, openCart, closeCart, clearCart, setCartItems } = cartSlice.actions;
+export const {
+  addToCart,
+  removeFromCart,
+  updateQuantity,
+  openCart,
+  closeCart,
+  clearCart,
+  setCartItems,
+  setAppliedCoupon,
+  removeAppliedCoupon
+} = cartSlice.actions;
 export default cartSlice.reducer;
