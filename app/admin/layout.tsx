@@ -2,9 +2,24 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import styles from "./admin.module.css";
 import { useAuth } from "../context/AuthContext";
 import { useSidebar } from "../context/SidebarContext";
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-admin-sans",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-admin-mono",
+  display: "swap",
+});
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -132,7 +147,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    <div className={styles.adminRoot} data-admin-root data-theme={theme}>
+    <div className={`${styles.adminRoot} ${plusJakarta.variable} ${jetbrainsMono.variable} ${plusJakarta.className}`} data-admin-root data-theme={theme}>
       <div className={styles.dashboardContainer}>
         {/* Sidebar */}
         <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarCollapsed}`}>
