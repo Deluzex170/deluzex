@@ -169,3 +169,32 @@ def validate_coupon_code(code: str, subtotal: float, email: Optional[str] = None
         })
 
     return validate_coupon_dict(coupon, subtotal, email, completed_orders, user_usage)
+
+
+def record_coupon_redemption(code: Optional[str]) -> None:
+    """
+    Atomically increments times_used counter when an order is completed/verified.
+    If the coupon reaches or exceeds its max_uses limit, it is automatically
+    deactivated (is_active = False) so it stops displaying anywhere.
+    """
+    if not code:
+        return
+    clean_code = code.strip().upper()
+    db.coupons.update_one({"code": clean_code}, {"$inc": {"times_used": 1}})
+
+    # Check if max_uses reached and auto-deactivate
+    coupon = db.coupons.find_one({"code": clean_code})
+    if coupon and coupon.get("max_uses") is not None:
+        if coupon.get("times_used", 0) >= coupon["max_uses"]:
+            db.coupons.update_one(
+                {"_id": coupon["_id"]},
+                {
+                    "$set": {
+                        "is_active": False,
+                        "updated_at": datetime.now(timezone.utc).replace(tzinfo=None),
+                    }
+                },
+            )
+            logger.info(
+                f"Coupon {clean_code} reached maximum uses limit ({coupon['max_uses']}). Automatically marked inactive."
+            )

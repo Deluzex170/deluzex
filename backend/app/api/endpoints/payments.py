@@ -30,7 +30,7 @@ from app.schemas.payment import (
     PaymentStatusResponse,
 )
 from app.services import razorpay as razorpay_service
-from app.services.coupon_service import validate_coupon_code
+from app.services.coupon_service import validate_coupon_code, record_coupon_redemption
 from app.core.audit import record_audit_event
 
 router = APIRouter()
@@ -373,12 +373,9 @@ def verify_payment(payload: VerifyPaymentRequest, request: Request = None):
     # Decrement inventory stock atomically
     decrement_product_stock(order_doc.get("items", []))
 
-    # Increment coupon usage atomically if coupon was applied
+    # Increment coupon usage atomically and auto-deactivate if quota reached
     if order_doc.get("coupon_code"):
-        db.coupons.update_one(
-            {"code": order_doc["coupon_code"].strip().upper()},
-            {"$inc": {"times_used": 1}}
-        )
+        record_coupon_redemption(order_doc["coupon_code"])
 
     # Dispatch luxury order confirmation email safely
     try:
@@ -505,7 +502,7 @@ def create_cod_order(payload: CodOrderRequest, request: Request = None):
                 },
             )
             if clean_coupon:
-                db.coupons.update_one({"code": clean_coupon}, {"$inc": {"times_used": 1}})
+                record_coupon_redemption(clean_coupon)
 
             # Dispatch confirmation email for resumed COD order
             try:
@@ -565,9 +562,9 @@ def create_cod_order(payload: CodOrderRequest, request: Request = None):
     )
     order_id = str(result.inserted_id)
 
-    # Increment coupon usage atomically if applied
+    # Record coupon usage and auto-deactivate if quota reached
     if clean_coupon:
-        db.coupons.update_one({"code": clean_coupon}, {"$inc": {"times_used": 1}})
+        record_coupon_redemption(clean_coupon)
 
     # Decrement inventory stock atomically for COD order
     decrement_product_stock(payload.items)

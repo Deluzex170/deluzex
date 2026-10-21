@@ -82,3 +82,36 @@ def test_validation_max_uses_per_user_exhausted():
     res = validate_coupon_dict(coupon, 2000.0, "user@test.com", completed_orders_count=1, user_usage_count=1)
     assert not res.valid
     assert res.reason == "USER_LIMIT_REACHED"
+
+def test_validation_max_uses_global_exhausted():
+    coupon = {"code": "LIMITED50", "is_active": True, "max_uses": 50, "times_used": 50, "min_order_value": 0}
+    res = validate_coupon_dict(coupon, 2000.0, None, completed_orders_count=0, user_usage_count=0)
+    assert not res.valid
+    assert res.reason == "MAX_USES_REACHED"
+
+def test_record_coupon_redemption_auto_deactivation():
+    from app.services.coupon_service import record_coupon_redemption
+    from app.core.database import db
+
+    test_code = "AUTODIACTIVATE50"
+    db.coupons.delete_many({"code": test_code})
+    db.coupons.insert_one({
+        "code": test_code,
+        "title": "Limit 50 Promo",
+        "discount_type": "flat",
+        "discount_value": 100.0,
+        "is_active": True,
+        "max_uses": 50,
+        "times_used": 49,
+    })
+
+    # Redeem 50th time
+    record_coupon_redemption(test_code)
+
+    updated = db.coupons.find_one({"code": test_code})
+    assert updated["times_used"] == 50
+    assert updated["is_active"] is False  # Must be automatically deactivated
+
+    # Cleanup
+    db.coupons.delete_many({"code": test_code})
+

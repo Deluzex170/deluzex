@@ -482,9 +482,16 @@ export default function AdminCouponsPage() {
                       )}
                     </td>
                     <td>
-                      <span>
-                        {coupon.times_used} / {coupon.max_uses ? coupon.max_uses : "∞"}
-                      </span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", alignItems: "flex-start" }}>
+                        <span>
+                          {coupon.times_used} / {coupon.max_uses ? coupon.max_uses : "∞"}
+                        </span>
+                        {Boolean(coupon.max_uses && coupon.times_used >= coupon.max_uses) && (
+                          <span style={{ fontSize: "0.65rem", padding: "0.15rem 0.35rem", background: "rgba(239, 68, 68, 0.2)", color: "#ef4444", borderRadius: "4px", fontWeight: 700, letterSpacing: "0.03em" }}>
+                            QUOTA FULL
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td>
                       <span style={{ fontSize: "0.85rem", color: coupon.expiry_date ? "#d1d5db" : "#8e8e93" }}>
