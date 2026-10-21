@@ -1,6 +1,6 @@
 # Production Readiness & E-Commerce Workflow Hardening Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use uperpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Remediate all critical frontend compilation errors, customer checkout continuity gaps, pre-order inventory validation, and API RBAC/privacy security vulnerabilities to make the Deluzex e-commerce web application 100% production-ready.
 
