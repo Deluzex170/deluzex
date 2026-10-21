@@ -9,6 +9,8 @@ class Settings(BaseSettings):
 
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "deluzex-backend"
+    SECRET_KEY: str = "deluzex_production_jwt_secret_change_me_super_secure_key_2026"
+    ALGORITHM: str = "HS256"
     RAZORPAY_KEY_ID: str = ""
     RAZORPAY_KEY_SECRET: str = ""
     RAZORPAY_WEBHOOK_SECRET: str = ""
