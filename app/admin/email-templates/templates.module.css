@@ -44,8 +44,8 @@
 .variables code { border: 1px solid var(--admin-border); background: var(--admin-surface); padding: 4px 7px; border-radius: 5px; }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 .error, .success { border: 1px solid; padding: 14px 18px; border-radius: 10px; margin-bottom: 20px; line-height: 1.6; overflow-wrap: anywhere; }
-.error { color: #991b1b; background: #fef2f2; border-color: #fecaca; }
-.success { color: #166534; background: #f0fdf4; border-color: #bbf7d0; }
+.error { color: #f87171; background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.3); }
+.success { color: #34d399; background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3); }
 .preview { margin-top: 28px; border-top: 1px solid var(--admin-border); padding-top: 20px; }
 .preview h3 { font-size: 15px; overflow-wrap: anywhere; }
 .preview iframe { width: 100%; height: 480px; border: 1px solid var(--admin-border); border-radius: 10px; background: white; }
