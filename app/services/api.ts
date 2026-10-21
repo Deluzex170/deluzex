@@ -163,9 +163,12 @@ export interface ProductSpecification {
 export interface Product {
   _id?: string | number;
   id?: string | number;
+  slug?: string;
+  title?: string;
   name?: string;
   price?: string | number;
   rating?: number;
+  image?: string;
   image_url?: string;
   description?: string;
   reviews_count?: number;
