@@ -12,8 +12,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { logout, isAuthenticated, isAdmin, loading } = useAuth();
   const { sidebarOpen, setSidebarOpen } = useSidebar();
   const [confirmLogout, setConfirmLogout] = React.useState(false);
+  const [theme, setTheme] = React.useState<"dark" | "light">("dark");
 
   const isLoginPage = pathname === "/admin/login";
+
+  React.useEffect(() => {
+    const savedTheme = localStorage.getItem("admin_theme") as "dark" | "light" | null;
+    if (savedTheme === "light" || savedTheme === "dark") {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    localStorage.setItem("admin_theme", nextTheme);
+  };
 
   React.useEffect(() => {
     document.body.style.paddingTop = "0px";
@@ -118,7 +132,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    <div className={styles.adminRoot} data-admin-root>
+    <div className={styles.adminRoot} data-admin-root data-theme={theme}>
       <div className={styles.dashboardContainer}>
         {/* Sidebar */}
         <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarCollapsed}`}>
@@ -130,7 +144,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             }}>
               <Link href="/" title="Back to Storefront" style={{ display: "flex", flexDirection: "column", gap: "0.45rem", textDecoration: "none" }}>
                 <img
-                  src="/images/logos/de_luzex_white.svg"
+                  src={theme === "light" ? "/images/logos/de_luzex_black.svg" : "/images/logos/de_luzex_white.svg"}
                   alt="De Luzex"
                   height="28"
                   style={{ height: "28px", width: "auto", maxWidth: "160px" }}
@@ -179,7 +193,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
             ))}
 
-            <div className={styles.menuGroup} style={{ marginTop: "auto", paddingTop: "0.75rem", borderTop: "1px solid var(--admin-border)" }}>
+            <div className={styles.menuGroup} style={{ marginTop: "auto", paddingTop: "0.75rem", borderTop: "1px solid var(--admin-border)", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <button
+                type="button"
+                className={styles.themeToggleBtn}
+                onClick={toggleTheme}
+                title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
+                  {theme === "dark" ? (
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="5" />
+                      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                    </svg>
+                  ) : (
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                    </svg>
+                  )}
+                  <span className={styles.menuLinkText}>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+                </div>
+                <span className={styles.themePill}>{theme === "dark" ? "DARK" : "LIGHT"}</span>
+              </button>
               {confirmLogout ? (
                 <div style={{
                   padding: "0.85rem",
