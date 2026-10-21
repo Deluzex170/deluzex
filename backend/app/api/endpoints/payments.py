@@ -357,7 +357,7 @@ def verify_payment(payload: VerifyPaymentRequest, request: Request = None):
         )
         raise HTTPException(status_code=400, detail="Payment verification failed")
 
-    # Mark as paid
+    # Mark as paid and decrement stock atomically
     db.orders.update_one(
         {"_id": oid},
         {
@@ -365,6 +365,7 @@ def verify_payment(payload: VerifyPaymentRequest, request: Request = None):
                 "status": "paid",
                 "razorpay_order_id": payload.razorpay_order_id,
                 "razorpay_payment_id": payload.razorpay_payment_id,
+                "stock_decremented": True,
                 "updated_at": now,
             }
         },
@@ -1111,6 +1112,13 @@ async def razorpay_webhook(request: Request):
                 )
                 try:
                     paid_doc = db.orders.find_one(query)
+                    if paid_doc and not paid_doc.get("stock_decremented"):
+                        try:
+                            decrement_product_stock(paid_doc.get("items", []))
+                            db.orders.update_one(query, {"$set": {"stock_decremented": True}})
+                        except Exception as decr_err:
+                            logger.warning(f"Webhook stock decrement warning for {query}: {decr_err}")
+
                     if paid_doc and not paid_doc.get("order_confirmation_email_sent"):
                         send_order_confirmation_email(paid_doc)
                         db.orders.update_one(query, {"$set": {"order_confirmation_email_sent": True}})

@@ -317,6 +317,11 @@ def update_order_status(
         )
 
     doc = db.orders.find_one({"_id": obj_id})
+    if not doc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found",
+        )
     logger.info(f"[PATCH /orders/{order_id}/status] Status updated successfully")
 
     # If transitioning to "shipped", dispatch automated customer email with courier tracking URL
@@ -330,6 +335,14 @@ def update_order_status(
             logger.info(f"[PATCH /orders/{order_id}/status] Shipping notification email dispatched")
         except Exception as exc:
             logger.warning(f"[PATCH /orders/{order_id}/status] Failed to dispatch shipping notification email: {exc}")
+
+    # If order is cancelled by admin, safely restore inventory stock back to products
+    if payload.status == "cancelled" and old_status != "cancelled":
+        try:
+            restore_product_stock(prev_doc.get("items", []))
+            logger.info(f"[PATCH /orders/{order_id}/status] Restored product stock for cancelled order #{order_id}")
+        except Exception as exc:
+            logger.warning(f"[PATCH /orders/{order_id}/status] Failed to restore inventory on cancel: {exc}")
 
     record_audit_event(
         action="ORDER_STATUS_UPDATE",
