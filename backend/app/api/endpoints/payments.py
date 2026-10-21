@@ -137,13 +137,13 @@ def create_order(payload: CreateOrderRequest, request: Request = None):
     if amount_paise < 100:
         raise HTTPException(status_code=400, detail="Order amount must be at least ₹1")
 
+    # Pre-flight stock availability check before creating payment session
+    validate_stock_availability(payload.items)
+
     # Verify and recalculate totals server-side (tamper resistance)
     calculated_subtotal, expected_discount, clean_coupon, expected_gst, expected_delivery, expected_total = verify_and_calculate_order_totals(
         payload.items, payload.subtotal, payload.coupon_code, payload.email, payload.total
     )
-
-    # Pre-flight stock availability check before creating payment session
-    validate_stock_availability(payload.items)
 
     now = datetime.utcnow()
 
@@ -468,13 +468,13 @@ def record_payment_failure(payload: PaymentFailurePayload, request: Request = No
 
 @router.post("/cod", response_model=CodOrderResponse)
 def create_cod_order(payload: CodOrderRequest, request: Request = None):
+    # Pre-flight stock availability check before placing COD order
+    validate_stock_availability(payload.items)
+
     # Verify and recalculate totals server-side (tamper resistance)
     calculated_subtotal, expected_discount, clean_coupon, expected_gst, expected_delivery, expected_total = verify_and_calculate_order_totals(
         payload.items, payload.subtotal, payload.coupon_code, payload.email, payload.total
     )
-
-    # Pre-flight stock availability check before placing COD order
-    validate_stock_availability(payload.items)
 
     now = datetime.utcnow()
 
