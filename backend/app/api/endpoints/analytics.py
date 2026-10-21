@@ -263,19 +263,24 @@ def get_dashboard_summary(admin: models.User = Depends(deps.get_current_active_a
     # 1. Revenue & Orders
     pipeline_rev = [
         {
+            "$match": {
+                "status": {"$in": ["paid", "processing", "shipped", "out_for_delivery", "delivered"]}
+            }
+        },
+        {
             "$group": {
                 "_id": None,
-                "total_revenue": {"$sum": "$total_amount"},
+                "total_revenue": {"$sum": {"$ifNull": ["$total", "$total_amount"]}},
                 "total_orders": {"$sum": 1}
             }
         }
     ]
     rev_agg = list(db.orders.aggregate(pipeline_rev))
-    total_rev = round(rev_agg[0]["total_revenue"], 2) if rev_agg else 0.0
-    total_orders = rev_agg[0]["total_orders"] if rev_agg else 0
+    total_rev = round(float(rev_agg[0]["total_revenue"]), 2) if rev_agg else 0.0
+    total_orders = db.orders.count_documents({"status": {"$ne": "cancelled"}})
 
     pending_orders = db.orders.count_documents({
-        "status": {"$in": ["pending", "confirmed", "processing"]}
+        "status": {"$in": ["pending", "cod", "confirmed", "processing"]}
     })
     delivered_orders = db.orders.count_documents({"status": "delivered"})
 
@@ -283,28 +288,61 @@ def get_dashboard_summary(admin: models.User = Depends(deps.get_current_active_a
     recent_orders_docs = list(db.orders.find({}).sort("created_at", -1).limit(5))
     recent_orders = []
     for o in recent_orders_docs:
-        c_name = o.get("customer", {}).get("name") if isinstance(o.get("customer"), dict) else "Customer"
+        shipping_addr = o.get("shipping_address") or {}
+        first_name = shipping_addr.get("first_name", "") if isinstance(shipping_addr, dict) else ""
+        last_name = shipping_addr.get("last_name", "") if isinstance(shipping_addr, dict) else ""
+        full_shipping_name = f"{first_name} {last_name}".strip()
+
+        c_name = (
+            full_shipping_name
+            or (o.get("customer", {}).get("name") if isinstance(o.get("customer"), dict) else None)
+            or (o.get("email") or "").split("@")[0]
+            or "Customer"
+        )
+        amount = o.get("total") if o.get("total") is not None else o.get("total_amount", 0.0)
+
+        created_at_val = o.get("created_at")
+        if isinstance(created_at_val, datetime):
+            created_at_str = created_at_val.isoformat()
+        elif created_at_val:
+            created_at_str = str(created_at_val)
+        else:
+            created_at_str = ""
+
         recent_orders.append({
             "id": str(o.get("_id", "")),
-            "order_number": o.get("order_number") or f"ORD-{str(o.get('_id', ''))[:6]}",
+            "order_number": o.get("order_number") or f"ORD-{str(o.get('_id', ''))[:6].upper()}",
             "customer_name": c_name,
-            "total_amount": o.get("total_amount", 0.0),
+            "total_amount": round(float(amount or 0.0), 2),
             "status": o.get("status", "pending"),
-            "created_at": o.get("created_at").isoformat() if isinstance(o.get("created_at"), datetime) else str(o.get("created_at", ""))
+            "created_at": created_at_str
         })
 
     # 2. Inventory Alerts
     total_products = db.products.count_documents({})
-    low_stock_docs = list(db.products.find({"stock": {"$lte": 5}}).limit(6))
-    low_stock_count = db.products.count_documents({"stock": {"$lte": 5}})
-    out_of_stock_count = db.products.count_documents({"stock": {"$lte": 0}})
+    low_stock_filter = {
+        "$or": [
+            {"stock_count": {"$lte": 5}},
+            {"stock": {"$lte": 5}}
+        ]
+    }
+    low_stock_docs = list(db.products.find(low_stock_filter).limit(6))
+    low_stock_count = db.products.count_documents(low_stock_filter)
+    out_of_stock_count = db.products.count_documents({
+        "$or": [
+            {"stock_count": {"$lte": 0}},
+            {"stock": {"$lte": 0}},
+            {"stock_status": "OUT OF STOCK"}
+        ]
+    })
 
     low_stock_items = []
     for p in low_stock_docs:
+        cnt = p.get("stock_count") if p.get("stock_count") is not None else p.get("stock", 0)
         low_stock_items.append({
             "id": str(p.get("_id", "")),
-            "name": p.get("product_name") or p.get("title") or "Unnamed Piece",
-            "stock": p.get("stock", 0)
+            "name": p.get("product_title") or p.get("title") or p.get("product_name") or "Unnamed Piece",
+            "stock": cnt
         })
 
     # 3. Inquiries & Moderation

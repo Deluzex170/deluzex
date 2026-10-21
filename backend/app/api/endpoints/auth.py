@@ -846,11 +846,16 @@ def get_user_stats(admin: models.User = Depends(deps.get_current_active_admin)):
 
     # Order revenue metrics
     pipeline = [
-        {"$group": {"_id": None, "total_spend": {"$sum": "$total_amount"}, "total_orders": {"$sum": 1}}}
+        {
+            "$match": {
+                "status": {"$in": ["paid", "processing", "shipped", "out_for_delivery", "delivered"]}
+            }
+        },
+        {"$group": {"_id": None, "total_spend": {"$sum": {"$ifNull": ["$total", "$total_amount"]}}, "total_orders": {"$sum": 1}}}
     ]
     agg = list(db.orders.aggregate(pipeline))
-    total_spend = round(agg[0]["total_spend"], 2) if agg and "total_spend" in agg[0] else 0.0
-    total_orders = agg[0]["total_orders"] if agg and "total_orders" in agg[0] else 0
+    total_spend = round(float(agg[0]["total_spend"]), 2) if agg and "total_spend" in agg[0] else 0.0
+    total_orders = db.orders.count_documents({"status": {"$ne": "cancelled"}})
 
     return {
         "total_users": total_users,
@@ -897,12 +902,12 @@ def get_users_admin(
 
     # Fast order aggregation by email and user_id
     pipeline_email = [
-        {"$match": {"customer.email": {"$exists": True, "$ne": None}}},
+        {"$match": {"$or": [{"email": {"$exists": True, "$ne": None}}, {"customer.email": {"$exists": True, "$ne": None}}]}},
         {
             "$group": {
-                "_id": {"$toLower": "$customer.email"},
+                "_id": {"$toLower": {"$ifNull": ["$email", "$customer.email"]}},
                 "count": {"$sum": 1},
-                "total_spent": {"$sum": "$total_amount"},
+                "total_spent": {"$sum": {"$ifNull": ["$total", "$total_amount"]}},
                 "last_order": {"$max": "$created_at"}
             }
         }
@@ -915,7 +920,7 @@ def get_users_admin(
             "$group": {
                 "_id": "$user_id",
                 "count": {"$sum": 1},
-                "total_spent": {"$sum": "$total_amount"},
+                "total_spent": {"$sum": {"$ifNull": ["$total", "$total_amount"]}},
                 "last_order": {"$max": "$created_at"}
             }
         }
