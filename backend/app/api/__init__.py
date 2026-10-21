@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.endpoints import health, categories, products, projects, testimonials, newsletter, cart, auth, contact, payments, orders, hero_products, blogs, content, addresses, cards, wishlist, analytics, audit, reviews, collaborations, faqs
+from app.api.endpoints import health, categories, products, projects, testimonials, newsletter, cart, auth, contact, payments, orders, hero_products, blogs, content, addresses, cards, wishlist, analytics, audit, reviews, collaborations, faqs, coupons
 
 from app.api.endpoints import email_templates
 
@@ -31,5 +31,7 @@ api_router.include_router(analytics.router, prefix="/analytics", tags=["analytic
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
 api_router.include_router(collaborations.router, prefix="/collaborations", tags=["collaborations"])
 api_router.include_router(faqs.router, prefix="/faqs", tags=["faqs"])
+api_router.include_router(coupons.router, prefix="/coupons", tags=["coupons"])
+api_router.include_router(coupons.admin_router, prefix="/admin/coupons", tags=["admin-coupons"])
 
 
