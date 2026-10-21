@@ -4,6 +4,43 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
 const originalFetch = globalThis.fetch;
 
+export function getAuthToken(): string | null {
+  if (typeof window !== 'undefined') {
+    const match =
+      localStorage.getItem('authToken') ||
+      localStorage.getItem('access_token') ||
+      localStorage.getItem('token');
+    if (match) return match;
+
+    try {
+      const cookies = document.cookie.split(';');
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'access_token' || name === 'accessToken' || name === 'session') {
+          return decodeURIComponent(value);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return null;
+}
+
+export const getStoredAuthToken = getAuthToken;
+
+export function getAuthHeaders(isFormData = false): Record<string, string> {
+  const headers: Record<string, string> = {};
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+  return headers;
+}
+
 let isHandlingSessionExpiry = false;
 
 export function handleSessionExpired(): void {
@@ -43,11 +80,25 @@ async function loggedFetch(input: RequestInfo | URL, init?: RequestInit): Promis
     input = url;
   }
 
-  const method = init?.method || "GET";
+  // Attach stored auth token if available and not explicitly provided
+  const token = getStoredAuthToken();
+  let modifiedInit = init;
+  if (token) {
+    const headers = new Headers(init?.headers);
+    if (!headers.has("Authorization")) {
+      headers.set("Authorization", `Bearer ${token}`);
+      modifiedInit = {
+        ...init,
+        headers,
+      };
+    }
+  }
+
+  const method = modifiedInit?.method || "GET";
   const startTime = typeof performance !== "undefined" ? performance.now() : Date.now();
 
   try {
-    const res = await originalFetch(input, init);
+    const res = await originalFetch(input, modifiedInit);
     const durationMs = (typeof performance !== "undefined" ? performance.now() : Date.now()) - startTime;
 
     let previewData: unknown = undefined;
@@ -234,42 +285,6 @@ export interface PasswordUpdate {
   new_password: string;
 }
 
-// Helper to get token (safe for both client and SSR)
-function getAuthToken(): string | null {
-  if (typeof window !== 'undefined') {
-    const match =
-      localStorage.getItem('authToken') ||
-      localStorage.getItem('access_token') ||
-      localStorage.getItem('token');
-    if (match) return match;
-
-    try {
-      const cookies = document.cookie.split(';');
-      for (const cookie of cookies) {
-        const [name, value] = cookie.trim().split('=');
-        if (name === 'access_token' || name === 'accessToken' || name === 'session') {
-          return decodeURIComponent(value);
-        }
-      }
-    } catch {
-      // ignore
-    }
-  }
-  return null;
-}
-
-// Helper to build headers
-export function getAuthHeaders(isFormData = false): Record<string, string> {
-  const headers: Record<string, string> = {};
-  const token = getAuthToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  if (!isFormData) {
-    headers['Content-Type'] = 'application/json';
-  }
-  return headers;
-}
 
 async function getApiError(res: Response, fallback: string): Promise<Error> {
   if (res.status === 401) {
