@@ -18,5 +18,6 @@ from app.models.visitor_log import VisitorLog
 from app.models.review import Review
 from app.models.collaboration import CollaborationSubmission
 from app.models.faq import FAQItem
+from app.models.coupon import Coupon
 
 # For Alembic or Base.metadata.create_all() to discover the models
