@@ -76,13 +76,12 @@ export default function CollaborateSection() {
           </p>
 
           <div className={styles.collaborateActions}>
-            <button
-              type="button"
+            <Link
+              href="/collaborate"
               className={styles.btnSubmitDesign}
-              onClick={() => setIsModalOpen(true)}
             >
               Submit Your Design
-            </button>
+            </Link>
             <Link
               href="/collaborate"
               className={styles.linkLearnHow}
