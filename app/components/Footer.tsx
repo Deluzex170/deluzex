@@ -54,7 +54,7 @@ export default function Footer() {
       <div className={styles.footerTopBorder}></div>
 
       <div className={styles.footerInner}>
-        {/* Left column */}
+        {/* Column 1: Brand, Marketplaces & Socials */}
         <div className={styles.footerLeft}>
           <p className={styles.footerLeftLabel}>Available On</p>
           <div className={styles.footerLogos}>
@@ -95,8 +95,9 @@ export default function Footer() {
             </a>
           </div>
 
-          <p className={styles.footerDesc}>Luxury lighting solutions, thoughtfully crafted<br />for modern interiors.</p>
-
+          <p className={styles.footerDesc}>
+            Luxury lighting solutions, thoughtfully crafted<br />for modern interiors.
+          </p>
 
           {/* Social icons */}
           <div className={styles.socialIcons}>
@@ -151,82 +152,81 @@ export default function Footer() {
               </svg>
             </a>
           </div>
-
-          <hr className={styles.footerDivider} />
-          <p className={styles.copyright}>{settings?.footer_copyright || "© 2026 DeLuzex. All rights reserved."}</p>
         </div>
 
-        {/* Right column */}
-        <div className={styles.footerRight}>
-          {/* Newsletter */}
-          <div className={styles.newsletterBlock}>
-            <h4 className={styles.newsletterTitle}>Be Updated With Us</h4>
-            <form className={styles.newsletterForm} onSubmit={handleSubscribe}>
-              <div
-                className={`${styles.newsletterInput} ${status === "error" ? styles.inputError : ""
-                  } ${status === "success" ? styles.inputSuccess : ""}`}
+        {/* Column 2: Explore Links */}
+        <div className={styles.linkGroup}>
+          <h5 className={styles.linkGroupTitle}>Explore</h5>
+          <Link href="/shop?category=Chandeliers">Chandeliers</Link>
+          <Link href="/shop?category=Pendant%20Lights">Pendant Lights</Link>
+          <Link href="/shop?category=Wall%20Lights">Wall Lights</Link>
+          <Link href="/shop?category=Table%20Lamps">Table Lamps</Link>
+          <Link href="/shop?sort=newest">New Arrivals</Link>
+          <Link href="/shop?sort=popular">Best Sellers</Link>
+        </div>
+
+        {/* Column 3: Company Links */}
+        <div className={styles.linkGroup}>
+          <h5 className={styles.linkGroupTitle}>Company</h5>
+          <Link href="/about">About Us</Link>
+          <Link href="/projects">Our Projects</Link>
+          <Link href="/contact">Contact</Link>
+          <Link href="/shipping">Shipping &amp; Delivery</Link>
+          <Link href="/privacy">Privacy Policy</Link>
+        </div>
+
+        {/* Column 4: Newsletter */}
+        <div className={styles.newsletterBlock}>
+          <h4 className={styles.newsletterTitle}>Be Updated With Us</h4>
+          <form className={styles.newsletterForm} onSubmit={handleSubscribe}>
+            <div
+              className={`${styles.newsletterInput} ${status === "error" ? styles.inputError : ""
+                } ${status === "success" ? styles.inputSuccess : ""}`}
+            >
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (status !== "idle") setStatus("idle");
+                }}
+                placeholder="Enter your email address"
+                aria-label="Email address for newsletter"
+                required
+              />
+              <button
+                type="submit"
+                className={styles.newsletterBtn}
+                disabled={status === "loading"}
+                aria-label="Subscribe to newsletter"
               >
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (status !== "idle") setStatus("idle");
-                  }}
-                  placeholder="Enter your email address"
-                  aria-label="Email address for newsletter"
-                  required
-                />
-                <button
-                  type="submit"
-                  className={styles.newsletterBtn}
-                  disabled={status === "loading"}
-                  aria-label="Subscribe to newsletter"
-                >
-                  {status === "loading" ? (
-                    <span className={styles.spinner} />
-                  ) : status === "success" ? (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M20 6L9 17l-5-5" />
-                    </svg>
-                  ) : (
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14M13 6l6 6-6 6" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              {message && (
-                <p className={status === "success" ? styles.newsletterSuccess : styles.newsletterError}>
-                  {message}
-                </p>
-              )}
-            </form>
-          </div>
-
-          {/* Footer links */}
-          <div className={styles.footerLinks}>
-            <div className={styles.linkGroup}>
-              <h5 className={styles.linkGroupTitle}>Explore</h5>
-              <Link href="/shop?category=Chandeliers">Chandeliers</Link>
-              <Link href="/shop?category=Pendant%20Lights">Pendant Lights</Link>
-              <Link href="/shop?category=Wall%20Lights">Wall Lights</Link>
-              <Link href="/shop?category=Table%20Lamps">Table Lamps</Link>
-              <Link href="/shop?sort=newest">New Arrivals</Link>
-              <Link href="/shop?sort=popular">Best Sellers</Link>
+                {status === "loading" ? (
+                  <span className={styles.spinner} />
+                ) : status === "success" ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                ) : (
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                )}
+              </button>
             </div>
-            <div className={styles.linkGroup}>
-              <h5 className={styles.linkGroupTitle}>Company</h5>
-              <Link href="/about">About Us</Link>
-              <Link href="/projects">Our Projects</Link>
-              <Link href="/contact">Contact</Link>
-              <Link href="/shipping">Shipping &amp; Delivery</Link>
-              <Link href="/privacy">Privacy Policy</Link>
-            </div>
-          </div>
+            {message && (
+              <p className={status === "success" ? styles.newsletterSuccess : styles.newsletterError}>
+                {message}
+              </p>
+            )}
+          </form>
         </div>
+      </div>
+
+      {/* Bottom Bar: Divider & Copyright */}
+      <div className={styles.footerBottom}>
+        <hr className={styles.footerDivider} />
+        <p className={styles.copyright}>{settings?.footer_copyright || "© 2026 DeLuzex. All rights reserved."}</p>
       </div>
     </footer>
   );
 }
-
