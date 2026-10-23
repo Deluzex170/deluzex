@@ -8,18 +8,20 @@ import HeroProductWidget from "./components/HeroProductWidget";
 import AnimatedCounter from "./components/animations/AnimatedCounter";
 import NewArrivalsCarousel from "./components/NewArrivalsCarousel";
 import CustomerStoriesCarousel from "./components/CustomerStoriesCarousel";
+import CategoriesCarousel from "./components/CategoriesCarousel";
+import ProjectsCarousel from "./components/ProjectsCarousel";
 import CollaborateSection from "./components/CollaborateSection";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function Home() {
-  const [categories, products, newArrivalProducts, testimonials, featuredProjects, cmsHome] = await Promise.all([
+  const [categories, products, newArrivalProducts, testimonials, allProjects, cmsHome] = await Promise.all([
     fetchCategories(),
     fetchProducts("limit=8"),
     fetchProducts("is_new_arrival=true"),
     fetchTestimonials(),
-    fetchProjects("is_featured=true"),
+    fetchProjects(),
     fetchSiteContent("homepage"),
   ]);
 
@@ -85,58 +87,7 @@ export default async function Home() {
           <p className={styles.categoriesTagline}>lighting for every interior</p>
           <h2 className={styles.categoriesTitle}>Discover Our Categories</h2>
         </div>
-        <div className={styles.categoryGrid}>
-          {categories.length > 0 ? (
-            categories.slice(0, 4).map((cat, i: number) => {
-              const catIdentifier = cat.name || cat._id || cat.id || "All";
-              return (
-                <Link
-                  key={cat.id || cat._id || i}
-                  href={`/shop?category=${encodeURIComponent(catIdentifier)}`}
-                  className={styles.catCard}
-                >
-                  <Image
-                    src={cat.image_url || "/images/category_chandelier_1784107756268.jpg"}
-                    alt={cat.name || "Category"}
-                    fill
-                    style={{ objectFit: "cover" }}
-                  />
-                  <div className={styles.catCardLabel}>
-                    <span>{cat.name}</span>
-                  </div>
-                </Link>
-              );
-            })
-          ) : (
-            <>
-              {/* Fallback layout if no API data */}
-              <Link href={`/shop?category=${encodeURIComponent("Pendant Lights")}`} className={styles.catCard}>
-                <Image src="/images/category_chandelier_1784107756268.jpg" alt="Pendant Lights" fill style={{ objectFit: "cover" }} />
-                <div className={styles.catCardLabel}>
-                  <span>Pendant Lights</span>
-                </div>
-              </Link>
-              <Link href={`/shop?category=${encodeURIComponent("Chandeliers")}`} className={styles.catCard}>
-                <Image src="/images/about_chandelier_1784107790569.jpg" alt="Chandeliers" fill style={{ objectFit: "cover" }} />
-                <div className={styles.catCardLabel}>
-                  <span>Chandeliers</span>
-                </div>
-              </Link>
-              <Link href={`/shop?category=${encodeURIComponent("COB")}`} className={styles.catCard}>
-                <Image src="/images/project_lobby_1784107778993.jpg" alt="COB" fill style={{ objectFit: "cover" }} />
-                <div className={styles.catCardLabel}>
-                  <span>COB</span>
-                </div>
-              </Link>
-              <Link href={`/shop?category=${encodeURIComponent("Table Lamps")}`} className={styles.catCard}>
-                <Image src="/images/lamp_black_gold_1784107745696.jpg" alt="Table Lamps" fill style={{ objectFit: "cover" }} />
-                <div className={styles.catCardLabel}>
-                  <span>Table Lamps</span>
-                </div>
-              </Link>
-            </>
-          )}
-        </div>
+        <CategoriesCarousel categories={categories} />
         <Link href="/categories" className={styles.btnExploreCat}>
           Explore Categories
         </Link>
@@ -146,33 +97,7 @@ export default async function Home() {
       {/* Figma: 1440x885, "Our Featured Projects." title, 2 large project cards, Explore button */}
       <section className={styles.projectsSection}>
         <h2 className={styles.projectsTitle}>Our Featured Projects.</h2>
-        <div className={styles.projectGrid}>
-          {featuredProjects && featuredProjects.length > 0 ? (
-            featuredProjects.slice(0, 2).map((proj) => (
-              <Link key={proj.id || proj._id} href={`/projects/${proj._id || proj.id}`} className={styles.projectCard}>
-                <Image
-                  src={proj.image_url || "/images/project_lounge_1784107767735.jpg"}
-                  alt={proj.title}
-                  fill
-                  sizes="(max-width: 768px) 50vw, 50vw"
-                  style={{ objectFit: "cover" }}
-                />
-                <div className={styles.projectCardLabel}>
-                  <div className={styles.projectCardLabelText}>
-                    <span className={styles.projectCardLabelTitle}>{proj.title}</span>
-                    <span className={styles.projectCardLabelSub}>{proj.location || "Global"}</span>
-                  </div>
-                  <span className={styles.projectArrowBtn}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                  </span>
-                </div>
-              </Link>
-            ))
-          ) : (<p>No projects available yet.</p>
-          )}
-        </div>
+        <ProjectsCarousel projects={allProjects} />
         <Link href="/projects" className={styles.btnExploreProjects}>
           Explore All Projects
         </Link>
@@ -234,9 +159,7 @@ export default async function Home() {
                 <Image
                   src="/images/logos/PremiumCraftmanship.svg"
                   alt="Premium Craftmanship"
-                  width={68}
-                  height={68}
-                  className={styles.aboutFeatureSvg}
+                  width={46} height={46} className={styles.aboutFeatureSvg}
                 />
                 <span className={styles.aboutFeatureLabel}>Premium Craftmanship</span>
               </div>
@@ -245,9 +168,7 @@ export default async function Home() {
                 <Image
                   src="/images/logos/BespokeDesign.svg"
                   alt="Bespoke Design"
-                  width={68}
-                  height={68}
-                  className={styles.aboutFeatureSvg}
+                  width={46} height={46} className={styles.aboutFeatureSvg}
                 />
                 <span className={styles.aboutFeatureLabel}>Bespoke Design</span>
               </div>
@@ -256,9 +177,7 @@ export default async function Home() {
                 <Image
                   src="/images/logos/HandcraftedExcellence.svg"
                   alt="Handcrafted Excellence"
-                  width={68}
-                  height={68}
-                  className={styles.aboutFeatureSvg}
+                  width={46} height={46} className={styles.aboutFeatureSvg}
                 />
                 <span className={styles.aboutFeatureLabel}>Handcrafted Excellence</span>
               </div>

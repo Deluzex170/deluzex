@@ -408,14 +408,13 @@ export async function fetchCategories(): Promise<Category[]> {
   try {
     const res = await fetch(`${API_BASE_URL}/categories`, {
       headers: getAuthHeaders(),
-      next: { revalidate: 60 } // Revalidate cache every 60s
+      cache: "no-store",
     });
     if (!res.ok) throw new Error("Failed to fetch categories");
     const data = await res.json();
     
     // Support direct arrays [...] or response wrappers like { data: [...] }
     return Array.isArray(data) ? data : (data.data || []);
-    return [];
   } catch (error) {
     logger.error("API", "Error fetching categories:", error);
     return []; // Return empty array on failure so UI doesn't crash
