@@ -412,7 +412,7 @@ export async function fetchCategories(): Promise<Category[]> {
     });
     if (!res.ok) throw new Error("Failed to fetch categories");
     const data = await res.json();
-    
+
     // Support direct arrays [...] or response wrappers like { data: [...] }
     return Array.isArray(data) ? data : (data.data || []);
   } catch (error) {
@@ -430,7 +430,7 @@ export async function fetchProducts(queryParams?: URLSearchParams | string): Pro
     });
     if (!res.ok) throw new Error("Failed to fetch products");
     const data = await res.json();
-    
+
     return data.data || data || [];
   } catch (error) {
     logger.error("API", "Error fetching products:", error);
@@ -446,7 +446,7 @@ export async function fetchProductById(id: string): Promise<Product | null> {
     });
     if (!res.ok) throw new Error(`Failed to fetch product ${id}`);
     const data = await res.json();
-    
+
     return data.data || data || null;
   } catch (error) {
     logger.error("API", `Error fetching product ${id}:`, error);
@@ -1484,23 +1484,23 @@ export function normalizeUserOrder(raw: Record<string, unknown>): UserOrder {
   const rawItems = (raw.items || raw.order_items || raw.products || []) as Record<string, unknown>[];
   const items: OrderItem[] = Array.isArray(rawItems)
     ? rawItems.map((it: Record<string, unknown>) => ({
-        product_id: (it.product_id || it.productId || it.id || it._id) as string | number | undefined,
-        title:
-          (it.title as string) ||
-          (it.product_title as string) ||
-          (it.name as string) ||
-          (it.product_name as string) ||
-          "Luxury Luminaire",
-        price: (it.price || it.unit_price || it.product_price || 0) as number | string,
-        quantity: (it.quantity || it.qty || 1) as number,
-        image:
-          (it.image as string) ||
-          (it.image_url as string) ||
-          (it.product_main_image as string) ||
-          (it.img as string) ||
-          "/images/category_chandeliers_1784107850024.png",
-        variant: (it.variant || it.selected_variant || it.product_variant || "") as string,
-      }))
+      product_id: (it.product_id || it.productId || it.id || it._id) as string | number | undefined,
+      title:
+        (it.title as string) ||
+        (it.product_title as string) ||
+        (it.name as string) ||
+        (it.product_name as string) ||
+        "Luxury Luminaire",
+      price: (it.price || it.unit_price || it.product_price || 0) as number | string,
+      quantity: (it.quantity || it.qty || 1) as number,
+      image:
+        (it.image as string) ||
+        (it.image_url as string) ||
+        (it.product_main_image as string) ||
+        (it.img as string) ||
+        "/images/category_chandeliers_1784107850024.png",
+      variant: (it.variant || it.selected_variant || it.product_variant || "") as string,
+    }))
     : [];
 
   const rawTotal = raw.total || raw.total_amount || raw.amount || raw.grand_total || 0;
@@ -1512,15 +1512,15 @@ export function normalizeUserOrder(raw: Record<string, unknown>): UserOrder {
   const rawDate = (raw.date || raw.order_date || raw.created_at || raw.createdAt) as string | undefined;
   const formattedDate = rawDate
     ? new Date(rawDate).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      })
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    })
     : new Date().toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      });
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
 
   return {
     _id: String(raw._id || raw.id || orderId),
@@ -2331,8 +2331,10 @@ export async function fetchProductReviews(productId: string): Promise<ProductRev
     logger.error("API", "Error fetching product reviews:", error);
     return {
       average_rating: 0, total_reviews: 0,
-      breakdown: { "5": { count: 0, pct: 0 }, "4": { count: 0, pct: 0 },
-        "3": { count: 0, pct: 0 }, "2": { count: 0, pct: 0 }, "1": { count: 0, pct: 0 } },
+      breakdown: {
+        "5": { count: 0, pct: 0 }, "4": { count: 0, pct: 0 },
+        "3": { count: 0, pct: 0 }, "2": { count: 0, pct: 0 }, "1": { count: 0, pct: 0 }
+      },
       reviews: [],
     };
   }

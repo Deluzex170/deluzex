@@ -33,13 +33,13 @@ export default async function CategoriesPage() {
         <div className={styles.heroOverlay}></div>
 
         <div className={styles.heroContent}>
-          <div className={styles.breadcrumbs}>
+          {/* <div className={styles.breadcrumbs}>
             <Link href="/" className={styles.breadcrumbLink}>
               Home
             </Link>
             <span>/</span>
             <span>Categories</span>
-          </div>
+          </div> */}
           <p className={styles.heroSub}>Collections</p>
           <h1 className={styles.heroTitle}>Explore Categories</h1>
           <p className={styles.heroDesc}>
