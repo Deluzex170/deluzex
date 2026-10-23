@@ -60,7 +60,7 @@ export default function Footer() {
           <div className={styles.footerLogos}>
             {/* Amazon logo */}
             <a
-              href={settings?.available_on?.amazon || "https://www.amazon.in"}
+              href={settings?.available_on?.amazon || "https://www.amazon.in/stores/DELUZEX/page/C2CF2F7D-46ED-433F-B75B-0A39923D937A?ref_=cm_sw_r_ud_ast_store_YCEWQSABJFW26RSAKT3H"}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.footerLogoItem}
