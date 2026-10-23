@@ -10,6 +10,9 @@ import NewArrivalsCarousel from "./components/NewArrivalsCarousel";
 import CustomerStoriesCarousel from "./components/CustomerStoriesCarousel";
 import CollaborateSection from "./components/CollaborateSection";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function Home() {
   const [categories, products, newArrivalProducts, testimonials, featuredProjects, cmsHome] = await Promise.all([
     fetchCategories(),
@@ -39,7 +42,7 @@ export default async function Home() {
 
         {/* Left content */}
         <div className={styles.heroLeft}>
-          <p className={styles.heroTagline}>Celebrate Every Moment with</p>
+          <p className={styles.heroTagline}>{cmsHome?.hero?.tagline || "Celebrate Every Moment with"}</p>
           <h1 className={styles.heroTitle}>{cmsHome?.hero?.title || "Where Lights become Art"}</h1>
           <p className={styles.heroDesc}>
             {cmsHome?.hero?.description || (
@@ -54,7 +57,7 @@ export default async function Home() {
               {cmsHome?.hero?.btn_explore_text || "Explore Collection"}
             </Link>
             <Link href={cmsHome?.hero?.btn_catalogue_link || "/projects"} className={styles.btncatalogue}>
-              View portfolio
+              {cmsHome?.hero?.btn_catalogue_text || "View portfolio"}
             </Link>
           </div>
         </div>
@@ -274,14 +277,23 @@ export default async function Home() {
 
         {/* Stats Row - 4 image cards with overlaid text */}
         <div className={styles.statsRow}>
-          {(cmsHome?.story?.stats || []).map((st: any, idx: number) => {
-            const numVal = parseInt(st.number.replace(/\D/g, ""), 10) || 0;
-            const suffixVal = st.number.replace(/[0-9]/g, "") || "+";
+          {((cmsHome?.story?.stats && cmsHome.story.stats.length > 0)
+            ? cmsHome.story.stats
+            : [
+              { number: "10+", label: "Years Of Excellence", image: "/images/project_lounge_1784107767735.jpg" },
+              { number: "99%", label: "Client Satisfaction", image: "/images/about_chandelier_1784107790569.jpg" },
+              { number: "50+", label: "Lighting Installations", image: "/images/project_lobby_1784107778993.jpg" },
+              { number: "100+", label: "Happy Customers", image: "/images/project_lounge_1784107767735.jpg" },
+            ]
+          ).map((st: any, idx: number) => {
+            const rawNum = String(st.number || "");
+            const numVal = parseInt(rawNum.replace(/\D/g, ""), 10) || 0;
+            const suffixVal = rawNum.replace(/[0-9]/g, "") || "+";
             return (
               <div key={idx} className={styles.statCard}>
                 <Image
                   src={st.image || "/images/project_lounge_1784107767735.jpg"}
-                  alt={st.label}
+                  alt={st.label || "Statistic"}
                   fill
                   className={styles.statCardImg}
                   style={{ objectFit: "cover" }}

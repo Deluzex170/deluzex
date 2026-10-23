@@ -1909,6 +1909,7 @@ export async function fetchNewsletterSubscribers(filters?: {
   if (filters?.search) params.append("search", filters.search);
 
   const res = await fetch(`${API_BASE_URL}/newsletter/subscribers?${params.toString()}`, {
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch newsletter subscribers");
@@ -1921,7 +1922,7 @@ export async function updateSubscriberNotified(
 ): Promise<{ message: string; subscriber: NewsletterSubscriberItem }> {
   const res = await fetch(`${API_BASE_URL}/newsletter/subscribers/${encodeURIComponent(subscriberId)}/notified`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ is_notified: isNotified }),
   });
   if (!res.ok) {
@@ -1934,6 +1935,7 @@ export async function updateSubscriberNotified(
 export async function deleteNewsletterSubscriber(subscriberId: string): Promise<{ message: string }> {
   const res = await fetch(`${API_BASE_URL}/newsletter/subscribers/${encodeURIComponent(subscriberId)}`, {
     method: "DELETE",
+    headers: getAuthHeaders(),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -2367,6 +2369,7 @@ export async function fetchAdminReviews(filters?: {
   if (filters?.limit !== undefined) params.append("limit", filters.limit.toString());
 
   const res = await fetch(`${API_BASE_URL}/reviews/all?${params.toString()}`, {
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch admin reviews");
@@ -2375,6 +2378,7 @@ export async function fetchAdminReviews(filters?: {
 
 export async function fetchReviewStats(): Promise<ReviewStats> {
   const res = await fetch(`${API_BASE_URL}/reviews/stats`, {
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch review statistics");
@@ -2387,7 +2391,7 @@ export async function updateReviewApproval(
 ): Promise<{ message: string; review: ProductReviewItem }> {
   const res = await fetch(`${API_BASE_URL}/reviews/${encodeURIComponent(reviewId)}/approval`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ is_approved: isApproved }),
   });
   if (!res.ok) {
@@ -2400,6 +2404,7 @@ export async function updateReviewApproval(
 export async function deleteReview(reviewId: string): Promise<{ message: string }> {
   const res = await fetch(`${API_BASE_URL}/reviews/${encodeURIComponent(reviewId)}`, {
     method: "DELETE",
+    headers: getAuthHeaders(),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -2974,6 +2979,7 @@ export async function fetchAdminCustomers(filters?: {
   if (filters?.limit !== undefined) params.append("limit", filters.limit.toString());
 
   const res = await fetch(`${API_BASE_URL}/auth/users?${params.toString()}`, {
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch customers");
@@ -2982,6 +2988,7 @@ export async function fetchAdminCustomers(filters?: {
 
 export async function fetchAdminCustomerStats(): Promise<AdminCustomerStats> {
   const res = await fetch(`${API_BASE_URL}/auth/users/stats`, {
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch customer statistics");
@@ -2994,7 +3001,7 @@ export async function updateCustomerStatus(
 ): Promise<{ message: string; is_active: boolean }> {
   const res = await fetch(`${API_BASE_URL}/auth/users/${encodeURIComponent(userId)}/status`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ is_active: isActive }),
   });
   if (!res.ok) {
@@ -3010,7 +3017,7 @@ export async function updateCustomerRole(
 ): Promise<{ message: string; is_admin: boolean }> {
   const res = await fetch(`${API_BASE_URL}/auth/users/${encodeURIComponent(userId)}/role`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ is_admin: isAdmin }),
   });
   if (!res.ok) {
@@ -3022,6 +3029,7 @@ export async function updateCustomerRole(
 
 export async function fetchCustomerOrders(userId: string): Promise<any[]> {
   const res = await fetch(`${API_BASE_URL}/auth/users/${encodeURIComponent(userId)}/orders`, {
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch customer orders");
@@ -3064,6 +3072,7 @@ export interface DashboardSummaryResponse {
 
 export async function fetchDashboardSummary(): Promise<DashboardSummaryResponse> {
   const res = await fetch(`${API_BASE_URL}/analytics/dashboard-summary`, {
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch dashboard summary");

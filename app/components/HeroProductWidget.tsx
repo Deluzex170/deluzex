@@ -269,9 +269,10 @@ export default function HeroProductWidget() {
           />
         </div>
         <div className={styles.heroInfoCardContent}>
-          <span className={styles.heroInfoCardNum}>/{String(activeIndex + 1).padStart(2, "0")}</span>
           <span className={styles.heroInfoCardName}>{activeLamp.name}</span>
-          <span className={styles.heroInfoCardCount}>₹{activeLamp.price ?? activeLamp.count}</span>
+          <span className={styles.heroInfoCardCount}>
+            ₹{Number(activeLamp.price ?? activeLamp.count ?? 0).toLocaleString("en-IN")}
+          </span>
         </div>
       </Link>
 
@@ -298,9 +299,8 @@ export default function HeroProductWidget() {
             <button
               key={`${lamp.image}-${position}`}
               type="button"
-              className={`${styles.heroLampCard} ${
-                position === carouselPosition ? styles.heroLampCardActive : ""
-              }`}
+              className={`${styles.heroLampCard} ${position === carouselPosition ? styles.heroLampCardActive : ""
+                }`}
               onClick={(e) => {
                 if (hasDraggedRef.current) {
                   e.preventDefault();

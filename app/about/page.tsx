@@ -112,8 +112,8 @@ export default async function About() {
                   idx === 0
                     ? "/images/logos/BespokeDesign.svg"
                     : idx === 1
-                    ? "/images/logos/HandcraftedExcellence.svg"
-                    : "/images/logos/PremiumCraftmanship.svg";
+                      ? "/images/logos/HandcraftedExcellence.svg"
+                      : "/images/logos/PremiumCraftmanship.svg";
                 const iconSrc =
                   f.icon && typeof f.icon === "string" && f.icon.startsWith("/images/")
                     ? f.icon
