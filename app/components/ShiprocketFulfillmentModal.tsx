@@ -460,13 +460,13 @@ export default function ShiprocketFulfillmentModal({
                   <div className={styles.grid2} style={{ marginBottom: "1rem" }}>
                     <div>
                       <div className={styles.label}>Air Waybill (AWB Number)</div>
-                      <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#d4af37" }}>
+                      <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-primary, #d4af37)" }}>
                         {currentOrder.awb_code}
                       </div>
                     </div>
                     <div>
                       <div className={styles.label}>Courier Partner</div>
-                      <div style={{ fontSize: "1rem", fontWeight: 600 }}>
+                      <div style={{ fontSize: "1rem", fontWeight: 600, color: "var(--admin-text-main, #ffffff)" }}>
                         {currentOrder.courier_name || "Express Logistics"}
                       </div>
                     </div>
@@ -493,8 +493,8 @@ export default function ShiprocketFulfillmentModal({
                   </div>
 
                   {/* Schedule Pickup Section */}
-                  <div style={{ marginTop: "1.5rem", paddingTop: "1rem", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                    <h5 style={{ margin: "0 0 0.5rem", fontSize: "0.9rem", color: "#e5e7eb" }}>
+                  <div style={{ marginTop: "1.5rem", paddingTop: "1rem", borderTop: "1px solid var(--admin-border, rgba(255,255,255,0.08))" }}>
+                    <h5 style={{ margin: "0 0 0.5rem", fontSize: "0.9rem", color: "var(--admin-text-main, #e5e7eb)" }}>
                       📅 Courier Pickup Scheduling
                     </h5>
                     <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
@@ -567,9 +567,9 @@ export default function ShiprocketFulfillmentModal({
                       </div>
                     </div>
 
-                    <div style={{ marginTop: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div style={{ fontSize: "0.8rem", color: "#9ca3af" }}>
-                        Pickup Location: <strong style={{ color: "#d4af37" }}>work</strong> (Pincode: 385210)
+                    <div className={styles.pickupBar}>
+                      <div style={{ fontSize: "0.85rem", color: "var(--admin-text-muted, #9ca3af)" }}>
+                        Pickup Location: <strong style={{ color: "var(--admin-primary, #d4af37)" }}>work</strong> (Pincode: 385210)
                       </div>
                       <button
                         className={styles.btnSecondary}
@@ -830,13 +830,13 @@ export default function ShiprocketFulfillmentModal({
                   <div className={styles.grid2} style={{ marginBottom: "1rem" }}>
                     <div>
                       <div className={styles.label}>Customer Reason</div>
-                      <div style={{ fontSize: "0.95rem", color: "#f3f4f6", fontWeight: 600, marginTop: "0.2rem" }}>
+                      <div style={{ fontSize: "0.95rem", color: "var(--admin-text-main, #f3f4f6)", fontWeight: 600, marginTop: "0.2rem" }}>
                         {returnDetails.reason}
                       </div>
                     </div>
                     <div>
                       <div className={styles.label}>Requested On</div>
-                      <div style={{ fontSize: "0.85rem", color: "#9ca3af", marginTop: "0.2rem" }}>
+                      <div style={{ fontSize: "0.85rem", color: "var(--admin-text-muted, #9ca3af)", marginTop: "0.2rem" }}>
                         {returnDetails.requested_at
                           ? new Date(returnDetails.requested_at).toLocaleString("en-IN")
                           : "Recently"}
@@ -847,7 +847,7 @@ export default function ShiprocketFulfillmentModal({
                   {returnDetails.customer_notes && (
                     <div style={{ marginBottom: "1rem" }}>
                       <div className={styles.label}>Customer Problem Description / Notes</div>
-                      <div style={{ background: "rgba(255,255,255,0.03)", padding: "0.75rem", borderRadius: "8px", fontSize: "0.88rem", color: "#e5e7eb", marginTop: "0.25rem" }}>
+                      <div style={{ background: "var(--admin-surface, #181820)", border: "1px solid var(--admin-border, #282832)", padding: "0.75rem", borderRadius: "8px", fontSize: "0.88rem", color: "var(--admin-text-main, #e5e7eb)", marginTop: "0.25rem" }}>
                         &ldquo;{returnDetails.customer_notes}&rdquo;
                       </div>
                     </div>
@@ -879,7 +879,7 @@ export default function ShiprocketFulfillmentModal({
                         ))}
                       </div>
                     ) : (
-                      <div style={{ fontSize: "0.82rem", color: "#9ca3af", marginTop: "0.3rem" }}>
+                      <div style={{ fontSize: "0.82rem", color: "var(--admin-text-muted, #9ca3af)", marginTop: "0.3rem" }}>
                         No photos attached with this request.
                       </div>
                     )}
@@ -887,18 +887,18 @@ export default function ShiprocketFulfillmentModal({
 
                   {/* Pickup & Destination Address */}
                   <div className={styles.grid2} style={{ marginBottom: "1.25rem" }}>
-                    <div style={{ background: "rgba(255,255,255,0.02)", padding: "0.8rem", borderRadius: "8px" }}>
+                    <div style={{ background: "var(--admin-surface, #181820)", border: "1px solid var(--admin-border, #282832)", padding: "0.8rem", borderRadius: "8px" }}>
                       <div className={styles.label}>Customer Pickup Location</div>
-                      <div style={{ fontSize: "0.85rem", color: "#e5e7eb", marginTop: "0.25rem" }}>
+                      <div style={{ fontSize: "0.85rem", color: "var(--admin-text-main, #e5e7eb)", marginTop: "0.25rem" }}>
                         <strong>{currentOrder.customer_name || returnDetails.customer_name}</strong>
                         {currentOrder.user_phone && <> • {currentOrder.user_phone}</>}
                         <br />
                         {currentOrder.shipping_address?.street}, {currentOrder.shipping_address?.city} - {currentOrder.shipping_address?.pin_code}
                       </div>
                     </div>
-                    <div style={{ background: "rgba(255,255,255,0.02)", padding: "0.8rem", borderRadius: "8px" }}>
+                    <div style={{ background: "var(--admin-surface, #181820)", border: "1px solid var(--admin-border, #282832)", padding: "0.8rem", borderRadius: "8px" }}>
                       <div className={styles.label}>Deluzex Receiving Warehouse</div>
-                      <div style={{ fontSize: "0.85rem", color: "#e5e7eb", marginTop: "0.25rem" }}>
+                      <div style={{ fontSize: "0.85rem", color: "var(--admin-text-main, #e5e7eb)", marginTop: "0.25rem" }}>
                         <strong>Deluzex Lighting Warehouse (&apos;work&apos;)</strong>
                         <br />
                         Block no 19, Galaxy complex, Ahmedabad - Palanpur Hwy, opposite ekta hotel, Banaskantha 385210
@@ -1159,9 +1159,9 @@ export default function ShiprocketFulfillmentModal({
                     </select>
                   </div>
 
-                  <div className={styles.card} style={{ background: "#1a1a20", marginBottom: "1rem" }}>
+                  <div className={styles.card} style={{ marginBottom: "1rem" }}>
                     <div className={styles.label}>Customer Pickup Location</div>
-                    <div style={{ fontSize: "0.9rem", color: "#ffffff", marginTop: "0.25rem" }}>
+                    <div style={{ fontSize: "0.9rem", color: "var(--admin-text-main, #ffffff)", marginTop: "0.25rem" }}>
                       {currentOrder.customer_name} • {currentOrder.user_phone}
                       <br />
                       {currentOrder.shipping_address?.street}, {currentOrder.shipping_address?.city},{" "}

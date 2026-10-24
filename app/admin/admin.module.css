@@ -110,6 +110,7 @@
 .adminRoot[data-theme="light"] [class*="tableWrapper"],
 .adminRoot[data-theme="light"] [class*="modalCard"],
 .adminRoot[data-theme="light"] [class*="modalContent"],
+.adminRoot[data-theme="light"] [class*="modal"],
 .adminRoot[data-theme="light"] [class*="drawer"],
 .adminRoot[data-theme="light"] [class*="card"],
 .adminRoot[data-theme="light"] [class*="navCard"],
