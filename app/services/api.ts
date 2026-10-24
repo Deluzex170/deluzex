@@ -3579,4 +3579,75 @@ export async function checkPincodeServiceability(
   return data;
 }
 
+// --- SHIPPING & DELIVERY RULES API ---
+
+export interface ShippingSettings {
+  standard_delivery_fee: number;
+  free_shipping_enabled: boolean;
+  free_shipping_threshold: number;
+  min_order_value_enabled: boolean;
+  min_order_value: number;
+  min_order_message: string;
+  cod_enabled: boolean;
+  cod_extra_fee: number;
+  cod_max_order_value: number;
+  estimated_delivery_days?: string;
+  white_glove_note?: string;
+  updated_at?: string;
+  updated_by?: string;
+}
+
+export async function fetchPublicShippingSettings(): Promise<ShippingSettings> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/shipping-settings/public`, {
+      cache: "no-store",
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.error("Error fetching public shipping settings:", err);
+  }
+  // Safe default fallback
+  return {
+    standard_delivery_fee: 99.0,
+    free_shipping_enabled: true,
+    free_shipping_threshold: 1999.0,
+    min_order_value_enabled: true,
+    min_order_value: 499.0,
+    min_order_message: "Minimum order value of ₹{amount} is required to place an order.",
+    cod_enabled: true,
+    cod_extra_fee: 0.0,
+    cod_max_order_value: 25000.0,
+    estimated_delivery_days: "3-5 business days",
+    white_glove_note: "Complimentary white-glove packaging on all orders.",
+  };
+}
+
+export async function fetchAdminShippingSettings(): Promise<ShippingSettings> {
+  const res = await fetch(`${API_BASE_URL}/shipping-settings/admin`, {
+    headers: getAuthHeaders(),
+    cache: "no-store",
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to load shipping settings");
+  return data.settings;
+}
+
+export async function updateAdminShippingSettings(
+  payload: Partial<ShippingSettings>
+): Promise<{ success: boolean; message: string; settings: ShippingSettings }> {
+  const res = await fetch(`${API_BASE_URL}/shipping-settings/admin`, {
+    method: "PUT",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to update shipping settings");
+  return data;
+}
+
 

@@ -25,6 +25,8 @@ import {
   validateCoupon,
   AvailableCoupon,
   CouponValidateResponse,
+  fetchPublicShippingSettings,
+  ShippingSettings,
 } from "../services/api";
 import styles from "./checkout.module.css";
 
@@ -112,19 +114,43 @@ export default function CheckoutPage() {
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponSuccessMsg, setCouponSuccessMsg] = useState<string | null>(null);
 
-  // Monetary Totals with Dynamic Discount
+  // Dynamic Shipping & Delivery Settings State
+  const [shippingRules, setShippingRules] = useState<ShippingSettings>({
+    standard_delivery_fee: 99,
+    free_shipping_enabled: true,
+    free_shipping_threshold: 1999,
+    min_order_value_enabled: true,
+    min_order_value: 499,
+    min_order_message: "Minimum order value of ₹{amount} is required to place an order.",
+    cod_enabled: true,
+    cod_extra_fee: 0,
+    cod_max_order_value: 25000,
+    estimated_delivery_days: "3-5 business days",
+    white_glove_note: "Complimentary white-glove packaging on all orders.",
+  });
+
+  // Monetary Totals with Dynamic Shipping Policy & Discount
   const subtotal = cartTotal;
   const discount = appliedCoupon?.discount_amount || 0;
   const taxableSubtotal = Math.max(0, subtotal - discount);
   const gst = taxableSubtotal * 0.18;
-  const isFreeShipping = appliedCoupon?.discount_type === "free_shipping" || subtotal >= 1999;
-  const delivery = isFreeShipping ? 0 : (subtotal > 0 ? 99 : 0);
+  const isFreeShipping =
+    appliedCoupon?.discount_type === "free_shipping" ||
+    (shippingRules.free_shipping_enabled && subtotal >= shippingRules.free_shipping_threshold);
+  const delivery = isFreeShipping ? 0 : (subtotal > 0 ? shippingRules.standard_delivery_fee : 0);
   const grandTotal = taxableSubtotal + gst + delivery;
 
-  // Initialize Idempotency Key & Preload Razorpay Script
+  const isBelowMinOrder =
+    shippingRules.min_order_value_enabled && subtotal > 0 && subtotal < shippingRules.min_order_value;
+  const minOrderDiff = Math.max(0, shippingRules.min_order_value - subtotal);
+
+  // Initialize Idempotency Key, Preload Razorpay Script, & Fetch Shipping Rules
   useEffect(() => {
     setIdempotencyKey(getOrCreateIdempotencyKey());
     loadRazorpayScript().catch((err) => console.warn("Razorpay script preload warning:", err));
+    fetchPublicShippingSettings().then((rules) => {
+      if (rules) setShippingRules(rules);
+    });
   }, []);
 
   // Fetch Available Public Coupons
@@ -262,6 +288,13 @@ export default function CheckoutPage() {
   const validateForm = (): boolean => {
     if (cartItems.length === 0) {
       setErrorMessage("Your cart is empty. Please add lighting fixtures to proceed.");
+      return false;
+    }
+    if (isBelowMinOrder) {
+      setErrorMessage(
+        shippingRules.min_order_message.replace("{amount}", `₹${shippingRules.min_order_value.toLocaleString("en-IN")}`)
+      );
+      scrollToError();
       return false;
     }
     if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
@@ -1201,12 +1234,34 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            {/* Minimum Order Value Alert */}
+            {isBelowMinOrder && (
+              <div style={{
+                padding: "0.75rem 1rem",
+                background: "rgba(239, 68, 68, 0.12)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                borderRadius: "8px",
+                color: "#fca5a5",
+                fontSize: "0.825rem",
+                marginBottom: "1rem",
+                lineHeight: 1.4,
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}>
+                <span>⛔</span>
+                <span>
+                  {shippingRules.min_order_message.replace("{amount}", `₹${shippingRules.min_order_value.toLocaleString("en-IN")}`)} (Add items worth ₹{minOrderDiff.toLocaleString("en-IN")} more to complete order)
+                </span>
+              </div>
+            )}
+
             {/* Dynamic CTA Button */}
             {paymentMethod === "razorpay" ? (
               <button
                 type="submit"
                 className={styles.btnPayWithRazorpay}
-                disabled={isProcessing}
+                disabled={isProcessing || isBelowMinOrder}
               >
                 {isProcessing ? (
                   <>
@@ -1219,7 +1274,7 @@ export default function CheckoutPage() {
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                     </svg>
-                    <span>Pay ₹{grandTotal.toFixed(2)} via Razorpay</span>
+                    <span>{isBelowMinOrder ? `Min. Order ₹${shippingRules.min_order_value.toLocaleString("en-IN")} Required` : `Pay ₹${grandTotal.toFixed(2)} via Razorpay`}</span>
                   </>
                 )}
               </button>
@@ -1227,7 +1282,7 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 className={styles.btnPayCod}
-                disabled={isProcessing}
+                disabled={isProcessing || isBelowMinOrder}
               >
                 {isProcessing ? (
                   <>
@@ -1235,7 +1290,7 @@ export default function CheckoutPage() {
                     <span>Confirming Order...</span>
                   </>
                 ) : (
-                  <span>Confirm Cash on Delivery (₹{grandTotal.toFixed(2)})</span>
+                  <span>{isBelowMinOrder ? `Min. Order ₹${shippingRules.min_order_value.toLocaleString("en-IN")} Required` : `Confirm Cash on Delivery (₹${grandTotal.toFixed(2)})`}</span>
                 )}
               </button>
             )}
