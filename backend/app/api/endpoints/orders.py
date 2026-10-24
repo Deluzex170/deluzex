@@ -477,3 +477,85 @@ def cancel_order(
         message="Order cancelled successfully",
         status="cancelled",
     )
+
+
+@router.post("/webhook")
+async def orders_logistics_webhook(request: Request):
+    """
+    Compliance Webhook Endpoint for Logistics Tracking Updates.
+    Does not use restricted keywords (shiprocket, kartrocket, sr, kr) in URL.
+    Supports both 'x-api-key' and 'Authorization' token verification.
+    """
+    token_header = request.headers.get("x-api-key") or request.headers.get("authorization")
+    configured_secret = getattr(deps.settings, "SHIPROCKET_WEBHOOK_SECRET", "")
+    if configured_secret and token_header:
+        clean_token = token_header.replace("Bearer ", "").strip()
+        if clean_token != configured_secret.strip():
+            logger.warning("[Logistics Webhook] Rejected: token mismatch")
+            return {"status": "unauthorized"}
+
+    try:
+        payload = await request.json()
+    except Exception:
+        return {"status": "ignored", "reason": "invalid json payload"}
+
+    logger.info(f"[Logistics Webhook] Received update: {payload}")
+
+    awb = payload.get("awb") or payload.get("awb_code") or payload.get("tracking_number")
+    current_status = str(payload.get("current_status") or payload.get("status") or "").upper().strip()
+    order_id_ref = payload.get("order_id")
+
+    query = {}
+    if awb:
+        query["$or"] = [{"awb_code": awb}, {"tracking_number": awb}]
+    elif order_id_ref:
+        try:
+            query["_id"] = ObjectId(order_id_ref)
+        except Exception:
+            pass
+
+    if not query:
+        return {"status": "ok", "message": "No matching order identifier found"}
+
+    order_doc = db.orders.find_one(query)
+    if not order_doc:
+        return {"status": "ok", "message": "Order not found in database"}
+
+    update_fields = {
+        "shiprocket_status": current_status,
+        "updated_at": datetime.utcnow(),
+    }
+
+    if current_status in ("DELIVERED", "COMPLETED"):
+        update_fields["status"] = "delivered"
+    elif current_status in ("OUT FOR DELIVERY", "OUT_FOR_DELIVERY"):
+        update_fields["status"] = "out_for_delivery"
+    elif current_status in ("IN TRANSIT", "IN_TRANSIT", "SHIPPED", "PICKED UP", "PICKED_UP"):
+        update_fields["status"] = "shipped"
+    elif current_status in ("RTO INITIATED", "RTO_INITIATED"):
+        update_fields["status"] = "rto_initiated"
+    elif current_status in ("RTO DELIVERED", "RTO_DELIVERED"):
+        update_fields["status"] = "rto_delivered"
+    elif current_status in ("CANCELED", "CANCELLED"):
+        update_fields["status"] = "cancelled"
+
+    activity_entry = {
+        "date": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        "status": current_status,
+        "location": payload.get("scans", [{}])[-1].get("location") if payload.get("scans") else None,
+        "activity": payload.get("message") or current_status,
+    }
+
+    db.orders.update_one(
+        {"_id": order_doc["_id"]},
+        {
+            "$set": update_fields,
+            "$push": {"tracking_activities": activity_entry},
+        },
+    )
+
+    logger.info(
+        f"[Logistics Webhook] Successfully synced Order #{order_doc['_id']} to '{update_fields.get('status', current_status)}'"
+    )
+    return {"status": "success", "order_id": str(order_doc["_id"])}
+
