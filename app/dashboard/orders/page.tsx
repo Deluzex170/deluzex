@@ -331,7 +331,14 @@ export default function OrdersPage() {
 
             {/* Live Progress Stepper */}
             <div className={styles.stepperContainer}>
-              <div className={styles.stepperTitle}>Live Shipment Progress</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                <div className={styles.stepperTitle} style={{ margin: 0 }}>Live Shipment Progress</div>
+                {selectedOrder.awb_code && (
+                  <div style={{ fontSize: "0.82rem", background: "rgba(212, 175, 55, 0.12)", border: "1px solid rgba(212, 175, 55, 0.3)", color: "#d4af37", padding: "0.25rem 0.65rem", borderRadius: "6px", fontWeight: 600 }}>
+                    🚚 {selectedOrder.courier_name || "Shiprocket Logistics"} • AWB: {selectedOrder.awb_code}
+                  </div>
+                )}
+              </div>
               <div className={styles.stepper}>
                 {STEP_STAGES.map((step, idx) => {
                   const currentProgress = getStepProgress(selectedOrder.status);
@@ -353,6 +360,17 @@ export default function OrdersPage() {
                   );
                 })}
               </div>
+
+              {selectedOrder.tracking_activities && selectedOrder.tracking_activities.length > 0 && (
+                <div style={{ marginTop: "1rem", paddingTop: "0.75rem", borderTop: "1px dashed rgba(255,255,255,0.1)" }}>
+                  <div style={{ fontSize: "0.78rem", color: "#9ca3af", marginBottom: "0.35rem" }}>Latest Transit Scans:</div>
+                  {selectedOrder.tracking_activities.slice(-2).reverse().map((act, idx) => (
+                    <div key={idx} style={{ fontSize: "0.8rem", color: "#e5e7eb", marginBottom: "0.25rem" }}>
+                      • <strong style={{ color: "#d4af37" }}>{act.status || act.activity}</strong> {act.location ? `at ${act.location}` : ""} ({act.date})
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Ordered Items */}

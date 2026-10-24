@@ -1489,6 +1489,36 @@ export interface UserOrder {
   created_at?: string;
   createdAt?: string;
   date?: string;
+
+  // Shiprocket Logistics
+  shiprocket_order_id?: number | string;
+  shiprocket_shipment_id?: number | string;
+  awb_code?: string;
+  courier_name?: string;
+  courier_company_id?: number;
+  pickup_scheduled_date?: string;
+  pickup_token_number?: string;
+  label_url?: string;
+  manifest_url?: string;
+  invoice_url?: string;
+  shiprocket_status?: string;
+  tracking_activities?: Array<{
+    date?: string;
+    status?: string;
+    location?: string;
+    activity?: string;
+  }>;
+  return_details?: {
+    return_order_id?: number | string;
+    return_shipment_id?: number | string;
+    return_awb_code?: string;
+    courier_name?: string;
+    return_status?: string;
+    reason?: string;
+    initiated_at?: string;
+    restocked?: boolean;
+    restocked_at?: string;
+  };
 }
 
 // Helper to normalize backend order objects into standard UserOrder format
@@ -1563,14 +1593,29 @@ export function normalizeUserOrder(raw: Record<string, unknown>): UserOrder {
     total: numTotal,
     amount: numTotal,
     status: (raw.status || raw.order_status || "Processing") as string,
-    tracking_number: (raw.tracking_number || raw.trackingNumber) as string | undefined,
-    courier_partner: (raw.courier_partner || raw.courierPartner) as string | undefined,
+    tracking_number: (raw.tracking_number || raw.trackingNumber || raw.awb_code) as string | undefined,
+    courier_partner: (raw.courier_partner || raw.courierPartner || raw.courier_name) as string | undefined,
     notes: (raw.notes || raw.order_notes) as string | undefined,
     payment_method: (raw.payment_method || raw.paymentMethod || "Online") as string,
     payment_status: (raw.payment_status || raw.paymentStatus || "Paid") as string,
     created_at: (raw.created_at || raw.createdAt || new Date().toISOString()) as string,
     createdAt: (raw.createdAt || raw.created_at || new Date().toISOString()) as string,
     date: formattedDate,
+
+    // Shiprocket Logistics
+    shiprocket_order_id: raw.shiprocket_order_id as number | string | undefined,
+    shiprocket_shipment_id: raw.shiprocket_shipment_id as number | string | undefined,
+    awb_code: (raw.awb_code || raw.tracking_number) as string | undefined,
+    courier_name: (raw.courier_name || raw.courier_partner) as string | undefined,
+    courier_company_id: raw.courier_company_id as number | undefined,
+    pickup_scheduled_date: raw.pickup_scheduled_date as string | undefined,
+    pickup_token_number: raw.pickup_token_number as string | undefined,
+    label_url: raw.label_url as string | undefined,
+    manifest_url: raw.manifest_url as string | undefined,
+    invoice_url: raw.invoice_url as string | undefined,
+    shiprocket_status: raw.shiprocket_status as string | undefined,
+    tracking_activities: (raw.tracking_activities || []) as UserOrder["tracking_activities"],
+    return_details: raw.return_details as UserOrder["return_details"],
   };
 }
 
@@ -3257,4 +3302,210 @@ export async function deleteAdminCoupon(id: string): Promise<{ success: boolean;
   if (!res.ok) throw new Error(data.detail || "Failed to delete coupon");
   return data;
 }
+
+// ==========================================
+// SHIPROCKET LOGISTICS & RETURNS API
+// ==========================================
+
+export interface AvailableCourier {
+  courier_company_id: number;
+  courier_name: string;
+  rate: number;
+  estimated_delivery_days: string | number;
+  etd?: string;
+  cod?: boolean;
+  rating?: number;
+  is_recommended?: boolean;
+}
+
+export interface CheckCouriersResponse {
+  order_id: string;
+  destination_pincode: string;
+  is_serviceable: boolean;
+  couriers: AvailableCourier[];
+}
+
+export interface TrackingActivity {
+  date?: string;
+  status?: string;
+  location?: string;
+  activity?: string;
+}
+
+export interface LiveTrackingResponse {
+  success: boolean;
+  order_id: string;
+  awb_code?: string;
+  current_status?: string;
+  etd?: string;
+  activities: TrackingActivity[];
+  message?: string;
+}
+
+export async function checkOrderCouriers(orderId: string, weight?: number): Promise<CheckCouriersResponse> {
+  const query = weight ? `?weight=${weight}` : "";
+  const res = await fetch(`${API_BASE_URL}/shiprocket/check-couriers/${orderId}${query}`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to check couriers");
+  return data;
+}
+
+export async function createShiprocketShipment(
+  orderId: string,
+  payload?: {
+    weight?: number;
+    length?: number;
+    breadth?: number;
+    height?: number;
+    pickup_location?: string;
+  }
+): Promise<{ success: boolean; shiprocket_order_id: number; shiprocket_shipment_id: number }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/create-shipment/${orderId}`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload || {}),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to create Shiprocket shipment");
+  return data;
+}
+
+export async function assignShiprocketCourier(
+  orderId: string,
+  shipmentId: number,
+  courierId?: number
+): Promise<{ success: boolean; awb_code: string; courier_name: string }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/assign-courier`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      order_id: orderId,
+      shipment_id: shipmentId,
+      courier_id: courierId,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to assign courier and generate AWB");
+  return data;
+}
+
+export async function scheduleShiprocketPickup(
+  orderId: string,
+  shipmentId: number,
+  pickupDate?: string
+): Promise<{ success: boolean; details: Record<string, unknown> }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/schedule-pickup`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      order_id: orderId,
+      shipment_id: shipmentId,
+      pickup_date: pickupDate,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to schedule pickup");
+  return data;
+}
+
+export async function fetchShippingLabel(shipmentId: number, orderId?: string): Promise<{ label_url: string }> {
+  const q = orderId ? `?order_id=${orderId}` : "";
+  const res = await fetch(`${API_BASE_URL}/shiprocket/label/${shipmentId}${q}`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to generate shipping label");
+  return data;
+}
+
+export async function fetchShippingInvoice(orderId: string): Promise<{ invoice_url: string }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/invoice/${orderId}`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to generate invoice");
+  return data;
+}
+
+export async function fetchOrderLiveTracking(orderId: string): Promise<LiveTrackingResponse> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/track/${orderId}`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to fetch live tracking");
+  return data;
+}
+
+export async function cancelShiprocketShipment(orderId: string): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/cancel-shipment/${orderId}`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to cancel shipment");
+  return data;
+}
+
+export async function createReturnOrder(
+  orderId: string,
+  reason: string,
+  dimensions?: { weight?: number; length?: number; breadth?: number; height?: number }
+): Promise<{ success: boolean; return_details: Record<string, unknown> }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/returns/create`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      order_id: orderId,
+      reason,
+      ...dimensions,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to initiate return order");
+  return data;
+}
+
+export async function restockReturnedOrder(orderId: string): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/returns/restock/${orderId}`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to restock returned order");
+  return data;
+}
+
+export async function checkPincodeServiceability(
+  pincode: string,
+  weight: number = 1.5,
+  isCod: boolean = false
+): Promise<{
+  success: boolean;
+  pincode: string;
+  is_serviceable: boolean;
+  estimated_days?: string;
+  couriers?: AvailableCourier[];
+}> {
+  const res = await fetch(
+    `${API_BASE_URL}/shiprocket/serviceability?pincode=${encodeURIComponent(pincode)}&weight=${weight}&is_cod=${isCod}`
+  );
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to check serviceability");
+  return data;
+}
+
 

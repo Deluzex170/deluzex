@@ -12,6 +12,7 @@ import {
   OrderStats,
 } from "../../services/api";
 import OrderInvoiceModal from "../../components/OrderInvoiceModal";
+import ShiprocketFulfillmentModal from "../../components/ShiprocketFulfillmentModal";
 
 const STATUS_TABS = [
   { key: "All", label: "All Orders" },
@@ -74,6 +75,7 @@ export default function AdminOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<UserOrder | null>(null);
   const [invoiceOrder, setInvoiceOrder] = useState<UserOrder | null>(null);
+  const [shiprocketOrder, setShiprocketOrder] = useState<UserOrder | null>(null);
 
   // Fulfillment form state
   const [fulfillStatus, setFulfillStatus] = useState<string>("processing");
@@ -381,6 +383,23 @@ export default function AdminOrdersPage() {
                           </button>
                           <button
                             className={styles.viewBtn}
+                            onClick={() => setShiprocketOrder(ord)}
+                            title="Ship with Shiprocket, generate AWB, print labels, live track & reverse returns"
+                            style={{
+                              background: ord.awb_code
+                                ? "rgba(124, 58, 237, 0.15)"
+                                : "rgba(212, 175, 55, 0.15)",
+                              color: ord.awb_code ? "#c084fc" : "#d4af37",
+                              borderColor: ord.awb_code
+                                ? "rgba(124, 58, 237, 0.35)"
+                                : "rgba(212, 175, 55, 0.35)",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {ord.awb_code ? "🚚 Shiprocket" : "🚀 Ship"}
+                          </button>
+                          <button
+                            className={styles.viewBtn}
                             onClick={() => setInvoiceOrder(ord)}
                             title="View and print GST Tax Invoice"
                             style={{ background: "rgba(196, 154, 69, 0.12)", color: "#c49a45", borderColor: "rgba(196, 154, 69, 0.3)" }}
@@ -442,6 +461,53 @@ export default function AdminOrdersPage() {
                   {toastMsg.text}
                 </div>
               )}
+
+              {/* SHIPROCKET 1-CLICK INTEGRATION BANNER */}
+              <div
+                style={{
+                  background: "linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(212, 175, 55, 0.08) 100%)",
+                  border: "1px solid rgba(124, 58, 237, 0.35)",
+                  borderRadius: "10px",
+                  padding: "1rem 1.15rem",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "1rem",
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "#ffffff", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <span>🚀 Shiprocket Automated Logistics</span>
+                    {selectedOrder.awb_code && (
+                      <span style={{ fontSize: "0.7rem", background: "#7c3aed", color: "#fff", padding: "0.15rem 0.45rem", borderRadius: "4px" }}>
+                        ACTIVE
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: "0.8rem", color: "#9ca3af", marginTop: "0.25rem" }}>
+                    {selectedOrder.awb_code
+                      ? `AWB: ${selectedOrder.awb_code} • ${selectedOrder.courier_name || "Assigned Courier"}`
+                      : "Create shipment, generate AWB, print barcode labels, track live & initiate returns."}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShiprocketOrder(selectedOrder)}
+                  style={{
+                    background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)",
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "0.55rem 1.15rem",
+                    borderRadius: "8px",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {selectedOrder.awb_code ? "🚚 Track & Manage" : "📦 Ship with Shiprocket"}
+                </button>
+              </div>
 
               {/* FULFILLMENT CONTROLS */}
               <div className={styles.sectionBlock}>
@@ -657,6 +723,26 @@ export default function AdminOrdersPage() {
         <OrderInvoiceModal
           order={invoiceOrder}
           onClose={() => setInvoiceOrder(null)}
+        />
+      )}
+
+      {/* Shiprocket Fulfillment & Returns Modal */}
+      {shiprocketOrder && (
+        <ShiprocketFulfillmentModal
+          order={shiprocketOrder}
+          isOpen={!!shiprocketOrder}
+          onClose={() => setShiprocketOrder(null)}
+          onOrderUpdated={() => {
+            loadData(true);
+            if (selectedOrder && (selectedOrder._id === shiprocketOrder._id || selectedOrder.id === shiprocketOrder.id)) {
+              fetchAdminOrders({}).then((ordersList) => {
+                const fresh = ordersList.find(
+                  (o) => o._id === shiprocketOrder._id || o.id === shiprocketOrder.id
+                );
+                if (fresh) setSelectedOrder(fresh);
+              });
+            }
+          }}
         />
       )}
     </div>

@@ -19,6 +19,7 @@ import {
   Product,
 } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
+import PincodeChecker from "../../components/PincodeChecker";
 
 export default function ProductDetail() {
   const dispatch = useDispatch();
@@ -534,6 +535,9 @@ export default function ProductDetail() {
                 {isOutOfStock ? "Inquire for Commission" : "Email and Inquiry"}
               </button>
             </div>
+
+            {/* Shiprocket Pincode Delivery Estimator */}
+            <PincodeChecker defaultWeight={1.5} />
 
             <div className={styles.divider} />
 

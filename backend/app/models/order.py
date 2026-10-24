@@ -15,6 +15,11 @@ OrderStatus = Literal[
     "out_for_delivery",
     "delivered",
     "cancelled",
+    "rto_initiated",
+    "rto_delivered",
+    "return_requested",
+    "return_in_transit",
+    "returned",
 ]
 PaymentMethod = str
 
@@ -65,6 +70,24 @@ class Order(BaseModel):
     error_description: Optional[str] = None
     upi_vpa: Optional[str] = None
     card_last4: Optional[str] = None
+
+    # Shiprocket Forward Logistics
+    shiprocket_order_id: Optional[int] = None
+    shiprocket_shipment_id: Optional[int] = None
+    awb_code: Optional[str] = None
+    courier_name: Optional[str] = None
+    courier_company_id: Optional[int] = None
+    pickup_scheduled_date: Optional[str] = None
+    pickup_token_number: Optional[str] = None
+    label_url: Optional[str] = None
+    manifest_url: Optional[str] = None
+    invoice_url: Optional[str] = None
+    shiprocket_status: Optional[str] = None
+    tracking_activities: List[dict] = Field(default_factory=list)
+
+    # Shiprocket Reverse Logistics (Returns)
+    return_details: Optional[dict] = None
+
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = None
 
