@@ -20,6 +20,7 @@ const STATUS_TABS = [
   { key: "paid", label: "Processing / Paid" },
   { key: "shipped", label: "Shipped" },
   { key: "delivered", label: "Delivered" },
+  { key: "return_requested", label: "Returns / Pickups" },
   { key: "cancelled", label: "Cancelled" },
 ];
 
@@ -190,6 +191,42 @@ export default function AdminOrdersPage() {
     } else if (s === "cod") {
       badgeClass = styles.statusPending;
       label = "COD (Pending)";
+    } else if (s === "return_requested") {
+      return (
+        <span
+          className={styles.statusBadge}
+          style={{ background: "rgba(245, 158, 11, 0.15)", color: "#f59e0b", borderColor: "rgba(245, 158, 11, 0.35)" }}
+        >
+          ● Return Requested
+        </span>
+      );
+    } else if (s === "return_in_transit" || s === "return_approved") {
+      return (
+        <span
+          className={styles.statusBadge}
+          style={{ background: "rgba(16, 185, 129, 0.15)", color: "#10b981", borderColor: "rgba(16, 185, 129, 0.35)" }}
+        >
+          ● Return In Transit
+        </span>
+      );
+    } else if (s === "return_rejected") {
+      return (
+        <span
+          className={styles.statusBadge}
+          style={{ background: "rgba(239, 68, 68, 0.15)", color: "#ef4444", borderColor: "rgba(239, 68, 68, 0.35)" }}
+        >
+          ● Return Rejected
+        </span>
+      );
+    } else if (s === "returned") {
+      return (
+        <span
+          className={styles.statusBadge}
+          style={{ background: "rgba(99, 102, 241, 0.15)", color: "#818cf8", borderColor: "rgba(99, 102, 241, 0.35)" }}
+        >
+          ● Returned & Restocked
+        </span>
+      );
     }
 
     return <span className={`${styles.statusBadge} ${badgeClass}`}>● {label}</span>;
@@ -386,17 +423,32 @@ export default function AdminOrdersPage() {
                             onClick={() => setShiprocketOrder(ord)}
                             title="Ship with Shiprocket, generate AWB, print labels, live track & reverse returns"
                             style={{
-                              background: ord.awb_code
-                                ? "rgba(124, 58, 237, 0.15)"
-                                : "rgba(212, 175, 55, 0.15)",
-                              color: ord.awb_code ? "#c084fc" : "#d4af37",
-                              borderColor: ord.awb_code
-                                ? "rgba(124, 58, 237, 0.35)"
-                                : "rgba(212, 175, 55, 0.35)",
+                              background:
+                                ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
+                                  ? "rgba(245, 158, 11, 0.22)"
+                                  : ord.awb_code
+                                  ? "rgba(124, 58, 237, 0.15)"
+                                  : "rgba(212, 175, 55, 0.15)",
+                              color:
+                                ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
+                                  ? "#f59e0b"
+                                  : ord.awb_code
+                                  ? "#c084fc"
+                                  : "#d4af37",
+                              borderColor:
+                                ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
+                                  ? "rgba(245, 158, 11, 0.6)"
+                                  : ord.awb_code
+                                  ? "rgba(124, 58, 237, 0.35)"
+                                  : "rgba(212, 175, 55, 0.35)",
                               fontWeight: 600,
                             }}
                           >
-                            {ord.awb_code ? "🚚 Shiprocket" : "🚀 Ship"}
+                            {ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
+                              ? "⚠️ Review Return"
+                              : ord.awb_code
+                              ? "🚚 Shiprocket"
+                              : "🚀 Ship"}
                           </button>
                           <button
                             className={styles.viewBtn}

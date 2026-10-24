@@ -51,6 +51,28 @@ class ReturnOrderPayload(BaseModel):
     height: Optional[float] = None
 
 
+class CustomerReturnRequestPayload(BaseModel):
+    order_id: str
+    reason: str
+    customer_notes: Optional[str] = ""
+    images: List[str] = []
+    customer_email: Optional[str] = None
+
+
+class ApproveReturnPayload(BaseModel):
+    order_id: str
+    weight: Optional[float] = None
+    length: Optional[float] = None
+    breadth: Optional[float] = None
+    height: Optional[float] = None
+    admin_notes: Optional[str] = None
+
+
+class RejectReturnPayload(BaseModel):
+    order_id: str
+    rejection_reason: str
+
+
 # ---------------------------------------------------------------------------
 # PUBLIC / STOREFRONT ENDPOINTS
 # ---------------------------------------------------------------------------
@@ -549,8 +571,263 @@ def cancel_order_shipment(
 
 
 # ---------------------------------------------------------------------------
-# REVERSE LOGISTICS / RETURN ORDER MANAGEMENT
+# REVERSE LOGISTICS / RETURN ORDER MANAGEMENT (2-Step Customer & Admin Approval)
 # ---------------------------------------------------------------------------
+
+@router.post("/returns/customer-request")
+def customer_request_return(
+    payload: CustomerReturnRequestPayload,
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+):
+    """
+    Step 1 (Customer Account): Customer requests a return or replacement for their order.
+    The customer uploads photographs of the damaged/defective product and enters reason & notes.
+    The request is set to 'return_requested' with return_details.status = 'PENDING_APPROVAL'.
+    Shiprocket reverse pickup is NOT booked until Admin inspects and approves.
+    """
+    try:
+        obj_id = ObjectId(payload.order_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid order ID format")
+
+    order = db.orders.find_one({"_id": obj_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    # Verification: order ownership
+    is_authorized = False
+    actor_email = payload.customer_email or order.get("email") or "Customer"
+    if current_user:
+        actor_email = current_user.email
+        if (
+            getattr(current_user, "is_admin", False)
+            or order.get("user_id") == str(current_user.id)
+            or (order.get("email") and order.get("email").strip().lower() == current_user.email.strip().lower())
+        ):
+            is_authorized = True
+    elif payload.customer_email:
+        if order.get("email") and order.get("email").strip().lower() == payload.customer_email.strip().lower():
+            is_authorized = True
+    else:
+        is_authorized = True
+
+    if not is_authorized:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to request a return for this order.",
+        )
+
+    current_status = (order.get("status") or "").lower()
+    if current_status in ("returned", "cancelled"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot request return: Order is already '{current_status}'.",
+        )
+
+    existing_return = order.get("return_details")
+    if existing_return and existing_return.get("status") == "APPROVED":
+        raise HTTPException(
+            status_code=400,
+            detail="A reverse pickup is already active and approved for this order.",
+        )
+
+    shipping_addr = order.get("shipping_address") or {}
+    customer_name = f"{shipping_addr.get('first_name', '')} {shipping_addr.get('last_name', '')}".strip() or "Valued Customer"
+
+    return_data = {
+        "status": "PENDING_APPROVAL",
+        "return_status": "PENDING_APPROVAL",
+        "reason": payload.reason.strip(),
+        "customer_notes": (payload.customer_notes or "").strip(),
+        "images": payload.images or [],
+        "requested_at": datetime.utcnow().isoformat(),
+        "customer_email": actor_email,
+        "customer_name": customer_name,
+        "pickup_address": f"{shipping_addr.get('street', '')}, {shipping_addr.get('city', '')}, {shipping_addr.get('state', '')} {shipping_addr.get('pin_code', '')}".strip(),
+        "restocked": False,
+    }
+
+    db.orders.update_one(
+        {"_id": obj_id},
+        {
+            "$set": {
+                "status": "return_requested",
+                "return_details": return_data,
+                "updated_at": datetime.utcnow(),
+            }
+        },
+    )
+
+    record_audit_event(
+        action="CUSTOMER_RETURN_REQUESTED",
+        action_category="shipping",
+        actor_email=actor_email,
+        target_id=payload.order_id,
+        details={
+            "reason": payload.reason,
+            "images_count": len(payload.images or []),
+        },
+    )
+
+    logger.info(f"[Shiprocket Returns] Customer submitted return request for Order #{payload.order_id} with {len(payload.images or [])} photo(s)")
+
+    return {
+        "success": True,
+        "message": "Return request submitted successfully. Our team will review your photos and approve reverse pickup shortly.",
+        "return_details": return_data,
+    }
+
+
+@router.post("/returns/approve")
+def approve_return_order(
+    payload: ApproveReturnPayload,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
+    """
+    Step 2 (Admin Approval Gate):
+    Admin reviews the customer's uploaded photos and approves the return.
+    ONLY at this point is the reverse pickup order created in Shiprocket and Reverse AWB generated.
+    """
+    try:
+        obj_id = ObjectId(payload.order_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid order ID format")
+
+    order = db.orders.find_one({"_id": obj_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    return_details = order.get("return_details") or {}
+    reason = return_details.get("reason") or "Approved Customer Return"
+
+    dims = {}
+    if payload.weight: dims["weight"] = payload.weight
+    if payload.length: dims["length"] = payload.length
+    if payload.breadth: dims["breadth"] = payload.breadth
+    if payload.height: dims["height"] = payload.height
+
+    try:
+        # Create return order in Shiprocket
+        ret_res = sr_service.create_return_order(
+            order=order,
+            reason=reason,
+            dimensions=dims,
+        )
+
+        return_order_id = ret_res["return_order_id"]
+        return_shipment_id = ret_res["return_shipment_id"]
+
+        # Assign courier & generate Return AWB
+        return_awb_code = None
+        courier_name = None
+        try:
+            awb_ret = sr_service.generate_return_awb(return_shipment_id)
+            return_awb_code = awb_ret.get("return_awb_code")
+            courier_name = awb_ret.get("courier_name")
+        except Exception as awb_err:
+            logger.warning(f"[Shiprocket] Reverse AWB auto-assignment warning: {awb_err}")
+
+        updated_return_details = {
+            **return_details,
+            "status": "APPROVED",
+            "return_status": "PICKUP_SCHEDULED",
+            "return_order_id": return_order_id,
+            "return_shipment_id": return_shipment_id,
+            "return_awb_code": return_awb_code,
+            "courier_name": courier_name,
+            "approved_at": datetime.utcnow().isoformat(),
+            "approved_by": admin.email,
+            "admin_notes": payload.admin_notes,
+        }
+
+        db.orders.update_one(
+            {"_id": obj_id},
+            {
+                "$set": {
+                    "status": "return_in_transit",
+                    "return_details": updated_return_details,
+                    "updated_at": datetime.utcnow(),
+                }
+            },
+        )
+
+        record_audit_event(
+            action="SHIPROCKET_RETURN_APPROVED",
+            action_category="shipping",
+            actor_email=admin.email,
+            target_id=payload.order_id,
+            details=updated_return_details,
+        )
+
+        logger.info(
+            f"[Shiprocket Returns] Order #{payload.order_id} approved by admin {admin.email}. Return AWB: {return_awb_code}"
+        )
+
+        return {
+            "success": True,
+            "message": "Return approved and Shiprocket reverse pickup scheduled!",
+            "return_details": updated_return_details,
+        }
+    except Exception as exc:
+        logger.error(f"[Shiprocket] Return approval error: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.post("/returns/reject")
+def reject_return_order(
+    payload: RejectReturnPayload,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
+    """
+    Step 2 (Alternative - Admin Rejection):
+    Admin inspects customer photos and rejects the return request with a reason.
+    """
+    try:
+        obj_id = ObjectId(payload.order_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid order ID format")
+
+    order = db.orders.find_one({"_id": obj_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    return_details = order.get("return_details") or {}
+    updated_return_details = {
+        **return_details,
+        "status": "REJECTED",
+        "return_status": "REJECTED",
+        "rejection_reason": payload.rejection_reason.strip(),
+        "rejected_at": datetime.utcnow().isoformat(),
+        "rejected_by": admin.email,
+    }
+
+    db.orders.update_one(
+        {"_id": obj_id},
+        {
+            "$set": {
+                "status": "return_rejected",
+                "return_details": updated_return_details,
+                "updated_at": datetime.utcnow(),
+            }
+        },
+    )
+
+    record_audit_event(
+        action="SHIPROCKET_RETURN_REJECTED",
+        action_category="shipping",
+        actor_email=admin.email,
+        target_id=payload.order_id,
+        details={"rejection_reason": payload.rejection_reason},
+    )
+
+    logger.info(f"[Shiprocket Returns] Order #{payload.order_id} rejected by admin {admin.email}")
+
+    return {
+        "success": True,
+        "message": "Return request rejected.",
+        "return_details": updated_return_details,
+    }
+
 
 @router.post("/returns/create")
 def initiate_return_order(
@@ -558,7 +835,7 @@ def initiate_return_order(
     admin: models.User = Depends(deps.get_current_active_admin),
 ):
     """
-    Initiate a return order / reverse pickup from customer's address back to 'work' warehouse.
+    Direct Admin fallback: Directly create return order in Shiprocket without customer request.
     """
     try:
         obj_id = ObjectId(payload.order_id)
@@ -585,7 +862,6 @@ def initiate_return_order(
         return_order_id = ret_res["return_order_id"]
         return_shipment_id = ret_res["return_shipment_id"]
 
-        # Attempt to auto-generate reverse AWB
         return_awb_code = None
         courier_name = None
         try:
@@ -596,6 +872,7 @@ def initiate_return_order(
             logger.warning(f"[Shiprocket] Reverse AWB auto-assignment pending: {awb_err}")
 
         return_data = {
+            "status": "APPROVED",
             "return_order_id": return_order_id,
             "return_shipment_id": return_shipment_id,
             "return_awb_code": return_awb_code,
@@ -611,7 +888,7 @@ def initiate_return_order(
             {
                 "$set": {
                     "return_details": return_data,
-                    "status": "return_requested",
+                    "status": "return_in_transit",
                     "updated_at": datetime.utcnow(),
                 }
             },
@@ -629,6 +906,7 @@ def initiate_return_order(
     except Exception as exc:
         logger.error(f"[Shiprocket] Return creation error: {exc}")
         raise HTTPException(status_code=500, detail=str(exc))
+
 
 
 @router.post("/returns/restock/{order_id}")

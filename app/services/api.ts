@@ -1514,7 +1514,20 @@ export interface UserOrder {
     return_awb_code?: string;
     courier_name?: string;
     return_status?: string;
+    status?: "PENDING_APPROVAL" | "APPROVED" | "REJECTED" | string;
     reason?: string;
+    customer_notes?: string;
+    images?: string[];
+    requested_at?: string;
+    customer_email?: string;
+    customer_name?: string;
+    pickup_address?: string;
+    approved_at?: string;
+    approved_by?: string;
+    admin_notes?: string;
+    rejected_at?: string;
+    rejected_by?: string;
+    rejection_reason?: string;
     initiated_at?: string;
     restocked?: boolean;
     restocked_at?: string;
@@ -3476,6 +3489,64 @@ export async function createReturnOrder(
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || "Failed to initiate return order");
+  return data;
+}
+
+export async function requestCustomerReturn(payload: {
+  order_id: string;
+  reason: string;
+  customer_notes?: string;
+  images?: string[];
+  customer_email?: string;
+}): Promise<{ success: boolean; message: string; return_details: Record<string, unknown> }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/returns/customer-request`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to submit return request");
+  return data;
+}
+
+export async function approveReturnOrder(payload: {
+  order_id: string;
+  weight?: number;
+  length?: number;
+  breadth?: number;
+  height?: number;
+  admin_notes?: string;
+}): Promise<{ success: boolean; message: string; return_details: Record<string, unknown> }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/returns/approve`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to approve return order");
+  return data;
+}
+
+export async function rejectReturnOrder(payload: {
+  order_id: string;
+  rejection_reason: string;
+}): Promise<{ success: boolean; message: string; return_details: Record<string, unknown> }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/returns/reject`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to reject return order");
   return data;
 }
 

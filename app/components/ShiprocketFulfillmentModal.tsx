@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import styles from "./ShiprocketFulfillmentModal.module.css";
 import {
   UserOrder,
@@ -14,6 +15,8 @@ import {
   fetchOrderLiveTracking,
   cancelShiprocketShipment,
   createReturnOrder,
+  approveReturnOrder,
+  rejectReturnOrder,
   restockReturnedOrder,
   LiveTrackingResponse,
 } from "../services/api";
@@ -65,9 +68,15 @@ export default function ShiprocketFulfillmentModal({
   const [trackingData, setTrackingData] = useState<LiveTrackingResponse | null>(null);
   const [isLoadingTracking, setIsLoadingTracking] = useState(false);
 
-  // Reverse Logistics (Returns)
+  // Reverse Logistics & Approval States
   const [returnReason, setReturnReason] = useState<string>(RETURN_REASONS[0]);
   const [isInitiatingReturn, setIsInitiatingReturn] = useState(false);
+  const [isApprovingReturn, setIsApprovingReturn] = useState(false);
+  const [isRejectingReturn, setIsRejectingReturn] = useState(false);
+  const [adminNotes, setAdminNotes] = useState<string>("");
+  const [rejectionReasonInput, setRejectionReasonInput] = useState<string>("");
+  const [showRejectPrompt, setShowRejectPrompt] = useState<boolean>(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isRestocking, setIsRestocking] = useState(false);
 
   // Local Order State to allow in-modal updates
@@ -80,7 +89,12 @@ export default function ShiprocketFulfillmentModal({
 
   useEffect(() => {
     setCurrentOrder(order);
-    if (order?.awb_code) {
+    if (
+      order?.return_details?.status === "PENDING_APPROVAL" ||
+      order?.status === "return_requested"
+    ) {
+      setActiveTab("returns");
+    } else if (order?.awb_code) {
       setActiveTab("track");
     } else {
       setActiveTab("ship");
@@ -277,6 +291,72 @@ export default function ShiprocketFulfillmentModal({
       showToast(msg, "error");
     } finally {
       setIsInitiatingReturn(false);
+    }
+  };
+
+  const handleApproveReturn = async () => {
+    if (!currentOrder._id) return;
+    setIsApprovingReturn(true);
+    try {
+      const res = await approveReturnOrder({
+        order_id: currentOrder._id,
+        weight,
+        length,
+        breadth,
+        height,
+        admin_notes: adminNotes.trim() || undefined,
+      });
+
+      showToast("Return approved! Shiprocket reverse pickup scheduled & AWB generated.");
+      setCurrentOrder((prev) =>
+        prev
+          ? {
+              ...prev,
+              return_details: res.return_details as UserOrder["return_details"],
+              status: "return_in_transit",
+            }
+          : null
+      );
+      onOrderUpdated();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to approve return";
+      showToast(msg, "error");
+    } finally {
+      setIsApprovingReturn(false);
+    }
+  };
+
+  const handleRejectReturn = async () => {
+    if (!currentOrder._id) return;
+    if (!rejectionReasonInput.trim()) {
+      showToast("Please provide a reason for rejecting the return request.", "error");
+      return;
+    }
+
+    setIsRejectingReturn(true);
+    try {
+      const res = await rejectReturnOrder({
+        order_id: currentOrder._id,
+        rejection_reason: rejectionReasonInput.trim(),
+      });
+
+      showToast("Customer return request rejected.");
+      setShowRejectPrompt(false);
+      setCurrentOrder((prev) =>
+        prev
+          ? {
+              ...prev,
+              return_details: res.return_details as UserOrder["return_details"],
+              status: "return_rejected",
+            }
+          : null
+      );
+      onOrderUpdated();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to reject return";
+      showToast(msg, "error");
+    } finally {
+      setIsRejectingReturn(false);
     }
   };
 
@@ -566,18 +646,41 @@ export default function ShiprocketFulfillmentModal({
           {/* TAB 2: LIVE TRACKING */}
           {activeTab === "track" && (
             <div className={styles.card}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
                 <h4 className={styles.cardTitle} style={{ margin: 0 }}>
                   🚚 Real-Time Courier Tracking
                 </h4>
-                <button
-                  className={styles.btnSecondary}
-                  onClick={() => currentOrder._id && loadTracking(currentOrder._id)}
-                  disabled={isLoadingTracking}
-                  style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem" }}
-                >
-                  {isLoadingTracking ? "Refreshing..." : "🔄 Refresh"}
-                </button>
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                  {currentOrder.awb_code && (
+                    <a
+                      href={`https://shiprocket.co/tracking/${currentOrder.awb_code}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={styles.btnSecondary}
+                      style={{
+                        fontSize: "0.75rem",
+                        padding: "0.3rem 0.6rem",
+                        textDecoration: "none",
+                        color: "#d4af37",
+                        borderColor: "rgba(212,175,55,0.4)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.25rem",
+                      }}
+                      title="Open Shiprocket Carrier Tracking Portal in new tab"
+                    >
+                      🌐 Shiprocket Portal ↗
+                    </a>
+                  )}
+                  <button
+                    className={styles.btnSecondary}
+                    onClick={() => currentOrder._id && loadTracking(currentOrder._id)}
+                    disabled={isLoadingTracking}
+                    style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem" }}
+                  >
+                    {isLoadingTracking ? "Refreshing..." : "🔄 Refresh"}
+                  </button>
+                </div>
               </div>
 
               {/* Visual Stepper */}
@@ -661,40 +764,315 @@ export default function ShiprocketFulfillmentModal({
           {/* TAB 3: REVERSE LOGISTICS (RETURNS) */}
           {activeTab === "returns" && (
             <div className={styles.card}>
-              <h4 className={styles.cardTitle}>
-                <span>🔄 Return & Reverse Pickup Management</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                <h4 className={styles.cardTitle} style={{ margin: 0 }}>
+                  <span>🔄 Return & Reverse Pickup Management</span>
+                </h4>
                 {returnDetails && (
                   <span
                     style={{
-                      fontSize: "0.75rem",
-                      background: "rgba(212,175,55,0.15)",
-                      color: "#d4af37",
-                      padding: "0.2rem 0.5rem",
-                      borderRadius: "4px",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      background:
+                        returnDetails.status === "PENDING_APPROVAL"
+                          ? "rgba(245, 158, 11, 0.18)"
+                          : returnDetails.status === "APPROVED"
+                          ? "rgba(16, 185, 129, 0.18)"
+                          : returnDetails.status === "REJECTED"
+                          ? "rgba(239, 68, 68, 0.18)"
+                          : "rgba(212,175,55,0.15)",
+                      color:
+                        returnDetails.status === "PENDING_APPROVAL"
+                          ? "#f59e0b"
+                          : returnDetails.status === "APPROVED"
+                          ? "#10b981"
+                          : returnDetails.status === "REJECTED"
+                          ? "#ef4444"
+                          : "#d4af37",
+                      border: `1px solid ${
+                        returnDetails.status === "PENDING_APPROVAL"
+                          ? "rgba(245, 158, 11, 0.4)"
+                          : returnDetails.status === "APPROVED"
+                          ? "rgba(16, 185, 129, 0.4)"
+                          : returnDetails.status === "REJECTED"
+                          ? "rgba(239, 68, 68, 0.4)"
+                          : "rgba(212,175,55,0.3)"
+                      }`,
+                      padding: "0.25rem 0.65rem",
+                      borderRadius: "6px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
                     }}
                   >
-                    STATUS: {returnDetails.return_status}
+                    {returnDetails.status === "PENDING_APPROVAL"
+                      ? "⚠️ Pending Admin Approval"
+                      : returnDetails.status === "APPROVED"
+                      ? "✓ Approved • Pickup Active"
+                      : returnDetails.status === "REJECTED"
+                      ? "✕ Rejected"
+                      : returnDetails.return_status}
                   </span>
                 )}
-              </h4>
+              </div>
 
-              {returnDetails ? (
-                /* Return in Progress */
-                <div>
+              {/* CASE 1: Customer submitted return request pending Admin approval */}
+              {returnDetails && returnDetails.status === "PENDING_APPROVAL" ? (
+                <div style={{ marginTop: "1rem" }}>
+                  <div style={{ padding: "0.9rem", background: "rgba(245, 158, 11, 0.08)", border: "1px solid rgba(245, 158, 11, 0.25)", borderRadius: "8px", marginBottom: "1.25rem" }}>
+                    <div style={{ fontWeight: 600, color: "#f59e0b", fontSize: "0.9rem", marginBottom: "0.25rem" }}>
+                      Customer Return Request Waiting for Verification
+                    </div>
+                    <div style={{ fontSize: "0.82rem", color: "#d1d5db" }}>
+                      The customer has requested to return this order and provided the defect photos below. Please inspect the images and product condition before approving reverse pickup in Shiprocket.
+                    </div>
+                  </div>
+
                   <div className={styles.grid2} style={{ marginBottom: "1rem" }}>
                     <div>
-                      <div className={styles.label}>Return AWB Code</div>
-                      <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#d4af37" }}>
-                        {returnDetails.return_awb_code || "Pending Courier Assignment"}
-                      </div>
-                    </div>
-                    <div>
-                      <div className={styles.label}>Reason for Return</div>
-                      <div style={{ fontSize: "0.9rem", color: "#e5e7eb" }}>
+                      <div className={styles.label}>Customer Reason</div>
+                      <div style={{ fontSize: "0.95rem", color: "#f3f4f6", fontWeight: 600, marginTop: "0.2rem" }}>
                         {returnDetails.reason}
                       </div>
                     </div>
+                    <div>
+                      <div className={styles.label}>Requested On</div>
+                      <div style={{ fontSize: "0.85rem", color: "#9ca3af", marginTop: "0.2rem" }}>
+                        {returnDetails.requested_at
+                          ? new Date(returnDetails.requested_at).toLocaleString("en-IN")
+                          : "Recently"}
+                      </div>
+                    </div>
                   </div>
+
+                  {returnDetails.customer_notes && (
+                    <div style={{ marginBottom: "1rem" }}>
+                      <div className={styles.label}>Customer Problem Description / Notes</div>
+                      <div style={{ background: "rgba(255,255,255,0.03)", padding: "0.75rem", borderRadius: "8px", fontSize: "0.88rem", color: "#e5e7eb", marginTop: "0.25rem" }}>
+                        &ldquo;{returnDetails.customer_notes}&rdquo;
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Customer Uploaded Photos Gallery */}
+                  <div style={{ marginBottom: "1.25rem" }}>
+                    <div className={styles.label}>
+                      Customer Uploaded Product Photos ({returnDetails.images?.length || 0})
+                    </div>
+                    {returnDetails.images && returnDetails.images.length > 0 ? (
+                      <div className={styles.photoGrid}>
+                        {returnDetails.images.map((imgUrl, idx) => (
+                          <div
+                            key={idx}
+                            className={styles.photoThumb}
+                            onClick={() => setPreviewImage(imgUrl)}
+                            title="Click to enlarge photo"
+                          >
+                            <Image
+                              src={imgUrl}
+                              alt={`Customer defective fixture ${idx + 1}`}
+                              fill
+                              sizes="120px"
+                              style={{ objectFit: "cover" }}
+                            />
+                            <div className={styles.photoOverlay}>🔍 Zoom</div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: "0.82rem", color: "#9ca3af", marginTop: "0.3rem" }}>
+                        No photos attached with this request.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Pickup & Destination Address */}
+                  <div className={styles.grid2} style={{ marginBottom: "1.25rem" }}>
+                    <div style={{ background: "rgba(255,255,255,0.02)", padding: "0.8rem", borderRadius: "8px" }}>
+                      <div className={styles.label}>Customer Pickup Location</div>
+                      <div style={{ fontSize: "0.85rem", color: "#e5e7eb", marginTop: "0.25rem" }}>
+                        <strong>{currentOrder.customer_name || returnDetails.customer_name}</strong>
+                        {currentOrder.user_phone && <> • {currentOrder.user_phone}</>}
+                        <br />
+                        {currentOrder.shipping_address?.street}, {currentOrder.shipping_address?.city} - {currentOrder.shipping_address?.pin_code}
+                      </div>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.02)", padding: "0.8rem", borderRadius: "8px" }}>
+                      <div className={styles.label}>Deluzex Receiving Warehouse</div>
+                      <div style={{ fontSize: "0.85rem", color: "#e5e7eb", marginTop: "0.25rem" }}>
+                        <strong>Deluzex Lighting Warehouse (&apos;work&apos;)</strong>
+                        <br />
+                        Block no 19, Galaxy complex, Ahmedabad - Palanpur Hwy, opposite ekta hotel, Banaskantha 385210
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Package Dimensions for Reverse Shipment */}
+                  <div style={{ marginBottom: "1.25rem" }}>
+                    <div className={styles.label}>Reverse Shipment Dimensions & Weight</div>
+                    <div className={styles.grid4} style={{ marginTop: "0.35rem" }}>
+                      <div className={styles.formGroup}>
+                        <label className={styles.subLabel}>Weight (KG)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          className={styles.input}
+                          value={weight}
+                          onChange={(e) => setWeight(parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label className={styles.subLabel}>L (cm)</label>
+                        <input
+                          type="number"
+                          className={styles.input}
+                          value={length}
+                          onChange={(e) => setLength(parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label className={styles.subLabel}>B (cm)</label>
+                        <input
+                          type="number"
+                          className={styles.input}
+                          value={breadth}
+                          onChange={(e) => setBreadth(parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label className={styles.subLabel}>H (cm)</label>
+                        <input
+                          type="number"
+                          className={styles.input}
+                          value={height}
+                          onChange={(e) => setHeight(parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Admin notes & Action buttons */}
+                  {!showRejectPrompt ? (
+                    <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap", marginTop: "1rem" }}>
+                      <button
+                        className={styles.btnApprove}
+                        onClick={handleApproveReturn}
+                        disabled={isApprovingReturn}
+                      >
+                        {isApprovingReturn ? "Booking Reverse Pickup..." : "✓ Approve & Book Reverse Pickup in Shiprocket"}
+                      </button>
+                      <button
+                        className={styles.btnReject}
+                        onClick={() => setShowRejectPrompt(true)}
+                        disabled={isApprovingReturn}
+                      >
+                        ✕ Reject Return Request
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: "1rem", padding: "1rem", background: "rgba(239, 68, 68, 0.08)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "8px" }}>
+                      <div style={{ color: "#ef4444", fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.5rem" }}>
+                        Provide Reason for Rejecting Return:
+                      </div>
+                      <textarea
+                        className={styles.input}
+                        rows={2}
+                        placeholder="e.g. Photographs indicate product damage is due to improper external installation, or warranty period expired."
+                        value={rejectionReasonInput}
+                        onChange={(e) => setRejectionReasonInput(e.target.value)}
+                        style={{ width: "100%", marginBottom: "0.75rem" }}
+                      />
+                      <div style={{ display: "flex", gap: "0.75rem" }}>
+                        <button
+                          className={styles.btnReject}
+                          onClick={handleRejectReturn}
+                          disabled={isRejectingReturn}
+                        >
+                          {isRejectingReturn ? "Rejecting..." : "Confirm Rejection"}
+                        </button>
+                        <button
+                          className={styles.btnSecondary}
+                          onClick={() => setShowRejectPrompt(false)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : returnDetails && returnDetails.status === "APPROVED" ? (
+                /* CASE 2: Approved and Reverse Pickup active */
+                <div style={{ marginTop: "1rem" }}>
+                  <div className={styles.grid2} style={{ marginBottom: "1rem" }}>
+                    <div>
+                      <div className={styles.label}>Return AWB Code</div>
+                      <div style={{ fontSize: "1.15rem", fontWeight: 700, color: "#10b981", marginTop: "0.2rem" }}>
+                        {returnDetails.return_awb_code || "Generated • In Transit"}
+                      </div>
+                      {returnDetails.courier_name && (
+                        <div style={{ fontSize: "0.82rem", color: "#9ca3af", marginTop: "0.15rem" }}>
+                          Courier: <strong>{returnDetails.courier_name}</strong>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className={styles.label}>Original Return Reason</div>
+                      <div style={{ fontSize: "0.9rem", color: "#e5e7eb", marginTop: "0.2rem" }}>
+                        {returnDetails.reason}
+                      </div>
+                      {returnDetails.approved_at && (
+                        <div style={{ fontSize: "0.78rem", color: "#9ca3af", marginTop: "0.15rem" }}>
+                          Approved on: {new Date(returnDetails.approved_at).toLocaleString("en-IN")}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {returnDetails.return_awb_code && (
+                    <div style={{ marginBottom: "1rem" }}>
+                      <a
+                        href={`https://shiprocket.co/tracking/${returnDetails.return_awb_code}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={styles.btnSecondary}
+                        style={{
+                          fontSize: "0.82rem",
+                          padding: "0.4rem 0.8rem",
+                          textDecoration: "none",
+                          color: "#d4af37",
+                          borderColor: "rgba(212,175,55,0.4)",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.35rem",
+                        }}
+                      >
+                        🌐 Track Reverse Pickup on Shiprocket Portal ↗
+                      </a>
+                    </div>
+                  )}
+
+                  {returnDetails.images && returnDetails.images.length > 0 && (
+                    <div style={{ marginBottom: "1rem" }}>
+                      <div className={styles.label}>Inspected Customer Photos</div>
+                      <div className={styles.photoGrid}>
+                        {returnDetails.images.map((imgUrl, idx) => (
+                          <div
+                            key={idx}
+                            className={styles.photoThumb}
+                            onClick={() => setPreviewImage(imgUrl)}
+                          >
+                            <Image
+                              src={imgUrl}
+                              alt="Defective item"
+                              fill
+                              sizes="120px"
+                              style={{ objectFit: "cover" }}
+                            />
+                            <div className={styles.photoOverlay}>🔍</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div style={{ padding: "0.85rem", background: "rgba(255,255,255,0.02)", borderRadius: "8px", marginBottom: "1rem" }}>
                     <div style={{ fontSize: "0.8rem", color: "#9ca3af" }}>
@@ -706,7 +1084,7 @@ export default function ShiprocketFulfillmentModal({
                   <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
                     {returnDetails.restocked ? (
                       <span style={{ color: "#10b981", fontSize: "0.9rem", fontWeight: 600 }}>
-                        ✓ Returned items have been inspected and restocked into MongoDB inventory.
+                        ✓ Returned fixtures have been received and restocked into MongoDB inventory.
                       </span>
                     ) : (
                       <button
@@ -714,14 +1092,55 @@ export default function ShiprocketFulfillmentModal({
                         onClick={handleRestockInventory}
                         disabled={isRestocking}
                       >
-                        {isRestocking ? "Restocking..." : "📥 Confirm Received & Restock Inventory"}
+                        {isRestocking ? "Restocking..." : "📥 Confirm Received at Warehouse & Restock Inventory"}
                       </button>
                     )}
                   </div>
                 </div>
+              ) : returnDetails && returnDetails.status === "REJECTED" ? (
+                /* CASE 3: Rejected */
+                <div style={{ marginTop: "1rem" }}>
+                  <div style={{ padding: "1rem", background: "rgba(239, 68, 68, 0.08)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "8px", marginBottom: "1rem" }}>
+                    <div style={{ fontWeight: 600, color: "#ef4444", fontSize: "0.95rem" }}>
+                      ✕ Return Request Rejected
+                    </div>
+                    <div style={{ fontSize: "0.88rem", color: "#e5e7eb", marginTop: "0.35rem" }}>
+                      <strong>Reason:</strong> {returnDetails.rejection_reason || "Requirements not met."}
+                    </div>
+                    {returnDetails.rejected_at && (
+                      <div style={{ fontSize: "0.78rem", color: "#9ca3af", marginTop: "0.35rem" }}>
+                        Rejected at: {new Date(returnDetails.rejected_at).toLocaleString("en-IN")}
+                      </div>
+                    )}
+                  </div>
+
+                  {returnDetails.images && returnDetails.images.length > 0 && (
+                    <div>
+                      <div className={styles.label}>Customer Submitted Photos</div>
+                      <div className={styles.photoGrid}>
+                        {returnDetails.images.map((imgUrl, idx) => (
+                          <div
+                            key={idx}
+                            className={styles.photoThumb}
+                            onClick={() => setPreviewImage(imgUrl)}
+                          >
+                            <Image
+                              src={imgUrl}
+                              alt="Defective item"
+                              fill
+                              sizes="120px"
+                              style={{ objectFit: "cover" }}
+                            />
+                            <div className={styles.photoOverlay}>🔍</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
-                /* Initiate Reverse Pickup */
-                <div>
+                /* CASE 4: Manual admin creation fallback */
+                <div style={{ marginTop: "1rem" }}>
                   <p style={{ fontSize: "0.85rem", color: "#9ca3af", margin: "0 0 1rem" }}>
                     Initiate courier pickup from the customer&apos;s address back to your primary warehouse (&apos;work&apos;).
                   </p>
@@ -765,6 +1184,20 @@ export default function ShiprocketFulfillmentModal({
           )}
         </div>
       </div>
+
+      {/* Photo Lightbox */}
+      {previewImage && (
+        <div className={styles.lightboxOverlay} onClick={() => setPreviewImage(null)}>
+          <div className={styles.lightboxContent} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.lightboxClose} onClick={() => setPreviewImage(null)}>
+              ×
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={previewImage} alt="Defect preview high resolution" className={styles.lightboxImg} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

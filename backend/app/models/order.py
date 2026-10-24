@@ -18,6 +18,8 @@ OrderStatus = Literal[
     "rto_initiated",
     "rto_delivered",
     "return_requested",
+    "return_approved",
+    "return_rejected",
     "return_in_transit",
     "returned",
 ]

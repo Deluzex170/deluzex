@@ -448,18 +448,28 @@ def create_return_order(
 
     first_name = shipping_addr.get("first_name", "Valued")
     last_name = shipping_addr.get("last_name", "Customer")
-    phone = _clean_phone(order.get("phone", ""))
-    email = order.get("email", "support@deluzexlighting.com")
+    phone = _clean_phone(order.get("phone") or order.get("user_phone") or (shipping_addr.get("phone") if isinstance(shipping_addr, dict) else "") or "9909382031")
+    email = order.get("email") or order.get("user_email") or "support@deluzexlighting.com"
 
     warehouse_loc = pickup_location or settings.SHIPROCKET_PICKUP_LOCATION
 
     items_payload = []
-    for item in order.get("items", []):
+    for item in (order.get("items") or []):
         items_payload.append({
             "name": item.get("title", "Luxury Lighting Fixture"),
-            "sku": item.get("product_id", "DELUZEX-RETURN-SKU")[:50],
+            "sku": str(item.get("product_id", "DELUZEX-RETURN-SKU"))[:50],
             "units": int(item.get("quantity", 1)),
             "selling_price": float(item.get("price", 0)),
+            "discount": 0,
+            "qc_enable": False,
+        })
+
+    if not items_payload:
+        items_payload.append({
+            "name": "Luxury Luminaire Return Item",
+            "sku": "DELUZEX-RETURN-DEFAULT",
+            "units": 1,
+            "selling_price": float(order.get("total", 1000)),
             "discount": 0,
             "qc_enable": False,
         })
