@@ -28,8 +28,9 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str = "Deluzex Lighting <support@deluzexlighting.com>"
 
     # Shiprocket Logistics Configuration
-    SHIPROCKET_EMAIL: str = "deluzexdata+ship@gmail.com"
+    SHIPROCKET_EMAIL: str = "deluzexdata+api@gmail.com"
     SHIPROCKET_PASSWORD: str = ""
+    SHIPROCKET_API_BASE: str = "https://apiv2.shiprocket.in/v1/external"
     SHIPROCKET_PICKUP_LOCATION: str = "work"
     SHIPROCKET_PICKUP_PINCODE: str = "385210"
     SHIPROCKET_DEFAULT_WEIGHT: float = 1.5

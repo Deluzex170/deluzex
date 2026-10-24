@@ -17,7 +17,7 @@ from app.core.config import settings
 
 logger = logging.getLogger("uvicorn.error")
 
-SHIPROCKET_API_BASE = "https://apiv2.shiprocket.in/v1/external"
+SHIPROCKET_API_BASE = getattr(settings, "SHIPROCKET_API_BASE")
 
 # In-memory token cache
 _cached_token: Optional[str] = None
