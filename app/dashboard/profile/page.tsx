@@ -2,9 +2,17 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
-import { fetchUserProfile, updateUserPassword, updateUserProfile } from "../../services/api";
+import {
+  fetchUserProfile,
+  updateUserPassword,
+  updateUserProfile,
+  fetchUserAddresses,
+  saveUserAddress,
+  deleteUserAddress,
+  setDefaultUserAddress,
+  SavedAddress,
+} from "../../services/api";
 import styles from "./profile.module.css";
 
 function getInitialUserValue(key: string, defaultValue: string, userObj?: Record<string, string> | null): string {
@@ -214,6 +222,122 @@ export default function ProfilePage() {
     }
   };
 
+  // Addresses State
+  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
+  const [selectedAddrId, setSelectedAddrId] = useState<string | null>(null);
+
+  // Add Address Modal State
+  const [showAddAddressModal, setShowAddAddressModal] = useState(false);
+  const [addrType, setAddrType] = useState<"Home" | "Work" | "Other">("Home");
+  const [addrFirstName, setAddrFirstName] = useState("");
+  const [addrLastName, setAddrLastName] = useState("");
+  const [addrStreet, setAddrStreet] = useState("");
+  const [addrCity, setAddrCity] = useState("");
+  const [addrState, setAddrState] = useState("");
+  const [addrPinCode, setAddrPinCode] = useState("");
+  const [addrPhone, setAddrPhone] = useState("");
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+
+  const userEmail = (user as Record<string, string>)?.email || email || "";
+
+  const loadAddresses = React.useCallback(async () => {
+    setIsLoadingAddresses(true);
+    try {
+      const data = await fetchUserAddresses(userEmail);
+      setAddresses(data || []);
+    } catch (err) {
+      console.error("Failed to load addresses:", err);
+      setAddresses([]);
+    } finally {
+      setIsLoadingAddresses(false);
+    }
+  }, [userEmail]);
+
+  useEffect(() => {
+    if (userEmail) {
+      loadAddresses();
+    }
+  }, [userEmail, loadAddresses]);
+
+  const handleSaveAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addrFirstName.trim() || !addrStreet.trim() || !addrCity.trim() || !addrState.trim() || !addrPinCode.trim() || !addrPhone.trim()) {
+      showToast("Please fill all required address fields.");
+      return;
+    }
+
+    const newAddr: SavedAddress = {
+      user_email: userEmail,
+      type: addrType,
+      first_name: addrFirstName.trim(),
+      last_name: addrLastName.trim(),
+      street: addrStreet.trim(),
+      city: addrCity.trim(),
+      state: addrState.trim(),
+      pin_code: addrPinCode.trim(),
+      phone: addrPhone.trim(),
+      is_default: addresses.length === 0,
+    };
+
+    setIsSavingAddress(true);
+    try {
+      await saveUserAddress(newAddr);
+      setShowAddAddressModal(false);
+      setAddrFirstName("");
+      setAddrLastName("");
+      setAddrStreet("");
+      setAddrCity("");
+      setAddrState("");
+      setAddrPinCode("");
+      setAddrPhone("");
+      showToast("Address saved successfully!");
+      await loadAddresses();
+    } catch (err) {
+      console.error("Failed to save address:", err);
+      showToast("Failed to save address to database.");
+    } finally {
+      setIsSavingAddress(false);
+    }
+  };
+
+  const handleSetDefaultAddress = async (addr: SavedAddress, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const addrId = addr.id || addr._id;
+    if (!addrId) return;
+
+    try {
+      await setDefaultUserAddress(addrId);
+      setAddresses((prev) =>
+        prev.map((a) => ({
+          ...a,
+          is_default: (a.id || a._id) === addrId,
+        }))
+      );
+      showToast("Default delivery address updated.");
+    } catch (err) {
+      console.error("Failed to set default address:", err);
+      showToast("Failed to update default address.");
+    }
+  };
+
+  const handleDeleteAddress = async (addr: SavedAddress, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const addrId = addr.id || addr._id;
+    if (!addrId) return;
+    if (!window.confirm("Are you sure you want to delete this address?")) return;
+
+    try {
+      await deleteUserAddress(addrId, userEmail);
+      setAddresses((prev) => prev.filter((a) => (a.id || a._id) !== addrId));
+      showToast("Address deleted successfully.");
+      loadAddresses();
+    } catch (err) {
+      console.error("Failed to delete address:", err);
+      showToast("Failed to delete address.");
+    }
+  };
+
 
   return (
     <div className={styles.container}>
@@ -287,39 +411,18 @@ export default function ProfilePage() {
             <span className={styles.memberBadge}>★ Deluzex Premium Client</span>
           </div>
         </div>
-
-        {/* <Link
-          href="/dashboard/overview"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            padding: "0.75rem 1.25rem",
-            background: "#FAFAF8",
-            border: "1px solid rgba(0,0,0,0.1)",
-            borderRadius: "6px",
-            fontSize: "0.85rem",
-            fontWeight: 600,
-            color: "#2B2B2B",
-          }}
-        >
-          <span>View Account Overview</span>
-          <span>→</span>
-        </Link> */}
       </div>
 
       {/* Main Grid */}
       <div className={styles.grid}>
-        {/* Left Column: Personal Info & Security */}
-        <div>
-          {/* Personal Information */}
-          <div className={styles.card}>
+        {/* Personal Information */}
+        <div className={styles.card}>
             <div className={styles.cardTitle}>
               <span>Personal Information</span>
             </div>
 
             <form onSubmit={handleSaveProfile}>
-              <div className={styles.formRow}>
+              <div className={styles.personalInfoGrid}>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>First Name</label>
                   <input
@@ -340,9 +443,6 @@ export default function ProfilePage() {
                     onChange={(e) => setLastName(e.target.value)}
                   />
                 </div>
-              </div>
-
-              <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Email Address</label>
                   <input
@@ -363,9 +463,6 @@ export default function ProfilePage() {
                     onChange={(e) => setPhone(e.target.value)}
                   />
                 </div>
-              </div>
-
-              <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>City</label>
                   <input
@@ -375,20 +472,12 @@ export default function ProfilePage() {
                     onChange={(e) => setCity(e.target.value)}
                   />
                 </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>Country</label>
-                  <input
-                    type="text"
-                    className={styles.input}
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                  />
+                <div className={styles.personalInfoActionsInline}>
+                  <button type="submit" className={styles.btnSave} disabled={isLoadingProfile || isSavingProfile}>
+                    {isSavingProfile ? "Saving..." : "Save Changes"}
+                  </button>
                 </div>
               </div>
-
-              <button type="submit" className={styles.btnSave} disabled={isLoadingProfile || isSavingProfile}>
-                {isSavingProfile ? "Saving..." : "Save Changes"}
-              </button>
             </form>
           </div>
 
@@ -502,96 +591,273 @@ export default function ProfilePage() {
 
             </form>
           </div>
-        </div>
 
-        {/* Right Column: Quick Navigation to other Dashboard pages */}
-        <div>
+          {/* Saved Addresses Section */}
           <div className={styles.card}>
             <div className={styles.cardTitle}>
-              <span>Quick Navigation</span>
+              <span>Saved Addresses</span>
+              <button
+                type="button"
+                className={styles.btnAddAddress}
+                onClick={() => {
+                  setAddrFirstName(firstName || "");
+                  setAddrLastName(lastName || "");
+                  setAddrPhone(phone || "");
+                  setAddrCity(city || "");
+                  setShowAddAddressModal(true);
+                }}
+              >
+                + Add New Address
+              </button>
             </div>
 
-            <div className={styles.quickNavList}>
-              <Link href="/dashboard/orders" className={styles.quickNavItem}>
-                <div className={styles.quickNavLeft}>
-                  <div className={styles.quickNavIcon}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2 M15 2H9c-1.1 0-2 .9-2 2v2h10V4c0-1.1-.9-2-2-2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className={styles.quickNavTitle}>My Orders</div>
-                    <div className={styles.quickNavSubtitle}>Track orders & view receipts</div>
-                  </div>
+            {isLoadingAddresses ? (
+              <p style={{ color: "#777", padding: "1.5rem 0", margin: 0, fontSize: "0.9rem" }}>Loading saved addresses...</p>
+            ) : addresses.length === 0 ? (
+              <div className={styles.emptyAddressState}>
+                <div className={styles.emptyAddressIcon}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
                 </div>
-                <span>→</span>
-              </Link>
+                <h3 className={styles.emptyAddressTitle}>No Addresses Saved Yet</h3>
+                <p className={styles.emptyAddressSubtitle}>
+                  Add your shipping and delivery address to enjoy seamless, faster checkout on all your orders.
+                </p>
+                <button
+                  type="button"
+                  className={styles.btnAddAddressFirst}
+                  onClick={() => {
+                    setAddrFirstName(firstName || "");
+                    setAddrLastName(lastName || "");
+                    setAddrPhone(phone || "");
+                    setAddrCity(city || "");
+                    setShowAddAddressModal(true);
+                  }}
+                >
+                  + Add Your First Address
+                </button>
+              </div>
+            ) : (
+              <div className={styles.addressGrid}>
+                {addresses.map((addr, i) => {
+                  const addrId = addr.id || addr._id || String(i);
+                  const isSelected = selectedAddrId ? selectedAddrId === addrId : !!addr.is_default;
+                  return (
+                    <div
+                      key={addrId}
+                      className={`${styles.addressCard} ${isSelected ? styles.addressCardActive : ""}`}
+                      onClick={() => {
+                        setSelectedAddrId(addrId);
+                        if (!addr.is_default) {
+                          handleSetDefaultAddress(addr);
+                        }
+                      }}
+                    >
+                      <div className={styles.addressTopRow}>
+                        {addr.is_default ? (
+                          <span className={styles.defaultBadge}>Default</span>
+                        ) : (
+                          <button
+                            type="button"
+                            className={styles.btnSetDefault}
+                            onClick={(e) => {
+                              setSelectedAddrId(addrId);
+                              handleSetDefaultAddress(addr, e);
+                            }}
+                          >
+                            Set as Default
+                          </button>
+                        )}
+                        <div
+                          className={`${styles.radioBtn} ${isSelected ? styles.radioBtnActive : ""}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAddrId(addrId);
+                            if (!addr.is_default) {
+                              handleSetDefaultAddress(addr);
+                            }
+                          }}
+                        >
+                          {isSelected && <div className={styles.radioDot} />}
+                        </div>
+                      </div>
 
-              <Link href="/dashboard/address" className={styles.quickNavItem}>
-                <div className={styles.quickNavLeft}>
-                  <div className={styles.quickNavIcon}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className={styles.quickNavTitle}>Delivery Addresses</div>
-                    <div className={styles.quickNavSubtitle}>Manage shipping destinations</div>
-                  </div>
-                </div>
-                <span>→</span>
-              </Link>
+                      <div className={styles.addressTypeRow}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        <span className={styles.addressType}>{addr.type || "Home"}</span>
+                      </div>
 
-              <Link href="/dashboard/payments" className={styles.quickNavItem}>
-                <div className={styles.quickNavLeft}>
-                  <div className={styles.quickNavIcon}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                      <line x1="1" y1="10" x2="23" y2="10" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className={styles.quickNavTitle}>Payment Methods</div>
-                    <div className={styles.quickNavSubtitle}>Saved cards & UPI details</div>
-                  </div>
-                </div>
-                <span>→</span>
-              </Link>
+                      <div className={styles.addressPersonName}>
+                        {addr.first_name} {addr.last_name}
+                      </div>
+                      <div className={styles.addressText}>
+                        {addr.street}, {addr.city}, {addr.state} - {addr.pin_code}
+                      </div>
+                      <div className={styles.addressPhone}>{addr.phone}</div>
 
-              <Link href="/dashboard/wishlist" className={styles.quickNavItem}>
-                <div className={styles.quickNavLeft}>
-                  <div className={styles.quickNavIcon}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className={styles.quickNavTitle}>Wishlist</div>
-                    <div className={styles.quickNavSubtitle}>Saved lighting designs</div>
-                  </div>
-                </div>
-                <span>→</span>
-              </Link>
-
-              <Link href="/dashboard/overview" className={styles.quickNavItem}>
-                <div className={styles.quickNavLeft}>
-                  <div className={styles.quickNavIcon}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className={styles.quickNavTitle}>Account Overview</div>
-                    <div className={styles.quickNavSubtitle}>Analytics & activity summary</div>
-                  </div>
-                </div>
-                <span>→</span>
-              </Link>
-            </div>
+                      <div className={styles.addressCardActions}>
+                        <button
+                          type="button"
+                          className={styles.btnDeleteAddress}
+                          onClick={(e) => handleDeleteAddress(addr, e)}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14H6L5 6" />
+                            <path d="M10 11v6M14 11v6" />
+                            <path d="M9 6V4h6v2" />
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
-      </div>
+
+      {/* Add Address Modal */}
+      {showAddAddressModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalBox}>
+            <div className={styles.modalHeader}>
+              <h2>Add Delivery Address</h2>
+              <button
+                type="button"
+                className={styles.modalCloseBtn}
+                onClick={() => setShowAddAddressModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAddress} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div className={styles.typeSelector}>
+                {(["Home", "Work", "Other"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setAddrType(t)}
+                    className={`${styles.typeBtn} ${addrType === t ? styles.typeBtnActive : ""}`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>First Name *</label>
+                  <input
+                    type="text"
+                    required
+                    className={styles.input}
+                    placeholder="First Name"
+                    value={addrFirstName}
+                    onChange={(e) => setAddrFirstName(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Last Name</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    placeholder="Last Name"
+                    value={addrLastName}
+                    onChange={(e) => setAddrLastName(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Street Address *</label>
+                <input
+                  type="text"
+                  required
+                  className={styles.input}
+                  placeholder="Street Address, Building / Apt"
+                  value={addrStreet}
+                  onChange={(e) => setAddrStreet(e.target.value)}
+                />
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>City *</label>
+                  <input
+                    type="text"
+                    required
+                    className={styles.input}
+                    placeholder="City"
+                    value={addrCity}
+                    onChange={(e) => setAddrCity(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>State *</label>
+                  <input
+                    type="text"
+                    required
+                    className={styles.input}
+                    placeholder="State"
+                    value={addrState}
+                    onChange={(e) => setAddrState(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>PIN Code *</label>
+                  <input
+                    type="text"
+                    required
+                    className={styles.input}
+                    placeholder="PIN Code"
+                    value={addrPinCode}
+                    onChange={(e) => setAddrPinCode(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Phone Number *</label>
+                  <input
+                    type="tel"
+                    required
+                    className={styles.input}
+                    placeholder="Phone Number"
+                    value={addrPhone}
+                    onChange={(e) => setAddrPhone(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.modalActions}>
+                <button
+                  type="button"
+                  className={styles.btnCancelModal}
+                  onClick={() => setShowAddAddressModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className={styles.btnSubmitModal}
+                  disabled={isSavingAddress}
+                >
+                  {isSavingAddress ? "Saving..." : "Save Address"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Feedback Toast */}
       {toastMessage && (
