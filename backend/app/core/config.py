@@ -15,10 +15,16 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_SECRET: str = ""
     RAZORPAY_WEBHOOK_SECRET: str = ""
 
-    # WhatsApp Cloud API Configuration
+    # WhatsApp Cloud API Configuration (Direct Meta)
     WHATSAPP_PHONE_NUMBER_ID: str = ""
     WHATSAPP_ACCESS_TOKEN: str = ""
     WHATSAPP_TEMPLATE_NAME: str = "auth"
+
+    # MSG91 WhatsApp Configuration
+    MSG91_AUTH_KEY: str = ""
+    MSG91_INTEGRATED_NUMBER: str = "17115086207"
+    MSG91_WABA_ID: str = "932004503106631"
+    MSG91_WHATSAPP_TEMPLATE_NAME: str = "deluzex_otp"
 
     # GoDaddy SMTP Email Configuration
     SMTP_HOST: str = "smtpout.secureserver.net"
