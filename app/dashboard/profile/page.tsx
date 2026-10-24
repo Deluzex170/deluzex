@@ -4,7 +4,13 @@ import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
-import { fetchUserProfile, updateUserPassword, updateUserProfile } from "../../services/api";
+import {
+  fetchUserProfile,
+  updateUserPassword,
+  updateUserProfile,
+  sendProfilePhoneOtp,
+  verifyProfilePhoneOtp,
+} from "../../services/api";
 import styles from "./profile.module.css";
 
 function getInitialUserValue(key: string, defaultValue: string, userObj?: Record<string, string> | null): string {
@@ -90,6 +96,9 @@ export default function ProfilePage() {
   const [phone, setPhone] = useState(() =>
     getInitialUserValue("phone", "+91 9982791722", userRecord)
   );
+  const [originalPhone, setOriginalPhone] = useState(() =>
+    getInitialUserValue("phone", "+91 9982791722", userRecord)
+  );
   const [city, setCity] = useState(() =>
     getInitialUserValue("city", "Ahmedabad", userRecord)
   );
@@ -105,6 +114,13 @@ export default function ProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Phone OTP Modal States
+  const [showPhoneOtpModal, setShowPhoneOtpModal] = useState(false);
+  const [phoneOtp, setPhoneOtp] = useState("");
+  const [isVerifyingPhoneOtp, setIsVerifyingPhoneOtp] = useState(false);
+  const [isSendingPhoneOtp, setIsSendingPhoneOtp] = useState(false);
+  const [phoneOtpTimer, setPhoneOtpTimer] = useState(0);
+
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -115,6 +131,15 @@ export default function ProfilePage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  // Timer countdown for Phone OTP resend
+  useEffect(() => {
+    if (phoneOtpTimer <= 0) return;
+    const interval = setInterval(() => {
+      setPhoneOtpTimer((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [phoneOtpTimer]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -124,7 +149,10 @@ export default function ProfilePage() {
         if (profile.first_name) setFirstName(profile.first_name);
         if (profile.last_name) setLastName(profile.last_name);
         if (profile.email) setEmail(profile.email);
-        if (profile.phone) setPhone(profile.phone);
+        if (profile.phone) {
+          setPhone(profile.phone);
+          setOriginalPhone(profile.phone);
+        }
         if (profile.city) setCity(profile.city);
         if (profile.country) setCountry(profile.country);
         localStorage.setItem("user", JSON.stringify(profile));
@@ -158,6 +186,26 @@ export default function ProfilePage() {
       return;
     }
 
+    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+    const cleanOriginal = originalPhone.replace(/\D/g, "").slice(-10);
+
+    // If phone number changed, require WhatsApp OTP verification before saving
+    if (cleanPhone.length === 10 && cleanPhone !== cleanOriginal) {
+      setIsSendingPhoneOtp(true);
+      try {
+        await sendProfilePhoneOtp(cleanPhone);
+        setShowPhoneOtpModal(true);
+        setPhoneOtp("");
+        setPhoneOtpTimer(60);
+        showToast(`WhatsApp OTP sent to +91 ${cleanPhone}`);
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : "Failed to send WhatsApp verification OTP.");
+      } finally {
+        setIsSendingPhoneOtp(false);
+      }
+      return;
+    }
+
     setIsSavingProfile(true);
     try {
       const updatedUser = await updateUserProfile({
@@ -176,6 +224,63 @@ export default function ProfilePage() {
     } finally {
       setIsSavingProfile(false);
     }
+  };
+
+  const handleResendPhoneOtp = async () => {
+    if (phoneOtpTimer > 0) return;
+    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+    try {
+      await sendProfilePhoneOtp(cleanPhone);
+      setPhoneOtpTimer(60);
+      showToast(`New WhatsApp OTP sent to +91 ${cleanPhone}`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Failed to resend OTP.");
+    }
+  };
+
+  const handleVerifyPhoneOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanOtp = phoneOtp.trim();
+    if (cleanOtp.length !== 6) {
+      showToast("Please enter the 6-digit WhatsApp OTP.");
+      return;
+    }
+
+    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+    setIsVerifyingPhoneOtp(true);
+    try {
+      // 1. Verify phone OTP and update phone number in backend
+      await verifyProfilePhoneOtp(cleanPhone, cleanOtp);
+
+      // 2. Also save other profile fields
+      const formattedPhone = `+91 ${cleanPhone}`;
+      const updatedUser = await updateUserProfile({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        email: email.trim(),
+        phone: formattedPhone,
+        city: city.trim(),
+        country: country.trim(),
+      });
+
+      setPhone(formattedPhone);
+      setOriginalPhone(formattedPhone);
+      setShowPhoneOtpModal(false);
+
+      const token = localStorage.getItem("authToken") || "";
+      login(token, updatedUser);
+      showToast("Phone number verified and profile saved successfully!");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Invalid WhatsApp OTP. Please try again.");
+    } finally {
+      setIsVerifyingPhoneOtp(false);
+    }
+  };
+
+  const handleCancelPhoneOtp = () => {
+    setShowPhoneOtpModal(false);
+    setPhone(originalPhone);
+    setPhoneOtp("");
   };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -592,6 +697,78 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Phone Change WhatsApp OTP Modal */}
+      {showPhoneOtpModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <button
+              type="button"
+              className={styles.modalCloseBtn}
+              onClick={handleCancelPhoneOtp}
+              aria-label="Close modal"
+            >
+              ×
+            </button>
+            <h3 className={styles.modalTitle}>Verify New Number</h3>
+            <p className={styles.modalSubtitle}>
+              For security, enter the 6-digit OTP sent to your WhatsApp on{" "}
+              <span className={styles.phoneHighlight}>+91 {phone.replace(/\D/g, "").slice(-10)}</span>
+            </p>
+
+            <form onSubmit={handleVerifyPhoneOtp}>
+              <input
+                type="text"
+                maxLength={6}
+                autoFocus
+                placeholder="• • • • • •"
+                className={styles.otpInputBox}
+                value={phoneOtp}
+                onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, ""))}
+              />
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                <span style={{ fontSize: "0.85rem", color: "#6b7280" }}>
+                  {phoneOtpTimer > 0 ? `Resend OTP in ${phoneOtpTimer}s` : "Didn't receive code?"}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleResendPhoneOtp}
+                  disabled={phoneOtpTimer > 0}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: phoneOtpTimer > 0 ? "#9ca3af" : "#c89b60",
+                    fontWeight: 600,
+                    fontSize: "0.85rem",
+                    cursor: phoneOtpTimer > 0 ? "not-allowed" : "pointer",
+                    textDecoration: "underline",
+                  }}
+                >
+                  Resend on WhatsApp
+                </button>
+              </div>
+
+              <div className={styles.modalBtnRow}>
+                <button
+                  type="button"
+                  className={styles.modalCancelBtn}
+                  onClick={handleCancelPhoneOtp}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className={styles.modalConfirmBtn}
+                  disabled={isVerifyingPhoneOtp || phoneOtp.length !== 6}
+                >
+                  {isVerifyingPhoneOtp ? "Verifying..." : "Verify & Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Feedback Toast */}
       {toastMessage && (

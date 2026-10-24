@@ -128,7 +128,25 @@ def register_user(user_in: schemas.UserRegister, request: Request):
 
 @router.post("/login", response_model=schemas.StandardResponse)
 def login_user(user_in: schemas.UserLogin, request: Request):
-    user_data = db.users.find_one({"email": {"$regex": f"^{re.escape(str(user_in.email).strip())}$", "$options": "i"}})
+    clean_identifier = str(user_in.email).strip()
+    digits = re.sub(r"\D", "", clean_identifier)
+    phone_query = []
+    if len(digits) >= 10:
+        last10 = digits[-10:]
+        phone_query = [
+            {"phone": digits},
+            {"phone": last10},
+            {"phone": f"91{last10}"},
+            {"phone": f"+91{last10}"},
+            {"phone": f"+91 {last10}"}
+        ]
+
+    user_data = db.users.find_one({
+        "$or": [
+            {"email": {"$regex": f"^{re.escape(clean_identifier)}$", "$options": "i"}},
+            *phone_query
+        ]
+    })
     
     if not user_data:
         record_audit_event(
@@ -138,13 +156,13 @@ def login_user(user_in: schemas.UserLogin, request: Request):
             actor_role="Guest",
             target_type="auth",
             target_name="Customer Login",
-            description=f"Failed login attempt for non-existent email: {user_in.email}",
+            description=f"Failed login attempt for non-existent user: {user_in.email}",
             status="FAILED",
             request=request
         )
         raise HTTPException(
             status_code=404,
-            detail="ACCOUNT_NOT_FOUND: No account found with this email. Please sign up to create an account."
+            detail="ACCOUNT_NOT_FOUND: No account found with this email or mobile number. Please sign up to create an account."
         )
         
     user = models.User(**user_data)
@@ -717,6 +735,324 @@ def verify_whatsapp_otp_endpoint(req: schemas.WhatsAppVerifyOtpRequest, request:
             created_at=user.created_at
         )
     )
+
+
+@router.post("/signup/send-whatsapp-otp", response_model=schemas.StandardResponse)
+def signup_send_whatsapp_otp(req: schemas.SignupWhatsAppSendOtpRequest, request: Request):
+    phone_clean = (req.phone or "").strip()
+    if not phone_clean:
+        raise HTTPException(status_code=400, detail="Mobile number is required.")
+
+    normalized_phone = whatsapp_service.normalize_phone_number(phone_clean)
+    if len(normalized_phone) < 10:
+        raise HTTPException(status_code=400, detail="Invalid mobile number format.")
+
+    # Check if phone is already registered
+    phone_variants = [normalized_phone, phone_clean, f"+{normalized_phone}"]
+    existing_phone = db.users.find_one({"phone": {"$in": phone_variants}})
+    if existing_phone:
+        raise HTTPException(
+            status_code=400,
+            detail="An account is already registered with this WhatsApp number. Please sign in instead."
+        )
+
+    # Check if email is already registered (if provided)
+    if req.email:
+        clean_email = str(req.email).strip().lower()
+        existing_email = db.users.find_one({"email": {"$regex": f"^{re.escape(clean_email)}$", "$options": "i"}})
+        if existing_email:
+            raise HTTPException(
+                status_code=400,
+                detail="An account is already registered with this email address. Please sign in instead."
+            )
+
+    # Rate limiting: 60-second cooldown
+    now = datetime.utcnow()
+    existing_otp = db.whatsapp_otps.find_one({"phone": normalized_phone})
+    if existing_otp:
+        created_at = existing_otp.get("created_at")
+        if created_at and (now - created_at).total_seconds() < 60:
+            remaining = int(60 - (now - created_at).total_seconds())
+            raise HTTPException(
+                status_code=429,
+                detail=f"Please wait {remaining} seconds before requesting a new WhatsApp code."
+            )
+
+    otp_code = f"{random.randint(100000, 999999)}"
+
+    # Dispatch via WhatsApp service
+    delivery_res = whatsapp_service.send_whatsapp_otp(normalized_phone, otp_code)
+    if not delivery_res.get("success"):
+        raise HTTPException(
+            status_code=502,
+            detail=delivery_res.get("error") or "Failed to deliver WhatsApp message."
+        )
+
+    db.whatsapp_otps.update_one(
+        {"phone": normalized_phone},
+        {
+            "$set": {
+                "phone": normalized_phone,
+                "otp": otp_code,
+                "created_at": now,
+                "expires_at": now + timedelta(minutes=5),
+                "verified": False,
+                "attempts": 0
+            }
+        },
+        upsert=True
+    )
+
+    record_audit_event(
+        action="SIGNUP_WHATSAPP_OTP_SENT",
+        action_category="auth",
+        actor_email=f"phone:{normalized_phone}",
+        actor_role="Guest",
+        target_type="auth",
+        target_name="WhatsApp Signup OTP",
+        description=f"Dispatched signup verification OTP to {normalized_phone}",
+        status="SUCCESS",
+        request=request
+    )
+
+    return schemas.StandardResponse(
+        success=True,
+        message="Verification code dispatched via WhatsApp.",
+        retry_after=60
+    )
+
+
+@router.post("/signup/verify-whatsapp", response_model=schemas.StandardResponse)
+def signup_verify_whatsapp(req: schemas.SignupWhatsAppVerifyRequest, request: Request):
+    phone_clean = (req.phone or "").strip()
+    otp_clean = (req.otp or "").strip()
+    clean_email = str(req.email).strip().lower()
+
+    if not phone_clean or not otp_clean:
+        raise HTTPException(status_code=400, detail="Phone number and OTP code are required.")
+
+    if len(req.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters long.")
+
+    normalized_phone = whatsapp_service.normalize_phone_number(phone_clean)
+    now = datetime.utcnow()
+
+    # Verify OTP
+    otp_record = db.whatsapp_otps.find_one({"phone": normalized_phone})
+    if not otp_record:
+        raise HTTPException(status_code=400, detail="No active verification code found. Please request a new one.")
+
+    if otp_record.get("expires_at") and now > otp_record["expires_at"]:
+        db.whatsapp_otps.delete_one({"phone": normalized_phone})
+        raise HTTPException(status_code=400, detail="Verification code has expired. Please request a new code.")
+
+    current_attempts = otp_record.get("attempts", 0)
+    if current_attempts >= 5:
+        db.whatsapp_otps.delete_one({"phone": normalized_phone})
+        raise HTTPException(status_code=429, detail="Too many invalid attempts. Please request a new code.")
+
+    if str(otp_record.get("otp")) != otp_clean:
+        db.whatsapp_otps.update_one({"phone": normalized_phone}, {"$inc": {"attempts": 1}})
+        remaining = 4 - current_attempts
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid verification code. {max(0, remaining)} attempts remaining."
+        )
+
+    # Invalidate OTP
+    db.whatsapp_otps.delete_one({"phone": normalized_phone})
+
+    # Double check uniqueness
+    phone_variants = [normalized_phone, phone_clean, f"+{normalized_phone}"]
+    if db.users.find_one({"phone": {"$in": phone_variants}}):
+        raise HTTPException(status_code=400, detail="An account is already registered with this mobile number.")
+    if db.users.find_one({"email": {"$regex": f"^{re.escape(clean_email)}$", "$options": "i"}}):
+        raise HTTPException(status_code=400, detail="An account is already registered with this email address.")
+
+    hashed_password = get_password_hash(req.password)
+    user = models.User(
+        first_name=req.first_name.strip(),
+        last_name=(req.last_name or "").strip(),
+        email=clean_email,
+        phone=normalized_phone,
+        hashed_password=hashed_password,
+        accept_terms=True,
+        is_active=True,
+        is_verified=True,  # Mobile number verified via WhatsApp OTP
+        is_admin=False,
+        created_at=now
+    )
+
+    insert_res = db.users.insert_one(user.model_dump(by_alias=True, exclude_none=True))
+    user.id = str(insert_res.inserted_id)
+
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        subject=str(user.id),
+        expires_delta=access_token_expires,
+        is_admin=False
+    )
+
+    record_audit_event(
+        action="USER_REGISTER_WHATSAPP",
+        action_category="auth",
+        actor_id=str(user.id),
+        actor_email=user.email,
+        actor_name=f"{user.first_name} {user.last_name}".strip(),
+        actor_role="Customer",
+        target_type="auth",
+        target_id=str(user.id),
+        target_name="WhatsApp Signup",
+        description=f"Account created and verified via WhatsApp: {user.phone}",
+        status="SUCCESS",
+        request=request
+    )
+
+    return schemas.StandardResponse(
+        success=True,
+        message="Account created and verified successfully!",
+        access_token=access_token,
+        token_type="bearer",
+        data=schemas.UserData(
+            id=str(user.id),
+            first_name=user.first_name,
+            last_name=user.last_name,
+            email=user.email,
+            phone=user.phone,
+            is_verified=True,
+            is_admin=False,
+            created_at=user.created_at
+        )
+    )
+
+
+@router.post("/profile/send-phone-otp", response_model=schemas.StandardResponse)
+def profile_send_phone_otp(
+    req: schemas.ProfilePhoneSendOtpRequest,
+    request: Request,
+    current_user: models.User = Depends(deps.get_current_active_user)
+):
+    phone_clean = (req.phone or "").strip()
+    if not phone_clean:
+        raise HTTPException(status_code=400, detail="New mobile number is required.")
+
+    normalized_phone = whatsapp_service.normalize_phone_number(phone_clean)
+    if len(normalized_phone) < 10:
+        raise HTTPException(status_code=400, detail="Invalid mobile number format.")
+
+    # Check if number already belongs to another user
+    phone_variants = [normalized_phone, phone_clean, f"+{normalized_phone}"]
+    user_oid = ObjectId(current_user.id) if isinstance(current_user.id, str) and ObjectId.is_valid(current_user.id) else current_user.id
+    conflict = db.users.find_one({"phone": {"$in": phone_variants}, "_id": {"$ne": user_oid}})
+    if conflict:
+        raise HTTPException(status_code=400, detail="This mobile number is already registered to another account.")
+
+    # Rate limiting
+    now = datetime.utcnow()
+    existing_otp = db.whatsapp_otps.find_one({"phone": normalized_phone})
+    if existing_otp:
+        created_at = existing_otp.get("created_at")
+        if created_at and (now - created_at).total_seconds() < 60:
+            remaining = int(60 - (now - created_at).total_seconds())
+            raise HTTPException(status_code=429, detail=f"Please wait {remaining} seconds before requesting a new code.")
+
+    otp_code = f"{random.randint(100000, 999999)}"
+    delivery_res = whatsapp_service.send_whatsapp_otp(normalized_phone, otp_code)
+    if not delivery_res.get("success"):
+        raise HTTPException(status_code=502, detail=delivery_res.get("error") or "Failed to deliver WhatsApp message.")
+
+    db.whatsapp_otps.update_one(
+        {"phone": normalized_phone},
+        {
+            "$set": {
+                "phone": normalized_phone,
+                "otp": otp_code,
+                "created_at": now,
+                "expires_at": now + timedelta(minutes=5),
+                "verified": False,
+                "attempts": 0
+            }
+        },
+        upsert=True
+    )
+
+    return schemas.StandardResponse(
+        success=True,
+        message="Verification code dispatched to your new WhatsApp number.",
+        retry_after=60
+    )
+
+
+@router.post("/profile/verify-phone-otp", response_model=schemas.StandardResponse)
+def profile_verify_phone_otp(
+    req: schemas.ProfilePhoneVerifyOtpRequest,
+    request: Request,
+    current_user: models.User = Depends(deps.get_current_active_user)
+):
+    phone_clean = (req.phone or "").strip()
+    otp_clean = (req.otp or "").strip()
+
+    if not phone_clean or not otp_clean:
+        raise HTTPException(status_code=400, detail="Mobile number and OTP code are required.")
+
+    normalized_phone = whatsapp_service.normalize_phone_number(phone_clean)
+    now = datetime.utcnow()
+
+    otp_record = db.whatsapp_otps.find_one({"phone": normalized_phone})
+    if not otp_record:
+        raise HTTPException(status_code=400, detail="No active verification code found. Please request a new one.")
+
+    if otp_record.get("expires_at") and now > otp_record["expires_at"]:
+        db.whatsapp_otps.delete_one({"phone": normalized_phone})
+        raise HTTPException(status_code=400, detail="Verification code has expired. Please request a new code.")
+
+    current_attempts = otp_record.get("attempts", 0)
+    if current_attempts >= 5:
+        db.whatsapp_otps.delete_one({"phone": normalized_phone})
+        raise HTTPException(status_code=429, detail="Too many invalid attempts.")
+
+    if str(otp_record.get("otp")) != otp_clean:
+        db.whatsapp_otps.update_one({"phone": normalized_phone}, {"$inc": {"attempts": 1}})
+        remaining = 4 - current_attempts
+        raise HTTPException(status_code=400, detail=f"Invalid verification code. {max(0, remaining)} attempts remaining.")
+
+    db.whatsapp_otps.delete_one({"phone": normalized_phone})
+
+    user_oid = ObjectId(current_user.id) if isinstance(current_user.id, str) and ObjectId.is_valid(current_user.id) else current_user.id
+    db.users.update_one({"_id": user_oid}, {"$set": {"phone": normalized_phone, "is_verified": True}})
+    updated_user_doc = db.users.find_one({"_id": user_oid})
+    updated_user = models.User(**dict(updated_user_doc))
+
+    record_audit_event(
+        action="USER_PHONE_UPDATED",
+        action_category="profile",
+        actor_id=str(current_user.id),
+        actor_email=current_user.email,
+        actor_name=f"{current_user.first_name} {current_user.last_name}".strip(),
+        actor_role="Customer",
+        target_type="user",
+        target_id=str(current_user.id),
+        target_name="Profile Phone Update",
+        description=f"User updated and verified new phone number: {normalized_phone}",
+        status="SUCCESS",
+        request=request
+    )
+
+    return schemas.StandardResponse(
+        success=True,
+        message="WhatsApp mobile number verified and updated successfully!",
+        data=schemas.UserData(
+            id=str(updated_user.id),
+            first_name=updated_user.first_name,
+            last_name=updated_user.last_name,
+            email=updated_user.email,
+            phone=updated_user.phone,
+            is_verified=updated_user.is_verified,
+            is_admin=bool(updated_user.is_admin),
+            created_at=updated_user.created_at
+        )
+    )
+
 
 @router.post("/forgot-password", response_model=schemas.StandardResponse)
 def forgot_password(payload: schemas.ForgotPasswordRequest, request: Request):

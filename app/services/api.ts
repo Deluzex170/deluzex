@@ -2669,6 +2669,91 @@ export async function verifyWhatsAppOtp(
   }
 }
 
+export async function sendSignupWhatsAppOtp(phone: string, email?: string): Promise<{ success: boolean; message: string; retry_after?: number }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/signup/send-whatsapp-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, email: email || null }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.detail || data.message || "Failed to send WhatsApp verification code.");
+    }
+    return data;
+  } catch (error: any) {
+    logger.error("API", "Error sending signup WhatsApp OTP:", error);
+    throw error;
+  }
+}
+
+export async function verifySignupWhatsApp(payload: {
+  phone: string;
+  otp: string;
+  first_name: string;
+  last_name?: string;
+  email: string;
+  password: string;
+}): Promise<{ success: boolean; message: string; access_token: string; data: any }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/signup/verify-whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.detail || data.message || "Invalid verification code.");
+    }
+    return data;
+  } catch (error: any) {
+    logger.error("API", "Error verifying signup WhatsApp OTP:", error);
+    throw error;
+  }
+}
+
+export async function sendProfilePhoneOtp(phone: string): Promise<{ success: boolean; message: string; retry_after?: number }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/profile/send-phone-otp`, {
+      method: "POST",
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ phone }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.detail || data.message || "Failed to send verification code to new number.");
+    }
+    return data;
+  } catch (error: any) {
+    logger.error("API", "Error sending profile phone OTP:", error);
+    throw error;
+  }
+}
+
+export async function verifyProfilePhoneOtp(phone: string, otp: string): Promise<{ success: boolean; message: string; data: any }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/profile/verify-phone-otp`, {
+      method: "POST",
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ phone, otp }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.detail || data.message || "Invalid verification code.");
+    }
+    return data;
+  } catch (error: any) {
+    logger.error("API", "Error verifying profile phone OTP:", error);
+    throw error;
+  }
+}
+
 export async function verifyEmailOtp(
   email: string,
   otp: string

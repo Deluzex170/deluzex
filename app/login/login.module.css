@@ -359,3 +359,39 @@
   font-size: 13px;
   color: #6B7280;
 }
+
+.phoneInputWrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: #FFFFFF;
+  height: 44px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.phoneInputWrapper:focus-within {
+  border-color: #D8A56E;
+  box-shadow: 0 0 0 2px rgba(216, 165, 110, 0.15);
+}
+
+.countryPrefix {
+  padding: 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #4B5563;
+  background: #F9FAFB;
+  border-right: 1px solid #E5E7EB;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  user-select: none;
+}
+
+.phoneInputWrapper input {
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  height: 100% !important;
+}

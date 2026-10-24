@@ -355,3 +355,140 @@
     justify-content: center;
   }
 }
+
+/* Phone OTP Verification Modal */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 1rem;
+}
+
+.modalContent {
+  background: #ffffff;
+  border-radius: 16px;
+  max-width: 440px;
+  width: 100%;
+  padding: 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  position: relative;
+  animation: modalScale 0.25s ease-out;
+}
+
+@keyframes modalScale {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.modalCloseBtn {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #9ca3af;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+}
+
+.modalCloseBtn:hover {
+  color: #1f2937;
+}
+
+.modalTitle {
+  font-family: var(--font-libre), serif;
+  font-size: 1.5rem;
+  color: #2b2b2b;
+  margin: 0 0 0.5rem;
+}
+
+.modalSubtitle {
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.4;
+  margin-bottom: 1.25rem;
+}
+
+.phoneHighlight {
+  color: #c89b60;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.otpInputBox {
+  width: 100%;
+  height: 48px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.35em;
+  color: #1f2937;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
+}
+
+.otpInputBox:focus {
+  border-color: #c89b60;
+  box-shadow: 0 0 0 3px rgba(200, 155, 96, 0.15);
+}
+
+.modalBtnRow {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.modalConfirmBtn {
+  flex: 1;
+  height: 44px;
+  background: #c89b60;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modalConfirmBtn:hover:not(:disabled) {
+  background: #b5894f;
+}
+
+.modalConfirmBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modalCancelBtn {
+  height: 44px;
+  padding: 0 1.25rem;
+  background: #f3f4f6;
+  color: #4b5563;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modalCancelBtn:hover {
+  background: #e5e7eb;
+}
