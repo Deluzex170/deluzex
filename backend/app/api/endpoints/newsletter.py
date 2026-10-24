@@ -1,22 +1,25 @@
+import io
+import csv
+import re
 from fastapi import APIRouter, HTTPException, Query, status, Depends
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from bson import ObjectId
 from app import models
 from app.api import deps
 from app.core.database import db
+from app.core.sanitizer import sanitize_search_term, sanitize_text
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-import io
-import csv
 
 router = APIRouter()
 
 class SubscriberNotifiedUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     is_notified: bool
 
 @router.post("/subscribe")
-def subscribe_newsletter(subscriber: models.NewsletterSubscriber):
+def subscribe_newsletter(subscriber: models.NewsletterSubscriberCreate):
     email = str(subscriber.email).strip().lower()
     
     # Check if already subscribed
@@ -65,7 +68,7 @@ def get_subscribers(
         query["is_notified"] = notified
 
     if search and search.strip():
-        term = search.strip()
+        term = sanitize_search_term(search)
         query["$or"] = [
             {"email": {"$regex": term, "$options": "i"}},
             {"source": {"$regex": term, "$options": "i"}}

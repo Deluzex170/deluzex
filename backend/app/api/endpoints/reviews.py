@@ -1,17 +1,20 @@
+import re
 from fastapi import APIRouter, HTTPException, Query, status, Depends
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from bson import ObjectId
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from app import models
 from app.api import deps
 from app.models.review import Review, ReviewCreate
 from app.core.database import db
+from app.core.sanitizer import sanitize_text, sanitize_search_term
 
 router = APIRouter()
 
 class ReviewApprovalRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     is_approved: bool
 
 def calculate_stats(product_id: str, only_approved: bool = True) -> Dict[str, Any]:
@@ -103,7 +106,7 @@ def get_all_reviews_admin(
         query["product_id"] = str(product_id)
 
     if search and search.strip():
-        term = search.strip()
+        term = sanitize_search_term(search)
         query["$or"] = [
             {"author_name": {"$regex": term, "$options": "i"}},
             {"author_email": {"$regex": term, "$options": "i"}},
@@ -246,15 +249,19 @@ def submit_product_review(payload: ReviewCreate):
     if not payload.text or not payload.text.strip():
         raise HTTPException(status_code=400, detail="Review comment is required")
         
+    clean_author_name = sanitize_text(payload.author_name, max_len=100)
+    clean_title = sanitize_text(payload.title, max_len=200) if payload.title else None
+    clean_text = sanitize_text(payload.text, max_len=5000)
+    clean_email = payload.author_email.strip().lower() if payload.author_email else None
     rating = max(1, min(5, int(payload.rating)))
     
     review_doc = {
         "product_id": str(payload.product_id),
-        "author_name": payload.author_name.strip(),
-        "author_email": payload.author_email.strip() if payload.author_email else None,
+        "author_name": clean_author_name,
+        "author_email": clean_email,
         "rating": rating,
-        "title": payload.title.strip() if payload.title else None,
-        "text": payload.text.strip(),
+        "title": clean_title,
+        "text": clean_text,
         "is_approved": True,
         "created_at": datetime.utcnow()
     }

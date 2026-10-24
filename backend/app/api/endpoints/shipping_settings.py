@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from app import models
 from app.api import deps
@@ -32,6 +32,7 @@ DEFAULT_SHIPPING_SETTINGS = {
 
 
 class ShippingSettingsPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     standard_delivery_fee: float = Field(ge=0, default=99.0, description="Standard delivery fee in INR")
     free_shipping_enabled: bool = Field(default=True, description="Enable free shipping above threshold")
     free_shipping_threshold: float = Field(ge=0, default=1999.0, description="Cart amount qualifying for free shipping")
@@ -39,13 +40,14 @@ class ShippingSettingsPayload(BaseModel):
     min_order_value: float = Field(ge=0, default=499.0, description="Minimum order value in INR")
     min_order_message: Optional[str] = Field(
         default="Minimum order value of ₹{amount} is required to place an order.",
+        max_length=500,
         description="Friendly message shown to customer when cart is below minimum",
     )
     cod_enabled: bool = Field(default=True, description="Enable Cash on Delivery option")
     cod_extra_fee: float = Field(ge=0, default=0.0, description="Extra fee for COD orders")
     cod_max_order_value: float = Field(ge=0, default=25000.0, description="Maximum cart amount allowed for COD")
-    estimated_delivery_days: Optional[str] = Field(default="3-5 business days")
-    white_glove_note: Optional[str] = Field(default="Complimentary white-glove packaging on all orders.")
+    estimated_delivery_days: Optional[str] = Field(default="3-5 business days", max_length=100)
+    white_glove_note: Optional[str] = Field(default="Complimentary white-glove packaging on all orders.", max_length=500)
 
 
 def get_shipping_rules() -> dict:

@@ -1,6 +1,6 @@
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 from app.models.order import OrderItem, ShippingAddress
 
@@ -14,23 +14,25 @@ class PaymentMethodInfo(BaseModel):
 
 
 class CreateOrderRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     email: EmailStr
-    phone: str
+    phone: str = Field(..., min_length=10, max_length=25)
     shipping_address: ShippingAddress
-    items: List[OrderItem]
-    subtotal: float
-    discount: float = 0.0
-    coupon_code: Optional[str] = None
-    gst: float
-    delivery: float
-    total: float
+    items: List[OrderItem] = Field(..., min_length=1, max_length=50)
+    subtotal: float = Field(..., ge=0)
+    discount: float = Field(default=0.0, ge=0)
+    coupon_code: Optional[str] = Field(None, max_length=50)
+    gst: float = Field(..., ge=0)
+    delivery: float = Field(..., ge=0)
+    total: float = Field(..., gt=0)
     payment_method: Literal["upi", "card", "netbanking", "wallet", "cod"]
-    razorpay_method: str = Field(..., description="Razorpay method key e.g. upi, card")
-    idempotency_key: Optional[str] = None
-    existing_order_id: Optional[str] = None
-    upi_vpa: Optional[str] = None
-    card_last4: Optional[str] = None
-    bank_code: Optional[str] = None
+    razorpay_method: str = Field(..., max_length=50, description="Razorpay method key e.g. upi, card")
+    idempotency_key: Optional[str] = Field(None, max_length=100)
+    existing_order_id: Optional[str] = Field(None, max_length=50)
+    upi_vpa: Optional[str] = Field(None, max_length=100)
+    card_last4: Optional[str] = Field(None, max_length=10)
+    bank_code: Optional[str] = Field(None, max_length=50)
 
 
 class CreateOrderResponse(BaseModel):
@@ -45,10 +47,12 @@ class CreateOrderResponse(BaseModel):
 
 
 class VerifyPaymentRequest(BaseModel):
-    order_id: str
-    razorpay_order_id: str
-    razorpay_payment_id: str
-    razorpay_signature: str
+    model_config = ConfigDict(extra="forbid")
+
+    order_id: str = Field(..., min_length=1, max_length=50)
+    razorpay_order_id: str = Field(..., min_length=1, max_length=100)
+    razorpay_payment_id: str = Field(..., min_length=1, max_length=100)
+    razorpay_signature: str = Field(..., min_length=1, max_length=256)
 
 
 class VerifyPaymentResponse(BaseModel):
@@ -58,18 +62,20 @@ class VerifyPaymentResponse(BaseModel):
 
 
 class CodOrderRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     email: EmailStr
-    phone: str
+    phone: str = Field(..., min_length=10, max_length=25)
     shipping_address: ShippingAddress
-    items: List[OrderItem]
-    subtotal: float
-    discount: float = 0.0
-    coupon_code: Optional[str] = None
-    gst: float
-    delivery: float
-    total: float
-    idempotency_key: Optional[str] = None
-    existing_order_id: Optional[str] = None
+    items: List[OrderItem] = Field(..., min_length=1, max_length=50)
+    subtotal: float = Field(..., ge=0)
+    discount: float = Field(default=0.0, ge=0)
+    coupon_code: Optional[str] = Field(None, max_length=50)
+    gst: float = Field(..., ge=0)
+    delivery: float = Field(..., ge=0)
+    total: float = Field(..., gt=0)
+    idempotency_key: Optional[str] = Field(None, max_length=100)
+    existing_order_id: Optional[str] = Field(None, max_length=50)
 
 
 class CodOrderResponse(BaseModel):

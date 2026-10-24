@@ -12,6 +12,7 @@ from app.api import deps
 from app.core.security import verify_password, get_password_hash, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.core.database import db
 from app.core.audit import record_audit_event
+from app.core.sanitizer import sanitize_search_term
 from app.services import whatsapp as whatsapp_service
 from app.services.email import send_verification_email, send_password_reset_email
 
@@ -886,7 +887,7 @@ def get_users_admin(
         query["is_admin"] = True
 
     if search and search.strip():
-        term = search.strip()
+        term = sanitize_search_term(search)
         search_or = [
             {"first_name": {"$regex": term, "$options": "i"}},
             {"last_name": {"$regex": term, "$options": "i"}},

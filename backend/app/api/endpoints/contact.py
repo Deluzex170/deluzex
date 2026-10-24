@@ -1,16 +1,19 @@
+import re
 from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
 from fastapi import APIRouter, HTTPException, Query, status, Depends
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from app import models
 from app.api import deps
 from app.core.database import db
+from app.core.sanitizer import sanitize_text, sanitize_search_term, sanitize_phone
 
 router = APIRouter()
 
 class InquiryStatusUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     status: str = Field(..., description="Status must be one of: new, contacted, resolved, archived")
 
 @router.get("", response_model=List[models.ContactMessage])
@@ -26,7 +29,7 @@ def read_contacts(
         query["status"] = status.lower()
 
     if search and search.strip():
-        term = search.strip()
+        term = sanitize_search_term(search)
         query["$or"] = [
             {"name": {"$regex": term, "$options": "i"}},
             {"email": {"$regex": term, "$options": "i"}},
@@ -58,13 +61,23 @@ def read_contact_stats(admin: models.User = Depends(deps.get_current_active_admi
     }
 
 @router.post("", response_model=models.ContactMessage)
-def create_contact(contact: models.ContactMessage):
-    data = contact.model_dump(by_alias=True, exclude_none=True)
-    if "status" not in data:
-        data["status"] = "new"
+def create_contact(contact: models.ContactMessageCreate):
+    clean_name = sanitize_text(contact.name, max_len=100) if contact.name else None
+    clean_phone = sanitize_phone(contact.phone) if contact.phone else None
+    clean_message = sanitize_text(contact.message, max_len=3000)
+    clean_email = str(contact.email).strip().lower()
+
+    data = {
+        "name": clean_name,
+        "email": clean_email,
+        "phone": clean_phone,
+        "message": clean_message,
+        "status": "new",
+        "created_at": datetime.utcnow(),
+    }
     result = db.contacts.insert_one(data)
-    contact.id = str(result.inserted_id)
-    return contact
+    data["_id"] = result.inserted_id
+    return models.ContactMessage(**data)
 
 @router.patch("/{id}/status", response_model=models.ContactMessage)
 def update_contact_status(

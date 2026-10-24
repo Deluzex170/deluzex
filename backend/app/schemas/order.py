@@ -1,31 +1,33 @@
 from datetime import datetime
 from typing import List, Literal, Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 from app.models.order import OrderItem, ShippingAddress, OrderStatus, PaymentMethod
 
 
 class OrderCreateRequest(BaseModel):
-    user_id: Optional[str] = None
+    model_config = ConfigDict(extra="forbid")
+    user_id: Optional[str] = Field(default=None, max_length=100)
     email: EmailStr
-    phone: str
+    phone: str = Field(..., min_length=10, max_length=20)
     shipping_address: ShippingAddress
-    items: List[OrderItem]
-    subtotal: float
-    discount: float = 0.0
-    coupon_code: Optional[str] = None
-    gst: float
-    delivery: float
-    total: float
+    items: List[OrderItem] = Field(..., min_length=1, max_length=100)
+    subtotal: float = Field(..., ge=0)
+    discount: float = Field(default=0.0, ge=0)
+    coupon_code: Optional[str] = Field(default=None, max_length=50)
+    gst: float = Field(..., ge=0)
+    delivery: float = Field(..., ge=0)
+    total: float = Field(..., ge=0)
     payment_method: PaymentMethod
-    notes: Optional[str] = None
+    notes: Optional[str] = Field(default=None, max_length=1000)
 
 
 class OrderStatusUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     status: OrderStatus
-    tracking_number: Optional[str] = None
-    courier_partner: Optional[str] = None
-    notes: Optional[str] = None
+    tracking_number: Optional[str] = Field(default=None, max_length=100)
+    courier_partner: Optional[str] = Field(default=None, max_length=100)
+    notes: Optional[str] = Field(default=None, max_length=1000)
 
 
 class OrderResponse(BaseModel):

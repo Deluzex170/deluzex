@@ -79,6 +79,14 @@ async def create_product(
     request: Request = None,
     current_user: models.User = Depends(get_current_active_admin)
 ):
+    if product_price < 0:
+        raise HTTPException(status_code=400, detail="Product price cannot be negative")
+    if stock_count < 0:
+        raise HTTPException(status_code=400, detail="Stock count cannot be negative")
+    clean_title = product_title.strip()
+    if not clean_title:
+        raise HTTPException(status_code=400, detail="Product title cannot be empty")
+
     try:
         image_url = None
         product_images_urls = []
@@ -230,7 +238,14 @@ async def update_product(
 
     product = models.Product(**doc)
 
-    if product_title is not None: product.product_title = product_title
+    if product_price is not None and product_price < 0:
+        raise HTTPException(status_code=400, detail="Product price cannot be negative")
+    if stock_count is not None and stock_count < 0:
+        raise HTTPException(status_code=400, detail="Stock count cannot be negative")
+    if product_title is not None and not product_title.strip():
+        raise HTTPException(status_code=400, detail="Product title cannot be empty")
+
+    if product_title is not None: product.product_title = product_title.strip()
     if product_price is not None: product.product_price = product_price
     if product_description is not None: product.product_description = product_description
     if product_category is not None: product.product_category = product_category

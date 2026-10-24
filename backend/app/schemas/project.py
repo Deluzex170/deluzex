@@ -1,11 +1,12 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 
 class ProjectBase(BaseModel):
-    title: str
-    subtitle: Optional[str] = None
-    installations_count: Optional[str] = None
-    image_url: Optional[str] = None
+    model_config = ConfigDict(extra="forbid")
+    title: str = Field(..., min_length=1, max_length=200)
+    subtitle: Optional[str] = Field(default=None, max_length=200)
+    installations_count: Optional[str] = Field(default=None, max_length=100)
+    image_url: Optional[str] = Field(default=None, max_length=1000)
     is_featured: bool = False
 
 class ProjectCreate(ProjectBase):
