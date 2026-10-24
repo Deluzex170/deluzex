@@ -8,27 +8,128 @@ export interface OrderInvoiceModalProps {
   onClose: () => void;
 }
 
+function numberToIndianWords(num: number): string {
+  if (!num || num <= 0) return "Zero Rupees Only";
+  const a = [
+    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
+    "Seventeen", "Eighteen", "Nineteen",
+  ];
+  const b = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+  const numToWords = (n: number): string => {
+    let str = "";
+    if (n > 19) {
+      str += b[Math.floor(n / 10)] + (n % 10 ? " " + a[n % 10] : "");
+    } else if (n > 0) {
+      str += a[n];
+    }
+    return str;
+  };
+
+  const integerPart = Math.floor(num);
+  const paisePart = Math.round((num - integerPart) * 100);
+
+  const crore = Math.floor(integerPart / 10000000);
+  const lakh = Math.floor((integerPart % 10000000) / 100000);
+  const thousand = Math.floor((integerPart % 100000) / 1000);
+  const hundred = Math.floor((integerPart % 1000) / 100);
+  const rest = integerPart % 100;
+
+  let words = "";
+  if (crore > 0) words += `${numToWords(crore)} Crore `;
+  if (lakh > 0) words += `${numToWords(lakh)} Lakh `;
+  if (thousand > 0) words += `${numToWords(thousand)} Thousand `;
+  if (hundred > 0) words += `${numToWords(hundred)} Hundred `;
+  if (rest > 0) words += `${numToWords(rest)} `;
+
+  words = words.trim() ? `${words.trim()} Rupees` : "Zero Rupees";
+
+  if (paisePart > 0) {
+    words += ` and ${numToWords(paisePart)} Paise`;
+  }
+  return `${words} Only`;
+}
+
 export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalProps) {
   if (!order) return null;
 
-  const orderNum = order.order_number || order.orderNumber || order.id || "ORD-0001";
-  const orderDate = order.created_at || order.date
-    ? new Date(order.created_at || order.date).toLocaleDateString("en-IN", {
+  const orderNum = order.order_number || order.orderNumber || order.order_id || order.id || order._id || "ORD-0001";
+  const orderDate = order.created_at || order.createdAt || order.date
+    ? new Date(order.created_at || order.createdAt || order.date).toLocaleDateString("en-IN", {
         day: "2-digit",
         month: "short",
         year: "numeric",
       })
     : new Date().toLocaleDateString("en-IN");
 
-  const totalAmount = Number(order.total_amount || order.totalAmount || 0);
-
-  // 18% GST calculation
-  const subtotalWithoutTax = Math.round((totalAmount / 1.18) * 100) / 100;
-  const totalTax = Math.round((totalAmount - subtotalWithoutTax) * 100) / 100;
-  const cgst = Math.round((totalTax / 2) * 100) / 100;
-  const sgst = Math.round((totalTax / 2) * 100) / 100;
-
   const items = Array.isArray(order.items) && order.items.length > 0 ? order.items : [];
+
+  // 1. Raw numbers from order object
+  const rawSubtotal = Number(order.subtotal ?? order.sub_total ?? 0);
+  const rawGst = Number(order.gst ?? order.tax ?? 0);
+  const delivery = Number(order.delivery ?? order.shipping_fee ?? order.shipping_cost ?? 0);
+  const discount = Number(order.discount ?? 0);
+
+  // 2. Safe calculation of items sum
+  const itemsSum = items.reduce((sum: number, it: any) => {
+    const qty = Number(it.quantity || it.qty || 1);
+    const itPrice = Number(it.price || it.unit_price || it.unitPrice || 0);
+    const itTotal = Number(it.total ?? (itPrice > 0 ? itPrice * qty : 0));
+    return sum + itTotal;
+  }, 0);
+
+  // 3. Extract order grand total from all possible fields
+  const totalFromOrder = Number(
+    order.total ??
+    order.amount ??
+    order.total_amount ??
+    order.totalAmount ??
+    order.grand_total ??
+    order.grandTotal ??
+    0
+  );
+
+  // 4. Calculate Taxable Value, Tax, and Grand Total
+  let taxableValue = 0;
+  let totalTax = 0;
+  let grandTotal = totalFromOrder;
+
+  if (rawSubtotal > 0 && rawGst > 0) {
+    taxableValue = Math.max(0, rawSubtotal - discount);
+    totalTax = rawGst;
+    if (grandTotal <= 0) {
+      grandTotal = Math.round((taxableValue + totalTax + delivery) * 100) / 100;
+    }
+  } else if (rawSubtotal > 0) {
+    taxableValue = Math.max(0, rawSubtotal - discount);
+    totalTax = Math.round((taxableValue * 0.18) * 100) / 100;
+    if (grandTotal <= 0) {
+      grandTotal = Math.round((taxableValue + totalTax + delivery) * 100) / 100;
+    }
+  } else if (itemsSum > 0 && grandTotal > itemsSum) {
+    // itemsSum is pre-tax, grandTotal is post-tax
+    taxableValue = Math.max(0, itemsSum - discount);
+    totalTax = Math.round((taxableValue * 0.18) * 100) / 100;
+  } else if (grandTotal > 0) {
+    // Single total provided (tax-inclusive fallback)
+    const base = Math.max(0, grandTotal - delivery);
+    taxableValue = Math.round((base / 1.18) * 100) / 100;
+    totalTax = Math.round((base - taxableValue) * 100) / 100;
+  } else if (itemsSum > 0) {
+    taxableValue = Math.max(0, itemsSum - discount);
+    totalTax = Math.round((taxableValue * 0.18) * 100) / 100;
+    grandTotal = Math.round((taxableValue + totalTax + delivery) * 100) / 100;
+  }
+
+  const cgst = Math.round((totalTax / 2) * 100) / 100;
+  const sgst = Math.round((totalTax - cgst) * 100) / 100;
+
+  const formatPrice = (val: number) =>
+    Number(val || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
   // Customer & Shipping Address extraction
   const custName =
@@ -38,14 +139,14 @@ export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalP
     "Valued Patron";
 
   const custEmail = order.customer?.email || order.customer_email || order.user_email || "concierge@deluzex.com";
-  const custPhone = order.customer?.phone || order.shipping_address?.phone || "—";
+  const custPhone = order.customer?.phone || order.shipping_address?.phone || order.user_phone || "—";
 
   const shipAddr = order.shipping_address || order.shippingAddress || {};
   const addressLine1 = shipAddr.address_line1 || shipAddr.street || shipAddr.address || "Bespoke Residence Delivery";
   const addressLine2 = shipAddr.address_line2 || shipAddr.apartment || "";
   const city = shipAddr.city || "Mumbai";
   const state = shipAddr.state || "Maharashtra";
-  const pincode = shipAddr.postal_code || shipAddr.pincode || shipAddr.zip || "400001";
+  const pincode = shipAddr.pin_code || shipAddr.postal_code || shipAddr.pincode || shipAddr.zip || "400001";
 
   const paymentMethod = order.payment_method || order.paymentMethod || "Online (Razorpay / UPI)";
   const paymentStatus = (order.payment_status || order.status || "Paid").toUpperCase();
@@ -159,17 +260,18 @@ export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalP
                   </td>
                   <td>940510</td>
                   <td style={{ textAlign: "center" }}>1</td>
-                  <td style={{ textAlign: "right" }}>₹{subtotalWithoutTax.toLocaleString("en-IN")}</td>
+                  <td style={{ textAlign: "right" }}>₹{formatPrice(taxableValue || grandTotal)}</td>
                   <td style={{ textAlign: "right" }}>18%</td>
                   <td style={{ textAlign: "right", fontWeight: 600 }}>
-                    ₹{totalAmount.toLocaleString("en-IN")}
+                    ₹{formatPrice(taxableValue || grandTotal)}
                   </td>
                 </tr>
               ) : (
                 items.map((it: any, idx: number) => {
                   const qty = Number(it.quantity || it.qty || 1);
-                  const itemTotal = Number(it.total || (it.price ? it.price * qty : totalAmount));
-                  const itemUnit = Math.round((itemTotal / qty / 1.18) * 100) / 100;
+                  const itPrice = Number(it.price || it.unit_price || it.unitPrice || 0);
+                  const unitPrice = itPrice > 0 ? itPrice : (taxableValue > 0 ? taxableValue / qty : 0);
+                  const lineTotal = Number(it.total ?? (unitPrice * qty));
 
                   return (
                     <tr key={idx}>
@@ -181,10 +283,10 @@ export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalP
                       </td>
                       <td>940510</td>
                       <td style={{ textAlign: "center" }}>{qty}</td>
-                      <td style={{ textAlign: "right" }}>₹{itemUnit.toLocaleString("en-IN")}</td>
+                      <td style={{ textAlign: "right" }}>₹{formatPrice(unitPrice)}</td>
                       <td style={{ textAlign: "right" }}>18%</td>
                       <td style={{ textAlign: "right", fontWeight: 600 }}>
-                        ₹{itemTotal.toLocaleString("en-IN")}
+                        ₹{formatPrice(lineTotal)}
                       </td>
                     </tr>
                   );
@@ -195,30 +297,44 @@ export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalP
 
           {/* Summary */}
           <div className={styles.summaryRow}>
-            <table className={styles.summaryTable}>
-              <tbody>
-                <tr>
-                  <td>Taxable Value:</td>
-                  <td>₹{subtotalWithoutTax.toLocaleString("en-IN")}</td>
-                </tr>
-                <tr>
-                  <td>CGST (9.0%):</td>
-                  <td>₹{cgst.toLocaleString("en-IN")}</td>
-                </tr>
-                <tr>
-                  <td>SGST (9.0%):</td>
-                  <td>₹{sgst.toLocaleString("en-IN")}</td>
-                </tr>
-                <tr>
-                  <td>Atelier White-Glove Shipping:</td>
-                  <td style={{ color: "#16a34a" }}>COMPLIMENTARY</td>
-                </tr>
-                <tr className={styles.totalRow}>
-                  <td>Grand Total (INR):</td>
-                  <td>₹{totalAmount.toLocaleString("en-IN")}</td>
-                </tr>
-              </tbody>
-            </table>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", width: "100%" }}>
+              <table className={styles.summaryTable}>
+                <tbody>
+                  <tr>
+                    <td>Taxable Value:</td>
+                    <td>₹{formatPrice(taxableValue)}</td>
+                  </tr>
+                  {discount > 0 && (
+                    <tr>
+                      <td>Coupon Discount:</td>
+                      <td style={{ color: "#16a34a" }}>-₹{formatPrice(discount)}</td>
+                    </tr>
+                  )}
+                  <tr>
+                    <td>CGST (9.0%):</td>
+                    <td>₹{formatPrice(cgst)}</td>
+                  </tr>
+                  <tr>
+                    <td>SGST (9.0%):</td>
+                    <td>₹{formatPrice(sgst)}</td>
+                  </tr>
+                  <tr>
+                    <td>Atelier White-Glove Shipping:</td>
+                    <td style={{ color: delivery > 0 ? "inherit" : "#16a34a" }}>
+                      {delivery > 0 ? `₹${formatPrice(delivery)}` : "COMPLIMENTARY"}
+                    </td>
+                  </tr>
+                  <tr className={styles.totalRow}>
+                    <td>Grand Total (INR):</td>
+                    <td>₹{formatPrice(grandTotal)}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div className={styles.wordsAmount} style={{ marginTop: "0.75rem", textAlign: "right" }}>
+                <strong>Amount in Words:</strong> {numberToIndianWords(grandTotal)}
+              </div>
+            </div>
           </div>
 
           {/* Legal Footer */}
