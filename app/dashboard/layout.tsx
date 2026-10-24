@@ -40,13 +40,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const adminMenuItems = isAdmin
     ? [
-        {
-          group: "Administration",
-          items: [
-            { name: "Admin Dashboard", path: "/admin", icon: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" }
-          ]
-        }
-      ]
+      {
+        group: "Administration",
+        items: [
+          { name: "Admin Dashboard", path: "/admin", icon: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" }
+        ]
+      }
+    ]
     : [];
 
   const menuItems = [
@@ -59,7 +59,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { name: "Orders", path: "/dashboard/orders", icon: "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2 M15 2H9c-1.1 0-2 .9-2 2v2h10V4c0-1.1-.9-2-2-2z" },
         { name: "Wishlist", path: "/dashboard/wishlist", icon: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" },
         { name: "Address", path: "/dashboard/address", icon: "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" },
-        { name: "Blog", path: "/dashboard/blogs", icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8" },
+        // { name: "Blog", path: "/dashboard/blogs", icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8" },
       ]
     },
     {

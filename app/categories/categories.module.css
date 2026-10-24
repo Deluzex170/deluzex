@@ -10,12 +10,12 @@
 .hero {
   position: relative;
   width: 100%;
-  min-height: 420px;
+  min-height: 480px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 120px 24px 60px;
+  padding: 80px 24px 80px;
   color: #fff;
   overflow: hidden;
 }
@@ -29,15 +29,19 @@
 .heroOverlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(18, 14, 10, 0.65) 0%, rgba(10, 8, 6, 0.88) 100%);
+  background: radial-gradient(circle at center, rgba(14, 11, 8, 0.52) 0%, rgba(10, 8, 6, 0.82) 100%);
   z-index: 2;
 }
 
 .heroContent {
   position: relative;
   z-index: 3;
-  max-width: 760px;
+  max-width: 820px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .breadcrumbs {
@@ -58,33 +62,38 @@
 }
 
 .breadcrumbLink:hover {
-  color: #C89B60;
+  color: #D79322;
 }
 
 .heroSub {
   font-family: var(--font-italianno), cursive;
-  font-size: 2.2rem;
-  color: #C89B60;
-  margin-bottom: 4px;
+  font-size: 3.5rem;
+  color: #E5A83B;
+  margin-bottom: 2px;
   letter-spacing: 0.05em;
+  line-height: 1.1;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
 }
 
 .heroTitle {
   font-family: var(--font-libre), serif;
-  font-size: 3.4rem;
-  font-weight: 400;
+  font-size: 4rem;
+  font-weight: 500;
   color: #FFFFFF;
   margin: 0 0 16px;
   line-height: 1.15;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
+  text-shadow: 0 3px 20px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.95);
 }
 
 .heroDesc {
-  font-size: 16px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.85);
-  max-width: 620px;
+  font-size: 1.18rem;
+  line-height: 1.65;
+  color: #F4F4F5;
+  max-width: 680px;
   margin: 0 auto;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+  font-weight: 400;
 }
 
 /* CATEGORIES SECTION */
@@ -102,7 +111,7 @@
 .sectionSub {
   font-family: 'Adobe Arabic', serif;
   font-style: normal;
-  font-size: 1.85rem;
+  font-size: 2rem;
   color: #D79322;
   margin: 0 0 -6px 0;
   line-height: 1.15;
@@ -110,7 +119,7 @@
 
 .sectionTitle {
   font-family: 'Adobe Arabic', var(--font-libre), serif;
-  font-size: 3.4rem;
+  font-size: 3.8rem;
   font-weight: 400;
   line-height: 1.1;
   color: #1A1A1A;
@@ -118,11 +127,11 @@
 }
 
 .sectionDesc {
-  font-size: 15px;
+  font-size: 1.5rem;
   color: #666;
   max-width: 580px;
   margin: 0 auto;
-  line-height: 1.6;
+  line-height: 1;
 }
 
 /* CATEGORY GRID */
@@ -134,9 +143,9 @@
 
 .categoryCard {
   position: relative;
-  height: 420px;
-  border-top-left-radius: 56px;
-  border-bottom-right-radius: 56px;
+  height: 360px;
+  border-top-left-radius: 44px;
+  border-bottom-right-radius: 44px;
   border-top-right-radius: 0;
   border-bottom-left-radius: 0;
   overflow: hidden;
@@ -175,38 +184,34 @@
 .cardOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(14, 10, 6, 0.92) 0%,
-    rgba(14, 10, 6, 0.6) 45%,
-    rgba(14, 10, 6, 0.15) 100%
-  );
+  background: linear-gradient(to top,
+      rgba(14, 10, 6, 0.92) 0%,
+      rgba(14, 10, 6, 0.6) 45%,
+      rgba(14, 10, 6, 0.15) 100%);
   z-index: 2;
   transition: background 0.3s ease;
 }
 
 .categoryCard:hover .cardOverlay {
-  background: linear-gradient(
-    to top,
-    rgba(14, 10, 6, 0.95) 0%,
-    rgba(14, 10, 6, 0.65) 50%,
-    rgba(14, 10, 6, 0.1) 100%
-  );
+  background: linear-gradient(to top,
+      rgba(14, 10, 6, 0.95) 0%,
+      rgba(14, 10, 6, 0.65) 50%,
+      rgba(14, 10, 6, 0.1) 100%);
 }
 
 .cardContent {
   position: relative;
   z-index: 3;
-  padding: 32px 28px;
+  padding: 22px 20px;
   color: #fff;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .categoryTag {
-  font-size: 11px;
-  letter-spacing: 0.15em;
+  font-size: 10px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #C89B60;
   font-weight: 600;
@@ -214,17 +219,17 @@
 
 .categoryName {
   font-family: var(--font-libre), serif;
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 400;
   color: #FFFFFF;
   margin: 0;
-  line-height: 1.25;
+  line-height: 1.20;
 }
 
 .categoryDesc {
-  font-size: 14px;
+  font-size: 0.92rem;
   color: rgba(255, 255, 255, 0.75);
-  line-height: 1.5;
+  line-height: 1.45;
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -236,15 +241,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 12px;
-  padding-top: 14px;
+  margin-top: 8px;
+  padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .viewProductsText {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: #C89B60;
   display: inline-flex;
   align-items: center;
@@ -258,8 +263,8 @@
 }
 
 .cardArrow {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: rgba(200, 155, 96, 0.2);
   color: #C89B60;
@@ -291,35 +296,35 @@
 }
 
 .bespokeContent {
-  max-width: 650px;
+  max-width: 750px;
 }
 
 .bespokeSub {
   font-family: var(--font-italianno), cursive;
-  font-size: 1.9rem;
+  font-size: 2.2rem;
   color: #C89B60;
   margin-bottom: 4px;
 }
 
 .bespokeTitle {
   font-family: var(--font-libre), serif;
-  font-size: 2rem;
+  font-size: 2.3rem;
   font-weight: 400;
   margin: 0 0 12px;
   color: #fff;
 }
 
 .bespokeDesc {
-  font-size: 15px;
+  font-size: 30px;
   color: rgba(255, 255, 255, 0.75);
-  line-height: 1.6;
+  line-height: 1;
   margin: 0;
 }
 
 .bespokeBtn {
   background: #C89B60;
   color: #fff;
-  font-size: 15px;
+  font-size: 25px;
   font-weight: 500;
   padding: 14px 28px;
   border-radius: 8px;
@@ -339,18 +344,34 @@
 
 /* RESPONSIVE MEDIA QUERIES */
 @media (max-width: 1024px) {
-  .heroTitle {
-    font-size: 2.8rem;
+  .hero {
+    min-height: 440px;
+    padding: 75px 24px 75px;
   }
+
+  .heroTitle {
+    font-size: 3.2rem;
+  }
+
+  .heroSub {
+    font-size: 2.6rem;
+  }
+
+  .heroDesc {
+    font-size: 1.08rem;
+  }
+
   .categoriesGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 24px;
   }
+
   .bespokeSection {
     flex-direction: column;
     text-align: center;
     padding: 40px 24px;
   }
+
   .bespokeContent {
     max-width: 100%;
   }
@@ -358,30 +379,42 @@
 
 @media (max-width: 768px) {
   .hero {
-    min-height: 340px;
-    padding: 100px 16px 40px;
+    min-height: 380px;
+    padding: 70px 16px 50px;
   }
+
+  .heroSub {
+    font-size: 2.4rem;
+  }
+
   .heroTitle {
-    font-size: 2.2rem;
+    font-size: 2.5rem;
   }
+
   .heroDesc {
-    font-size: 14px;
+    font-size: 1rem;
+    line-height: 1.55;
   }
+
   .categoriesSection {
     padding: 40px 16px 60px;
   }
+
   .sectionTitle {
     font-size: 1.8rem;
   }
+
   .categoriesGrid {
     grid-template-columns: 1fr;
     gap: 20px;
   }
+
   .categoryCard {
     height: 340px;
     border-top-left-radius: 40px;
     border-bottom-right-radius: 40px;
   }
+
   .categoryName {
     font-size: 1.5rem;
   }

@@ -755,23 +755,33 @@ function ShopContent() {
                   </div>
 
                   <div className={styles.productInfo}>
+                    <div className={styles.productTopRow}>
+                      {product.product_category ? (
+                        <span className={styles.productCategory}>
+                          {product.product_category.replace(/_/g, " ")}
+                        </span>
+                      ) : (
+                        <span />
+                      )}
+                      <div className={styles.productRating}>
+                        <svg
+                          className={styles.starIcon}
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                        >
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                        <span>{product.product_rating ? `${product.product_rating} / 5` : "Not rated yet"}</span>
+                      </div>
+                    </div>
+
                     <div className={styles.productInfoRow}>
                       <Link href={`/product/${pId}`} className={styles.productNameLink}>
                         <h4 className={styles.productName}>{product.product_title}</h4>
                       </Link>
                       <div className={styles.productPrice}>₹{product.product_price}</div>
-                    </div>
-                    <div className={styles.productRating}>
-                      <svg
-                        className={styles.starIcon}
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                      </svg>
-                      <span>{product.product_rating ? `${product.product_rating} / 5` : "Not rated yet"}</span>
                     </div>
                   </div>
                 </div>

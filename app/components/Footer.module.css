@@ -1,14 +1,14 @@
 .footer {
   width: 100%;
   background: var(--color-bg, #f8f1ea);
-  padding: 0 0 44px;
+  padding: 0 0 15px;
 }
 
 .footerTopBorder {
   height: 1px;
   background: #D8A56E;
   width: 100%;
-  margin-bottom: 56px;
+  margin-bottom: 25px;
 }
 
 .footerInner {
@@ -272,14 +272,14 @@
 .footerBottom {
   width: 1440px;
   max-width: 100%;
-  margin: 52px auto 0;
+  margin: 20px auto 0;
   padding: 0 80px;
 }
 
 .footerDivider {
   border: none;
-  border-top: 1px solid #E8DFD5;
-  margin: 0 0 20px 0;
+  border-top: 1.5px solid #E8DFD5;
+  margin: 0 0 10px 0;
   width: 100%;
 }
 

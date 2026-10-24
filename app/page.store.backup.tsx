@@ -96,7 +96,7 @@ export default async function Home() {
       {/* ===================== FEATURED PROJECTS SECTION ===================== */}
       {/* Figma: 1440x885, "Our Featured Projects." title, 2 large project cards, Explore button */}
       <section className={styles.projectsSection}>
-        <h2 className={styles.projectsTitle}>Our Featured Projects.</h2>
+        <h2 className={styles.projectsTitle}>Our Featured Projects</h2>
         <ProjectsCarousel projects={allProjects} />
         <Link href="/projects" className={styles.btnExploreProjects}>
           Explore All Projects

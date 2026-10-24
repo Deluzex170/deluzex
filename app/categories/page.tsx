@@ -81,7 +81,7 @@ export default async function CategoriesPage() {
                 <div className={styles.cardOverlay}></div>
 
                 <div className={styles.cardContent}>
-                  <span className={styles.categoryTag}>Collection #{String(index + 1).padStart(2, "0")}</span>
+
                   <h3 className={styles.categoryName}>{cat.name}</h3>
                   {cat.description && (
                     <p className={styles.categoryDesc}>{cat.description}</p>
