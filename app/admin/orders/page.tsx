@@ -116,8 +116,8 @@ export default function AdminOrdersPage() {
   const handleOpenDrawer = (order: UserOrder) => {
     setSelectedOrder(order);
     setFulfillStatus(order.status || "processing");
-    setCourierPartner(order.courier_partner || "");
-    setTrackingNumber(order.tracking_number || "");
+    setCourierPartner(order.courier_partner || order.courier_name || "");
+    setTrackingNumber(order.tracking_number || order.awb_code || "");
     setFulfillNotes(order.notes || "");
     setToastMsg(null);
   };
@@ -563,14 +563,21 @@ export default function AdminOrdersPage() {
 
               {/* FULFILLMENT CONTROLS */}
               <div className={styles.sectionBlock}>
-                <div className={styles.sectionBlockTitle}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="1" y="3" width="15" height="13" />
-                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
-                    <circle cx="5.5" cy="18.5" r="2.5" />
-                    <circle cx="18.5" cy="18.5" r="2.5" />
-                  </svg>
-                  Order Status & Courier Dispatch
+                <div className={styles.sectionBlockTitle} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="1" y="3" width="15" height="13" />
+                      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                      <circle cx="5.5" cy="18.5" r="2.5" />
+                      <circle cx="18.5" cy="18.5" r="2.5" />
+                    </svg>
+                    Order Status & Courier Dispatch
+                  </div>
+                  {selectedOrder.awb_code && (
+                    <span style={{ fontSize: "0.72rem", background: "rgba(124, 58, 237, 0.15)", color: "#a78bfa", border: "1px solid rgba(124, 58, 237, 0.3)", padding: "0.15rem 0.5rem", borderRadius: "4px", fontWeight: 500 }}>
+                      ⚡ Auto-Synced with Shiprocket
+                    </span>
+                  )}
                 </div>
 
                 <form className={styles.fulfillForm} onSubmit={handleFulfillSubmit}>
@@ -791,7 +798,13 @@ export default function AdminOrdersPage() {
                 const fresh = ordersList.find(
                   (o) => o._id === shiprocketOrder._id || o.id === shiprocketOrder.id
                 );
-                if (fresh) setSelectedOrder(fresh);
+                if (fresh) {
+                  setSelectedOrder(fresh);
+                  setFulfillStatus(fresh.status || "processing");
+                  setCourierPartner(fresh.courier_partner || fresh.courier_name || "");
+                  setTrackingNumber(fresh.tracking_number || fresh.awb_code || "");
+                  setFulfillNotes(fresh.notes || "");
+                }
               });
             }
           }}
