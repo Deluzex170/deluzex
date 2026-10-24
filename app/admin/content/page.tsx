@@ -436,7 +436,7 @@ export default function AdminContentPage() {
                     height: "220px",
                     borderRadius: "12px",
                     overflow: "hidden",
-                    background: "#1a1a1a",
+                    background: "var(--admin-surface-hover)",
                     border: "1px solid var(--admin-border)",
                     marginBottom: "1rem",
                   }}
@@ -584,7 +584,7 @@ export default function AdminContentPage() {
                     height: "180px",
                     borderRadius: "12px",
                     overflow: "hidden",
-                    background: "#1a1a1a",
+                    background: "var(--admin-surface-hover)",
                     border: "1px solid var(--admin-border)",
                     marginBottom: "0.75rem",
                   }}
@@ -792,7 +792,7 @@ export default function AdminContentPage() {
                     height: "180px",
                     borderRadius: "12px",
                     overflow: "hidden",
-                    background: "#1a1a1a",
+                    background: "var(--admin-surface-hover)",
                     border: "1px solid var(--admin-border)",
                     marginBottom: "0.75rem",
                   }}
@@ -865,7 +865,7 @@ export default function AdminContentPage() {
                     height: "200px",
                     borderRadius: "12px",
                     overflow: "hidden",
-                    background: "#1a1a1a",
+                    background: "var(--admin-surface-hover)",
                     border: "1px solid var(--admin-border)",
                     marginBottom: "0.75rem",
                   }}
@@ -964,7 +964,7 @@ export default function AdminContentPage() {
                     height: "180px",
                     borderRadius: "12px",
                     overflow: "hidden",
-                    background: "#1a1a1a",
+                    background: "var(--admin-surface-hover)",
                     border: "1px solid var(--admin-border)",
                     marginBottom: "0.75rem",
                   }}

@@ -2,7 +2,7 @@
   padding: 2rem 2.5rem 4rem;
   max-width: 1400px;
   margin: 0 auto;
-  color: #f5f5f5;
+  color: var(--admin-text-main, #f5f5f5);
   font-family: inherit;
 }
 
@@ -26,7 +26,7 @@
 
 .titleArea p {
   font-size: 0.95rem;
-  color: #8e8e93;
+  color: var(--admin-text-muted, #8e8e93);
   margin: 0;
 }
 
@@ -60,13 +60,14 @@
 }
 
 .kpiCard {
-  background: #141418;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--admin-surface, #141418);
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.06));
   border-radius: 12px;
   padding: 1.25rem 1.5rem;
   position: relative;
   overflow: hidden;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 .kpiCard:hover {
@@ -78,14 +79,14 @@
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #8e8e93;
+  color: var(--admin-text-muted, #8e8e93);
   margin-bottom: 0.5rem;
 }
 
 .kpiValue {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--admin-text-main, #ffffff);
   line-height: 1.1;
 }
 
@@ -97,10 +98,11 @@
   flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 1.5rem;
-  background: #141418;
+  background: var(--admin-surface, #141418);
   padding: 0.85rem 1.25rem;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.06));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 .filterTabs {
@@ -114,7 +116,7 @@
   border-radius: 8px;
   border: 1px solid transparent;
   background: transparent;
-  color: #8e8e93;
+  color: var(--admin-text-muted, #8e8e93);
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
@@ -122,8 +124,8 @@
 }
 
 .tabBtn:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--admin-text-main, #ffffff);
+  background: var(--admin-surface-hover, rgba(255, 255, 255, 0.05));
 }
 
 .tabBtnActive {
@@ -135,8 +137,8 @@
 .searchBox {
   display: flex;
   align-items: center;
-  background: #0e0e12;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--admin-bg, #0e0e12);
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.1));
   border-radius: 8px;
   padding: 0.45rem 0.85rem;
   width: 280px;
@@ -146,22 +148,23 @@
 .searchBox input {
   background: transparent;
   border: none;
-  color: #ffffff;
+  color: var(--admin-text-main, #ffffff);
   font-size: 0.85rem;
   width: 100%;
   outline: none;
 }
 
 .searchBox input::placeholder {
-  color: #636366;
+  color: var(--admin-text-subtle, #636366);
 }
 
 /* INQUIRIES TABLE */
 .tableContainer {
-  background: #141418;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--admin-surface, #141418);
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.06));
   border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 .tableWrapper {
@@ -177,34 +180,35 @@
 
 .table th {
   padding: 1rem 1.25rem;
-  background: #0e0e12;
-  color: #d4af37;
+  background: var(--admin-bg, #0e0e12);
+  color: var(--admin-primary, #d4af37);
   font-weight: 600;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--admin-border, rgba(255, 255, 255, 0.06));
 }
 
 .table td {
   padding: 1.15rem 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--admin-border-subtle, rgba(255, 255, 255, 0.04));
   vertical-align: middle;
+  color: var(--admin-text-main, #f5f5f5);
 }
 
 .table tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--admin-surface-hover, rgba(255, 255, 255, 0.02));
 }
 
 .senderName {
   font-weight: 600;
-  color: #ffffff;
+  color: var(--admin-text-main, #ffffff);
   display: block;
 }
 
 .senderEmail {
   font-size: 0.8rem;
-  color: #8e8e93;
+  color: var(--admin-text-muted, #8e8e93);
 }
 
 .messageSnippet {
@@ -212,7 +216,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #d4d4d8;
+  color: var(--admin-text-main, #d4d4d8);
   font-size: 0.85rem;
 }
 
@@ -249,9 +253,21 @@
   border-color: rgba(234, 179, 8, 0.35);
 }
 
+:global([data-theme="light"]) .status_new {
+  background: rgba(234, 179, 8, 0.2);
+  color: #b45309;
+  border-color: rgba(234, 179, 8, 0.4);
+}
+
 .status_contacted {
   background: rgba(59, 130, 246, 0.15);
   color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+:global([data-theme="light"]) .status_contacted {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1d4ed8;
   border-color: rgba(59, 130, 246, 0.35);
 }
 
@@ -261,10 +277,22 @@
   border-color: rgba(34, 197, 94, 0.35);
 }
 
+:global([data-theme="light"]) .status_resolved {
+  background: rgba(34, 197, 94, 0.15);
+  color: #15803d;
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
 .status_archived {
   background: rgba(156, 163, 175, 0.15);
   color: #9ca3af;
   border-color: rgba(156, 163, 175, 0.35);
+}
+
+:global([data-theme="light"]) .status_archived {
+  background: rgba(100, 116, 139, 0.15);
+  color: #475569;
+  border-color: rgba(100, 116, 139, 0.3);
 }
 
 .actionBtnGroup {
@@ -310,7 +338,7 @@
 .modalBackdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(6px);
   z-index: 1000;
   display: flex;
@@ -320,8 +348,8 @@
 }
 
 .modalCard {
-  background: #141418;
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: var(--admin-surface, #141418);
+  border: 1px solid var(--admin-border, rgba(212, 175, 55, 0.3));
   border-radius: 16px;
   max-width: 650px;
   width: 100%;
@@ -329,16 +357,17 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+  color: var(--admin-text-main, #ffffff);
 }
 
 .modalHeader {
   padding: 1.5rem 1.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--admin-border, rgba(255, 255, 255, 0.08));
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #0e0e12;
+  background: var(--admin-bg, #0e0e12);
 }
 
 .modalHeader h3 {
@@ -353,14 +382,14 @@
 .closeBtn {
   background: transparent;
   border: none;
-  color: #8e8e93;
+  color: var(--admin-text-muted, #8e8e93);
   font-size: 1.4rem;
   cursor: pointer;
   line-height: 1;
 }
 
 .closeBtn:hover {
-  color: #ffffff;
+  color: var(--admin-text-main, #ffffff);
 }
 
 .modalBody {
@@ -374,22 +403,22 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 1.25rem;
   margin-bottom: 1.5rem;
-  background: #0e0e12;
+  background: var(--admin-bg, #0e0e12);
   padding: 1.25rem;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.04));
 }
 
 .metaItem label {
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: #8e8e93;
+  color: var(--admin-text-muted, #8e8e93);
   display: block;
   margin-bottom: 0.25rem;
 }
 
 .metaItem span, .metaItem a {
-  color: #ffffff;
+  color: var(--admin-text-main, #ffffff);
   font-size: 0.95rem;
   font-weight: 500;
   text-decoration: none;
@@ -400,8 +429,8 @@
 }
 
 .messageBlock {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--admin-bg, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.06));
   border-radius: 10px;
   padding: 1.25rem;
   margin-bottom: 1.5rem;
@@ -420,16 +449,16 @@
   white-space: pre-wrap;
   line-height: 1.6;
   font-size: 0.95rem;
-  color: #e4e4e7;
+  color: var(--admin-text-main, #e4e4e7);
 }
 
 .modalFooter {
   padding: 1.25rem 1.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--admin-border, rgba(255, 255, 255, 0.08));
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #0e0e12;
+  background: var(--admin-bg, #0e0e12);
   flex-wrap: wrap;
   gap: 1rem;
 }
@@ -455,7 +484,7 @@
 .emptyState {
   padding: 4rem 2rem;
   text-align: center;
-  color: #8e8e93;
+  color: var(--admin-text-muted, #8e8e93);
 }
 
 .emptyState p {

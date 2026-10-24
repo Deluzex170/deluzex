@@ -2,7 +2,7 @@
   padding: 2.25rem 2.5rem;
   max-width: 1440px;
   margin: 0 auto;
-  color: #F4F4F6;
+  color: var(--admin-text-main, #F4F4F6);
 }
 
 @media (max-width: 768px) {
@@ -23,13 +23,13 @@
 .headerTitle {
   font-size: 2rem;
   font-weight: 700;
-  color: #FFFFFF;
+  color: var(--admin-text-main, #FFFFFF);
   margin: 0 0 0.35rem 0;
   letter-spacing: -0.02em;
 }
 
 .headerSubtitle {
-  color: #9CA3AF;
+  color: var(--admin-text-muted, #9CA3AF);
   font-size: 0.95rem;
   margin: 0;
 }
@@ -93,11 +93,11 @@
 }
 
 .kpiCard {
-  background: #131317;
+  background: var(--admin-surface, #131317);
   border-radius: 14px;
-  border: 1px solid #23232A;
+  border: 1px solid var(--admin-border, #23232A);
   padding: 1.5rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -107,7 +107,7 @@
 .kpiCard:hover {
   transform: translateY(-2px);
   border-color: rgba(196, 154, 69, 0.4);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
 }
 
 .kpiTop {
@@ -120,7 +120,7 @@
 .kpiLabel {
   font-size: 0.82rem;
   font-weight: 700;
-  color: #9CA3AF;
+  color: var(--admin-text-muted, #9CA3AF);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -132,9 +132,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1F1F26;
-  color: #FFFFFF;
-  border: 1px solid #2A2A33;
+  background: var(--admin-bg, #1F1F26);
+  color: var(--admin-text-main, #FFFFFF);
+  border: 1px solid var(--admin-border, #2A2A33);
 }
 
 .kpiIconBlue {
@@ -164,7 +164,7 @@
 .kpiValue {
   font-size: 2.25rem;
   font-weight: 800;
-  color: #FFFFFF;
+  color: var(--admin-text-main, #FFFFFF);
   line-height: 1;
   margin-bottom: 0.5rem;
   letter-spacing: -0.03em;
@@ -175,15 +175,15 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.82rem;
-  color: #9CA3AF;
+  color: var(--admin-text-muted, #9CA3AF);
 }
 
 /* SECTION 2: AUDIT LOGS STREAM TABLE */
 .logsSection {
-  background: #131317;
+  background: var(--admin-surface, #131317);
   border-radius: 14px;
-  border: 1px solid #23232A;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--admin-border, #23232A);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
 
@@ -194,25 +194,25 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
-  border-bottom: 1px solid #23232A;
-  background: #0E0E12;
+  border-bottom: 1px solid var(--admin-border, #23232A);
+  background: var(--admin-bg, #0E0E12);
 }
 
 .filterTabs {
   display: flex;
-  background: #181820;
+  background: var(--admin-bg, #181820);
   padding: 0.25rem;
   border-radius: 10px;
   gap: 0.2rem;
   flex-wrap: wrap;
-  border: 1px solid #23232A;
+  border: 1px solid var(--admin-border, #23232A);
 }
 
 .filterTab {
   padding: 0.45rem 0.95rem;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #9CA3AF;
+  color: var(--admin-text-muted, #9CA3AF);
   border: none;
   background: transparent;
   border-radius: 8px;
@@ -250,11 +250,11 @@
 .searchInput {
   width: 100%;
   padding: 0.55rem 0.75rem 0.55rem 2.25rem;
-  border: 1px solid #23232A;
+  border: 1px solid var(--admin-border, #23232A);
   border-radius: 8px;
   font-size: 0.875rem;
-  background: #181820;
-  color: #FFFFFF;
+  background: var(--admin-bg, #181820);
+  color: var(--admin-text-main, #FFFFFF);
   outline: none;
   transition: border-color 0.2s;
   box-sizing: border-box;
@@ -266,11 +266,11 @@
 
 .statusSelect {
   padding: 0.55rem 0.85rem;
-  border: 1px solid #23232A;
+  border: 1px solid var(--admin-border, #23232A);
   border-radius: 8px;
   font-size: 0.875rem;
-  background: #181820;
-  color: #F4F4F6;
+  background: var(--admin-bg, #181820);
+  color: var(--admin-text-main, #F4F4F6);
   outline: none;
 }
 
@@ -296,19 +296,19 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: #C49A45;
-  background: #0E0E12;
-  border-bottom: 1px solid #23232A;
+  background: var(--admin-bg, #0E0E12);
+  border-bottom: 1px solid var(--admin-border, #23232A);
 }
 
 .table td {
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid #1F1F26;
-  color: #E5E7EB;
+  border-bottom: 1px solid var(--admin-border, #1F1F26);
+  color: var(--admin-text-main, #E5E7EB);
   vertical-align: middle;
 }
 
 .table tr:hover td {
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--admin-surface-hover, rgba(255, 255, 255, 0.025));
 }
 
 /* ACTOR CELL */
@@ -322,15 +322,15 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #1F1F26;
-  color: #E5E7EB;
+  background: var(--admin-bg, #1F1F26);
+  color: var(--admin-text-main, #E5E7EB);
   font-weight: 700;
   font-size: 0.85rem;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1px solid #2A2A33;
+  border: 1px solid var(--admin-border, #2A2A33);
 }
 
 .avatarAdmin {
@@ -353,7 +353,7 @@
 
 .actorName {
   font-weight: 700;
-  color: #FFFFFF;
+  color: var(--admin-text-main, #FFFFFF);
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -361,7 +361,7 @@
 
 .actorEmail {
   font-size: 0.78rem;
-  color: #9CA3AF;
+  color: var(--admin-text-muted, #9CA3AF);
 }
 
 /* ROLES */
@@ -387,12 +387,12 @@
 
 .roleGuest {
   padding: 0.15rem 0.5rem;
-  background: #1F1F26;
-  color: #9CA3AF;
+  background: var(--admin-bg, #1F1F26);
+  color: var(--admin-text-muted, #9CA3AF);
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 600;
-  border: 1px solid #2A2A33;
+  border: 1px solid var(--admin-border, #2A2A33);
 }
 
 /* ACTIONS */
@@ -409,26 +409,26 @@
 
 .actionSuccess {
   background: rgba(16, 185, 129, 0.14);
-  color: #34D399;
+  color: #16a34a;
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .actionUpdate {
   background: rgba(245, 158, 11, 0.14);
-  color: #FBBF24;
+  color: #d97706;
   border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .actionDanger {
   background: rgba(239, 68, 68, 0.14);
-  color: #F87171;
+  color: #dc2626;
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .actionNeutral {
-  background: #1F1F26;
-  color: #D1D5DB;
-  border: 1px solid #2E2E38;
+  background: var(--admin-bg, #1F1F26);
+  color: var(--admin-text-main, #D1D5DB);
+  border: 1px solid var(--admin-border, #2E2E38);
 }
 
 /* TARGET */
@@ -436,13 +436,13 @@
   display: inline-block;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #F4F4F6;
+  color: var(--admin-text-main, #F4F4F6);
 }
 
 .targetType {
   font-size: 0.7rem;
   text-transform: uppercase;
-  color: #8E8E96;
+  color: var(--admin-text-muted, #8E8E96);
   letter-spacing: 0.05em;
   margin-bottom: 0.15rem;
 }
@@ -450,7 +450,7 @@
 /* DESCRIPTION */
 .descText {
   font-size: 0.85rem;
-  color: #D1D5DB;
+  color: var(--admin-text-main, #D1D5DB);
   max-width: 320px;
   line-height: 1.4;
 }
@@ -458,12 +458,12 @@
 /* DETAILS BTN */
 .btnViewDetails {
   padding: 0.35rem 0.75rem;
-  background: #181820;
-  border: 1px solid #2A2A35;
+  background: var(--admin-surface, #181820);
+  border: 1px solid var(--admin-border, #2A2A35);
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #E5E7EB;
+  color: var(--admin-text-main, #E5E7EB);
   cursor: pointer;
   transition: all 0.15s ease;
   display: inline-flex;
@@ -497,18 +497,18 @@
 }
 
 .modalContent {
-  background: #131317;
+  background: var(--admin-surface, #131317);
   border-radius: 14px;
   width: 100%;
   max-width: 680px;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-  border: 1px solid #23232A;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--admin-border, #23232A);
   overflow: hidden;
   animation: scaleUp 0.2s ease-out;
-  color: #F4F4F6;
+  color: var(--admin-text-main, #F4F4F6);
 }
 
 @keyframes scaleUp {
@@ -518,17 +518,17 @@
 
 .modalHeader {
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #23232A;
+  border-bottom: 1px solid var(--admin-border, #23232A);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #0E0E12;
+  background: var(--admin-bg, #0E0E12);
 }
 
 .modalTitle {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #FFFFFF;
+  color: var(--admin-text-main, #FFFFFF);
   margin: 0;
 }
 
@@ -536,7 +536,7 @@
   background: transparent;
   border: none;
   font-size: 1.5rem;
-  color: #9CA3AF;
+  color: var(--admin-text-muted, #9CA3AF);
   cursor: pointer;
   line-height: 1;
   padding: 0.25rem;
@@ -544,7 +544,7 @@
 }
 
 .modalCloseBtn:hover {
-  color: #FFFFFF;
+  color: var(--admin-text-main, #FFFFFF);
 }
 
 .modalBody {
@@ -559,17 +559,17 @@
   display: flex;
   justify-content: space-between;
   padding: 0.65rem 0;
-  border-bottom: 1px solid #1F1F26;
+  border-bottom: 1px solid var(--admin-border, #1F1F26);
   font-size: 0.85rem;
 }
 
 .detailLabel {
-  color: #9CA3AF;
+  color: var(--admin-text-muted, #9CA3AF);
   font-weight: 600;
 }
 
 .detailVal {
-  color: #FFFFFF;
+  color: var(--admin-text-main, #FFFFFF);
   font-weight: 600;
   text-align: right;
 }
@@ -582,10 +582,10 @@
 }
 
 .diffBox {
-  background: #0E0E12;
+  background: var(--admin-bg, #0E0E12);
   border-radius: 8px;
   padding: 1rem;
-  border: 1px solid #23232A;
+  border: 1px solid var(--admin-border, #23232A);
 }
 
 .diffBoxTitle {
@@ -598,13 +598,13 @@
 }
 
 .jsonViewer {
-  background: #08080A;
-  color: #E2E8F0;
+  background: var(--admin-bg, #08080A);
+  color: var(--admin-text-main, #E2E8F0);
   padding: 1rem;
   border-radius: 8px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.8rem;
   overflow-x: auto;
   max-height: 250px;
-  border: 1px solid #1F1F26;
+  border: 1px solid var(--admin-border, #1F1F26);
 }

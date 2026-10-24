@@ -375,31 +375,31 @@ export default function AdminCustomersPage() {
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
-              <div style={{ background: "#1a1a1a", padding: "1rem", borderRadius: "8px", border: "1px solid #242424" }}>
-                <div style={{ fontSize: "0.75rem", color: "#888", textTransform: "uppercase" }}>Email Address</div>
-                <div style={{ fontWeight: 500, color: "#fff", marginTop: "0.25rem" }}>
+              <div style={{ background: "var(--admin-bg)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
+                <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase" }}>Email Address</div>
+                <div style={{ fontWeight: 500, color: "var(--admin-text-main)", marginTop: "0.25rem" }}>
                   <a href={`mailto:${selectedCustomer.email}`} style={{ color: "#c49a45", textDecoration: "none" }}>
                     {selectedCustomer.email || "—"}
                   </a>
                 </div>
               </div>
 
-              <div style={{ background: "#1a1a1a", padding: "1rem", borderRadius: "8px", border: "1px solid #242424" }}>
-                <div style={{ fontSize: "0.75rem", color: "#888", textTransform: "uppercase" }}>Phone Number</div>
-                <div style={{ fontWeight: 500, color: "#fff", marginTop: "0.25rem" }}>
+              <div style={{ background: "var(--admin-bg)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
+                <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase" }}>Phone Number</div>
+                <div style={{ fontWeight: 500, color: "var(--admin-text-main)", marginTop: "0.25rem" }}>
                   {selectedCustomer.phone || "—"}
                 </div>
               </div>
 
-              <div style={{ background: "#1a1a1a", padding: "1rem", borderRadius: "8px", border: "1px solid #242424" }}>
-                <div style={{ fontSize: "0.75rem", color: "#888", textTransform: "uppercase" }}>Lifetime Orders</div>
-                <div style={{ fontWeight: 600, color: "#fff", marginTop: "0.25rem", fontSize: "1.1rem" }}>
+              <div style={{ background: "var(--admin-bg)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
+                <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase" }}>Lifetime Orders</div>
+                <div style={{ fontWeight: 600, color: "var(--admin-text-main)", marginTop: "0.25rem", fontSize: "1.1rem" }}>
                   {selectedCustomer.orders_count} orders
                 </div>
               </div>
 
-              <div style={{ background: "#1a1a1a", padding: "1rem", borderRadius: "8px", border: "1px solid #242424" }}>
-                <div style={{ fontSize: "0.75rem", color: "#888", textTransform: "uppercase" }}>Total Spend</div>
+              <div style={{ background: "var(--admin-bg)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
+                <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase" }}>Total Spend</div>
                 <div style={{ fontWeight: 600, color: "#c49a45", marginTop: "0.25rem", fontSize: "1.1rem" }}>
                   ₹{selectedCustomer.total_spent.toLocaleString("en-IN")}
                 </div>
@@ -410,11 +410,11 @@ export default function AdminCustomersPage() {
             <div>
               <div className={styles.modalSectionLabel}>Order History ({customerOrders.length})</div>
               {loadingOrders ? (
-                <div style={{ padding: "2rem", textAlign: "center", color: "#888" }}>
+                <div style={{ padding: "2rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
                   Loading order history...
                 </div>
               ) : customerOrders.length === 0 ? (
-                <div style={{ padding: "2rem", textAlign: "center", color: "#777", background: "#181818", borderRadius: "8px" }}>
+                <div style={{ padding: "2rem", textAlign: "center", color: "var(--admin-text-muted)", background: "var(--admin-bg)", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
                   No orders placed yet by this customer.
                 </div>
               ) : (

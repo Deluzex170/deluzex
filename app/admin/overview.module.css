@@ -5,7 +5,7 @@
   max-width: 1400px;
   margin: 0 auto;
   min-height: calc(100vh - 80px);
-  color: #f3f3f3;
+  color: var(--admin-text-main, #f3f3f3);
   font-family: inherit;
 }
 
@@ -23,7 +23,7 @@
   font-weight: 500;
   letter-spacing: -0.02em;
   margin: 0 0 0.5rem 0;
-  color: #ffffff;
+  color: var(--admin-text-main, #ffffff);
 }
 
 .goldAccent {
@@ -32,7 +32,7 @@
 
 .subtitle {
   font-size: 0.95rem;
-  color: #8c8c8c;
+  color: var(--admin-text-muted, #8c8c8c);
   margin: 0;
 }
 
@@ -66,8 +66,8 @@
 }
 
 .kpiCard {
-  background: #141414;
-  border: 1px solid #242424;
+  background: var(--admin-surface, #141414);
+  border: 1px solid var(--admin-border, #242424);
   border-radius: 12px;
   padding: 1.5rem;
   position: relative;
@@ -91,7 +91,7 @@
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #8c8c8c;
+  color: var(--admin-text-muted, #8c8c8c);
 }
 
 .kpiIcon {
@@ -102,7 +102,7 @@
 .kpiValue {
   font-size: 2.25rem;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--admin-text-main, #ffffff);
   line-height: 1.1;
   margin-bottom: 0.5rem;
 }
@@ -113,7 +113,7 @@
 
 .kpiFootnote {
   font-size: 0.8rem;
-  color: #717171;
+  color: var(--admin-text-subtle, #717171);
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -134,7 +134,7 @@
 .sectionTitle {
   font-size: 1.15rem;
   font-weight: 600;
-  color: #e5e5e5;
+  color: var(--admin-text-main, #e5e5e5);
   letter-spacing: -0.01em;
 }
 
@@ -145,12 +145,12 @@
 }
 
 .navCard {
-  background: #141414;
-  border: 1px solid #222222;
+  background: var(--admin-surface, #141414);
+  border: 1px solid var(--admin-border, #222222);
   border-radius: 10px;
   padding: 1.15rem 1.25rem;
   text-decoration: none;
-  color: #e0e0e0;
+  color: var(--admin-text-main, #e0e0e0);
   transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
@@ -158,7 +158,7 @@
 }
 
 .navCard:hover {
-  background: #1a1a1a;
+  background: var(--admin-surface-hover, #1a1a1a);
   border-color: rgba(196, 154, 69, 0.4);
   transform: translateY(-2px);
   color: #c49a45;
@@ -168,12 +168,12 @@
   font-weight: 600;
   font-size: 0.95rem;
   margin-bottom: 0.35rem;
-  color: #ffffff;
+  color: var(--admin-text-main, #ffffff);
 }
 
 .navCardDesc {
   font-size: 0.8rem;
-  color: #777777;
+  color: var(--admin-text-muted, #777777);
 }
 
 /* Dual Column Feed */
@@ -184,8 +184,8 @@
 }
 
 .feedCard {
-  background: #141414;
-  border: 1px solid #242424;
+  background: var(--admin-surface, #141414);
+  border: 1px solid var(--admin-border, #242424);
   border-radius: 12px;
   padding: 1.5rem;
 }
@@ -196,7 +196,7 @@
   align-items: center;
   margin-bottom: 1.25rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid var(--admin-border, #222);
 }
 
 .viewAllLink {
@@ -216,7 +216,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.9rem 0;
-  border-bottom: 1px solid #1c1c1c;
+  border-bottom: 1px solid var(--admin-border, #1c1c1c);
 }
 
 .orderRow:last-child {
@@ -225,13 +225,13 @@
 
 .orderNum {
   font-weight: 600;
-  color: #ffffff;
+  color: var(--admin-text-main, #ffffff);
   font-size: 0.9rem;
 }
 
 .orderCust {
   font-size: 0.8rem;
-  color: #777;
+  color: var(--admin-text-muted, #777);
 }
 
 .orderRight {
@@ -257,12 +257,12 @@
 
 .statusPaid {
   background: rgba(34, 197, 94, 0.12);
-  color: #4ade80;
+  color: #16a34a;
 }
 
 .statusPending {
   background: rgba(234, 179, 8, 0.12);
-  color: #facc15;
+  color: #ca8a04;
 }
 
 /* Stock Alert Row */
@@ -271,7 +271,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.85rem 0;
-  border-bottom: 1px solid #1c1c1c;
+  border-bottom: 1px solid var(--admin-border, #1c1c1c);
 }
 
 .stockRow:last-child {
@@ -280,7 +280,7 @@
 
 .stockName {
   font-weight: 500;
-  color: #eee;
+  color: var(--admin-text-main, #eee);
   font-size: 0.875rem;
 }
 
@@ -293,20 +293,20 @@
 
 .stockCritical {
   background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
+  color: #dc2626;
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .stockWarning {
   background: rgba(234, 179, 8, 0.12);
-  color: #facc15;
+  color: #ca8a04;
   border: 1px solid rgba(234, 179, 8, 0.3);
 }
 
 /* Operational Attention Pill */
 .opAlertCard {
-  background: #181818;
-  border: 1px solid #282828;
+  background: var(--admin-surface, #181818);
+  border: 1px solid var(--admin-border, #282828);
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 0.75rem;
@@ -325,12 +325,12 @@
 .opAlertTitle {
   font-weight: 500;
   font-size: 0.875rem;
-  color: #fff;
+  color: var(--admin-text-main, #fff);
 }
 
 .opAlertSubtitle {
   font-size: 0.775rem;
-  color: #777;
+  color: var(--admin-text-muted, #777);
 }
 
 .opBadge {

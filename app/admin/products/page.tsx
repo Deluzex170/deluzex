@@ -209,7 +209,7 @@ export default function AdminProducts() {
             <button
               onClick={() => setItemToDelete(null)}
               className={styles.btnCancel}
-              style={{ background: "#1A1A20", border: "1px solid var(--admin-border)", color: "#D1D5DB", padding: "0.65rem 1.25rem" }}
+              style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", color: "var(--admin-text-main)", padding: "0.65rem 1.25rem" }}
             >
               Cancel
             </button>

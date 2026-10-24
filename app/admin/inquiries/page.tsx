@@ -339,8 +339,8 @@ export default function AdminInquiries() {
                 </div>
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#0e0e12", padding: "1rem 1.25rem", borderRadius: "10px" }}>
-                <span style={{ fontSize: "0.85rem", color: "#8e8e93" }}>Update Status:</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--admin-bg)", border: "1px solid var(--admin-border)", padding: "1rem 1.25rem", borderRadius: "10px" }}>
+                <span style={{ fontSize: "0.85rem", color: "var(--admin-text-muted)" }}>Update Status:</span>
                 <select
                   className={`${styles.statusSelect} ${styles[`status_${(selectedInquiry.status || "new").toLowerCase()}`] || styles.status_new}`}
                   value={(selectedInquiry.status || "new").toLowerCase()}

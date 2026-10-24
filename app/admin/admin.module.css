@@ -98,6 +98,120 @@
   color-scheme: light;
 }
 
+/* ─── Universal Light Theme Surface & Contrast Enforcement ─── */
+.adminRoot[data-theme="light"] [class*="container"] {
+  color: var(--admin-text-main);
+}
+
+.adminRoot[data-theme="light"] [class*="kpiCard"],
+.adminRoot[data-theme="light"] [class*="controlsBar"],
+.adminRoot[data-theme="light"] [class*="tableContainer"],
+.adminRoot[data-theme="light"] [class*="tableCard"],
+.adminRoot[data-theme="light"] [class*="tableWrapper"],
+.adminRoot[data-theme="light"] [class*="modalCard"],
+.adminRoot[data-theme="light"] [class*="modalContent"],
+.adminRoot[data-theme="light"] [class*="drawer"],
+.adminRoot[data-theme="light"] [class*="card"],
+.adminRoot[data-theme="light"] [class*="navCard"],
+.adminRoot[data-theme="light"] [class*="feedCard"],
+.adminRoot[data-theme="light"] [class*="panelCard"],
+.adminRoot[data-theme="light"] [class*="logsSection"],
+.adminRoot[data-theme="light"] [class*="membersCard"],
+.adminRoot[data-theme="light"] [class*="opAlertCard"] {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text-main) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+}
+
+.adminRoot[data-theme="light"] th {
+  background-color: var(--admin-bg) !important;
+  color: var(--admin-text-muted) !important;
+  border-color: var(--admin-border) !important;
+}
+
+.adminRoot[data-theme="light"] td {
+  color: var(--admin-text-main) !important;
+  border-color: var(--admin-border) !important;
+}
+
+.adminRoot[data-theme="light"] tr:hover td {
+  background-color: var(--admin-surface-hover) !important;
+}
+
+.adminRoot[data-theme="light"] [class*="kpiValue"],
+.adminRoot[data-theme="light"] [class*="senderName"],
+.adminRoot[data-theme="light"] [class*="customerName"],
+.adminRoot[data-theme="light"] [class*="drawerItemTitle"],
+.adminRoot[data-theme="light"] [class*="messageSnippet"],
+.adminRoot[data-theme="light"] [class*="actorName"],
+.adminRoot[data-theme="light"] [class*="targetPill"],
+.adminRoot[data-theme="light"] [class*="descText"],
+.adminRoot[data-theme="light"] [class*="modalTitle"],
+.adminRoot[data-theme="light"] [class*="detailVal"],
+.adminRoot[data-theme="light"] [class*="memberName"],
+.adminRoot[data-theme="light"] [class*="stockName"],
+.adminRoot[data-theme="light"] [class*="navCardTitle"],
+.adminRoot[data-theme="light"] [class*="opAlertTitle"] {
+  color: var(--admin-text-main) !important;
+}
+
+.adminRoot[data-theme="light"] [class*="kpiLabel"],
+.adminRoot[data-theme="light"] [class*="senderEmail"],
+.adminRoot[data-theme="light"] [class*="customerSub"],
+.adminRoot[data-theme="light"] [class*="drawerItemQtyPrice"],
+.adminRoot[data-theme="light"] [class*="actorEmail"],
+.adminRoot[data-theme="light"] [class*="targetType"],
+.adminRoot[data-theme="light"] [class*="detailLabel"],
+.adminRoot[data-theme="light"] [class*="formLabel"],
+.adminRoot[data-theme="light"] [class*="memberEmail"],
+.adminRoot[data-theme="light"] [class*="navCardDesc"],
+.adminRoot[data-theme="light"] [class*="opAlertSubtitle"],
+.adminRoot[data-theme="light"] [class*="orderCust"] {
+  color: var(--admin-text-muted) !important;
+}
+
+.adminRoot[data-theme="light"] [class*="searchBox"],
+.adminRoot[data-theme="light"] [class*="searchInput"],
+.adminRoot[data-theme="light"] [class*="sectionBlock"],
+.adminRoot[data-theme="light"] [class*="metaGrid"],
+.adminRoot[data-theme="light"] [class*="messageBlock"],
+.adminRoot[data-theme="light"] [class*="modalHeader"],
+.adminRoot[data-theme="light"] [class*="modalFooter"],
+.adminRoot[data-theme="light"] [class*="drawerHeader"],
+.adminRoot[data-theme="light"] [class*="drawerFooter"],
+.adminRoot[data-theme="light"] [class*="logsToolbar"],
+.adminRoot[data-theme="light"] [class*="filterTabs"],
+.adminRoot[data-theme="light"] [class*="tabSwitch"],
+.adminRoot[data-theme="light"] [class*="dropzone"],
+.adminRoot[data-theme="light"] [class*="diffBox"],
+.adminRoot[data-theme="light"] [class*="previewCard"],
+.adminRoot[data-theme="light"] [class*="topPageRow"],
+.adminRoot[data-theme="light"] [class*="memberCard"],
+.adminRoot[data-theme="light"] [class*="pathTag"],
+.adminRoot[data-theme="light"] [class*="jsonViewer"] {
+  background-color: var(--admin-bg) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text-main) !important;
+}
+
+.adminRoot[data-theme="light"] [class*="badgeGuest"],
+.adminRoot[data-theme="light"] [class*="roleGuest"],
+.adminRoot[data-theme="light"] [class*="actionNeutral"] {
+  background-color: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+  color: #475569 !important;
+}
+
+.adminRoot[data-theme="light"] [class*="searchBox"] input,
+.adminRoot[data-theme="light"] input[type="text"],
+.adminRoot[data-theme="light"] input[type="search"],
+.adminRoot[data-theme="light"] select,
+.adminRoot[data-theme="light"] textarea {
+  color: var(--admin-text-main) !important;
+  background-color: var(--admin-bg) !important;
+}
+
 .adminRoot h1,
 .adminRoot h2,
 .adminRoot h3,
@@ -482,7 +596,7 @@
 }
 
 .table th {
-  background: #0E0E12;
+  background: var(--admin-bg, #0E0E12);
   padding: 1.1rem 1.4rem;
   font-size: 0.72rem;
   text-transform: uppercase;
@@ -601,14 +715,14 @@
 }
 
 .modal {
-  background: #141418;
+  background: var(--admin-surface, #141418);
   border-radius: 14px;
   width: 100%;
   max-width: 480px;
   max-height: calc(100vh - 4rem);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
   animation: adminModalFadeIn 0.2s ease-out;
   border: 1px solid var(--admin-border);
   position: relative;
@@ -627,14 +741,14 @@
   justify-content: space-between;
   padding: 1.15rem 1.4rem;
   border-bottom: 1px solid var(--admin-border);
-  background: #121216;
+  background: var(--admin-bg, #121216);
   flex-shrink: 0;
 }
 
 .modalTitle {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #FFFFFF;
+  color: var(--admin-text-main, #FFFFFF);
   margin: 0;
   display: flex;
   align-items: center;
@@ -704,7 +818,7 @@
   position: absolute;
   top: 1.25rem;
   right: 1.25rem;
-  background: #1F1F26;
+  background: var(--admin-bg, #1F1F26);
   border: 1px solid var(--admin-border);
   width: 32px;
   height: 32px;
@@ -712,7 +826,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #9CA3AF;
+  color: var(--admin-text-muted, #9CA3AF);
   cursor: pointer;
   transition: all 0.2s;
   font-size: 1rem;
@@ -720,13 +834,13 @@
 }
 
 .modalCloseBtn:hover {
-  background: #282832;
-  color: #FFFFFF;
+  background: var(--admin-surface-hover, #282832);
+  color: var(--admin-text-main, #FFFFFF);
 }
 
 .tabSwitch {
   display: inline-flex;
-  background: #0E0E12;
+  background: var(--admin-bg, #0E0E12);
   border-radius: 8px;
   padding: 3px;
   gap: 3px;
@@ -742,7 +856,7 @@
   font-weight: 600;
   border-radius: 6px;
   cursor: pointer;
-  color: #9CA3AF;
+  color: var(--admin-text-muted, #9CA3AF);
   transition: all 0.2s;
   white-space: nowrap;
 }
@@ -750,30 +864,30 @@
 .tabSwitchBtnActive {
   background: var(--admin-surface);
   color: #C49A45;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(196, 154, 69, 0.25);
 }
 
 .dropzone {
-  border: 2px dashed #2E2E38;
+  border: 2px dashed var(--admin-border, #2E2E38);
   border-radius: 12px;
   padding: 1.5rem;
   text-align: center;
   cursor: pointer;
-  background: #0E0E12;
+  background: var(--admin-bg, #0E0E12);
   transition: all 0.2s;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  color: #9CA3AF;
+  color: var(--admin-text-muted, #9CA3AF);
 }
 
 .dropzone:hover {
   border-color: #C49A45;
   background: rgba(196, 154, 69, 0.04);
-  color: #FFFFFF;
+  color: var(--admin-text-main, #FFFFFF);
 }
 
 .previewCard {
@@ -783,7 +897,7 @@
   padding: 0.65rem 0.95rem;
   border: 1px solid var(--admin-border);
   border-radius: 10px;
-  background: #0E0E12;
+  background: var(--admin-bg, #0E0E12);
   margin-top: 0.5rem;
 }
 
@@ -817,7 +931,7 @@
 .modal h3 {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #FFFFFF;
+  color: var(--admin-text-main, #FFFFFF);
   margin-bottom: 0.5rem;
   text-align: center;
 }
@@ -837,8 +951,8 @@
 }
 
 .btnCancel {
-  background: #1A1A20;
-  color: #D1D5DB;
+  background: var(--admin-surface, #1A1A20);
+  color: var(--admin-text-main, #D1D5DB);
   border: 1px solid var(--admin-border);
   padding: 0.65rem 1.25rem;
   border-radius: 8px;
@@ -849,8 +963,8 @@
 }
 
 .btnCancel:hover {
-  background: #25252E;
-  color: #FFFFFF;
+  background: var(--admin-surface-hover, #25252E);
+  color: var(--admin-text-main, #FFFFFF);
 }
 
 .btnConfirmLogout {
@@ -881,7 +995,7 @@
 .formLabel {
   font-size: 0.76rem;
   font-weight: 700;
-  color: #D1D5DB;
+  color: var(--admin-text-muted, #D1D5DB);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -893,8 +1007,8 @@
   border-radius: 8px;
   font-size: 0.9rem;
   font-family: inherit;
-  color: #FFFFFF;
-  background: #0E0E12;
+  color: var(--admin-text-main, #FFFFFF);
+  background: var(--admin-bg, #0E0E12);
   transition: border-color 0.2s, box-shadow 0.2s;
   outline: none;
   box-sizing: border-box;

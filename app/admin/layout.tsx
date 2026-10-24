@@ -260,9 +260,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <button
                       onClick={() => setConfirmLogout(false)}
                       style={{
-                        background: "#1F1F24",
-                        color: "#9CA3AF",
-                        border: "1px solid #2E2E38",
+                        background: "var(--admin-surface)",
+                        color: "var(--admin-text-muted)",
+                        border: "1px solid var(--admin-border)",
                         padding: "0.45rem 0.6rem",
                         borderRadius: "6px",
                         fontSize: "0.75rem",
