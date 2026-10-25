@@ -6,11 +6,8 @@ import { useDispatch } from "react-redux";
 import { addToCart, openCart } from "../../store/cartSlice";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
-import {
-  fetchUserWishlist,
-  removeFromWishlist,
-  WishlistItem,
-} from "../../services/api";
+import { useWishlist } from "../../context/WishlistContext";
+import { WishlistItem } from "../../services/api";
 
 // Placeholder pendant lamp image using a gradient background
 function LampPlaceholder() {
@@ -47,39 +44,31 @@ export default function WishlistPage() {
   const { user } = useAuth();
   const userEmail = (user as Record<string, string>)?.email || "";
 
-  const [items, setItems] = useState<WishlistItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    wishlistItems: items,
+    removeFromWishlist: globalRemove,
+    refreshWishlist,
+    isLoading: loading,
+  } = useWishlist();
+
   const [search, setSearch] = useState("");
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
 
-  const loadWishlist = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await fetchUserWishlist(userEmail);
-      setItems(data || []);
-    } catch (err) {
-      console.error("Failed to load wishlist from database:", err);
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [userEmail]);
-
   useEffect(() => {
-    loadWishlist();
-  }, [loadWishlist]);
+    refreshWishlist();
+  }, [refreshWishlist]);
 
   const removeItem = async (item: WishlistItem) => {
+    const pId = item.product_id || item.id || item._id;
     const itemId = item.id || item._id;
-    if (!itemId) return;
+    const title = item.product_title;
+    if (!pId && !itemId) return;
 
-    // Optimistic UI update
-    setItems((prev) => prev.filter((i) => (i.id || i._id) !== itemId));
     try {
-      await removeFromWishlist(itemId);
+      await globalRemove(pId || itemId || "", itemId, title);
     } catch (err) {
       console.error("Failed to remove item from wishlist:", err);
-      loadWishlist();
+      refreshWishlist();
     }
   };
 

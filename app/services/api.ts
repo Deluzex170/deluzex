@@ -1429,6 +1429,45 @@ export async function checkWishlistStatus(
   return { is_wishlisted: false, item_id: null };
 }
 
+export async function toggleWishlistApi(item: {
+  user_email: string;
+  product_id?: string;
+  product_title: string;
+  product_price: number | string;
+  product_image?: string;
+  product_slug?: string;
+}): Promise<{ is_wishlisted: boolean; item_id?: string | null; message?: string }> {
+  const res = await fetch(`${API_BASE_URL}/user/wishlist/toggle`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(item),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to update wishlist");
+  }
+  return await res.json();
+}
+
+export async function removeFromWishlistByProductId(productId: string, email: string): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/user/wishlist/product/${encodeURIComponent(productId)}?email=${encodeURIComponent(email)}`,
+      {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      }
+    );
+    return res.ok;
+  } catch (error) {
+    console.error("Failed to remove from wishlist by product id:", error);
+    return false;
+  }
+}
+
 // --- USER ORDERS API ---
 
 export interface OrderItem {

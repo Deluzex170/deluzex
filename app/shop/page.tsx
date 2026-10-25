@@ -10,6 +10,7 @@ import { useEffect, useState, useMemo, useRef, useCallback, Suspense } from "rea
 import { useSearchParams, useRouter } from "next/navigation";
 import { fetchCategories, fetchProducts, Category, Product } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import WishlistButton from "../components/WishlistButton";
 
 const SORT_OPTIONS = [
   { label: "Featured", value: "FEATURED" },
@@ -681,6 +682,9 @@ function ShopContent() {
                         className={styles.productImage}
                       />
                     </Link>
+
+                    {/* Wishlist Button */}
+                    <WishlistButton product={product} variant="floating" />
 
                     {isOutOfStock && (
                       <span className={styles.outOfStockBadge}>Out of Stock</span>

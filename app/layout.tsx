@@ -30,6 +30,7 @@ const hanken = Hanken_Grotesk({
 
 import { AuthProvider } from "./context/AuthContext";
 import { SidebarProvider } from "./context/SidebarContext";
+import { WishlistProvider } from "./context/WishlistContext";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -54,14 +55,16 @@ export default function RootLayout({
           <VisitorTracker />
           <SidebarProvider>
             <ReduxProvider>
-              <CartSyncManager />
-              <Header />
-              {children}
-              <ConditionalFooter />
-              <CartSidebar />
-              <MainSidebar />
-              <UserLoginModal />
-              <ConsoleBanner />
+              <WishlistProvider>
+                <CartSyncManager />
+                <Header />
+                {children}
+                <ConditionalFooter />
+                <CartSidebar />
+                <MainSidebar />
+                <UserLoginModal />
+                <ConsoleBanner />
+              </WishlistProvider>
             </ReduxProvider>
           </SidebarProvider>
         </AuthProvider>

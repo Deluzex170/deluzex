@@ -19,6 +19,7 @@ import {
   Product,
 } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
+import WishlistButton from "../../components/WishlistButton";
 
 export default function ProductDetail() {
   const dispatch = useDispatch();
@@ -379,6 +380,7 @@ export default function ProductDetail() {
                   priority
                 />
               ) : null}
+              {product && <WishlistButton product={product} variant="floating" size={22} />}
             </div>
 
             {/* 4 Thumbnail Selector Grid matching Figma */}
@@ -533,6 +535,8 @@ export default function ProductDetail() {
               >
                 {isOutOfStock ? "Inquire for Commission" : "Email and Inquiry"}
               </button>
+
+              {product && <WishlistButton product={product} variant="pill" size={18} showText />}
             </div>
 
             <div className={styles.divider} />
