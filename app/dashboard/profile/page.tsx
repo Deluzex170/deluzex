@@ -96,6 +96,11 @@ export default function ProfilePage() {
   };
 
   const handleRemoveAvatar = async () => {
+    const hasPhoto = Boolean(avatarPreview || (typeof window !== "undefined" && localStorage.getItem("user_avatar")));
+    if (!hasPhoto) {
+      showToast("No custom profile photo to remove.");
+      return;
+    }
     setAvatarPreview(null);
     setAvatarError(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -500,24 +505,33 @@ export default function ProfilePage() {
                 <h2 className={styles.profileCardName}>{savedProfile.firstName} {savedProfile.lastName}</h2>
                 <div className={styles.profileCardEmail}>{savedProfile.email}</div>
                 <div className={styles.profileCardPhone}>{savedProfile.phone}</div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", marginTop: "0.45rem", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.45rem", flexWrap: "wrap" }}>
                   <span className={styles.memberBadge}>&#9733; Deluzex Premium Client</span>
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className={styles.changePhotoTextBtn}
+                    className={styles.changePhotoBtn}
+                    title="Upload or change profile picture"
                   >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
                     Change Photo
                   </button>
-                  {avatarPreview && !avatarError && (
-                    <button
-                      type="button"
-                      onClick={handleRemoveAvatar}
-                      className={styles.removePhotoTextBtn}
-                    >
-                      Remove Photo
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={handleRemoveAvatar}
+                    className={styles.removePhotoBtn}
+                    title="Remove profile photo and restore default initials"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6l-1 14H6L5 6" />
+                      <path d="M10 11v6M14 11v6" />
+                    </svg>
+                    Remove Photo
+                  </button>
                 </div>
               </div>
             </div>

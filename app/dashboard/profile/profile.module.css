@@ -750,36 +750,46 @@
   transform: scale(1.1);
 }
 
-.changePhotoTextBtn {
-  background: none;
-  border: none;
+.changePhotoBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  color: #374151;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.28rem 0.65rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.changePhotoBtn:hover {
+  border-color: #C89B60;
   color: #C89B60;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  background: #FAF8F5;
 }
 
-.changePhotoTextBtn:hover {
-  color: #9E7339;
-}
-
-.removePhotoTextBtn {
-  background: none;
-  border: none;
+.removePhotoBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #FEF2F2;
+  border: 1px solid #FCA5A5;
   color: #DC2626;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 600;
   cursor: pointer;
-  padding: 0;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  padding: 0.28rem 0.65rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
-.removePhotoTextBtn:hover {
-  color: #991B1B;
+.removePhotoBtn:hover {
+  background: #FEE2E2;
+  border-color: #EF4444;
+  color: #B91C1C;
 }
 
 .btnDeleteAccount {
