@@ -289,18 +289,35 @@ def update_order_status(
     """
     Update the status, tracking number, courier partner, or notes of an existing order (Admin only).
     """
+    clean_id = order_id.replace("#", "").strip()
     logger.info(f"[PATCH /orders/{order_id}/status] Updating status to '{payload.status}' by {admin.email}")
+    prev_doc = None
     try:
-        obj_id = ObjectId(order_id)
+        prev_doc = db.orders.find_one({"_id": ObjectId(clean_id)})
     except Exception:
-        logger.warning(f"[PATCH /orders/{order_id}/status] Invalid ObjectId format")
+        pass
+
+    if prev_doc is None:
+        prev_doc = db.orders.find_one({
+            "$or": [
+                {"order_id": clean_id},
+                {"order_id": order_id},
+                {"custom_order_id": clean_id},
+                {"custom_order_id": order_id},
+                {"id": clean_id},
+                {"id": order_id},
+            ]
+        })
+
+    if prev_doc is None:
+        logger.warning(f"[PATCH /orders/{order_id}/status] Order not found")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid order ID format",
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found",
         )
 
-    prev_doc = db.orders.find_one({"_id": obj_id})
-    old_status = prev_doc.get("status") if prev_doc else None
+    obj_id = prev_doc["_id"]
+    old_status = prev_doc.get("status")
 
     update_fields = {
         "status": payload.status,
@@ -360,20 +377,32 @@ def delete_order(
     """
     Delete an order (Admin only).
     """
+    clean_id = order_id.replace("#", "").strip()
+    doc = None
     try:
-        obj_id = ObjectId(order_id)
+        doc = db.orders.find_one({"_id": ObjectId(clean_id)})
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid order ID format",
-        )
+        pass
 
-    doc = db.orders.find_one({"_id": obj_id})
+    if doc is None:
+        doc = db.orders.find_one({
+            "$or": [
+                {"order_id": clean_id},
+                {"order_id": order_id},
+                {"custom_order_id": clean_id},
+                {"custom_order_id": order_id},
+                {"id": clean_id},
+                {"id": order_id},
+            ]
+        })
+
     if doc is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Order not found",
         )
+
+    obj_id = doc["_id"]
 
     db.orders.delete_one({"_id": obj_id})
     record_audit_event(
