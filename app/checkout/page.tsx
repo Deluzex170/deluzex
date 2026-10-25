@@ -8,6 +8,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
 import {
   clearCart,
+  updateQuantity,
+  removeFromCart,
   setAppliedCoupon as setReduxAppliedCoupon,
   removeAppliedCoupon as removeReduxAppliedCoupon,
 } from "../store/cartSlice";
@@ -25,6 +27,9 @@ import {
   validateCoupon,
   AvailableCoupon,
   CouponValidateResponse,
+  getCartSessionId,
+  updateBackendCartItem,
+  removeBackendCartItem,
 } from "../services/api";
 import styles from "./checkout.module.css";
 
@@ -217,6 +222,32 @@ export default function CheckoutPage() {
     setCouponError(null);
   };
 
+  const handleUpdateQty = async (itemId: string | number, change: number, currentQty: number) => {
+    const newQty = currentQty + change;
+    const userEmail = (user as Record<string, string>)?.email || email.trim() || undefined;
+    const guestSid = getCartSessionId();
+    const identifier = userEmail || guestSid;
+
+    if (newQty <= 0) {
+      if (typeof window !== "undefined" && !window.confirm("Remove this item from your cart?")) {
+        return;
+      }
+      dispatch(removeFromCart(itemId));
+      try {
+        await removeBackendCartItem(identifier, String(itemId));
+      } catch (err) {
+        console.warn("Failed to remove item from backend cart:", err);
+      }
+    } else {
+      dispatch(updateQuantity({ id: itemId, change }));
+      try {
+        await updateBackendCartItem(identifier, String(itemId), newQty);
+      } catch (err) {
+        console.warn("Failed to update item quantity in backend cart:", err);
+      }
+    }
+  };
+
   const applyAddress = useCallback((addr: SavedAddress) => {
     setSelectedAddressId(addr.id || addr._id || null);
     setFirstName(addr.first_name || "");
@@ -375,7 +406,7 @@ export default function CheckoutPage() {
               delivery,
               total: grandTotal,
               status: "Processing",
-              payment_method: "Razorpay (Cards / UPI / NetBanking)",
+              payment_method: "Online Payment (Cards / UPI / NetBanking)",
               payment_status: "Paid",
             }).catch(console.warn);
 
@@ -662,7 +693,7 @@ export default function CheckoutPage() {
             2
           </div>
           <span className={`${styles.stepLabel} ${styles.stepLabelActive}`}>
-            Razorpay Payment
+            Payment Method
           </span>
         </div>
 
@@ -904,15 +935,17 @@ export default function CheckoutPage() {
             </label>
           </div>
 
-          {/* Section 3: Razorpay Payment Gateway Hub */}
+          {/* Section 3: Payment Method (Razorpay Payment Gateway & Cash on Delivery) */}
           <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>3. Payment Gateway</h2>
+            <h2 className={styles.sectionTitle}>3. Payment Method</h2>
 
             <div className={styles.razorpayGatewayContainer}>
-              {/* Option 1: Official Razorpay Payment Gateway (Recommended) */}
+              {/* Option 1: Razorpay Payment Gateway */}
               <div
                 className={`${styles.razorpaySelectCard} ${paymentMethod === "razorpay" ? styles.razorpaySelectCardActive : ""}`}
                 onClick={() => setPaymentMethod("razorpay")}
+                role="button"
+                tabIndex={0}
               >
                 <div className={styles.razorpayCardHeader}>
                   <div className={styles.razorpayHeaderLeft}>
@@ -920,109 +953,41 @@ export default function CheckoutPage() {
                       {paymentMethod === "razorpay" && <div className={styles.razorpayRadioDot} />}
                     </div>
                     <div className={styles.razorpayTitleGroup}>
-                      <h3 className={styles.razorpayMainTitle}>Razorpay Secure Gateway</h3>
+                      <h3 className={styles.razorpayMainTitle}>Online Payment (UPI, Cards, Net Banking)</h3>
                       <span className={styles.razorpayLivePill}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                         </svg>
-                        Official Gateway
+                        Instant
                       </span>
-                      <span className={styles.razorpayZeroFeePill}>Zero Convenience Fee</span>
+                      <span className={styles.razorpayZeroFeePill}>Zero Fee</span>
                     </div>
                   </div>
                 </div>
 
-                <p className={styles.razorpayDescription}>
-                  Pay securely with all Indian and International payment methods. Includes <strong>Instant UPI</strong> (GPay, PhonePe, Paytm), <strong>Credit & Debit Cards</strong> with RBI-compliant 3D Secure OTP verification, <strong>50+ Net Banking Banks</strong>, and <strong>Wallets</strong>.
+                <p className={styles.razorpayDescription} style={{ margin: 0 }}>
+                  Pay instantly and securely using UPI (Google Pay, PhonePe, Paytm), Credit &amp; Debit Cards (Visa, MasterCard, RuPay), Net Banking, or Wallets.
                 </p>
-
-                {/* Grid of Supported Methods Inside Razorpay */}
-                <div className={styles.razorpayMethodsGrid}>
-                  {/* UPI Chip */}
-                  <div className={styles.methodChip}>
-                    <div className={styles.methodChipIcon}>
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                      </svg>
-                    </div>
-                    <div className={styles.methodChipInfo}>
-                      <span className={styles.methodChipName}>UPI Apps</span>
-                      <span className={styles.methodChipDetail}>GPay, PhonePe, Paytm</span>
-                    </div>
-                  </div>
-
-                  {/* Cards Chip */}
-                  <div className={styles.methodChip}>
-                    <div className={styles.methodChipIcon}>
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="2" y="5" width="20" height="14" rx="2" />
-                        <line x1="2" y1="10" x2="22" y2="10" />
-                      </svg>
-                    </div>
-                    <div className={styles.methodChipInfo}>
-                      <span className={styles.methodChipName}>Cards (3DS)</span>
-                      <span className={styles.methodChipDetail}>Visa, MC, RuPay</span>
-                    </div>
-                  </div>
-
-                  {/* NetBanking Chip */}
-                  <div className={styles.methodChip}>
-                    <div className={styles.methodChipIcon}>
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="3" y1="21" x2="21" y2="21" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                        <polyline points="5 6 12 3 19 6" />
-                        <line x1="4" y1="10" x2="4" y2="21" />
-                        <line x1="20" y1="10" x2="20" y2="21" />
-                        <line x1="8" y1="14" x2="8" y2="17" />
-                        <line x1="12" y1="14" x2="12" y2="17" />
-                        <line x1="16" y1="14" x2="16" y2="17" />
-                      </svg>
-                    </div>
-                    <div className={styles.methodChipInfo}>
-                      <span className={styles.methodChipName}>Net Banking</span>
-                      <span className={styles.methodChipDetail}>50+ Major Banks</span>
-                    </div>
-                  </div>
-
-                  {/* Wallets Chip */}
-                  <div className={styles.methodChip}>
-                    <div className={styles.methodChipIcon}>
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
-                        <path d="M4 6v12c0 1.1.9 2 2 2h14v-4" />
-                        <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" />
-                      </svg>
-                    </div>
-                    <div className={styles.methodChipInfo}>
-                      <span className={styles.methodChipName}>Wallets & PayLater</span>
-                      <span className={styles.methodChipDetail}>Amazon, Mobikwik</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.razorpayTrustBanner}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.2">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    <polyline points="9 12 11 14 15 10" />
-                  </svg>
-                  <span>
-                    Secured by <strong>Razorpay Encrypted Infrastructure</strong> • 256-Bit SSL Encryption • PCI-DSS Level 1 Certified
-                  </span>
-                </div>
               </div>
 
-              {/* Option 2: Cash on Delivery Alternative */}
+              {/* Option 2: Cash on Delivery */}
               <div
                 className={`${styles.codSelectCard} ${paymentMethod === "cod" ? styles.codSelectCardActive : ""}`}
                 onClick={() => setPaymentMethod("cod")}
+                role="button"
+                tabIndex={0}
               >
                 <div className={styles.razorpayCardHeader}>
                   <div className={styles.razorpayHeaderLeft}>
                     <div className={`${styles.razorpayRadioCircle} ${paymentMethod === "cod" ? styles.razorpayRadioCircleSelected : ""}`}>
                       {paymentMethod === "cod" && <div className={styles.razorpayRadioDot} />}
                     </div>
-                    <h3 className={styles.razorpayMainTitle}>Cash on Delivery (Doorstep Payment)</h3>
+                    <div className={styles.razorpayTitleGroup}>
+                      <h3 className={styles.razorpayMainTitle}>Cash on Delivery (COD)</h3>
+                      <span className={styles.codBadgePill}>
+                        Doorstep
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <p className={styles.razorpayDescription} style={{ margin: 0 }}>
@@ -1042,7 +1007,6 @@ export default function CheckoutPage() {
               {cartItems.map((item) => (
                 <div key={item.id} className={styles.cartItem}>
                   <div className={styles.itemImage}>
-                    <span className={styles.itemBadge}>{item.quantity}</span>
                     <Image
                       src={item.image || "/images/lamp_modern_tall_1784107732736.jpg"}
                       alt={item.title}
@@ -1052,8 +1016,36 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <div className={styles.itemDetails}>
-                    <h4 className={styles.itemName}>{item.title}</h4>
-                    <span className={styles.itemPrice}>₹{item.price.toFixed(2)}</span>
+                    <div className={styles.itemTitleRow}>
+                      <h4 className={styles.itemName}>{item.title}</h4>
+                      <div className={styles.qtyControlGroup}>
+                        <button
+                          type="button"
+                          className={styles.qtyBtn}
+                          onClick={() => handleUpdateQty(item.id, -1, item.quantity)}
+                          aria-label={`Decrease quantity of ${item.title}`}
+                          title="Decrease quantity"
+                        >
+                          −
+                        </button>
+                        <span className={styles.qtyValue}>{item.quantity}</span>
+                        <button
+                          type="button"
+                          className={styles.qtyBtn}
+                          onClick={() => handleUpdateQty(item.id, 1, item.quantity)}
+                          aria-label={`Increase quantity of ${item.title}`}
+                          title="Increase quantity"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    <div className={styles.itemPriceRow}>
+                      <span className={styles.itemPrice}>₹{(item.price * item.quantity).toFixed(2)}</span>
+                      {item.quantity > 1 && (
+                        <span className={styles.itemUnitPrice}>₹{item.price.toFixed(2)} each</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1211,7 +1203,7 @@ export default function CheckoutPage() {
                 {isProcessing ? (
                   <>
                     <div className={styles.spinner} />
-                    <span>Connecting to Razorpay Secure...</span>
+                    <span>Connecting to Secure Payment...</span>
                   </>
                 ) : (
                   <>
@@ -1219,7 +1211,7 @@ export default function CheckoutPage() {
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                     </svg>
-                    <span>Pay ₹{grandTotal.toFixed(2)} via Razorpay</span>
+                    <span>Pay ₹{grandTotal.toFixed(2)} Online</span>
                   </>
                 )}
               </button>
@@ -1244,7 +1236,7 @@ export default function CheckoutPage() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C89B60" strokeWidth="2">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
-              <span>Bank-Grade 256-Bit Encryption • Official Razorpay Partner</span>
+              <span>Bank-Grade 256-Bit SSL Encryption • 100% Secure Transaction</span>
             </div>
           </div>
         </div>
