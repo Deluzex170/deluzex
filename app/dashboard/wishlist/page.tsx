@@ -5,6 +5,7 @@ import styles from "./wishlist.module.css";
 import { useDispatch } from "react-redux";
 import { addToCart, openCart } from "../../store/cartSlice";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { WishlistItem } from "../../services/api";
@@ -177,10 +178,28 @@ export default function WishlistPage() {
                 ? item.product_price
                 : `₹${item.product_price}`;
 
+            const productTarget = item.product_slug || item.product_id || item.id || item._id;
+            const productHref = productTarget ? `/product/${productTarget}` : null;
+
             return (
               <div key={itemId} className={styles.productCard}>
                 <div className={styles.imgWrapper}>
-                  {hasImg ? (
+                  {productHref ? (
+                    <Link href={productHref} className={styles.imgLink} title={`View ${item.product_title}`}>
+                      {hasImg ? (
+                        <img
+                          src={item.product_image!}
+                          alt={item.product_title}
+                          className={styles.productImg}
+                          onError={() =>
+                            setImgErrors((prev) => ({ ...prev, [itemId]: true }))
+                          }
+                        />
+                      ) : (
+                        <LampPlaceholder />
+                      )}
+                    </Link>
+                  ) : hasImg ? (
                     <img
                       src={item.product_image!}
                       alt={item.product_title}
@@ -194,22 +213,44 @@ export default function WishlistPage() {
                   )}
                   <button
                     className={styles.removeBtn}
-                    onClick={() => removeItem(item)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      removeItem(item);
+                    }}
                     aria-label="Remove item"
+                    title="Remove from wishlist"
                   >
                     ✕
                   </button>
                 </div>
                 <div className={styles.productInfo}>
-                  <div className={styles.productName}>{item.product_title}</div>
+                  {productHref ? (
+                    <Link
+                      href={productHref}
+                      className={styles.productNameLink}
+                      title={`View details for ${item.product_title}`}
+                    >
+                      <div className={styles.productName}>{item.product_title}</div>
+                    </Link>
+                  ) : (
+                    <div className={styles.productName}>{item.product_title}</div>
+                  )}
                   <div className={styles.productPrice}>{displayPrice}</div>
-                  <button
-                    className={styles.btnAddToCart}
-                    type="button"
-                    onClick={() => handleAddToCart(item)}
-                  >
-                    Add To Cart
-                  </button>
+                  <div className={styles.actionsRow}>
+                    {productHref && (
+                      <Link href={productHref} className={styles.btnViewDetails}>
+                        View Details
+                      </Link>
+                    )}
+                    <button
+                      className={styles.btnAddToCart}
+                      type="button"
+                      onClick={() => handleAddToCart(item)}
+                    >
+                      Add To Cart
+                    </button>
+                  </div>
                 </div>
               </div>
             );

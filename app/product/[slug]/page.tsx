@@ -580,8 +580,6 @@ export default function ProductDetail() {
                   </svg>
                 </a>
               )}
-
-              {product && <WishlistButton product={product} variant="pill" size={18} showText />}
             </div>
 
             <div className={styles.divider} />

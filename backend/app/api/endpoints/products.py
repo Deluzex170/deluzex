@@ -33,12 +33,20 @@ def read_products(
     
 @router.get("/{product_id}")
 def read_product(product_id: str):
+    doc = None
     try:
         obj_id = ObjectId(product_id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid product_id format")
+        doc = db.products.find_one({"_id": obj_id})
+    except Exception:
+        pass
 
-    doc = db.products.find_one({"_id": obj_id})
+    if doc is None:
+        doc = (
+            db.products.find_one({"slug": product_id})
+            or db.products.find_one({"sku": product_id})
+            or db.products.find_one({"product_title": product_id})
+        )
+
     if doc is None:
         raise HTTPException(status_code=404, detail="Product not found")
     return models.Product(**doc)
