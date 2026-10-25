@@ -1,4 +1,4 @@
-﻿/* --- Page Container --- */
+/* --- Page Container --- */
 .container {
   padding: 1rem 1.5rem 1.5rem;
   max-width: 1100px;
@@ -726,4 +726,76 @@
   .addressListRow {
     grid-template-columns: 1fr;
   }
+}
+
+.avatarRemoveBtn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #DC2626;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.avatarRemoveBtn:hover {
+  background: #B91C1C;
+  transform: scale(1.1);
+}
+
+.changePhotoTextBtn {
+  background: none;
+  border: none;
+  color: #C89B60;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.changePhotoTextBtn:hover {
+  color: #9E7339;
+}
+
+.removePhotoTextBtn {
+  background: none;
+  border: none;
+  color: #DC2626;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.removePhotoTextBtn:hover {
+  color: #991B1B;
+}
+
+.btnDeleteAccount {
+  padding: 0.65rem 1.25rem;
+  background: #DC2626;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btnDeleteAccount:hover {
+  background: #B91C1C;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
 }

@@ -20,6 +20,7 @@ class UserData(BaseModel):
     last_name: Optional[str] = ""
     email: Optional[str] = None
     phone: Optional[str] = None
+    avatar_url: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
     country: Optional[str] = None
@@ -51,6 +52,8 @@ class UserProfileUpdate(BaseModel):
     last_name: Optional[str] = None
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
+    avatar_url: Optional[str] = None
+    remove_avatar: Optional[bool] = False
     city: Optional[str] = None
     state: Optional[str] = None
     country: Optional[str] = None

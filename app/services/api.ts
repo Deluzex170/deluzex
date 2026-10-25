@@ -223,6 +223,8 @@ export interface UserProfileUpdate {
   last_name: string;
   email: string;
   phone?: string;
+  avatar_url?: string | null;
+  remove_avatar?: boolean;
   city?: string;
   state?: string;
   country?: string;
@@ -397,6 +399,30 @@ export async function updateUserPassword(password: PasswordUpdate): Promise<void
   }
 }
 
+
+export async function removeUserAvatar(): Promise<boolean> {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("user_avatar");
+    try {
+      const stored = JSON.parse(localStorage.getItem("user") || "{}");
+      delete stored.avatar_url;
+      delete stored.avatar;
+      delete stored.image;
+      localStorage.setItem("user", JSON.stringify(stored));
+    } catch {
+      // ignore
+    }
+  }
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/me/avatar`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+    return res.ok;
+  } catch {
+    return true;
+  }
+}
 
 export async function deleteUserProfile(): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/auth/me`, {

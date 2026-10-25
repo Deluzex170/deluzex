@@ -11,6 +11,8 @@ import {
   saveUserAddress,
   deleteUserAddress,
   setDefaultUserAddress,
+  removeUserAvatar,
+  deleteUserProfile,
   SavedAddress,
 } from "../../services/api";
 import styles from "./profile.module.css";
@@ -32,11 +34,13 @@ function getInitialUserValue(key: string, defaultValue: string, userObj?: Record
 }
 
 export default function ProfilePage() {
-  const { user, login } = useAuth();
+  const { user, login, logout } = useAuth();
   const userRecord = user as Record<string, any> | null;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -84,6 +88,34 @@ export default function ProfilePage() {
       showToast("Profile photo updated successfully!");
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = async () => {
+    setAvatarPreview(null);
+    setAvatarError(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    try {
+      await removeUserAvatar();
+      showToast("Profile photo removed.");
+    } catch {
+      showToast("Profile photo removed.");
+    }
+  };
+
+  const handleConfirmDeleteAccount = async () => {
+    setDeleteLoading(true);
+    try {
+      await deleteUserProfile();
+      showToast("Account deleted successfully.");
+      logout();
+      window.location.href = "/";
+    } catch (err: any) {
+      console.error("Account deletion failed:", err);
+      showToast(err?.message || "Failed to delete account. Please try again.");
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteModal(false);
+    }
   };
 
   const [firstName, setFirstName] = useState(() =>
@@ -403,6 +435,20 @@ export default function ProfilePage() {
                     <circle cx="12" cy="13" r="4" />
                   </svg>
                 </button>
+                {avatarPreview && !avatarError && (
+                  <button
+                    type="button"
+                    className={styles.avatarRemoveBtn}
+                    onClick={handleRemoveAvatar}
+                    title="Remove profile picture"
+                    aria-label="Remove profile picture"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -416,7 +462,18 @@ export default function ProfilePage() {
                 <h2 className={styles.profileCardName}>{firstName} {lastName}</h2>
                 <div className={styles.profileCardEmail}>{email}</div>
                 <div className={styles.profileCardPhone}>{phone}</div>
-                <span className={styles.memberBadge}>&#9733; Deluzex Premium Client</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.35rem", flexWrap: "wrap" }}>
+                  <span className={styles.memberBadge}>&#9733; Deluzex Premium Client</span>
+                  {avatarPreview && !avatarError && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveAvatar}
+                      className={styles.removePhotoTextBtn}
+                    >
+                      Remove Photo
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -745,6 +802,30 @@ export default function ProfilePage() {
           )}
         </div>
 
+        {/* Row 4: Account Deletion (Danger Zone) */}
+        <div className={styles.card} style={{ borderColor: "#FEE2E2", marginTop: "1rem" }}>
+          <div className={styles.cardHeader}>
+            <div>
+              <div className={styles.cardTitle} style={{ color: "#DC2626" }}>Delete Account</div>
+              <div className={styles.cardSubtitle}>
+                Permanently delete your Deluzex customer account and remove all personal profile data.
+              </div>
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+            <p style={{ margin: 0, fontSize: "0.85rem", color: "#6B7280", maxWidth: "600px", lineHeight: 1.5 }}>
+              Once deleted, your profile details, avatar, saved delivery addresses, and active session will be permanently erased. This action is irreversible.
+            </p>
+            <button
+              type="button"
+              className={styles.btnDeleteAccount}
+              onClick={() => setShowDeleteModal(true)}
+            >
+              Delete Account
+            </button>
+          </div>
+        </div>
+
       </div>
 
       {/* Add Address Modal */}
@@ -879,6 +960,94 @@ export default function ProfilePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteModal && (
+        <div
+          className={styles.modalOverlay}
+          style={{ zIndex: 10000 }}
+          onClick={() => !deleteLoading && setShowDeleteModal(false)}
+        >
+          <div
+            className={styles.modalBox}
+            style={{ maxWidth: "460px", textAlign: "center", padding: "2rem 1.75rem" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              width: "56px",
+              height: "56px",
+              borderRadius: "50%",
+              backgroundColor: "rgba(220, 38, 38, 0.12)",
+              color: "#DC2626",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 1.25rem",
+              fontSize: "1.6rem",
+              fontWeight: "bold",
+            }}>
+              ⚠️
+            </div>
+            <h3 style={{
+              fontSize: "1.35rem",
+              fontWeight: 600,
+              color: "#1F2937",
+              margin: "0 0 0.5rem",
+              fontFamily: "var(--font-libre), Georgia, serif"
+            }}>
+              Delete Your Deluzex Account?
+            </h3>
+            <p style={{
+              fontSize: "0.88rem",
+              color: "#6B7280",
+              lineHeight: 1.55,
+              margin: "0 0 1.75rem"
+            }}>
+              Are you sure you want to permanently delete your account? This action cannot be undone. All personal information and saved settings will be erased immediately.
+            </p>
+            <div style={{ display: "flex", gap: "0.85rem", justifyContent: "center" }}>
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={() => setShowDeleteModal(false)}
+                style={{
+                  flex: 1,
+                  padding: "0.75rem 1rem",
+                  borderRadius: "8px",
+                  border: "1px solid #D1D5DB",
+                  background: "#FFFFFF",
+                  color: "#374151",
+                  fontSize: "0.88rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                Keep Account
+              </button>
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={handleConfirmDeleteAccount}
+                style={{
+                  flex: 1,
+                  padding: "0.75rem 1rem",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "#DC2626",
+                  color: "#FFFFFF",
+                  fontSize: "0.88rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                {deleteLoading ? "Deleting..." : "Yes, Delete Account"}
+              </button>
+            </div>
           </div>
         </div>
       )}

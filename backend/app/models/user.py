@@ -10,6 +10,7 @@ class User(BaseModel):
     email: Optional[str] = None
     hashed_password: Optional[str] = None
     phone: Optional[str] = None
+    avatar_url: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
     country: Optional[str] = None
