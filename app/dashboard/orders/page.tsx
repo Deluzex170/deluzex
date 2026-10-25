@@ -70,6 +70,7 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<UserOrder | null>(null);
   const [invoiceOrder, setInvoiceOrder] = useState<UserOrder | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<UserOrder | null>(null);
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -116,8 +117,9 @@ export default function OrdersPage() {
     return statusMatch && (matchesId || matchesItem || matchesCustomer);
   });
 
-  const handleCancelOrder = async (orderId: string) => {
-    if (!confirm("Are you sure you want to cancel this order?")) return;
+  const handleConfirmCancel = async (order: UserOrder) => {
+    const orderId = order.order_id || order.id || "";
+    if (!orderId) return;
     setCancelLoading(true);
     try {
       await cancelUserOrder(orderId, userEmail);
@@ -125,8 +127,10 @@ export default function OrdersPage() {
       if (selectedOrder && (selectedOrder.order_id === orderId || selectedOrder.id === orderId)) {
         setSelectedOrder((prev) => (prev ? { ...prev, status: "Cancelled" } : null));
       }
-    } catch (err) {
+      setOrderToCancel(null);
+    } catch (err: any) {
       console.error("Failed to cancel order:", err);
+      alert(err?.message || "Failed to cancel order. Please try again.");
     } finally {
       setCancelLoading(false);
     }
@@ -302,6 +306,19 @@ export default function OrdersPage() {
                         >
                           <span>📄 Invoice</span>
                         </button>
+                        {isOrderProcessing(order.status) && (
+                          <button
+                            className={styles.trackLink}
+                            style={{ color: "#dc2626" }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOrderToCancel(order);
+                            }}
+                            title="Cancel this active order"
+                          >
+                            <span>✕ Cancel</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -437,17 +454,105 @@ export default function OrdersPage() {
               >
                 📄 View GST Invoice
               </button>
-              {(selectedOrder.status || "").toLowerCase() === "processing" && (
+              {isOrderProcessing(selectedOrder.status) && (
                 <button
                   className={styles.btnCancelOrder}
                   disabled={cancelLoading}
-                  onClick={() => handleCancelOrder(selectedOrder.order_id || selectedOrder.id || "")}
+                  onClick={() => setOrderToCancel(selectedOrder)}
                 >
-                  {cancelLoading ? "Cancelling..." : "Cancel Order"}
+                  Cancel Order
                 </button>
               )}
               <button className={styles.btnCloseModal} onClick={() => setSelectedOrder(null)}>
                 Close Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Confirmation Modal for Cancelling Order */}
+      {orderToCancel && (
+        <div
+          className={styles.modalOverlay}
+          style={{ zIndex: 10000 }}
+          onClick={() => !cancelLoading && setOrderToCancel(null)}
+        >
+          <div
+            className={styles.modalContent}
+            style={{ maxWidth: "460px", textAlign: "center", padding: "2rem 1.75rem" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              width: "56px",
+              height: "56px",
+              borderRadius: "50%",
+              backgroundColor: "rgba(239, 68, 68, 0.12)",
+              color: "#DC2626",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 1.25rem",
+              fontSize: "1.6rem",
+              fontWeight: "bold",
+            }}>
+              ⚠️
+            </div>
+            <h3 style={{
+              fontSize: "1.35rem",
+              fontWeight: 600,
+              color: "#1F2937",
+              margin: "0 0 0.5rem",
+              fontFamily: "var(--font-libre), Georgia, serif"
+            }}>
+              Cancel Order #{orderToCancel.order_id || orderToCancel.id}?
+            </h3>
+            <p style={{
+              fontSize: "0.88rem",
+              color: "#6B7280",
+              lineHeight: 1.55,
+              margin: "0 0 1.75rem"
+            }}>
+              Are you sure you want to cancel this order? This action will halt order fulfillment, restore inventory stock, and mark your order as cancelled.
+            </p>
+            <div style={{ display: "flex", gap: "0.85rem", justifyContent: "center" }}>
+              <button
+                type="button"
+                disabled={cancelLoading}
+                onClick={() => setOrderToCancel(null)}
+                style={{
+                  flex: 1,
+                  padding: "0.75rem 1rem",
+                  borderRadius: "8px",
+                  border: "1px solid #D1D5DB",
+                  background: "#FFFFFF",
+                  color: "#374151",
+                  fontSize: "0.88rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                Keep Order
+              </button>
+              <button
+                type="button"
+                disabled={cancelLoading}
+                onClick={() => handleConfirmCancel(orderToCancel)}
+                style={{
+                  flex: 1,
+                  padding: "0.75rem 1rem",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "#DC2626",
+                  color: "#FFFFFF",
+                  fontSize: "0.88rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                {cancelLoading ? "Cancelling..." : "Yes, Cancel Order"}
               </button>
             </div>
           </div>

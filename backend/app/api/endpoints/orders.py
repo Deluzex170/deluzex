@@ -187,17 +187,26 @@ def get_order(
     Get full details of a specific order by its MongoDB Order ID.
     Enforces privacy: only the order owner or an admin can view order details.
     """
+    clean_id = order_id.replace("#", "").strip()
     logger.info(f"[GET /orders/{order_id}] Fetching order details")
+    doc = None
     try:
-        obj_id = ObjectId(order_id)
+        doc = db.orders.find_one({"_id": ObjectId(clean_id)})
     except Exception:
-        logger.warning(f"[GET /orders/{order_id}] Invalid ObjectId format")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid order ID format",
-        )
+        pass
 
-    doc = db.orders.find_one({"_id": obj_id})
+    if doc is None:
+        doc = db.orders.find_one({
+            "$or": [
+                {"order_id": clean_id},
+                {"order_id": order_id},
+                {"custom_order_id": clean_id},
+                {"custom_order_id": order_id},
+                {"id": clean_id},
+                {"id": order_id},
+            ]
+        })
+
     if doc is None:
         logger.warning(f"[GET /orders/{order_id}] Order not found in database")
         raise HTTPException(
@@ -391,23 +400,34 @@ def cancel_order(
     Cancel an order if it is in a cancellable state (pending, paid, cod, processing).
     Enforces authorization: Only the customer who owns the order or an Admin can cancel it.
     """
+    clean_id = order_id.replace("#", "").strip()
     logger.info(f"[POST /orders/{order_id}/cancel] Attempting to cancel order by {current_user.email}")
+    doc = None
     try:
-        obj_id = ObjectId(order_id)
+        doc = db.orders.find_one({"_id": ObjectId(clean_id)})
     except Exception:
-        logger.warning(f"[POST /orders/{order_id}/cancel] Invalid ObjectId format")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid order ID format",
-        )
+        pass
 
-    doc = db.orders.find_one({"_id": obj_id})
+    if doc is None:
+        doc = db.orders.find_one({
+            "$or": [
+                {"order_id": clean_id},
+                {"order_id": order_id},
+                {"custom_order_id": clean_id},
+                {"custom_order_id": order_id},
+                {"id": clean_id},
+                {"id": order_id},
+            ]
+        })
+
     if doc is None:
         logger.warning(f"[POST /orders/{order_id}/cancel] Order not found")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Order not found",
         )
+
+    obj_id = doc["_id"]
 
     # Check ownership or admin
     order_email = (doc.get("email") or "").strip().lower()
