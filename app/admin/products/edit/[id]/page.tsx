@@ -842,8 +842,38 @@ export default function EditProduct() {
 
             {/* SUBMIT BUTTON */}
             <div style={{ gridColumn: '1 / -1', marginTop: '1rem' }}>
-              <button type="submit" disabled={saving} style={{ width: '100%', background: '#E0531C', color: '#fff', padding: '1rem', borderRadius: '8px', fontSize: '1rem', fontWeight: 600, border: 'none', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, boxShadow: '0 4px 12px rgba(224, 83, 28, 0.25)' }}>
-                {saving ? "Updating Product..." : "Update Product Specifications"}
+              <button
+                type="submit"
+                disabled={saving}
+                style={{
+                  width: '100%',
+                  background: '#E0531C',
+                  color: '#fff',
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  opacity: saving ? 0.7 : 1,
+                  boxShadow: '0 4px 12px rgba(224, 83, 28, 0.25)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.6rem'
+                }}
+              >
+                {saving ? (
+                  <>
+                    <svg style={{ animation: 'spin 0.75s linear infinite' }} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    <span>Updating Product...</span>
+                  </>
+                ) : (
+                  "Update Product Specifications"
+                )}
               </button>
             </div>
           </form>

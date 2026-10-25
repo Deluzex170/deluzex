@@ -8,6 +8,8 @@ import CartSidebar from "./components/CartSidebar";
 import MainSidebar from "./components/MainSidebar";
 import UserLoginModal from "./components/UserLoginModal";
 import ConsoleBanner from "./components/ConsoleBanner";
+import { Suspense } from "react";
+import TopProgressBar from "./components/TopProgressBar";
 import VisitorTracker from "./components/VisitorTracker";
 import CartSyncManager from "./components/CartSyncManager";
 
@@ -52,6 +54,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${libre.variable} ${italianno.variable} ${hanken.variable}`} suppressHydrationWarning>
         <AuthProvider>
+          <Suspense fallback={null}>
+            <TopProgressBar />
+          </Suspense>
           <VisitorTracker />
           <SidebarProvider>
             <ReduxProvider>

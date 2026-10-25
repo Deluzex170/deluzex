@@ -155,13 +155,18 @@ export default function CartSidebar() {
     }
   };
 
+  const [isNavigatingCheckout, setIsNavigatingCheckout] = useState(false);
+
   const handleCheckout = () => {
+    if (isNavigatingCheckout || cartItems.length === 0) return;
+    setIsNavigatingCheckout(true);
     if (isAuthenticated) {
       router.push("/checkout");
     } else {
       router.push("/login?redirect=/checkout");
     }
     dispatch(closeCart());
+    setTimeout(() => setIsNavigatingCheckout(false), 1500);
   };
 
   if (!isCartOpen) return null;
@@ -494,10 +499,29 @@ export default function CartSidebar() {
 
           <button
             className={styles.btnCheckout}
-            disabled={cartItems.length === 0}
+            disabled={cartItems.length === 0 || isNavigatingCheckout}
             onClick={handleCheckout}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
           >
-            Proceed to Checkout
+            {isNavigatingCheckout ? (
+              <>
+                <svg
+                  style={{ animation: "spin 0.8s linear infinite" }}
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                  <path d="M12 2a10 10 0 0 1 10 10" />
+                </svg>
+                <span>Proceeding to Checkout...</span>
+              </>
+            ) : (
+              "Proceed to Checkout"
+            )}
           </button>
         </div>
       </div>

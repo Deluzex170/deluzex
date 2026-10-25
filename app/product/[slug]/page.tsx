@@ -58,6 +58,9 @@ export default function ProductDetail() {
   const [inquiryLoading, setInquiryLoading] = useState(false);
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [addedToCartToast, setAddedToCartToast] = useState(false);
+  const [isBuyingNow, setIsBuyingNow] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [addingRelatedId, setAddingRelatedId] = useState<string | number | null>(null);
   const [inquiryForm, setInquiryForm] = useState({
     name: "",
     email: "",
@@ -253,11 +256,12 @@ export default function ProductDetail() {
 
   // Action Button Handlers
   const handleBuyNow = () => {
-    if (!product) return;
+    if (!product || isBuyingNow) return;
     if (isOutOfStock) {
       alert("This item is currently sold out. You can submit an inquiry below for custom commissioning.");
       return;
     }
+    setIsBuyingNow(true);
     dispatch(
       addToCart({
         id: String(product.id || params.slug || ""),
@@ -271,11 +275,12 @@ export default function ProductDetail() {
   };
 
   const handleAddToCart = () => {
-    if (!product) return;
+    if (!product || isAddingToCart) return;
     if (isOutOfStock) {
       alert("This item is currently out of stock.");
       return;
     }
+    setIsAddingToCart(true);
     dispatch(
       addToCart({
         id: String(product.id || params.slug || ""),
@@ -286,6 +291,9 @@ export default function ProductDetail() {
       })
     );
     setAddedToCartToast(true);
+    setTimeout(() => {
+      setIsAddingToCart(false);
+    }, 600);
     setTimeout(() => setAddedToCartToast(false), 2500);
   };
 
@@ -535,20 +543,44 @@ export default function ProductDetail() {
                 type="button"
                 className={styles.btnBuyNow}
                 onClick={handleBuyNow}
-                disabled={isOutOfStock}
+                disabled={isOutOfStock || isBuyingNow}
                 style={isOutOfStock ? { opacity: 0.45, cursor: "not-allowed", background: "#333" } : undefined}
               >
-                {isOutOfStock ? "Sold Out" : "Buy it Now"}
+                {isBuyingNow ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
+                    <svg className={styles.btnSpinner} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    Proceeding to Checkout...
+                  </span>
+                ) : isOutOfStock ? (
+                  "Sold Out"
+                ) : (
+                  "Buy it Now"
+                )}
               </button>
 
               <button
                 type="button"
                 className={styles.btnAddToCart}
                 onClick={handleAddToCart}
-                disabled={isOutOfStock}
+                disabled={isOutOfStock || isAddingToCart}
                 style={isOutOfStock ? { opacity: 0.45, cursor: "not-allowed" } : undefined}
               >
-                {isOutOfStock ? "Out of Stock" : "Add to cart"}
+                {isAddingToCart ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
+                    <svg className={styles.btnSpinner} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    Adding to cart...
+                  </span>
+                ) : isOutOfStock ? (
+                  "Out of Stock"
+                ) : (
+                  "Add to cart"
+                )}
               </button>
 
               <button
@@ -1138,9 +1170,11 @@ export default function ProductDetail() {
                       type="button"
                       className={styles.productQuickAddBtn}
                       aria-label={`Add ${prod.product_title} to cart`}
+                      disabled={addingRelatedId === prodId}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        setAddingRelatedId(prodId);
                         dispatch(
                           addToCart({
                             id: String(prod.id || prod._id || Math.random()),
@@ -1151,21 +1185,29 @@ export default function ProductDetail() {
                           })
                         );
                         dispatch(openCart());
+                        setTimeout(() => setAddingRelatedId(null), 500);
                       }}
                     >
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
+                      {addingRelatedId === prodId ? (
+                        <svg className={styles.btnSpinner} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                          <path d="M12 2a10 10 0 0 1 10 10" />
+                        </svg>
+                      ) : (
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <line x1="12" y1="5" x2="12" y2="19"></line>
+                          <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                      )}
                     </button>
                   </div>
 

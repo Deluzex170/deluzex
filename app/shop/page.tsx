@@ -43,6 +43,7 @@ function ShopContent() {
   const [isCatPaused, setIsCatPaused] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [addingProductId, setAddingProductId] = useState<string | number | null>(null);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -728,6 +729,7 @@ function ShopContent() {
                       <button
                         type="button"
                         className={styles.addToCartBtn}
+                        disabled={addingProductId === pId}
                         onClick={(e) => {
                           e.preventDefault();
                           if (!isAuthenticated) {
@@ -737,23 +739,32 @@ function ShopContent() {
                             );
                             return;
                           }
+                          setAddingProductId(pId);
                           dispatch(addToCart(product));
+                          setTimeout(() => setAddingProductId(null), 500);
                         }}
                         aria-label="Add to cart"
                       >
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.4"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <line x1="12" y1="5" x2="12" y2="19"></line>
-                          <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
+                        {addingProductId === pId ? (
+                          <svg style={{ animation: "spin 0.75s linear infinite" }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                            <path d="M12 2a10 10 0 0 1 10 10" />
+                          </svg>
+                        ) : (
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                          </svg>
+                        )}
                       </button>
                     )}
                   </div>

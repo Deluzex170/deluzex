@@ -54,6 +54,8 @@ export default function WishlistPage() {
 
   const [search, setSearch] = useState("");
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
+  const [isMovingAll, setIsMovingAll] = useState(false);
+  const [addingId, setAddingId] = useState<string | null>(null);
 
   useEffect(() => {
     refreshWishlist();
@@ -74,6 +76,8 @@ export default function WishlistPage() {
   };
 
   const handleAddToCart = (item: WishlistItem) => {
+    const pId = String(item.product_id || item.id || item._id || "");
+    setAddingId(pId);
     const rawPrice = String(item.product_price).replace(/[^\d.]/g, "");
     dispatch(
       addToCart({
@@ -85,9 +89,12 @@ export default function WishlistPage() {
       })
     );
     dispatch(openCart());
+    setTimeout(() => setAddingId(null), 600);
   };
 
   const handleMoveAllToCart = () => {
+    if (isMovingAll || items.length === 0) return;
+    setIsMovingAll(true);
     items.forEach((item) => {
       const rawPrice = String(item.product_price).replace(/[^\d.]/g, "");
       dispatch(
@@ -101,6 +108,7 @@ export default function WishlistPage() {
       );
     });
     dispatch(openCart());
+    setTimeout(() => setIsMovingAll(false), 800);
   };
 
   const filtered = items.filter((item) =>
@@ -132,9 +140,19 @@ export default function WishlistPage() {
           className={styles.btnMoveAll}
           type="button"
           onClick={handleMoveAllToCart}
-          disabled={items.length === 0}
+          disabled={items.length === 0 || isMovingAll}
         >
-          Move All To Cart
+          {isMovingAll ? (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+              <svg className={styles.btnSpinner} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                <path d="M12 2a10 10 0 0 1 10 10" />
+              </svg>
+              Moving to Cart...
+            </span>
+          ) : (
+            "Move All To Cart"
+          )}
         </button>
       </div>
 
@@ -247,8 +265,19 @@ export default function WishlistPage() {
                       className={styles.btnAddToCart}
                       type="button"
                       onClick={() => handleAddToCart(item)}
+                      disabled={addingId === String(item.product_id || item.id || item._id || itemId)}
                     >
-                      Add To Cart
+                      {addingId === String(item.product_id || item.id || item._id || itemId) ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                          <svg className={styles.btnSpinner} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                            <path d="M12 2a10 10 0 0 1 10 10" />
+                          </svg>
+                          Adding...
+                        </span>
+                      ) : (
+                        "Add To Cart"
+                      )}
                     </button>
                   </div>
                 </div>

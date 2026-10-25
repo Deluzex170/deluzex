@@ -230,6 +230,17 @@
   color: var(--color-white);
 }
 
+.btnSpinner {
+  animation: spinWishlist 0.75s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes spinWishlist {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Footer Banner */
 .footerBanner {
   display: flex;

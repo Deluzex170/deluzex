@@ -400,6 +400,17 @@
   color: #FF9900;
 }
 
+.btnSpinner {
+  animation: spinBtn 0.75s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes spinBtn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Subtle Divider */
 .divider {
   width: 100%;

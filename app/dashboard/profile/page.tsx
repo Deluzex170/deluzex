@@ -614,8 +614,31 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <button type="submit" className={styles.btnSave} disabled={isLoadingProfile || isSavingProfile}>
-                {isSavingProfile ? "Saving..." : "Save Changes"}
+              <button
+                type="submit"
+                className={styles.btnSave}
+                disabled={isLoadingProfile || isSavingProfile}
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
+              >
+                {isSavingProfile ? (
+                  <>
+                    <svg
+                      style={{ animation: "spin 0.75s linear infinite" }}
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    <span>Saving Changes...</span>
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
               </button>
             </form>
           </div>
@@ -724,8 +747,31 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <button type="submit" className={styles.btnSave} disabled={isUpdatingPassword}>
-                {isUpdatingPassword ? "Updating..." : "Update Password"}
+              <button
+                type="submit"
+                className={styles.btnSave}
+                disabled={isUpdatingPassword}
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
+              >
+                {isUpdatingPassword ? (
+                  <>
+                    <svg
+                      style={{ animation: "spin 0.75s linear infinite" }}
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    <span>Updating Password...</span>
+                  </>
+                ) : (
+                  "Update Password"
+                )}
               </button>
             </form>
           </div>
@@ -1014,8 +1060,27 @@ export default function ProfilePage() {
                   type="submit"
                   className={styles.btnSubmitModal}
                   disabled={isSavingAddress}
+                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
                 >
-                  {isSavingAddress ? "Saving..." : "Save Address"}
+                  {isSavingAddress ? (
+                    <>
+                      <svg
+                        style={{ animation: "spin 0.75s linear infinite" }}
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                        <path d="M12 2a10 10 0 0 1 10 10" />
+                      </svg>
+                      <span>Saving Address...</span>
+                    </>
+                  ) : (
+                    "Save Address"
+                  )}
                 </button>
               </div>
             </form>
@@ -1100,11 +1165,34 @@ export default function ProfilePage() {
                   color: "#FFFFFF",
                   fontSize: "0.88rem",
                   fontWeight: 600,
-                  cursor: "pointer",
+                  cursor: deleteLoading ? "not-allowed" : "pointer",
+                  opacity: deleteLoading ? 0.75 : 1,
                   transition: "all 0.2s ease",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
                 }}
               >
-                {deleteLoading ? "Deleting..." : "Yes, Delete Account"}
+                {deleteLoading ? (
+                  <>
+                    <svg
+                      style={{ animation: "spin 0.75s linear infinite" }}
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    <span>Deleting Account...</span>
+                  </>
+                ) : (
+                  "Yes, Delete Account"
+                )}
               </button>
             </div>
           </div>

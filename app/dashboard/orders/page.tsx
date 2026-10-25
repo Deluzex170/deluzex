@@ -548,11 +548,34 @@ export default function OrdersPage() {
                   color: "#FFFFFF",
                   fontSize: "0.88rem",
                   fontWeight: 600,
-                  cursor: "pointer",
+                  cursor: cancelLoading ? "not-allowed" : "pointer",
+                  opacity: cancelLoading ? 0.75 : 1,
                   transition: "all 0.2s ease",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
                 }}
               >
-                {cancelLoading ? "Cancelling..." : "Yes, Cancel Order"}
+                {cancelLoading ? (
+                  <>
+                    <svg
+                      style={{ animation: "spin 0.75s linear infinite" }}
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    <span>Cancelling Order...</span>
+                  </>
+                ) : (
+                  "Yes, Cancel Order"
+                )}
               </button>
             </div>
           </div>
