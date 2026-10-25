@@ -265,10 +265,13 @@ def remove_cart_item(identifier: str, product_id: str):
     }
 
 @router.delete("/{identifier}")
-def clear_cart(identifier: str):
+def clear_cart(identifier: str, session_id: Optional[str] = None):
     """Clear all cart items for a guest session or user email."""
     identifier = identifier.strip()
-    query = {"$or": [{"session_id": identifier}, {"user_email": identifier}]}
+    clauses = [{"session_id": identifier}, {"user_email": identifier}]
+    if session_id and session_id.strip():
+        clauses.append({"session_id": session_id.strip()})
+    query = {"$or": clauses}
     result = db.cart_items.delete_many(query)
     return {
         "success": True,

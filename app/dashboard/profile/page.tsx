@@ -101,6 +101,9 @@ export default function ProfilePage() {
   const [city, setCity] = useState(() =>
     getInitialUserValue("city", "Ahmedabad", userRecord)
   );
+  const [state, setState] = useState(() =>
+    getInitialUserValue("state", "Gujarat", userRecord)
+  );
   const [country, setCountry] = useState(() =>
     getInitialUserValue("country", "India", userRecord)
   );
@@ -134,6 +137,7 @@ export default function ProfilePage() {
         if (profile.email) setEmail(profile.email);
         if (profile.phone) setPhone(profile.phone);
         if (profile.city) setCity(profile.city);
+        if (profile.state) setState(profile.state);
         if (profile.country) setCountry(profile.country);
         localStorage.setItem("user", JSON.stringify(profile));
       })
@@ -174,6 +178,7 @@ export default function ProfilePage() {
         email: email.trim(),
         phone: phone.trim(),
         city: city.trim(),
+        state: state.trim(),
         country: country.trim(),
       });
       const token = localStorage.getItem("authToken") || "";
@@ -341,88 +346,92 @@ export default function ProfilePage() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>My Profile</h1>
-        <p className={styles.subtitle}>
-          Manage your personal details, credentials, and quick account settings.
-        </p>
-      </div>
+      <div className={styles.grid}>
 
-      {/* Hero Profile Card */}
-      <div className={styles.profileHero}>
-        <div className={styles.heroLeft}>
-          <div style={{ position: "relative" }}>
-            <div className={styles.avatarWrapper}>
-              {avatarPreview && !avatarError ? (
-                <Image
-                  src={avatarPreview}
-                  alt="Profile"
-                  fill
-                  unoptimized
-                  className={styles.avatarImg}
-                  onError={() => setAvatarError(true)}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "linear-gradient(135deg, #C89B60, #856117)",
-                    color: "#ffffff",
-                    fontSize: "2rem",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {(firstName?.[0] || email?.[0] || "U").toUpperCase()}
-                </div>
-              )}
-            </div>
-            <button
-              type="button"
-              className={styles.avatarEditBtn}
-              onClick={() => fileInputRef.current?.click()}
-              title="Change profile picture"
-              aria-label="Change profile picture"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={handleAvatarChange}
-            />
+        {/* Row 1: Title (left) | Profile Card (right) */}
+        <div className={styles.topRow}>
+          {/* Left: Title block */}
+          <div className={styles.titleBlock}>
+            <h1 className={styles.title}>My Profile</h1>
+            <p className={styles.subtitle}>
+              Manage your personal details, credentials, and quick account settings.
+            </p>
           </div>
-          <div className={styles.heroInfo}>
-            <h2>{firstName} {lastName}</h2>
-            <div className={styles.heroEmail}>
-              <span>{email}</span>
-              <span>•</span>
-              <span>{phone}</span>
+
+          {/* Right: Profile overview card */}
+          <div className={styles.card}>
+            <div className={styles.profileCardContent}>
+              <div className={styles.avatarWrapperContainer}>
+                <div className={styles.avatarWrapper}>
+                  {avatarPreview && !avatarError ? (
+                    <Image
+                      src={avatarPreview}
+                      alt="Profile"
+                      fill
+                      unoptimized
+                      className={styles.avatarImg}
+                      onError={() => setAvatarError(true)}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: "linear-gradient(135deg, #C89B60, #856117)",
+                        color: "#ffffff",
+                        fontSize: "1.6rem",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {(firstName?.[0] || email?.[0] || "U").toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className={styles.avatarEditBtn}
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Change profile picture"
+                  aria-label="Change profile picture"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={handleAvatarChange}
+                />
+              </div>
+
+              <div className={styles.profileDetailsColumn}>
+                <h2 className={styles.profileCardName}>{firstName} {lastName}</h2>
+                <div className={styles.profileCardEmail}>{email}</div>
+                <div className={styles.profileCardPhone}>{phone}</div>
+                <span className={styles.memberBadge}>&#9733; Deluzex Premium Client</span>
+              </div>
             </div>
-            <span className={styles.memberBadge}>★ Deluzex Premium Client</span>
           </div>
         </div>
-      </div>
 
-      {/* Main Grid */}
-      <div className={styles.grid}>
-        {/* Personal Information */}
-        <div className={styles.card}>
+        {/* Row 2: Personal Information (left) | Security & Password (right) */}
+        <div className={styles.twoColRow}>
+          {/* Left: Personal Information */}
+          <div className={styles.card}>
             <div className={styles.cardTitle}>
               <span>Personal Information</span>
             </div>
 
-            <form onSubmit={handleSaveProfile}>
-              <div className={styles.personalInfoGrid}>
+            <form onSubmit={handleSaveProfile} className={styles.compactForm}>
+              <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>First Name</label>
                   <input
@@ -443,6 +452,9 @@ export default function ProfilePage() {
                     onChange={(e) => setLastName(e.target.value)}
                   />
                 </div>
+              </div>
+
+              <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Email Address</label>
                   <input
@@ -463,6 +475,9 @@ export default function ProfilePage() {
                     onChange={(e) => setPhone(e.target.value)}
                   />
                 </div>
+              </div>
+
+              <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>City</label>
                   <input
@@ -472,22 +487,30 @@ export default function ProfilePage() {
                     onChange={(e) => setCity(e.target.value)}
                   />
                 </div>
-                <div className={styles.personalInfoActionsInline}>
-                  <button type="submit" className={styles.btnSave} disabled={isLoadingProfile || isSavingProfile}>
-                    {isSavingProfile ? "Saving..." : "Save Changes"}
-                  </button>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>State</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                  />
                 </div>
               </div>
+
+              <button type="submit" className={styles.btnSave} disabled={isLoadingProfile || isSavingProfile}>
+                {isSavingProfile ? "Saving..." : "Save Changes"}
+              </button>
             </form>
           </div>
 
-          {/* Security & Password */}
+          {/* Right: Security & Password */}
           <div className={styles.card}>
             <div className={styles.cardTitle}>
-              <span>Security & Password</span>
+              <span>Security &amp; Password</span>
             </div>
 
-            <form onSubmit={handleUpdatePassword}>
+            <form onSubmit={handleUpdatePassword} className={styles.compactForm}>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Current Password</label>
                 <div className={styles.passwordWrapper}>
@@ -506,13 +529,13 @@ export default function ProfilePage() {
                     aria-label={showCurrentPassword ? "Hide password" : "Show password"}
                   >
                     {showCurrentPassword ? (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                         <line x1="1" y1="1" x2="23" y2="23" />
                       </svg>
                     ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z" />
                         <circle cx="12" cy="12" r="3" />
                       </svg>
                     )}
@@ -526,7 +549,7 @@ export default function ProfilePage() {
                   <div className={styles.passwordWrapper}>
                     <input
                       type={showNewPassword ? "text" : "password"}
-                      placeholder="At least 6 characters"
+                      placeholder="Min 6 chars"
                       className={styles.input}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
@@ -539,13 +562,13 @@ export default function ProfilePage() {
                       aria-label={showNewPassword ? "Hide password" : "Show password"}
                     >
                       {showNewPassword ? (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                           <line x1="1" y1="1" x2="23" y2="23" />
                         </svg>
                       ) : (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z" />
                           <circle cx="12" cy="12" r="3" />
                         </svg>
                       )}
@@ -553,11 +576,11 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Confirm New Password</label>
+                  <label className={styles.label}>Confirm Password</label>
                   <div className={styles.passwordWrapper}>
                     <input
                       type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Confirm new password"
+                      placeholder="Confirm password"
                       className={styles.input}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
@@ -570,13 +593,13 @@ export default function ProfilePage() {
                       aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                     >
                       {showConfirmPassword ? (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                           <line x1="1" y1="1" x2="23" y2="23" />
                         </svg>
                       ) : (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z" />
                           <circle cx="12" cy="12" r="3" />
                         </svg>
                       )}
@@ -588,17 +611,46 @@ export default function ProfilePage() {
               <button type="submit" className={styles.btnSave} disabled={isUpdatingPassword}>
                 {isUpdatingPassword ? "Updating..." : "Update Password"}
               </button>
-
             </form>
           </div>
+        </div>
 
-          {/* Saved Addresses Section */}
-          <div className={styles.card}>
-            <div className={styles.cardTitle}>
-              <span>Saved Addresses</span>
+        {/* Row 3: Saved Addresses â€” full width */}
+        <div className={styles.card}>
+          <div className={styles.cardTitle}>
+            <span>Saved Addresses</span>
+            <button
+              type="button"
+              className={styles.btnAddAddress}
+              onClick={() => {
+                setAddrFirstName(firstName || "");
+                setAddrLastName(lastName || "");
+                setAddrPhone(phone || "");
+                setAddrCity(city || "");
+                setShowAddAddressModal(true);
+              }}
+            >
+              + Add New Address
+            </button>
+          </div>
+
+          {isLoadingAddresses ? (
+            <p style={{ color: "#777", padding: "0.5rem 0", margin: 0, fontSize: "0.85rem" }}>Loading saved addresses...</p>
+          ) : addresses.length === 0 ? (
+            <div className={styles.emptyAddressState}>
+              <div className={styles.emptyAddressIcon}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+              </div>
+              <h3 className={styles.emptyAddressTitle}>No Addresses Saved Yet</h3>
+              <p className={styles.emptyAddressSubtitle}>
+                Add your shipping and delivery address for faster checkout.
+              </p>
               <button
                 type="button"
-                className={styles.btnAddAddress}
+                className={styles.btnAddAddressFirst}
                 onClick={() => {
                   setAddrFirstName(firstName || "");
                   setAddrLastName(lastName || "");
@@ -607,121 +659,93 @@ export default function ProfilePage() {
                   setShowAddAddressModal(true);
                 }}
               >
-                + Add New Address
+                + Add Address
               </button>
             </div>
-
-            {isLoadingAddresses ? (
-              <p style={{ color: "#777", padding: "1.5rem 0", margin: 0, fontSize: "0.9rem" }}>Loading saved addresses...</p>
-            ) : addresses.length === 0 ? (
-              <div className={styles.emptyAddressState}>
-                <div className={styles.emptyAddressIcon}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                </div>
-                <h3 className={styles.emptyAddressTitle}>No Addresses Saved Yet</h3>
-                <p className={styles.emptyAddressSubtitle}>
-                  Add your shipping and delivery address to enjoy seamless, faster checkout on all your orders.
-                </p>
-                <button
-                  type="button"
-                  className={styles.btnAddAddressFirst}
-                  onClick={() => {
-                    setAddrFirstName(firstName || "");
-                    setAddrLastName(lastName || "");
-                    setAddrPhone(phone || "");
-                    setAddrCity(city || "");
-                    setShowAddAddressModal(true);
-                  }}
-                >
-                  + Add Your First Address
-                </button>
-              </div>
-            ) : (
-              <div className={styles.addressGrid}>
-                {addresses.map((addr, i) => {
-                  const addrId = addr.id || addr._id || String(i);
-                  const isSelected = selectedAddrId ? selectedAddrId === addrId : !!addr.is_default;
-                  return (
-                    <div
-                      key={addrId}
-                      className={`${styles.addressCard} ${isSelected ? styles.addressCardActive : ""}`}
-                      onClick={() => {
-                        setSelectedAddrId(addrId);
-                        if (!addr.is_default) {
-                          handleSetDefaultAddress(addr);
-                        }
-                      }}
-                    >
-                      <div className={styles.addressTopRow}>
-                        {addr.is_default ? (
-                          <span className={styles.defaultBadge}>Default</span>
-                        ) : (
-                          <button
-                            type="button"
-                            className={styles.btnSetDefault}
-                            onClick={(e) => {
-                              setSelectedAddrId(addrId);
-                              handleSetDefaultAddress(addr, e);
-                            }}
-                          >
-                            Set as Default
-                          </button>
-                        )}
-                        <div
-                          className={`${styles.radioBtn} ${isSelected ? styles.radioBtnActive : ""}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedAddrId(addrId);
-                            if (!addr.is_default) {
-                              handleSetDefaultAddress(addr);
-                            }
-                          }}
-                        >
-                          {isSelected && <div className={styles.radioDot} />}
-                        </div>
-                      </div>
-
-                      <div className={styles.addressTypeRow}>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                          <circle cx="12" cy="10" r="3" />
-                        </svg>
-                        <span className={styles.addressType}>{addr.type || "Home"}</span>
-                      </div>
-
-                      <div className={styles.addressPersonName}>
-                        {addr.first_name} {addr.last_name}
-                      </div>
-                      <div className={styles.addressText}>
-                        {addr.street}, {addr.city}, {addr.state} - {addr.pin_code}
-                      </div>
-                      <div className={styles.addressPhone}>{addr.phone}</div>
-
-                      <div className={styles.addressCardActions}>
+          ) : (
+            <div className={styles.addressListRow}>
+              {addresses.map((addr, i) => {
+                const addrId = addr.id || addr._id || String(i);
+                const isSelected = selectedAddrId ? selectedAddrId === addrId : !!addr.is_default;
+                return (
+                  <div
+                    key={addrId}
+                    className={`${styles.addressCard} ${isSelected ? styles.addressCardActive : ""}`}
+                    onClick={() => {
+                      setSelectedAddrId(addrId);
+                      if (!addr.is_default) {
+                        handleSetDefaultAddress(addr);
+                      }
+                    }}
+                  >
+                    <div className={styles.addressTopRow}>
+                      {addr.is_default ? (
+                        <span className={styles.defaultBadge}>Default</span>
+                      ) : (
                         <button
                           type="button"
-                          className={styles.btnDeleteAddress}
-                          onClick={(e) => handleDeleteAddress(addr, e)}
+                          className={styles.btnSetDefault}
+                          onClick={(e) => {
+                            setSelectedAddrId(addrId);
+                            handleSetDefaultAddress(addr, e);
+                          }}
                         >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6l-1 14H6L5 6" />
-                            <path d="M10 11v6M14 11v6" />
-                            <path d="M9 6V4h6v2" />
-                          </svg>
-                          Delete
+                          Set as Default
                         </button>
+                      )}
+                      <div
+                        className={`${styles.radioBtn} ${isSelected ? styles.radioBtnActive : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedAddrId(addrId);
+                          if (!addr.is_default) {
+                            handleSetDefaultAddress(addr);
+                          }
+                        }}
+                      >
+                        {isSelected && <div className={styles.radioDot} />}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+
+                    <div className={styles.addressTypeRow}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                      <span className={styles.addressType}>{addr.type || "Home"}</span>
+                    </div>
+
+                    <div className={styles.addressPersonName}>
+                      {addr.first_name} {addr.last_name}
+                    </div>
+                    <div className={styles.addressText}>
+                      {addr.street}, {addr.city}, {addr.state} - {addr.pin_code}
+                    </div>
+                    <div className={styles.addressPhone}>{addr.phone}</div>
+
+                    <div className={styles.addressCardActions}>
+                      <button
+                        type="button"
+                        className={styles.btnDeleteAddress}
+                        onClick={(e) => handleDeleteAddress(addr, e)}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6l-1 14H6L5 6" />
+                          <path d="M10 11v6M14 11v6" />
+                          <path d="M9 6V4h6v2" />
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
+
+      </div>
 
       {/* Add Address Modal */}
       {showAddAddressModal && (
@@ -734,7 +758,7 @@ export default function ProfilePage() {
                 className={styles.modalCloseBtn}
                 onClick={() => setShowAddAddressModal(false)}
               >
-                ×
+                Ã—
               </button>
             </div>
 

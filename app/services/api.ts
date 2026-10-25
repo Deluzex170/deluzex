@@ -211,6 +211,7 @@ export interface UserProfile {
   email: string;
   phone?: string | null;
   city?: string | null;
+  state?: string | null;
   country?: string | null;
   is_verified: boolean;
   is_admin?: boolean;
@@ -223,6 +224,7 @@ export interface UserProfileUpdate {
   email: string;
   phone?: string;
   city?: string;
+  state?: string;
   country?: string;
 }
 
@@ -2522,9 +2524,13 @@ export async function removeBackendCartItem(
   }
 }
 
-export async function clearBackendCart(identifier: string): Promise<boolean> {
+export async function clearBackendCart(identifier: string, sessionId?: string): Promise<boolean> {
   try {
-    const res = await fetch(`${API_BASE_URL}/cart/${encodeURIComponent(identifier)}`, {
+    let url = `${API_BASE_URL}/cart/${encodeURIComponent(identifier)}`;
+    if (sessionId) {
+      url += `?session_id=${encodeURIComponent(sessionId)}`;
+    }
+    const res = await fetch(url, {
       method: "DELETE",
       headers: getAuthHeaders(),
     });

@@ -11,6 +11,7 @@ class User(BaseModel):
     hashed_password: Optional[str] = None
     phone: Optional[str] = None
     city: Optional[str] = None
+    state: Optional[str] = None
     country: Optional[str] = None
     accept_terms: bool = True
     is_active: bool = True

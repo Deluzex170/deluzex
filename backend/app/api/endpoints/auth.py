@@ -300,6 +300,7 @@ def verify_email_otp(req: schemas.VerifyEmailOtpRequest, request: Request):
             email=user.email,
             phone=user.phone,
             city=user.city,
+            state=user.state,
             country=user.country,
             is_verified=True,
             is_admin=bool(user.is_admin),
@@ -352,6 +353,7 @@ def get_me(current_user: models.User = Depends(deps.get_current_active_user)):
             email=current_user.email,
             phone=current_user.phone,
             city=current_user.city,
+            state=current_user.state,
             country=current_user.country,
             is_verified=current_user.is_verified,
             is_admin=bool(current_user.is_admin),
@@ -374,6 +376,8 @@ def update_me(
         update_fields["phone"] = profile_in.phone.strip()
     if profile_in.city is not None:
         update_fields["city"] = profile_in.city.strip()
+    if profile_in.state is not None:
+        update_fields["state"] = profile_in.state.strip()
     if profile_in.country is not None:
         update_fields["country"] = profile_in.country.strip()
     if profile_in.email is not None and str(profile_in.email).strip().lower() != str(current_user.email).lower():
@@ -404,6 +408,7 @@ def update_me(
             email=updated_user.email,
             phone=updated_user.phone,
             city=updated_user.city,
+            state=updated_user.state,
             country=updated_user.country,
             is_verified=updated_user.is_verified,
             is_admin=bool(updated_user.is_admin),

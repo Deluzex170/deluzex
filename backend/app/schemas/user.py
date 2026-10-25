@@ -21,6 +21,7 @@ class UserData(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     city: Optional[str] = None
+    state: Optional[str] = None
     country: Optional[str] = None
     is_verified: bool = False
     is_admin: bool = False
@@ -51,6 +52,7 @@ class UserProfileUpdate(BaseModel):
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     city: Optional[str] = None
+    state: Optional[str] = None
     country: Optional[str] = None
 
 class UserPasswordUpdate(BaseModel):
