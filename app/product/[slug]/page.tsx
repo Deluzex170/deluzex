@@ -350,10 +350,6 @@ export default function ProductDetail() {
   };
 
   const handleOpenReviewModal = () => {
-    if (!isAuthenticated) {
-      openLoginModal(undefined, "Please sign in to write a review.");
-      return;
-    }
     const defaultName = (user as any)?.name || `${(user as any)?.first_name || ""} ${(user as any)?.last_name || ""}`.trim() || "";
     const defaultEmail = userEmail || "";
     setReviewForm((prev) => ({
@@ -366,10 +362,6 @@ export default function ProductDetail() {
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAuthenticated) {
-      openLoginModal(undefined, "Please sign in to write a review.");
-      return;
-    }
     if (!product) return;
     if (!reviewForm.name.trim()) {
       alert("Please enter your name.");
@@ -379,24 +371,32 @@ export default function ProductDetail() {
       alert("Please enter your review comments.");
       return;
     }
+    const targetProductId = String(product.id || (product as any)._id || params.slug);
+    if (!targetProductId) {
+      alert("Product ID is missing.");
+      return;
+    }
+
     setReviewSubmitting(true);
     try {
       const res = await submitProductReview({
-        product_id: String(product.id || params.slug),
+        product_id: targetProductId,
         author_name: reviewForm.name.trim(),
         author_email: reviewForm.email.trim() || undefined,
         rating: reviewRating,
         title: reviewForm.title.trim() || undefined,
         text: reviewForm.text.trim(),
       });
-      setReviewsStats(res.stats);
-      setReviewSuccessMsg("Thank you! Your review has been submitted.");
+      if (res && res.stats) {
+        setReviewsStats(res.stats);
+      }
+      setReviewSuccessMsg("Thank you! Your review has been submitted successfully.");
       setTimeout(() => {
         setShowReviewModal(false);
         setReviewSuccessMsg("");
         setReviewForm({ name: "", email: "", title: "", text: "" });
         setReviewRating(5);
-      }, 1400);
+      }, 1800);
     } catch (err: any) {
       console.error("Failed to submit review:", err);
       alert(err?.message || "Failed to submit review. Please try again.");
@@ -472,11 +472,33 @@ export default function ProductDetail() {
                 </div>
               </div>
 
-              <div className={styles.ratingBadge}>
-                <span className={styles.starIcon}>★</span>
-                <span className={styles.ratingText}>
-                  {(reviewsStats?.average_rating ?? 0).toFixed(1)} ( {reviewsStats?.total_reviews ?? 0} Reviews )
-                </span>
+              <div className={styles.ratingBadgeRow}>
+                <div className={styles.ratingBadge}>
+                  <span className={styles.starIcon}>★</span>
+                  <span className={styles.ratingText}>
+                    {(reviewsStats?.average_rating ?? 0).toFixed(1)} ( {reviewsStats?.total_reviews ?? 0} Reviews )
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.writeReviewLinkBtn}
+                  onClick={handleOpenReviewModal}
+                >
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  Write a review
+                </button>
               </div>
             </div>
 
@@ -1052,129 +1074,181 @@ export default function ProductDetail() {
             <div>
               <h2 className={styles.reviewsTitle}>Customer Reviews</h2>
             </div>
-          </div>
-
-          <div className={styles.reviewsDivider} />
-
-          <div className={styles.ratingSummary}>
-            <div className={styles.ratingScore}>
-              <h3>{(reviewsStats?.average_rating ?? 0).toFixed(1)}</h3>
-              <div className={styles.stars}>
-                {"★".repeat(Math.round(reviewsStats?.average_rating ?? 0))}
-                {"☆".repeat(5 - Math.round(reviewsStats?.average_rating ?? 0))}
-              </div>
-              <p>{reviewsStats?.total_reviews ? `${reviewsStats.total_reviews} Ratings` : "No ratings yet"}</p>
-            </div>
-            <div className={styles.ratingBars}>
-              {[5, 4, 3, 2, 1].map((score) => ({
-                score: String(score), count: `${reviewsStats?.breakdown?.[String(score)]?.count ?? 0} Reviews`,
-                pct: reviewsStats?.breakdown?.[String(score)]?.pct ?? 0,
-              })).map((bar, idx) => (
-                <div key={idx} className={styles.ratingBarRow}>
-                  <div className={styles.barTrack}>
-                    <div className={styles.barFill} style={{ width: `${bar.pct}%` }}></div>
-                  </div>
-                  <div className={styles.barMeta}>
-                    <span className={styles.barScore}>{bar.score}</span>
-                    <span className={styles.barReviewsCount}>{bar.count}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.reviewList}>
-            {(reviewsStats?.reviews && reviewsStats.reviews.length > 0
-              ? (showAllReviews ? reviewsStats.reviews : reviewsStats.reviews.slice(0, 3)).map((rev) => ({
-                  id: rev.id,
-                  author_name: rev.author_name,
-                  time_ago: rev.created_at
-                    ? new Date(rev.created_at).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    : "Recent",
-                  rating: rev.rating || 5,
-                  text: rev.text,
-                  photos: [],
-                }))
-              : []
-            ).map((rev: any, i: number) => {
-              const starCount = Math.max(1, Math.min(5, rev.rating || 5));
-
-              return (
-                <div key={rev.id || i} className={styles.reviewItem}>
-                  <div className={styles.reviewHeader}>
-                    <div className={styles.reviewUser}>
-                      <div className={styles.avatarCircle}>
-                        <img
-                          src="/images/logos/de_luzex_white.svg"
-                          alt="De Luzex"
-                          className={styles.avatarImg}
-                        />
-                      </div>
-                      <div className={styles.reviewUserInfo}>
-                        <span className={styles.reviewName}>{rev.author_name}</span>
-                        <span className={styles.reviewSeparatorDot}>·</span>
-                        <span className={styles.reviewDate}>{rev.time_ago}</span>
-                      </div>
-                    </div>
-                    <div className={styles.reviewRatingRight}>
-                      <span className={styles.reviewScoreNumber}>{(rev.rating || 5).toFixed(1)}</span>
-                      <span className={styles.reviewStarsGold}>
-                        {"★".repeat(starCount)}
-                      </span>
-                    </div>
-                  </div>
-                  <p className={styles.reviewText}>{rev.text}</p>
-                  {Array.isArray(rev.photos) && rev.photos.length > 0 && (
-                    <div className={styles.reviewPhotosRow}>
-                      {rev.photos.map((photoSrc: string, pIdx: number) => (
-                        <div key={pIdx} className={styles.reviewPhotoThumb}>
-                          <Image
-                            src={photoSrc}
-                            alt={`Review photo ${pIdx + 1}`}
-                            fill
-                            sizes="72px"
-                            className={styles.reviewThumbImg}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {((reviewsStats?.reviews?.length ?? 0) > 3) && (
             <button
-              className={styles.readAllBtn}
               type="button"
-              onClick={() => setShowAllReviews(!showAllReviews)}
+              className={styles.writeReviewBtn}
+              onClick={handleOpenReviewModal}
             >
-              <span className={styles.readAllBtnText}>
-                {showAllReviews ? "Show Fewer Reviews" : "Read All Reviews"}
-              </span>
               <svg
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2.5"
+                strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className={styles.readAllBtnIcon}
-                style={{
-                  transform: showAllReviews ? "rotate(180deg)" : "none",
-                  transition: "transform 0.25s ease",
-                }}
               >
-                <polyline points="6 9 12 15 18 9"></polyline>
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
+              <span>Write a Review</span>
             </button>
+          </div>
+
+          <div className={styles.reviewsDivider} />
+
+          {(!reviewsStats?.reviews || reviewsStats.reviews.length === 0) ? (
+            <div className={styles.emptyReviewsState}>
+              <div className={styles.emptyReviewsIcon}>★</div>
+              <h3 className={styles.emptyReviewsTitle}>No Reviews Yet</h3>
+              <p className={styles.emptyReviewsText}>
+                Be the first to share your experience with {product.product_title}! Your feedback helps others discover handcrafted lighting.
+              </p>
+              <button
+                type="button"
+                className={styles.writeReviewBtn}
+                onClick={handleOpenReviewModal}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                <span>Write the First Review</span>
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className={styles.ratingSummary}>
+                <div className={styles.ratingScore}>
+                  <h3>{(reviewsStats?.average_rating ?? 0).toFixed(1)}</h3>
+                  <div className={styles.stars}>
+                    {"★".repeat(Math.round(reviewsStats?.average_rating ?? 0))}
+                    {"☆".repeat(5 - Math.round(reviewsStats?.average_rating ?? 0))}
+                  </div>
+                  <p>{reviewsStats?.total_reviews ? `${reviewsStats.total_reviews} Ratings` : "No ratings yet"}</p>
+                </div>
+                <div className={styles.ratingBars}>
+                  {[5, 4, 3, 2, 1].map((score) => ({
+                    score: String(score), count: `${reviewsStats?.breakdown?.[String(score)]?.count ?? 0} Reviews`,
+                    pct: reviewsStats?.breakdown?.[String(score)]?.pct ?? 0,
+                  })).map((bar, idx) => (
+                    <div key={idx} className={styles.ratingBarRow}>
+                      <div className={styles.barTrack}>
+                        <div className={styles.barFill} style={{ width: `${bar.pct}%` }}></div>
+                      </div>
+                      <div className={styles.barMeta}>
+                        <span className={styles.barScore}>{bar.score}</span>
+                        <span className={styles.barReviewsCount}>{bar.count}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className={styles.reviewList}>
+                {(reviewsStats?.reviews && reviewsStats.reviews.length > 0
+                  ? (showAllReviews ? reviewsStats.reviews : reviewsStats.reviews.slice(0, 3)).map((rev) => ({
+                      id: rev.id,
+                      author_name: rev.author_name,
+                      time_ago: rev.created_at
+                        ? new Date(rev.created_at).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })
+                        : "Recent",
+                      rating: rev.rating || 5,
+                      text: rev.text,
+                      photos: [],
+                    }))
+                  : []
+                ).map((rev: any, i: number) => {
+                  const starCount = Math.max(1, Math.min(5, rev.rating || 5));
+
+                  return (
+                    <div key={rev.id || i} className={styles.reviewItem}>
+                      <div className={styles.reviewHeader}>
+                        <div className={styles.reviewUser}>
+                          <div className={styles.avatarCircle}>
+                            <img
+                              src="/images/logos/de_luzex_white.svg"
+                              alt="De Luzex"
+                              className={styles.avatarImg}
+                            />
+                          </div>
+                          <div className={styles.reviewUserInfo}>
+                            <span className={styles.reviewName}>{rev.author_name}</span>
+                            <span className={styles.reviewSeparatorDot}>·</span>
+                            <span className={styles.reviewDate}>{rev.time_ago}</span>
+                          </div>
+                        </div>
+                        <div className={styles.reviewRatingRight}>
+                          <span className={styles.reviewScoreNumber}>{(rev.rating || 5).toFixed(1)}</span>
+                          <span className={styles.reviewStarsGold}>
+                            {"★".repeat(starCount)}
+                          </span>
+                        </div>
+                      </div>
+                      <p className={styles.reviewText}>{rev.text}</p>
+                      {Array.isArray(rev.photos) && rev.photos.length > 0 && (
+                        <div className={styles.reviewPhotosRow}>
+                          {rev.photos.map((photoSrc: string, pIdx: number) => (
+                            <div key={pIdx} className={styles.reviewPhotoThumb}>
+                              <Image
+                                src={photoSrc}
+                                alt={`Review photo ${pIdx + 1}`}
+                                fill
+                                sizes="72px"
+                                className={styles.reviewThumbImg}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {((reviewsStats?.reviews?.length ?? 0) > 3) && (
+                <button
+                  className={styles.readAllBtn}
+                  type="button"
+                  onClick={() => setShowAllReviews(!showAllReviews)}
+                >
+                  <span className={styles.readAllBtnText}>
+                    {showAllReviews ? "Show Fewer Reviews" : "Read All Reviews"}
+                  </span>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={styles.readAllBtnIcon}
+                    style={{
+                      transform: showAllReviews ? "rotate(180deg)" : "none",
+                      transition: "transform 0.25s ease",
+                    }}
+                  >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+              )}
+            </>
           )}
         </section>
 
