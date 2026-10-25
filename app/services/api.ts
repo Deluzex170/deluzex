@@ -1797,7 +1797,11 @@ export async function cancelUserOrder(orderId: string, email?: string): Promise<
   try {
     const res = await fetch(`${API_BASE_URL}/orders/${cleanId}/cancel`, {
       method: "POST",
-      headers: getAuthHeaders(),
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email: email || "" }),
     });
     return res.ok;
   } catch {

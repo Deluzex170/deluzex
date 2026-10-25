@@ -12,6 +12,7 @@ from app.core.audit import record_audit_event
 from app.services.inventory import decrement_product_stock, restore_product_stock
 from app.services.email import send_order_confirmation_email
 from app.schemas.order import (
+    OrderCancelRequest,
     OrderCancelResponse,
     OrderCreateRequest,
     OrderListResponse,
@@ -342,6 +343,14 @@ def update_order_status(
             detail="Order not found",
         )
 
+    # Sync inventory stock if transitioning to or from cancelled
+    new_status = str(payload.status).lower()
+    old_status_clean = str(old_status).lower() if old_status else ""
+    if new_status == "cancelled" and old_status_clean != "cancelled":
+        restore_product_stock(prev_doc.get("items", []))
+    elif old_status_clean == "cancelled" and new_status != "cancelled":
+        decrement_product_stock(prev_doc.get("items", []))
+
     doc = db.orders.find_one({"_id": obj_id})
     logger.info(f"[PATCH /orders/{order_id}/status] Status updated successfully")
 
@@ -423,14 +432,15 @@ def delete_order(
 @router.put("/{order_id}/cancel", response_model=OrderCancelResponse)
 def cancel_order(
     order_id: str,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    payload: Optional[OrderCancelRequest] = None,
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
 ):
     """
     Cancel an order if it is in a cancellable state (pending, paid, cod, processing).
-    Enforces authorization: Only the customer who owns the order or an Admin can cancel it.
+    Enforces authorization: Only the customer who owns the order (via token or email) or an Admin can cancel it.
     """
     clean_id = order_id.replace("#", "").strip()
-    logger.info(f"[POST /orders/{order_id}/cancel] Attempting to cancel order by {current_user.email}")
+    logger.info(f"[POST /orders/{order_id}/cancel] Attempting to cancel order #{clean_id}")
     doc = None
     try:
         doc = db.orders.find_one({"_id": ObjectId(clean_id)})
@@ -460,19 +470,26 @@ def cancel_order(
 
     # Check ownership or admin
     order_email = (doc.get("email") or "").strip().lower()
-    user_email = (current_user.email or "").strip().lower()
     order_uid = str(doc.get("user_id") or "")
-    user_id_str = str(current_user.id) if current_user.id else None
-    is_owner = (order_email and order_email == user_email) or (user_id_str and order_uid == user_id_str)
 
-    if not is_owner and not getattr(current_user, "is_admin", False):
-        logger.warning(f"[POST /orders/{order_id}/cancel] User {current_user.email} unauthorized to cancel order #{order_id}")
+    is_owner = False
+    if current_user:
+        user_email = (current_user.email or "").strip().lower()
+        user_id_str = str(current_user.id) if current_user.id else None
+        is_owner = (order_email and order_email == user_email) or (user_id_str and order_uid == user_id_str) or getattr(current_user, "is_admin", False)
+
+    if not is_owner and payload and payload.email:
+        req_email = (payload.email or "").strip().lower()
+        is_owner = bool(order_email and order_email == req_email)
+
+    if not is_owner:
+        logger.warning(f"[POST /orders/{order_id}/cancel] Unauthorized attempt to cancel order #{order_id}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to cancel this order",
         )
 
-    current_status = doc.get("status")
+    current_status = str(doc.get("status") or "").lower()
     non_cancellable = ["shipped", "out_for_delivery", "delivered", "cancelled"]
     if current_status in non_cancellable:
         logger.warning(f"[POST /orders/{order_id}/cancel] Cannot cancel order with status '{current_status}'")
@@ -481,16 +498,18 @@ def cancel_order(
             detail=f"Order cannot be cancelled as it is already '{current_status}'",
         )
 
+    update_fields = {
+        "status": "cancelled",
+        "updated_at": datetime.utcnow(),
+    }
+    if payload and payload.reason:
+        update_fields["cancel_reason"] = payload.reason
+
     db.orders.update_one(
         {"_id": obj_id},
-        {
-            "$set": {
-                "status": "cancelled",
-                "updated_at": datetime.utcnow(),
-            }
-        },
+        {"$set": update_fields},
     )
-    logger.info(f"[POST /orders/{order_id}/cancel] Order cancelled successfully")
+    logger.info(f"[POST /orders/{order_id}/cancel] Order #{order_id} cancelled successfully")
 
     # Restore inventory stock back to products
     restore_product_stock(doc.get("items", []))
