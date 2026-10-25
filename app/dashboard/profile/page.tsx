@@ -94,6 +94,18 @@ export default function ProfilePage() {
     setAvatarPreview(null);
     setAvatarError(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("user_avatar");
+      try {
+        const stored = JSON.parse(localStorage.getItem("user") || "{}");
+        const updated = { ...stored, avatar_url: null, avatar: null, image: null, image_url: null };
+        localStorage.setItem("user", JSON.stringify(updated));
+        const token = localStorage.getItem("authToken") || "";
+        login(token, updated);
+      } catch {
+        // ignore
+      }
+    }
     try {
       await removeUserAvatar();
       showToast("Profile photo removed.");
@@ -118,6 +130,7 @@ export default function ProfilePage() {
     }
   };
 
+  // Form input states (editable in input fields)
   const [firstName, setFirstName] = useState(() =>
     getInitialUserValue("first_name", userRecord?.first_name || userRecord?.name?.split(" ")[0] || "Hasanabbas", userRecord)
   );
@@ -139,6 +152,14 @@ export default function ProfilePage() {
   const [country, setCountry] = useState(() =>
     getInitialUserValue("country", "India", userRecord)
   );
+
+  // Saved profile display state (only updates when user presses "Save Changes" or when profile loads from DB)
+  const [savedProfile, setSavedProfile] = useState(() => ({
+    firstName: getInitialUserValue("first_name", userRecord?.first_name || userRecord?.name?.split(" ")[0] || "Hasanabbas", userRecord),
+    lastName: getInitialUserValue("last_name", userRecord?.last_name || userRecord?.name?.split(" ").slice(1).join(" ") || "Chaudhary", userRecord),
+    email: getInitialUserValue("email", "Hasanabbas@gmail.com", userRecord),
+    phone: getInitialUserValue("phone", "+91 9982791722", userRecord),
+  }));
 
   // Password fields and visibility toggles
   const [currentPassword, setCurrentPassword] = useState("");
@@ -171,6 +192,12 @@ export default function ProfilePage() {
         if (profile.city) setCity(profile.city);
         if (profile.state) setState(profile.state);
         if (profile.country) setCountry(profile.country);
+        setSavedProfile({
+          firstName: profile.first_name || profile.name?.split(" ")[0] || "Hasanabbas",
+          lastName: profile.last_name || profile.name?.split(" ").slice(1).join(" ") || "Chaudhary",
+          email: profile.email || "Hasanabbas@gmail.com",
+          phone: profile.phone || "+91 9982791722",
+        });
         localStorage.setItem("user", JSON.stringify(profile));
       })
       .catch((error: Error) => {
@@ -215,6 +242,12 @@ export default function ProfilePage() {
       });
       const token = localStorage.getItem("authToken") || "";
       login(token, updatedUser);
+      setSavedProfile({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+      });
       showToast("Personal information saved successfully!");
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Failed to update profile.");
@@ -419,7 +452,7 @@ export default function ProfilePage() {
                         textTransform: "uppercase",
                       }}
                     >
-                      {(firstName?.[0] || email?.[0] || "U").toUpperCase()}
+                      {(savedProfile.firstName?.[0] || savedProfile.email?.[0] || "U").toUpperCase()}
                     </div>
                   )}
                 </div>
@@ -459,11 +492,18 @@ export default function ProfilePage() {
               </div>
 
               <div className={styles.profileDetailsColumn}>
-                <h2 className={styles.profileCardName}>{firstName} {lastName}</h2>
-                <div className={styles.profileCardEmail}>{email}</div>
-                <div className={styles.profileCardPhone}>{phone}</div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.35rem", flexWrap: "wrap" }}>
+                <h2 className={styles.profileCardName}>{savedProfile.firstName} {savedProfile.lastName}</h2>
+                <div className={styles.profileCardEmail}>{savedProfile.email}</div>
+                <div className={styles.profileCardPhone}>{savedProfile.phone}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", marginTop: "0.45rem", flexWrap: "wrap" }}>
                   <span className={styles.memberBadge}>&#9733; Deluzex Premium Client</span>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className={styles.changePhotoTextBtn}
+                  >
+                    Change Photo
+                  </button>
                   {avatarPreview && !avatarError && (
                     <button
                       type="button"
