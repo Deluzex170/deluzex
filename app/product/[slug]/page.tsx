@@ -197,20 +197,64 @@ export default function ProductDetail() {
     `Hello Deluzex team! I am interested in inquiring about "${product.product_title}" (SKU: ${product.sku || "N/A"}). Please provide quotation and volume pricing details.`
   );
 
-  // Technical Specifications data
-  const specRows = [
-    { key: "Dimensions", value: product.dimensions || "Not provided" },
-    { key: "Finish", value: product.finish || product.product_finishing || "Not provided" },
-    { key: "Material", value: product.material || product.product_material || "Not provided" },
-    { key: "Colorway", value: product.colorway || product.product_style || "Not provided" },
-    { key: "Piece Weight", value: product.piece_weight || "Not provided" },
-    { key: "Care", value: product.care || "Not provided" },
-    { key: "MOQ Rule", value: product.moq_rule || "Not provided" },
-    { key: "Replenishment", value: product.replenishment || "Not provided" },
+  // Helper to test if an admin-provided value is genuine and not null/empty/placeholder
+  const isValidDetail = (val: unknown): boolean => {
+    if (val === null || val === undefined) return false;
+    const str = String(val).trim();
+    if (!str) return false;
+    const lower = str.toLowerCase();
+    return (
+      lower !== "null" &&
+      lower !== "undefined" &&
+      lower !== "not provided" &&
+      lower !== "not_provided" &&
+      lower !== "not available" &&
+      lower !== "not_available" &&
+      lower !== "none" &&
+      lower !== "n/a" &&
+      lower !== "na"
+    );
+  };
+
+  // Technical Specifications data - only valid, non-null attributes entered by admin
+  const candidateSpecs = [
+    { key: "Dimensions", value: product.dimensions },
+    { key: "Finish", value: product.finish || product.product_finishing },
+    { key: "Material", value: product.material || product.product_material },
+    { key: "Colorway", value: product.colorway || product.product_style },
+    { key: "Piece Weight", value: product.piece_weight },
+    { key: "Care", value: product.care },
+    { key: "MOQ Rule", value: product.moq_rule },
+    { key: "Replenishment", value: product.replenishment },
+    { key: "Voltage", value: product.product_voltage },
+    { key: "Wattage", value: product.product_wattage },
   ];
 
-  // Additional dynamic specs configured by admin
-  const extraSpecs = Array.isArray(product.specifications) ? product.specifications : [];
+  const specRows = candidateSpecs.filter((s) => isValidDetail(s.value));
+
+  // Additional dynamic specs configured by admin (filtering out null / empty entries)
+  const extraSpecs = (Array.isArray(product.specifications) ? product.specifications : []).filter(
+    (spec) => isValidDetail(spec?.key) && isValidDetail(spec?.value)
+  );
+
+  const accordionSpecs = [
+    { key: "Material", value: product.material || product.product_material },
+    { key: "Voltage", value: product.product_voltage },
+    { key: "Finish", value: product.finish || product.product_finishing },
+    { key: "Wattage", value: product.product_wattage },
+    { key: "Colorway", value: product.colorway || product.product_style },
+    ...extraSpecs,
+  ].filter((s) => isValidDetail(s.value));
+
+  const dimensionSpecs = [
+    { key: "Dimensions", value: product.dimensions },
+    { key: "Weight", value: product.piece_weight },
+  ].filter((d) => isValidDetail(d.value));
+
+  const hasAnyAccordions =
+    isValidDetail(product.technical_spec_pdf) ||
+    accordionSpecs.length > 0 ||
+    dimensionSpecs.length > 0;
 
   // Stock status text & class
   const isOutOfStock = product.in_stock === false || 
@@ -454,10 +498,11 @@ export default function ProductDetail() {
             </div>
 
             {/* Product Description */}
-            <p className={styles.description}>
-              {product.product_description ||
-                "Our signature rustic flat plate crafted from refined red terracotta clays. Extremely low absorption, fired at intense heat to guarantee chip protection."}
-            </p>
+            {isValidDetail(product.product_description) && (
+              <p className={styles.description}>
+                {product.product_description}
+              </p>
+            )}
 
             {/* Stock Availability Indicator */}
             {isOutOfStock ? (
@@ -542,165 +587,163 @@ export default function ProductDetail() {
             <div className={styles.divider} />
 
             {/* Technical Specifications Section */}
-            <div className={styles.specsSection} id="specifications">
-              <div className={styles.specsHeaderRow}>
-                <div className={styles.specsHeader}>TECHNICAL SPECIFICATIONS</div>
+            {(specRows.length > 0 || extraSpecs.length > 0) && (
+              <div className={styles.specsSection} id="specifications">
+                <div className={styles.specsHeaderRow}>
+                  <div className={styles.specsHeader}>TECHNICAL SPECIFICATIONS</div>
+                </div>
+                <div className={styles.specsList}>
+                  {specRows.map((spec, idx) => (
+                    <div key={idx} className={styles.specRow}>
+                      <div className={styles.specKey}>{spec.key}</div>
+                      <div className={styles.specVal}>{String(spec.value)}</div>
+                    </div>
+                  ))}
+                  {/* Custom Admin Added Specifications */}
+                  {extraSpecs.map((spec, idx) => (
+                    <div key={`custom-${idx}`} className={styles.specRow}>
+                      <div className={styles.specKey}>{spec.key}</div>
+                      <div className={styles.specVal}>{String(spec.value)}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className={styles.divider} style={{ marginTop: "1.15rem", marginBottom: 0 }} />
               </div>
-              <div className={styles.specsList}>
-                {specRows.map(
-                  (spec, idx) =>
-                    spec.value && (
-                      <div key={idx} className={styles.specRow}>
-                        <div className={styles.specKey}>{spec.key}</div>
-                        <div className={styles.specVal}>{spec.value}</div>
-                      </div>
-                    )
-                )}
-                {/* Custom Admin Added Specifications */}
-                {extraSpecs.map(
-                  (spec, idx) =>
-                    spec.key &&
-                    spec.value && (
-                      <div key={`custom-${idx}`} className={styles.specRow}>
-                        <div className={styles.specKey}>{spec.key}</div>
-                        <div className={styles.specVal}>{spec.value}</div>
-                      </div>
-                    )
-                )}
-              </div>
-              <div className={styles.divider} style={{ marginTop: "1.15rem", marginBottom: 0 }} />
-            </div>
+            )}
           </div>
         </div>
 
         {/* ==================== PRODUCT SHOWCASE & ACCORDIONS SECTION ==================== */}
-        <section className={styles.showcaseSection}>
-          <div className={styles.showcaseGrid}>
-            {/* Left Column: Golden bordered luxury showcase card */}
-            <div className={styles.showcaseCard}>
-              <div className={styles.showcaseImageWrapper}>
-                <Image
-                  src={
-                    galleryImages[1] ||
-                    currentImage ||
-                    product.product_main_image ||
-                    "/images/logos/de_luzex_black.svg"
-                  }
-                  alt={product.product_title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  className={styles.showcaseImg}
-                />
+        {hasAnyAccordions && (
+          <section className={styles.showcaseSection}>
+            <div className={styles.showcaseGrid}>
+              {/* Left Column: Golden bordered luxury showcase card */}
+              <div className={styles.showcaseCard}>
+                <div className={styles.showcaseImageWrapper}>
+                  <Image
+                    src={
+                      galleryImages[1] ||
+                      currentImage ||
+                      product.product_main_image ||
+                      "/images/logos/de_luzex_black.svg"
+                    }
+                    alt={product.product_title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className={styles.showcaseImg}
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Right Column: 3 Accordions matching design */}
-            <div className={styles.accordionContainer}>
-              {/* 1. DOWNLOAD */}
-              <div className={styles.accordionItem}>
-                <button
-                  type="button"
-                  className={styles.accordionHeader}
-                  onClick={() => toggleAccordion("download")}
-                  aria-expanded={accordionsOpen.download}
-                >
-                  <span className={styles.accordionTitle}>DOWNLOAD</span>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    className={`${styles.accordionChevron} ${accordionsOpen.download ? styles.accordionChevronOpen : ""}`}
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
-                {accordionsOpen.download && (
-                  <div className={styles.accordionContent}>
+              {/* Right Column: Accordions matching available information */}
+              <div className={styles.accordionContainer}>
+                {/* 1. DOWNLOAD - only if technical_spec_pdf exists */}
+                {isValidDetail(product.technical_spec_pdf) && (
+                  <div className={styles.accordionItem}>
                     <button
                       type="button"
-                      className={styles.downloadLink}
-                      onClick={() => setShowPdfModal(true)}
+                      className={styles.accordionHeader}
+                      onClick={() => toggleAccordion("download")}
+                      aria-expanded={accordionsOpen.download}
                     >
-                      Installation Guide
+                      <span className={styles.accordionTitle}>DOWNLOAD</span>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        className={`${styles.accordionChevron} ${accordionsOpen.download ? styles.accordionChevronOpen : ""}`}
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
                     </button>
+                    {accordionsOpen.download && (
+                      <div className={styles.accordionContent}>
+                        <button
+                          type="button"
+                          className={styles.downloadLink}
+                          onClick={() => setShowPdfModal(true)}
+                        >
+                          Technical Specification Datasheet (PDF)
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 2. PRODUCT SPECIFICATIONS - only if valid specs exist */}
+                {accordionSpecs.length > 0 && (
+                  <div className={styles.accordionItem}>
                     <button
                       type="button"
-                      className={styles.downloadLink}
-                      onClick={() => setShowPdfModal(true)}
+                      className={styles.accordionHeader}
+                      onClick={() => toggleAccordion("specs")}
+                      aria-expanded={accordionsOpen.specs}
                     >
-                      Datasheet
+                      <span className={styles.accordionTitle}>PRODUCT SPECIFICATIONS</span>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        className={`${styles.accordionChevron} ${accordionsOpen.specs ? styles.accordionChevronOpen : ""}`}
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
                     </button>
+                    {accordionsOpen.specs && (
+                      <div className={styles.accordionContent}>
+                        {accordionSpecs.map((spec, idx) => (
+                          <p key={idx} className={styles.specItem}>
+                            {spec.key}: {String(spec.value)}
+                          </p>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
 
-              {/* 2. PRODUCT SPECIFICATIONS */}
-              <div className={styles.accordionItem}>
-                <button
-                  type="button"
-                  className={styles.accordionHeader}
-                  onClick={() => toggleAccordion("specs")}
-                  aria-expanded={accordionsOpen.specs}
-                >
-                  <span className={styles.accordionTitle}>PRODUCT SPECIFICATIONS</span>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    className={`${styles.accordionChevron} ${accordionsOpen.specs ? styles.accordionChevronOpen : ""}`}
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
-                {accordionsOpen.specs && (
-                  <div className={styles.accordionContent}>
-                    <p className={styles.specItem}>
-                      Material: {product.material || product.product_material || "Not provided"}
-                    </p>
-
-                    <p className={styles.specItem}>Voltage: {product.product_voltage || "Not provided"}</p>
-
-                  </div>
-                )}
-              </div>
-
-              {/* 3. DIMENSIONS */}
-              <div className={styles.accordionItem}>
-                <button
-                  type="button"
-                  className={styles.accordionHeader}
-                  onClick={() => toggleAccordion("dimensions")}
-                  aria-expanded={accordionsOpen.dimensions}
-                >
-                  <span className={styles.accordionTitle}>DIMENSIONS</span>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    className={`${styles.accordionChevron} ${accordionsOpen.dimensions ? styles.accordionChevronOpen : ""}`}
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
-                {accordionsOpen.dimensions && (
-                  <div className={styles.accordionContent}>
-
-                    <p className={styles.specItem}>Weight: {product.piece_weight || "Not provided"}</p>
+                {/* 3. DIMENSIONS - only if valid dimensions exist */}
+                {dimensionSpecs.length > 0 && (
+                  <div className={styles.accordionItem}>
+                    <button
+                      type="button"
+                      className={styles.accordionHeader}
+                      onClick={() => toggleAccordion("dimensions")}
+                      aria-expanded={accordionsOpen.dimensions}
+                    >
+                      <span className={styles.accordionTitle}>DIMENSIONS</span>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        className={`${styles.accordionChevron} ${accordionsOpen.dimensions ? styles.accordionChevronOpen : ""}`}
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </button>
+                    {accordionsOpen.dimensions && (
+                      <div className={styles.accordionContent}>
+                        {dimensionSpecs.map((dim, idx) => (
+                          <p key={idx} className={styles.specItem}>
+                            {dim.key}: {String(dim.value)}
+                          </p>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
       </div>
 
       {/* Floating Added to Cart Toast */}

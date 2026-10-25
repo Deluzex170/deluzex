@@ -760,25 +760,30 @@ function ShopContent() {
 
                   <div className={styles.productInfo}>
                     <div className={styles.productTopRow}>
-                      {product.product_category ? (
+                      {product.product_category &&
+                      product.product_category.trim() &&
+                      product.product_category.toLowerCase() !== "null" &&
+                      product.product_category.toLowerCase() !== "undefined" ? (
                         <span className={styles.productCategory}>
                           {product.product_category.replace(/_/g, " ")}
                         </span>
                       ) : (
                         <span />
                       )}
-                      <div className={styles.productRating}>
-                        <svg
-                          className={styles.starIcon}
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                        >
-                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                        <span>{product.product_rating ? `${product.product_rating} / 5` : "Not rated yet"}</span>
-                      </div>
+                      {product.product_rating && Number(product.product_rating) > 0 ? (
+                        <div className={styles.productRating}>
+                          <svg
+                            className={styles.starIcon}
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                          >
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                          </svg>
+                          <span>{product.product_rating} / 5</span>
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className={styles.productInfoRow}>
