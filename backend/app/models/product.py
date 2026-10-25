@@ -35,6 +35,7 @@ class Product(BaseModel):
     replenishment: Optional[str] = None
     whatsapp_number: Optional[str] = None
     phone_number: Optional[str] = None
+    amazon_link: Optional[str] = None
     specifications: Optional[list[dict]] = []
     technical_spec_pdf: Optional[str] = None
 

@@ -409,6 +409,29 @@ export default function AdminProducts() {
                           }}>
                             {prod.stock_status || "IN STOCK"}
                           </span>
+                          {prod.amazon_link && (
+                            <a
+                              href={prod.amazon_link.startsWith("http") ? prod.amazon_link : `https://${prod.amazon_link}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={`Amazon Listing: ${prod.amazon_link}`}
+                              style={{
+                                fontSize: "0.7rem",
+                                padding: "1px 7px",
+                                borderRadius: "4px",
+                                fontWeight: 700,
+                                background: "#131921",
+                                color: "#FF9900",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3px",
+                                textDecoration: "none",
+                                border: "1px solid rgba(255, 153, 0, 0.4)",
+                              }}
+                            >
+                              Amazon ↗
+                            </a>
+                          )}
                         </div>
                         {prod.product_description && (
                           <div

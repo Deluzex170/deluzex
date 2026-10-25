@@ -360,6 +360,46 @@
   transform: translateY(0);
 }
 
+.btnAmazon {
+  width: 100%;
+  background: #131921;
+  color: #FFFFFF;
+  border: 1.5px solid #232F3E;
+  border-radius: 9999px;
+  padding: 0.62rem 1.25rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  box-shadow: 0 4px 14px rgba(19, 25, 33, 0.18);
+}
+
+.btnAmazon:hover {
+  background: #232F3E;
+  border-color: #FF9900;
+  color: #FF9900;
+  box-shadow: 0 6px 20px rgba(255, 153, 0, 0.22);
+  transform: translateY(-1px);
+}
+
+.btnAmazon:active {
+  transform: translateY(0);
+}
+
+.btnAmazonIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #FF9900;
+}
+
 /* Subtle Divider */
 .divider {
   width: 100%;

@@ -559,6 +559,28 @@ export default function ProductDetail() {
                 {isOutOfStock ? "Inquire for Commission" : "Email and Inquiry"}
               </button>
 
+              {isValidDetail(product.amazon_link) && (
+                <a
+                  href={String(product.amazon_link).trim().startsWith("http") ? String(product.amazon_link).trim() : `https://${String(product.amazon_link).trim()}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.btnAmazon}
+                  title="Buy directly on Amazon"
+                >
+                  <span className={styles.btnAmazonIcon}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M13.62 14.51c-2.04 1.5-4.99 2.3-7.56 2.3-3.6 0-6.83-1.34-9.27-3.58-.19-.18-.02-.43.22-.29 2.64 1.54 5.86 2.47 9.21 2.47 2.28 0 4.77-.56 7.02-1.71.35-.18.64.27.38.81zm.9-1.14c-.26-.34-1.73-.14-2.39-.06-.2.02-.23-.15-.05-.28 1.17-.83 3.09-.59 3.32-.3.23.29-.06 2.22-1.17 3.13-.17.14-.33.06-.25-.12.25-.6.8-2.04.54-2.37zm2.18-5.32c-.44.75-.95 1.48-1.54 2.18-.17.2-.42.08-.34-.14.49-1.28.8-2.67.92-4.08.02-.27.35-.38.5-.16.48.71 1.05 1.37 1.68 1.98.2.19.04.46-.2.43-.34-.05-.68-.12-1.02-.21z"/>
+                    </svg>
+                  </span>
+                  <span>Buy on Amazon</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.85 }}>
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                </a>
+              )}
+
               {product && <WishlistButton product={product} variant="pill" size={18} showText />}
             </div>
 

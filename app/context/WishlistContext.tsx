@@ -14,8 +14,8 @@ interface WishlistContextType {
   wishlistItems: WishlistItem[];
   wishlistIds: Set<string>;
   isWishlisted: (productId?: string | number, title?: string) => boolean;
-  toggleWishlist: (product: Partial<Product> & { title?: string; image?: string; price?: number | string }) => Promise<boolean>;
-  removeFromWishlist: (productId: string | number) => Promise<boolean>;
+  toggleWishlist: (product: Partial<Product> & { title?: string; image?: string; price?: number | string; slug?: string }) => Promise<boolean>;
+  removeFromWishlist: (productId: string | number, itemId?: string, title?: string) => Promise<boolean>;
   wishlistCount: number;
   isLoading: boolean;
   refreshWishlist: () => Promise<void>;

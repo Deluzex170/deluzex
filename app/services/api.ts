@@ -184,7 +184,8 @@ export interface Product {
   product_main_image?: string;
   product_images?: string[];
 
-  // Technical Specifications & Reference Design Fields
+  slug?: string;
+  product_wattage?: string;
   sku?: string;
   stock_status?: string;
   in_stock?: boolean;
@@ -200,6 +201,7 @@ export interface Product {
   replenishment?: string;
   whatsapp_number?: string;
   phone_number?: string;
+  amazon_link?: string;
   specifications?: ProductSpecification[];
   technical_spec_pdf?: string;
 }
@@ -208,6 +210,8 @@ export interface UserProfile {
   id: string;
   first_name: string;
   last_name: string;
+  name?: string;
+  avatar_url?: string | null;
   email: string;
   phone?: string | null;
   city?: string | null;
@@ -219,9 +223,9 @@ export interface UserProfile {
 }
 
 export interface UserProfileUpdate {
-  first_name: string;
-  last_name: string;
-  email: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
   phone?: string;
   avatar_url?: string | null;
   remove_avatar?: boolean;
@@ -1462,7 +1466,7 @@ export async function toggleWishlistApi(item: {
   product_price: number | string;
   product_image?: string;
   product_slug?: string;
-}): Promise<{ is_wishlisted: boolean; item_id?: string | null; message?: string }> {
+}): Promise<{ is_wishlisted: boolean; item_id?: string | null; message?: string; item?: WishlistItem | Record<string, unknown> }> {
   const res = await fetch(`${API_BASE_URL}/user/wishlist/toggle`, {
     method: "POST",
     headers: {
