@@ -534,23 +534,37 @@ export async function toggleProductNewArrival(id: string | number, isNewArrival?
   return data.data || data;
 }
 
-export async function createCategory(categoryData: JsonObject) {
+export async function createCategory(categoryData: JsonObject | FormData) {
+  const isFormData = categoryData instanceof FormData;
   const res = await fetch(`${API_BASE_URL}/categories`, {
     method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(categoryData)
+    headers: {
+      ...getAuthHeaders(isFormData),
+      ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: isFormData ? categoryData : JSON.stringify(categoryData)
   });
-  if (!res.ok) throw new Error('Failed to create category');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to create category');
+  }
   return res.json();
 }
 
-export async function updateCategory(id: string | number, categoryData: JsonObject) {
+export async function updateCategory(id: string | number, categoryData: JsonObject | FormData) {
+  const isFormData = categoryData instanceof FormData;
   const res = await fetch(`${API_BASE_URL}/categories/${id}`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(categoryData)
+    headers: {
+      ...getAuthHeaders(isFormData),
+      ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: isFormData ? categoryData : JSON.stringify(categoryData)
   });
-  if (!res.ok) throw new Error('Failed to update category');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to update category');
+  }
   return res.json();
 }
 

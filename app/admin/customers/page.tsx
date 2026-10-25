@@ -432,7 +432,7 @@ export default function AdminCustomersPage() {
                       </div>
                     </div>
                     <div className={styles.orderAmount}>
-                      ₹{(ord.total_amount || ord.totalAmount || 0).toLocaleString("en-IN")}
+                      ₹{(ord.total || ord.total_amount || ord.totalAmount || 0).toLocaleString("en-IN")}
                     </div>
                   </div>
                 ))

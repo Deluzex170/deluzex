@@ -114,25 +114,53 @@ def get_all_reviews_admin(
     reviews_cursor = list(db.reviews.find(query).sort("created_at", -1).skip(skip).limit(limit))
 
     # Batch lookup product details
-    product_ids = [r.get("product_id") for r in reviews_cursor if r.get("product_id")]
+    raw_pids = [str(r.get("product_id")) for r in reviews_cursor if r.get("product_id")]
     product_map = {}
-    valid_obj_ids = []
-    for pid in set(product_ids):
-        try:
-            valid_obj_ids.append(ObjectId(pid))
-        except Exception:
-            pass
+    obj_ids = []
+    str_ids = []
+    for pid in set(raw_pids):
+        if ObjectId.is_valid(pid):
+            obj_ids.append(ObjectId(pid))
+        else:
+            str_ids.append(pid)
 
-    if valid_obj_ids:
+    query_prods = []
+    if obj_ids:
+        query_prods.append({"_id": {"$in": obj_ids}})
+    if str_ids:
+        query_prods.append({"slug": {"$in": str_ids}})
+        query_prods.append({"sku": {"$in": str_ids}})
+
+    if query_prods:
         prods = db.products.find(
-            {"_id": {"$in": valid_obj_ids}},
-            {"_id": 1, "product_name": 1, "title": 1, "image": 1, "images": 1}
+            {"$or": query_prods} if len(query_prods) > 1 else query_prods[0],
+            {
+                "_id": 1,
+                "slug": 1,
+                "sku": 1,
+                "product_title": 1,
+                "product_name": 1,
+                "title": 1,
+                "product_main_image": 1,
+                "product_images": 1,
+                "image": 1,
+                "images": 1,
+            }
         )
         for p in prods:
-            product_map[str(p["_id"])] = {
-                "name": p.get("product_name") or p.get("title") or "Unnamed Product",
-                "image": p.get("image") or (p.get("images")[0] if p.get("images") else None)
-            }
+            name_val = p.get("product_title") or p.get("product_name") or p.get("title") or "Unnamed Product"
+            img_val = p.get("product_main_image") or p.get("image")
+            if not img_val and p.get("product_images") and len(p.get("product_images")) > 0:
+                img_val = p.get("product_images")[0]
+            elif not img_val and p.get("images") and len(p.get("images")) > 0:
+                img_val = p.get("images")[0]
+
+            item_data = {"name": name_val, "image": img_val}
+            product_map[str(p["_id"])] = item_data
+            if p.get("slug"):
+                product_map[p["slug"]] = item_data
+            if p.get("sku"):
+                product_map[p["sku"]] = item_data
 
     formatted = []
     for r in reviews_cursor:

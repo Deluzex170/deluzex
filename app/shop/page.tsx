@@ -72,21 +72,25 @@ function ShopContent() {
     if (!categoriesRef.current) return;
     const container = categoriesRef.current;
     const card = container.firstElementChild as HTMLElement | null;
-    const cardWidth = card ? card.offsetWidth + 24 : 294;
+    const cardWidth = card ? card.getBoundingClientRect().width + 24 : 294;
     const { scrollLeft, scrollWidth, clientWidth } = container;
-    const maxScroll = scrollWidth - clientWidth;
+    const maxScroll = Math.max(0, scrollWidth - clientWidth);
+
+    if (maxScroll <= 5) return;
 
     if (direction === "next") {
-      if (scrollLeft + cardWidth >= maxScroll - 10) {
+      if (scrollLeft >= maxScroll - 10) {
         container.scrollTo({ left: 0, behavior: "smooth" });
       } else {
-        container.scrollBy({ left: cardWidth, behavior: "smooth" });
+        const target = Math.min(scrollLeft + cardWidth, maxScroll);
+        container.scrollTo({ left: target, behavior: "smooth" });
       }
     } else {
       if (scrollLeft <= 10) {
         container.scrollTo({ left: maxScroll, behavior: "smooth" });
       } else {
-        container.scrollBy({ left: -cardWidth, behavior: "smooth" });
+        const target = Math.max(scrollLeft - cardWidth, 0);
+        container.scrollTo({ left: target, behavior: "smooth" });
       }
     }
   }, []);
@@ -327,13 +331,20 @@ function ShopContent() {
                   }}
                   aria-label={`Filter by ${cat.name}`}
                 >
-                  <Image
-                    src={cat.image_url || "/images/category_chandelier_1784107756268.jpg"}
-                    alt={cat.name}
-                    fill
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                    style={{ objectFit: "cover" }}
-                  />
+                  {cat.image_url && cat.image_url.trim() ? (
+                    <Image
+                      src={cat.image_url.trim()}
+                      alt={cat.name}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      style={{ objectFit: "cover" }}
+                    />
+                  ) : (
+                    <div className={styles.catCardPlaceholder}>
+                      <span className={styles.catCardPlaceholderIcon}>✦</span>
+                      <span className={styles.catCardPlaceholderSub}>Signature Family</span>
+                    </div>
+                  )}
                   <div className={styles.categoryOverlay}>
                     <h3 className={styles.categoryTitle}>{cat.name}</h3>
                   </div>

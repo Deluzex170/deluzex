@@ -70,13 +70,20 @@ export default async function CategoriesPage() {
                 className={styles.categoryCard}
               >
                 <div className={styles.cardImageWrapper}>
-                  <Image
-                    src={cat.image_url || "/images/category_chandelier_1784107756268.jpg"}
-                    alt={cat.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className={styles.cardImage}
-                  />
+                  {cat.image_url ? (
+                    <Image
+                      src={cat.image_url}
+                      alt={cat.name}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className={styles.cardImage}
+                    />
+                  ) : (
+                    <div className={styles.cardPlaceholder}>
+                      <span className={styles.cardPlaceholderIcon}>✦</span>
+                      <span className={styles.cardPlaceholderBadge}>Signature Family</span>
+                    </div>
+                  )}
                 </div>
                 <div className={styles.cardOverlay}></div>
 

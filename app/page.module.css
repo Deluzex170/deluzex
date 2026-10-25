@@ -515,8 +515,8 @@
 /* Outer corners of first/last card are more rounded, inner corners less */
 
 .catCard {
-  flex: 0 0 calc((100% - 3 * 24px) / 4);
-  min-width: 280px;
+  flex: 0 0 calc((100% - 3.4 * 24px) / 4.15);
+  min-width: 250px;
   position: relative;
   height: 320px;
   overflow: hidden;
@@ -535,6 +535,35 @@
 .catCard:hover {
   transform: scale(1.02);
   box-shadow: 0 0 0 2.5px #D79322, 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+.catCardPlaceholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #2e2417 0%, #14100b 100%);
+  gap: 10px;
+}
+
+.catCardPlaceholderIcon {
+  font-size: 2.2rem;
+  color: #d79322;
+  opacity: 0.8;
+}
+
+.catCardPlaceholderSub {
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #c49a45;
+  font-weight: 600;
+  border: 1px solid rgba(196, 154, 69, 0.35);
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: rgba(196, 154, 69, 0.08);
 }
 
 /* "Chandeliers" label - white text centered at bottom of active card */

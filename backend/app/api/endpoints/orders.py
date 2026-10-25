@@ -167,7 +167,15 @@ def list_orders(
                 query["phone"] = phone.strip()
 
     if order_status and order_status.lower() != "all":
-        query["status"] = {"$regex": f"^{re.escape(order_status.strip())}$", "$options": "i"}
+        norm_status = order_status.strip().lower()
+        if norm_status in ("pending", "cod"):
+            query["status"] = {"$in": ["pending", "cod"]}
+        elif norm_status in ("paid", "processing"):
+            query["status"] = {"$in": ["paid", "processing"]}
+        elif norm_status in ("shipped", "out_for_delivery"):
+            query["status"] = {"$in": ["shipped", "out_for_delivery"]}
+        else:
+            query["status"] = {"$regex": f"^{re.escape(order_status.strip())}$", "$options": "i"}
 
     docs = list(
         db.orders.find(query)

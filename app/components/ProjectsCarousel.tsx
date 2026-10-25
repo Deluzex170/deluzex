@@ -79,25 +79,29 @@ export default function ProjectsCarousel({ projects }: ProjectsCarouselProps) {
     if (!scrollRef.current) return;
     const container = scrollRef.current;
     const firstCard = container.querySelector(`.${styles.projectCard}`) as HTMLElement | null;
-    const cardWidth = firstCard ? firstCard.offsetWidth : 600;
+    const cardWidth = firstCard ? firstCard.getBoundingClientRect().width : 600;
     const gap = 24;
     const scrollAmount = cardWidth + gap;
 
     const { scrollLeft, scrollWidth, clientWidth } = container;
-    const maxScroll = scrollWidth - clientWidth;
+    const maxScroll = Math.max(0, scrollWidth - clientWidth);
+
+    if (maxScroll <= 5) return;
 
     if (direction === "next") {
-      if (scrollLeft + scrollAmount >= maxScroll - 10) {
+      if (scrollLeft >= maxScroll - 10) {
         // Smooth loop back to the beginning
         container.scrollTo({ left: 0, behavior: "smooth" });
       } else {
-        container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        const target = Math.min(scrollLeft + scrollAmount, maxScroll);
+        container.scrollTo({ left: target, behavior: "smooth" });
       }
     } else {
       if (scrollLeft <= 10) {
         container.scrollTo({ left: maxScroll, behavior: "smooth" });
       } else {
-        container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+        const target = Math.max(scrollLeft - scrollAmount, 0);
+        container.scrollTo({ left: target, behavior: "smooth" });
       }
     }
   }, []);

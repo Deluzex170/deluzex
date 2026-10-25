@@ -906,7 +906,7 @@ def get_user_stats(admin: models.User = Depends(deps.get_current_active_admin)):
 
     # Order revenue metrics
     pipeline = [
-        {"$group": {"_id": None, "total_spend": {"$sum": "$total_amount"}, "total_orders": {"$sum": 1}}}
+        {"$group": {"_id": None, "total_spend": {"$sum": {"$ifNull": ["$total", "$total_amount"]}}, "total_orders": {"$sum": 1}}}
     ]
     agg = list(db.orders.aggregate(pipeline))
     total_spend = round(agg[0]["total_spend"], 2) if agg and "total_spend" in agg[0] else 0.0
@@ -957,12 +957,26 @@ def get_users_admin(
 
     # Fast order aggregation by email and user_id
     pipeline_email = [
-        {"$match": {"customer.email": {"$exists": True, "$ne": None}}},
+        {
+            "$match": {
+                "$or": [
+                    {"email": {"$exists": True, "$ne": None}},
+                    {"customer.email": {"$exists": True, "$ne": None}}
+                ]
+            }
+        },
+        {
+            "$project": {
+                "order_email": {"$ifNull": ["$email", "$customer.email"]},
+                "order_total": {"$ifNull": ["$total", "$total_amount"]},
+                "created_at": "$created_at"
+            }
+        },
         {
             "$group": {
-                "_id": {"$toLower": "$customer.email"},
+                "_id": {"$toLower": "$order_email"},
                 "count": {"$sum": 1},
-                "total_spent": {"$sum": "$total_amount"},
+                "total_spent": {"$sum": "$order_total"},
                 "last_order": {"$max": "$created_at"}
             }
         }
@@ -975,7 +989,7 @@ def get_users_admin(
             "$group": {
                 "_id": "$user_id",
                 "count": {"$sum": 1},
-                "total_spent": {"$sum": "$total_amount"},
+                "total_spent": {"$sum": {"$ifNull": ["$total", "$total_amount"]}},
                 "last_order": {"$max": "$created_at"}
             }
         }
@@ -1083,12 +1097,20 @@ def get_user_orders_admin(
     orders_cursor = list(db.orders.find({
         "$or": [
             {"user_id": user_id},
+            {"email": {"$regex": f"^{re.escape(user_email)}$", "$options": "i"}},
             {"customer.email": {"$regex": f"^{re.escape(user_email)}$", "$options": "i"}}
         ]
     }).sort("created_at", -1))
 
     for o in orders_cursor:
         o["id"] = str(o.pop("_id", ""))
+        order_total = o.get("total") if o.get("total") is not None else o.get("total_amount", 0.0)
+        try:
+            order_total = float(order_total)
+        except (ValueError, TypeError):
+            order_total = 0.0
+        o["total"] = order_total
+        o["total_amount"] = order_total
         if isinstance(o.get("created_at"), datetime):
             o["created_at"] = o["created_at"].isoformat()
 

@@ -181,6 +181,35 @@
   transform: scale(1.08);
 }
 
+.cardPlaceholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #2e2417 0%, #15110c 100%);
+  gap: 12px;
+}
+
+.cardPlaceholderIcon {
+  font-size: 2.5rem;
+  color: #d79322;
+  opacity: 0.8;
+}
+
+.cardPlaceholderBadge {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #c49a45;
+  font-weight: 600;
+  border: 1px solid rgba(196, 154, 69, 0.35);
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: rgba(196, 154, 69, 0.08);
+}
+
 .cardOverlay {
   position: absolute;
   inset: 0;

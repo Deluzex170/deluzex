@@ -86,25 +86,29 @@ export default function CategoriesCarousel({ categories }: CategoriesCarouselPro
     if (!scrollRef.current) return;
     const container = scrollRef.current;
     const firstCard = container.querySelector(`.${styles.catCard}`) as HTMLElement | null;
-    const cardWidth = firstCard ? firstCard.offsetWidth : 290;
+    const cardWidth = firstCard ? firstCard.getBoundingClientRect().width : 280;
     const gap = 24;
     const scrollAmount = cardWidth + gap;
 
     const { scrollLeft, scrollWidth, clientWidth } = container;
-    const maxScroll = scrollWidth - clientWidth;
+    const maxScroll = Math.max(0, scrollWidth - clientWidth);
+
+    if (maxScroll <= 5) return;
 
     if (direction === "next") {
-      if (scrollLeft + scrollAmount >= maxScroll - 5) {
+      if (scrollLeft >= maxScroll - 10) {
         // Smooth loop back to beginning
         container.scrollTo({ left: 0, behavior: "smooth" });
       } else {
-        container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        const target = Math.min(scrollLeft + scrollAmount, maxScroll);
+        container.scrollTo({ left: target, behavior: "smooth" });
       }
     } else {
-      if (scrollLeft <= 5) {
+      if (scrollLeft <= 10) {
         container.scrollTo({ left: maxScroll, behavior: "smooth" });
       } else {
-        container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+        const target = Math.max(scrollLeft - scrollAmount, 0);
+        container.scrollTo({ left: target, behavior: "smooth" });
       }
     }
   }, []);
@@ -208,10 +212,8 @@ export default function CategoriesCarousel({ categories }: CategoriesCarouselPro
       >
         {displayCategories.map((cat, idx) => {
           const catIdentifier = cat.name || cat._id || cat.id || "All";
-          const imgSrc =
-            cat.image_url ||
-            (cat as any).image ||
-            DEFAULT_CATEGORIES[idx % DEFAULT_CATEGORIES.length].image_url!;
+          const rawImg = cat.image_url || (cat as any).image;
+          const imgSrc = rawImg && rawImg.trim() ? rawImg.trim() : (list.length === 0 ? DEFAULT_CATEGORIES[idx % DEFAULT_CATEGORIES.length].image_url : null);
 
           return (
             <Link
@@ -226,14 +228,21 @@ export default function CategoriesCarousel({ categories }: CategoriesCarouselPro
               }}
               draggable={false}
             >
-              <Image
-                src={imgSrc}
-                alt={cat.name || "Category"}
-                fill
-                sizes="(max-width: 768px) 240px, 320px"
-                style={{ objectFit: "cover", pointerEvents: "none" }}
-                draggable={false}
-              />
+              {imgSrc ? (
+                <Image
+                  src={imgSrc}
+                  alt={cat.name || "Category"}
+                  fill
+                  sizes="(max-width: 768px) 240px, 320px"
+                  style={{ objectFit: "cover", pointerEvents: "none" }}
+                  draggable={false}
+                />
+              ) : (
+                <div className={styles.catCardPlaceholder}>
+                  <span className={styles.catCardPlaceholderIcon}>✦</span>
+                  <span className={styles.catCardPlaceholderSub}>Signature Family</span>
+                </div>
+              )}
               <div className={styles.catCardLabel}>
                 <span>{cat.name}</span>
               </div>
