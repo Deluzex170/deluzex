@@ -392,6 +392,28 @@
   margin: 0;
 }
 
+.specsDownloadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(215, 147, 34, 0.08);
+  border: 1px solid rgba(215, 147, 34, 0.3);
+  border-radius: 6px;
+  color: #B8860B;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.specsDownloadBtn:hover {
+  background: #D79322;
+  color: #ffffff;
+  border-color: #D79322;
+}
+
 .specsList {
   display: flex;
   flex-direction: column;
@@ -444,6 +466,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -518,6 +541,7 @@
     opacity: 0;
     transform: translateY(16px) scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1668,6 +1692,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -1691,6 +1716,7 @@
     transform: translateY(16px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -1858,4 +1884,3 @@
   margin: 0 auto 1.25rem auto;
   box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
 }
-

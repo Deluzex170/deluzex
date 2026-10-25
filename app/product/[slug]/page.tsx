@@ -65,18 +65,6 @@ export default function ProductDetail() {
     quantity: "50",
     message: "",
   });
-  const [accordionsOpen, setAccordionsOpen] = useState<{ [key: string]: boolean }>({
-    download: true,
-    specs: true,
-    dimensions: true,
-  });
-
-  const toggleAccordion = (key: string) => {
-    setAccordionsOpen((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
   const ctlGridRef = useRef<HTMLDivElement>(null);
   const [activeCtlId, setActiveCtlId] = useState<string | number | null>(null);
 
@@ -216,45 +204,35 @@ export default function ProductDetail() {
     );
   };
 
-  // Technical Specifications data - only valid, non-null attributes entered by admin
-  const candidateSpecs = [
+  // Unified Specifications - single clean list combining core attributes & custom dynamic specifications
+  const baseSpecs = [
+    { key: "SKU", value: product.sku },
     { key: "Dimensions", value: product.dimensions },
     { key: "Finish", value: product.finish || product.product_finishing },
     { key: "Material", value: product.material || product.product_material },
     { key: "Colorway", value: product.colorway || product.product_style },
+    { key: "Voltage", value: product.product_voltage },
+    { key: "Wattage", value: product.product_wattage },
     { key: "Piece Weight", value: product.piece_weight },
     { key: "Care", value: product.care },
     { key: "MOQ Rule", value: product.moq_rule },
     { key: "Replenishment", value: product.replenishment },
-    { key: "Voltage", value: product.product_voltage },
-    { key: "Wattage", value: product.product_wattage },
-  ];
+  ].filter((s) => isValidDetail(s.value));
 
-  const specRows = candidateSpecs.filter((s) => isValidDetail(s.value));
-
-  // Additional dynamic specs configured by admin (filtering out null / empty entries)
   const extraSpecs = (Array.isArray(product.specifications) ? product.specifications : []).filter(
     (spec) => isValidDetail(spec?.key) && isValidDetail(spec?.value)
   );
 
-  const accordionSpecs = [
-    { key: "Material", value: product.material || product.product_material },
-    { key: "Voltage", value: product.product_voltage },
-    { key: "Finish", value: product.finish || product.product_finishing },
-    { key: "Wattage", value: product.product_wattage },
-    { key: "Colorway", value: product.colorway || product.product_style },
-    ...extraSpecs,
-  ].filter((s) => isValidDetail(s.value));
-
-  const dimensionSpecs = [
-    { key: "Dimensions", value: product.dimensions },
-    { key: "Weight", value: product.piece_weight },
-  ].filter((d) => isValidDetail(d.value));
-
-  const hasAnyAccordions =
-    isValidDetail(product.technical_spec_pdf) ||
-    accordionSpecs.length > 0 ||
-    dimensionSpecs.length > 0;
+  // Combine and deduplicate by lowercase key so admin custom specs take precedence or don't duplicate
+  const seenKeys = new Set<string>();
+  const allSpecifications: { key: string; value: unknown }[] = [];
+  for (const item of [...baseSpecs, ...extraSpecs]) {
+    const normKey = String(item.key).trim().toLowerCase();
+    if (!seenKeys.has(normKey)) {
+      seenKeys.add(normKey);
+      allSpecifications.push(item);
+    }
+  }
 
   // Stock status text & class
   const isOutOfStock = product.in_stock === false || 
@@ -586,22 +564,29 @@ export default function ProductDetail() {
 
             <div className={styles.divider} />
 
-            {/* Technical Specifications Section */}
-            {(specRows.length > 0 || extraSpecs.length > 0) && (
+            {/* Unified Product Specifications Section */}
+            {allSpecifications.length > 0 && (
               <div className={styles.specsSection} id="specifications">
                 <div className={styles.specsHeaderRow}>
-                  <div className={styles.specsHeader}>TECHNICAL SPECIFICATIONS</div>
+                  <div className={styles.specsHeader}>PRODUCT SPECIFICATIONS</div>
+                  {isValidDetail(product.technical_spec_pdf) && (
+                    <button
+                      type="button"
+                      className={styles.specsDownloadBtn}
+                      onClick={() => setShowPdfModal(true)}
+                      title="View & Download Technical Specification Datasheet (PDF)"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                      </svg>
+                      Datasheet (PDF)
+                    </button>
+                  )}
                 </div>
                 <div className={styles.specsList}>
-                  {specRows.map((spec, idx) => (
+                  {allSpecifications.map((spec, idx) => (
                     <div key={idx} className={styles.specRow}>
-                      <div className={styles.specKey}>{spec.key}</div>
-                      <div className={styles.specVal}>{String(spec.value)}</div>
-                    </div>
-                  ))}
-                  {/* Custom Admin Added Specifications */}
-                  {extraSpecs.map((spec, idx) => (
-                    <div key={`custom-${idx}`} className={styles.specRow}>
                       <div className={styles.specKey}>{spec.key}</div>
                       <div className={styles.specVal}>{String(spec.value)}</div>
                     </div>
@@ -612,138 +597,6 @@ export default function ProductDetail() {
             )}
           </div>
         </div>
-
-        {/* ==================== PRODUCT SHOWCASE & ACCORDIONS SECTION ==================== */}
-        {hasAnyAccordions && (
-          <section className={styles.showcaseSection}>
-            <div className={styles.showcaseGrid}>
-              {/* Left Column: Golden bordered luxury showcase card */}
-              <div className={styles.showcaseCard}>
-                <div className={styles.showcaseImageWrapper}>
-                  <Image
-                    src={
-                      galleryImages[1] ||
-                      currentImage ||
-                      product.product_main_image ||
-                      "/images/logos/de_luzex_black.svg"
-                    }
-                    alt={product.product_title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    className={styles.showcaseImg}
-                  />
-                </div>
-              </div>
-
-              {/* Right Column: Accordions matching available information */}
-              <div className={styles.accordionContainer}>
-                {/* 1. DOWNLOAD - only if technical_spec_pdf exists */}
-                {isValidDetail(product.technical_spec_pdf) && (
-                  <div className={styles.accordionItem}>
-                    <button
-                      type="button"
-                      className={styles.accordionHeader}
-                      onClick={() => toggleAccordion("download")}
-                      aria-expanded={accordionsOpen.download}
-                    >
-                      <span className={styles.accordionTitle}>DOWNLOAD</span>
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.2"
-                        className={`${styles.accordionChevron} ${accordionsOpen.download ? styles.accordionChevronOpen : ""}`}
-                      >
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                    </button>
-                    {accordionsOpen.download && (
-                      <div className={styles.accordionContent}>
-                        <button
-                          type="button"
-                          className={styles.downloadLink}
-                          onClick={() => setShowPdfModal(true)}
-                        >
-                          Technical Specification Datasheet (PDF)
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 2. PRODUCT SPECIFICATIONS - only if valid specs exist */}
-                {accordionSpecs.length > 0 && (
-                  <div className={styles.accordionItem}>
-                    <button
-                      type="button"
-                      className={styles.accordionHeader}
-                      onClick={() => toggleAccordion("specs")}
-                      aria-expanded={accordionsOpen.specs}
-                    >
-                      <span className={styles.accordionTitle}>PRODUCT SPECIFICATIONS</span>
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.2"
-                        className={`${styles.accordionChevron} ${accordionsOpen.specs ? styles.accordionChevronOpen : ""}`}
-                      >
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                    </button>
-                    {accordionsOpen.specs && (
-                      <div className={styles.accordionContent}>
-                        {accordionSpecs.map((spec, idx) => (
-                          <p key={idx} className={styles.specItem}>
-                            {spec.key}: {String(spec.value)}
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 3. DIMENSIONS - only if valid dimensions exist */}
-                {dimensionSpecs.length > 0 && (
-                  <div className={styles.accordionItem}>
-                    <button
-                      type="button"
-                      className={styles.accordionHeader}
-                      onClick={() => toggleAccordion("dimensions")}
-                      aria-expanded={accordionsOpen.dimensions}
-                    >
-                      <span className={styles.accordionTitle}>DIMENSIONS</span>
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.2"
-                        className={`${styles.accordionChevron} ${accordionsOpen.dimensions ? styles.accordionChevronOpen : ""}`}
-                      >
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                    </button>
-                    {accordionsOpen.dimensions && (
-                      <div className={styles.accordionContent}>
-                        {dimensionSpecs.map((dim, idx) => (
-                          <p key={idx} className={styles.specItem}>
-                            {dim.key}: {String(dim.value)}
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-        )}
       </div>
 
       {/* Floating Added to Cart Toast */}
