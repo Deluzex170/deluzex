@@ -68,7 +68,7 @@ export default function ProfilePage() {
     }
 
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       const result = reader.result as string;
       setAvatarPreview(result);
       setAvatarError(false);
@@ -84,6 +84,11 @@ export default function ProfilePage() {
         } catch {
           // ignore
         }
+      }
+      try {
+        await updateUserProfile({ avatar_url: result });
+      } catch {
+        // ignore
       }
       showToast("Profile photo updated successfully!");
     };
