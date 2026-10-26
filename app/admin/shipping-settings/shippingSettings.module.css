@@ -1,0 +1,553 @@
+/* Shipping & Delivery Rules Admin Styles */
+
+.container {
+  padding: 2rem 2.5rem 4rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  color: var(--admin-text-main, #f5f5f5);
+  font-family: inherit;
+}
+
+.header {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.titleArea h1 {
+  font-family: inherit;
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #d4af37;
+  letter-spacing: -0.025em;
+  margin: 0 0 0.4rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.titleArea p {
+  font-size: 0.95rem;
+  color: var(--admin-text-muted, #8e8e93);
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.saveBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.6rem;
+  background: #c49a45;
+  color: #0b0b0e;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.02em;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background: #d4af37;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.25);
+}
+
+.saveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.resetBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.25rem;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  color: #d4af37;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resetBtn:hover {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: #d4af37;
+  transform: translateY(-1px);
+}
+
+/* Layout Grid */
+.layoutGrid {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 1080px) {
+  .layoutGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Cards */
+.card {
+  background: var(--admin-card-bg, #141416);
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition: border-color 0.2s;
+}
+
+.card:hover {
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+  gap: 1rem;
+}
+
+.cardTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--admin-text-main, #ffffff);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.25rem 0;
+}
+
+.cardDesc {
+  font-size: 0.825rem;
+  color: var(--admin-text-muted, #9ca3af);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #2a2a2e;
+  transition: 0.3s;
+  border-radius: 24px;
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.1));
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #ffffff;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+  background-color: #c49a45;
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(22px);
+  background-color: #0b0b0e;
+}
+
+/* Form Controls */
+.fieldRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.fieldLabel {
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: var(--admin-text-main, #e5e7eb);
+}
+
+.fieldHint {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted, #8e8e93);
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.currencyPrefix {
+  position: absolute;
+  left: 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #c49a45;
+  pointer-events: none;
+}
+
+.inputNumber {
+  width: 100%;
+  background: var(--admin-input-bg, #1a1a1e);
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.12));
+  color: var(--admin-text-main, #ffffff);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem 0.65rem 2rem;
+  font-size: 0.925rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.inputText {
+  width: 100%;
+  background: var(--admin-input-bg, #1a1a1e);
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.12));
+  color: var(--admin-text-main, #ffffff);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.925rem;
+  transition: all 0.2s;
+}
+
+.inputNumber:focus,
+.inputText:focus {
+  outline: none;
+  border-color: #c49a45;
+  box-shadow: 0 0 0 3px rgba(196, 154, 69, 0.15);
+}
+
+.badgeEnabled {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  font-size: 0.725rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+
+.badgeDisabled {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  font-size: 0.725rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+
+/* Simulator Widget (Right Column) */
+.simulatorSticky {
+  position: sticky;
+  top: 1.5rem;
+}
+
+.simulatorCard {
+  background: var(--admin-card-bg, #141416);
+  border: 1px solid rgba(196, 154, 69, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.simHeader {
+  border-bottom: 1px solid var(--admin-border, rgba(255, 255, 255, 0.08));
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.simTitle {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #c49a45;
+  margin: 0 0 0.3rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.simDesc {
+  font-size: 0.8rem;
+  color: var(--admin-text-muted, #9ca3af);
+  margin: 0;
+}
+
+.simSliderBlock {
+  margin-bottom: 1.5rem;
+}
+
+.simSliderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.simSliderLabel {
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: var(--admin-text-muted, #9ca3af);
+}
+
+.simSliderValue {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.simRange {
+  width: 100%;
+  accent-color: #c49a45;
+  cursor: pointer;
+}
+
+.presetButtons {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.presetBtn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.1));
+  color: var(--admin-text-main, #d1d5db);
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.725rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.presetBtn:hover {
+  background: rgba(196, 154, 69, 0.15);
+  border-color: #c49a45;
+  color: #c49a45;
+}
+
+/* Storefront Simulation Display Box */
+.simPreviewBox {
+  background: #0b0b0e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.simPreviewTitle {
+  font-size: 0.725rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #c49a45;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.progressBarContainer {
+  background: #1f1f23;
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #c49a45 0%, #10b981 100%);
+  transition: width 0.3s ease;
+}
+
+.progressLabel {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+.progressHighlight {
+  color: #c49a45;
+  font-weight: 600;
+}
+
+.simReceiptTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.8rem;
+}
+
+.simReceiptTable td {
+  padding: 0.35rem 0;
+  color: #9ca3af;
+}
+
+.simReceiptTable td:last-child {
+  text-align: right;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.simTotalRow td {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0.6rem;
+  font-size: 0.925rem;
+  color: #ffffff;
+}
+
+.simTotalRow td:last-child {
+  color: #c49a45;
+  font-size: 1.05rem;
+}
+
+.alertBox {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.alertWarning {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.alertSuccess {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #6ee7b7;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 9999;
+  padding: 0.85rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.25s ease-out;
+}
+
+.toastSuccess {
+  background: #065f46;
+  color: #ffffff;
+  border: 1px solid #10b981;
+}
+
+.toastError {
+  background: #991b1b;
+  color: #ffffff;
+  border: 1px solid #ef4444;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Light Theme Overrides */
+:global([data-admin-root][data-theme="light"]) .card,
+:global([data-admin-root][data-theme="light"]) .simulatorCard {
+  background: #ffffff;
+  border-color: #e5e7eb;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+:global([data-admin-root][data-theme="light"]) .cardTitle {
+  color: #111827;
+}
+
+:global([data-admin-root][data-theme="light"]) .fieldLabel {
+  color: #374151;
+}
+
+:global([data-admin-root][data-theme="light"]) .inputNumber,
+:global([data-admin-root][data-theme="light"]) .inputText {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+:global([data-admin-root][data-theme="light"]) .simPreviewBox {
+  background: #f9fafb;
+  border-color: #e5e7eb;
+}
+
+:global([data-admin-root][data-theme="light"]) .simSliderValue {
+  color: #111827;
+}
+
+:global([data-admin-root][data-theme="light"]) .simReceiptTable td:last-child {
+  color: #111827;
+}
+
+:global([data-admin-root][data-theme="light"]) .simTotalRow td {
+  border-top-color: #e5e7eb;
+  color: #111827;
+}

@@ -4,6 +4,43 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
 const originalFetch = globalThis.fetch;
 
+export function getAuthToken(): string | null {
+  if (typeof window !== 'undefined') {
+    const match =
+      localStorage.getItem('authToken') ||
+      localStorage.getItem('access_token') ||
+      localStorage.getItem('token');
+    if (match) return match;
+
+    try {
+      const cookies = document.cookie.split(';');
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'access_token' || name === 'accessToken' || name === 'session') {
+          return decodeURIComponent(value);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return null;
+}
+
+export const getStoredAuthToken = getAuthToken;
+
+export function getAuthHeaders(isFormData = false): Record<string, string> {
+  const headers: Record<string, string> = {};
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+  return headers;
+}
+
 let isHandlingSessionExpiry = false;
 
 export function handleSessionExpired(): void {
@@ -43,11 +80,25 @@ async function loggedFetch(input: RequestInfo | URL, init?: RequestInit): Promis
     input = url;
   }
 
-  const method = init?.method || "GET";
+  // Attach stored auth token if available and not explicitly provided
+  const token = getStoredAuthToken();
+  let modifiedInit = init;
+  if (token) {
+    const headers = new Headers(init?.headers);
+    if (!headers.has("Authorization")) {
+      headers.set("Authorization", `Bearer ${token}`);
+      modifiedInit = {
+        ...init,
+        headers,
+      };
+    }
+  }
+
+  const method = modifiedInit?.method || "GET";
   const startTime = typeof performance !== "undefined" ? performance.now() : Date.now();
 
   try {
-    const res = await originalFetch(input, init);
+    const res = await originalFetch(input, modifiedInit);
     const durationMs = (typeof performance !== "undefined" ? performance.now() : Date.now()) - startTime;
 
     let previewData: unknown = undefined;
@@ -163,9 +214,12 @@ export interface ProductSpecification {
 export interface Product {
   _id?: string | number;
   id?: string | number;
+  slug?: string;
+  title?: string;
   name?: string;
   price?: string | number;
   rating?: number;
+  image?: string;
   image_url?: string;
   description?: string;
   reviews_count?: number;
@@ -239,42 +293,6 @@ export interface PasswordUpdate {
   new_password: string;
 }
 
-// Helper to get token (safe for both client and SSR)
-function getAuthToken(): string | null {
-  if (typeof window !== 'undefined') {
-    const match =
-      localStorage.getItem('authToken') ||
-      localStorage.getItem('access_token') ||
-      localStorage.getItem('token');
-    if (match) return match;
-
-    try {
-      const cookies = document.cookie.split(';');
-      for (const cookie of cookies) {
-        const [name, value] = cookie.trim().split('=');
-        if (name === 'access_token' || name === 'accessToken' || name === 'session') {
-          return decodeURIComponent(value);
-        }
-      }
-    } catch {
-      // ignore
-    }
-  }
-  return null;
-}
-
-// Helper to build headers
-export function getAuthHeaders(isFormData = false): Record<string, string> {
-  const headers: Record<string, string> = {};
-  const token = getAuthToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  if (!isFormData) {
-    headers['Content-Type'] = 'application/json';
-  }
-  return headers;
-}
 
 async function getApiError(res: Response, fallback: string): Promise<Error> {
   if (res.status === 401) {
@@ -1555,6 +1573,49 @@ export interface UserOrder {
   created_at?: string;
   createdAt?: string;
   date?: string;
+
+  // Shiprocket Logistics
+  shiprocket_order_id?: number | string;
+  shiprocket_shipment_id?: number | string;
+  awb_code?: string;
+  courier_name?: string;
+  courier_company_id?: number;
+  pickup_scheduled_date?: string;
+  pickup_token_number?: string;
+  label_url?: string;
+  manifest_url?: string;
+  invoice_url?: string;
+  shiprocket_status?: string;
+  tracking_activities?: Array<{
+    date?: string;
+    status?: string;
+    location?: string;
+    activity?: string;
+  }>;
+  return_details?: {
+    return_order_id?: number | string;
+    return_shipment_id?: number | string;
+    return_awb_code?: string;
+    courier_name?: string;
+    return_status?: string;
+    status?: "PENDING_APPROVAL" | "APPROVED" | "REJECTED" | string;
+    reason?: string;
+    customer_notes?: string;
+    images?: string[];
+    requested_at?: string;
+    customer_email?: string;
+    customer_name?: string;
+    pickup_address?: string;
+    approved_at?: string;
+    approved_by?: string;
+    admin_notes?: string;
+    rejected_at?: string;
+    rejected_by?: string;
+    rejection_reason?: string;
+    initiated_at?: string;
+    restocked?: boolean;
+    restocked_at?: string;
+  };
 }
 
 // Helper to normalize backend order objects into standard UserOrder format
@@ -1629,14 +1690,29 @@ export function normalizeUserOrder(raw: Record<string, unknown>): UserOrder {
     total: numTotal,
     amount: numTotal,
     status: (raw.status || raw.order_status || "Processing") as string,
-    tracking_number: (raw.tracking_number || raw.trackingNumber) as string | undefined,
-    courier_partner: (raw.courier_partner || raw.courierPartner) as string | undefined,
+    tracking_number: (raw.tracking_number || raw.trackingNumber || raw.awb_code) as string | undefined,
+    courier_partner: (raw.courier_partner || raw.courierPartner || raw.courier_name) as string | undefined,
     notes: (raw.notes || raw.order_notes) as string | undefined,
     payment_method: (raw.payment_method || raw.paymentMethod || "Online") as string,
     payment_status: (raw.payment_status || raw.paymentStatus || "Paid") as string,
     created_at: (raw.created_at || raw.createdAt || new Date().toISOString()) as string,
     createdAt: (raw.createdAt || raw.created_at || new Date().toISOString()) as string,
     date: formattedDate,
+
+    // Shiprocket Logistics
+    shiprocket_order_id: raw.shiprocket_order_id as number | string | undefined,
+    shiprocket_shipment_id: raw.shiprocket_shipment_id as number | string | undefined,
+    awb_code: (raw.awb_code || raw.tracking_number) as string | undefined,
+    courier_name: (raw.courier_name || raw.courier_partner) as string | undefined,
+    courier_company_id: raw.courier_company_id as number | undefined,
+    pickup_scheduled_date: raw.pickup_scheduled_date as string | undefined,
+    pickup_token_number: raw.pickup_token_number as string | undefined,
+    label_url: raw.label_url as string | undefined,
+    manifest_url: raw.manifest_url as string | undefined,
+    invoice_url: raw.invoice_url as string | undefined,
+    shiprocket_status: raw.shiprocket_status as string | undefined,
+    tracking_activities: (raw.tracking_activities || []) as UserOrder["tracking_activities"],
+    return_details: raw.return_details as UserOrder["return_details"],
   };
 }
 
@@ -2692,6 +2768,91 @@ export async function verifyWhatsAppOtp(
   }
 }
 
+export async function sendSignupWhatsAppOtp(phone: string, email?: string): Promise<{ success: boolean; message: string; retry_after?: number }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/signup/send-whatsapp-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, email: email || null }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.detail || data.message || "Failed to send WhatsApp verification code.");
+    }
+    return data;
+  } catch (error: any) {
+    logger.error("API", "Error sending signup WhatsApp OTP:", error);
+    throw error;
+  }
+}
+
+export async function verifySignupWhatsApp(payload: {
+  phone: string;
+  otp: string;
+  first_name: string;
+  last_name?: string;
+  email: string;
+  password: string;
+}): Promise<{ success: boolean; message: string; access_token: string; data: any }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/signup/verify-whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.detail || data.message || "Invalid verification code.");
+    }
+    return data;
+  } catch (error: any) {
+    logger.error("API", "Error verifying signup WhatsApp OTP:", error);
+    throw error;
+  }
+}
+
+export async function sendProfilePhoneOtp(phone: string): Promise<{ success: boolean; message: string; retry_after?: number }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/profile/send-phone-otp`, {
+      method: "POST",
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ phone }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.detail || data.message || "Failed to send verification code to new number.");
+    }
+    return data;
+  } catch (error: any) {
+    logger.error("API", "Error sending profile phone OTP:", error);
+    throw error;
+  }
+}
+
+export async function verifyProfilePhoneOtp(phone: string, otp: string): Promise<{ success: boolean; message: string; data: any }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/profile/verify-phone-otp`, {
+      method: "POST",
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ phone, otp }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.detail || data.message || "Invalid verification code.");
+    }
+    return data;
+  } catch (error: any) {
+    logger.error("API", "Error verifying profile phone OTP:", error);
+    throw error;
+  }
+}
+
 export async function verifyEmailOtp(
   email: string,
   otp: string
@@ -3342,4 +3503,339 @@ export async function deleteAdminCoupon(id: string): Promise<{ success: boolean;
   if (!res.ok) throw new Error(data.detail || "Failed to delete coupon");
   return data;
 }
+
+// ==========================================
+// SHIPROCKET LOGISTICS & RETURNS API
+// ==========================================
+
+export interface AvailableCourier {
+  courier_company_id: number;
+  courier_name: string;
+  rate: number;
+  estimated_delivery_days: string | number;
+  etd?: string;
+  cod?: boolean;
+  rating?: number;
+  is_recommended?: boolean;
+}
+
+export interface CheckCouriersResponse {
+  order_id: string;
+  destination_pincode: string;
+  is_serviceable: boolean;
+  couriers: AvailableCourier[];
+}
+
+export interface TrackingActivity {
+  date?: string;
+  status?: string;
+  location?: string;
+  activity?: string;
+}
+
+export interface LiveTrackingResponse {
+  success: boolean;
+  order_id: string;
+  awb_code?: string;
+  current_status?: string;
+  etd?: string;
+  activities: TrackingActivity[];
+  message?: string;
+}
+
+export async function checkOrderCouriers(orderId: string, weight?: number): Promise<CheckCouriersResponse> {
+  const query = weight ? `?weight=${weight}` : "";
+  const res = await fetch(`${API_BASE_URL}/shiprocket/check-couriers/${orderId}${query}`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to check couriers");
+  return data;
+}
+
+export async function createShiprocketShipment(
+  orderId: string,
+  payload?: {
+    weight?: number;
+    length?: number;
+    breadth?: number;
+    height?: number;
+    pickup_location?: string;
+  }
+): Promise<{ success: boolean; shiprocket_order_id: number; shiprocket_shipment_id: number }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/create-shipment/${orderId}`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload || {}),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to create Shiprocket shipment");
+  return data;
+}
+
+export async function assignShiprocketCourier(
+  orderId: string,
+  shipmentId: number,
+  courierId?: number
+): Promise<{ success: boolean; awb_code: string; courier_name: string }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/assign-courier`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      order_id: orderId,
+      shipment_id: shipmentId,
+      courier_id: courierId,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to assign courier and generate AWB");
+  return data;
+}
+
+export async function scheduleShiprocketPickup(
+  orderId: string,
+  shipmentId: number,
+  pickupDate?: string
+): Promise<{ success: boolean; details: Record<string, unknown> }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/schedule-pickup`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      order_id: orderId,
+      shipment_id: shipmentId,
+      pickup_date: pickupDate,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to schedule pickup");
+  return data;
+}
+
+export async function fetchShippingLabel(shipmentId: number, orderId?: string): Promise<{ label_url: string }> {
+  const q = orderId ? `?order_id=${orderId}` : "";
+  const res = await fetch(`${API_BASE_URL}/shiprocket/label/${shipmentId}${q}`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to generate shipping label");
+  return data;
+}
+
+export async function fetchShippingInvoice(orderId: string): Promise<{ invoice_url: string }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/invoice/${orderId}`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to generate invoice");
+  return data;
+}
+
+export async function fetchOrderLiveTracking(orderId: string): Promise<LiveTrackingResponse> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/track/${orderId}`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to fetch live tracking");
+  return data;
+}
+
+export async function cancelShiprocketShipment(orderId: string): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/cancel-shipment/${orderId}`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to cancel shipment");
+  return data;
+}
+
+export async function createReturnOrder(
+  orderId: string,
+  reason: string,
+  dimensions?: { weight?: number; length?: number; breadth?: number; height?: number }
+): Promise<{ success: boolean; return_details: Record<string, unknown> }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/returns/create`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      order_id: orderId,
+      reason,
+      ...dimensions,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to initiate return order");
+  return data;
+}
+
+export async function requestCustomerReturn(payload: {
+  order_id: string;
+  reason: string;
+  customer_notes?: string;
+  images?: string[];
+  customer_email?: string;
+}): Promise<{ success: boolean; message: string; return_details: Record<string, unknown> }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/returns/customer-request`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to submit return request");
+  return data;
+}
+
+export async function approveReturnOrder(payload: {
+  order_id: string;
+  weight?: number;
+  length?: number;
+  breadth?: number;
+  height?: number;
+  admin_notes?: string;
+}): Promise<{ success: boolean; message: string; return_details: Record<string, unknown> }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/returns/approve`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to approve return order");
+  return data;
+}
+
+export async function rejectReturnOrder(payload: {
+  order_id: string;
+  rejection_reason: string;
+}): Promise<{ success: boolean; message: string; return_details: Record<string, unknown> }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/returns/reject`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to reject return order");
+  return data;
+}
+
+export async function restockReturnedOrder(orderId: string): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/returns/restock/${orderId}`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to restock returned order");
+  return data;
+}
+
+export async function checkPincodeServiceability(
+  pincode: string,
+  weight: number = 1.5,
+  isCod: boolean = false
+): Promise<{
+  success: boolean;
+  pincode: string;
+  is_serviceable: boolean;
+  estimated_days?: string;
+  couriers?: AvailableCourier[];
+}> {
+  const res = await fetch(
+    `${API_BASE_URL}/shiprocket/serviceability?pincode=${encodeURIComponent(pincode)}&weight=${weight}&is_cod=${isCod}`
+  );
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to check serviceability");
+  return data;
+}
+
+// --- SHIPPING & DELIVERY RULES API ---
+
+export interface ShippingSettings {
+  standard_delivery_fee: number;
+  free_shipping_enabled: boolean;
+  free_shipping_threshold: number;
+  min_order_value_enabled: boolean;
+  min_order_value: number;
+  min_order_message: string;
+  cod_enabled: boolean;
+  cod_extra_fee: number;
+  cod_max_order_value: number;
+  estimated_delivery_days?: string;
+  white_glove_note?: string;
+  updated_at?: string;
+  updated_by?: string;
+}
+
+export async function fetchPublicShippingSettings(): Promise<ShippingSettings> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/shipping-settings/public`, {
+      cache: "no-store",
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.error("Error fetching public shipping settings:", err);
+  }
+  // Safe default fallback
+  return {
+    standard_delivery_fee: 99.0,
+    free_shipping_enabled: true,
+    free_shipping_threshold: 1999.0,
+    min_order_value_enabled: true,
+    min_order_value: 499.0,
+    min_order_message: "Minimum order value of ₹{amount} is required to place an order.",
+    cod_enabled: true,
+    cod_extra_fee: 0.0,
+    cod_max_order_value: 25000.0,
+    estimated_delivery_days: "3-5 business days",
+    white_glove_note: "Complimentary white-glove packaging on all orders.",
+  };
+}
+
+export async function fetchAdminShippingSettings(): Promise<ShippingSettings> {
+  const res = await fetch(`${API_BASE_URL}/shipping-settings/admin`, {
+    headers: getAuthHeaders(),
+    cache: "no-store",
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to load shipping settings");
+  return data.settings;
+}
+
+export async function updateAdminShippingSettings(
+  payload: Partial<ShippingSettings>
+): Promise<{ success: boolean; message: string; settings: ShippingSettings }> {
+  const res = await fetch(`${API_BASE_URL}/shipping-settings/admin`, {
+    method: "PUT",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to update shipping settings");
+  return data;
+}
+
 

@@ -27,7 +27,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import api_router
 from app.core.config import settings
-from app.core.database import init_db
+from app.core.database import init_db, ensure_database_indexes
 from app.core.logger import app_logger, log_request, print_startup_banner
 import uvicorn
 import logging
@@ -38,6 +38,8 @@ logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db, ping_ms, is_connected = init_db()
+    if is_connected:
+        ensure_database_indexes(db)
     routes_count = len([r for r in app.routes if hasattr(r, "path")])
     print_startup_banner(
         project_name=settings.PROJECT_NAME,

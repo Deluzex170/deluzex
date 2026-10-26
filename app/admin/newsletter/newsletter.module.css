@@ -1,11 +1,11 @@
 /* Executive Luxury Admin Newsletter Management Styles - Light Professional Theme */
 
 .container {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  color: #0f172a;
+  padding: 2.5rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 80px);
+  color: #f3f3f3;
   font-family: inherit;
   animation: fadeIn 0.3s ease-out forwards;
 }
@@ -26,10 +26,10 @@
 
 .titleArea h1 {
   font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  margin: 0 0 0.35rem 0;
-  color: #0f172a;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5rem 0;
+  color: #ffffff;
 }
 
 .goldAccent {
@@ -37,8 +37,8 @@
 }
 
 .subtitle {
-  font-size: 0.925rem;
-  color: #64748b;
+  font-size: 0.95rem;
+  color: #8c8c8c;
   margin: 0;
 }
 
@@ -102,12 +102,11 @@
 }
 
 .kpiCard {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 1.35rem 1.5rem;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
-  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  background: #141414;
+  border: 1px solid #242424;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
 .kpiCard:hover {
@@ -120,23 +119,21 @@
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #64748b;
-  font-weight: 700;
-  margin-bottom: 0.4rem;
+  color: #8c8c8c;
+  margin-bottom: 0.5rem;
 }
 
 .kpiValue {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  font-size: 2.25rem;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.1;
 }
 
 .kpiDesc {
   font-size: 0.8rem;
-  color: #64748b;
-  margin-top: 0.4rem;
+  color: #717171;
+  margin-top: 0.5rem;
 }
 
 /* Controls Bar */
@@ -156,17 +153,18 @@
 
 .tabs {
   display: flex;
-  background: #f1f5f9;
-  border-radius: 8px;
-  padding: 3px;
-  gap: 3px;
+  background: #141414;
+  border: 1px solid #242424;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
 }
 
 .tabBtn {
   background: transparent;
   border: none;
-  color: #64748b;
-  padding: 0.55rem 1.1rem;
+  color: #8c8c8c;
+  padding: 0.6rem 1.25rem;
   border-radius: 6px;
   font-size: 0.825rem;
   font-weight: 600;
@@ -178,17 +176,17 @@
 }
 
 .tabBtn:hover {
-  color: #0f172a;
+  color: #ffffff;
 }
 
 .activeTab {
-  background: #ffffff;
-  color: #0f172a;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  background: #242424;
+  color: #c49a45;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 .tabBadge {
-  background: #f1f5f9;
+  background: rgba(255, 255, 255, 0.08);
   font-size: 0.75rem;
   padding: 2px 7px;
   border-radius: 10px;
@@ -210,10 +208,10 @@
 
 .searchInput {
   flex: 1;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #0f172a;
-  padding: 0.6rem 0.95rem;
+  background: #141414;
+  border: 1px solid #242424;
+  color: #ffffff;
+  padding: 0.65rem 1rem;
   border-radius: 8px;
   font-size: 0.875rem;
   outline: none;
@@ -227,10 +225,10 @@
 }
 
 .searchBtn {
-  background: #0f172a;
+  background: #1f1f1f;
   color: #ffffff;
-  border: none;
-  padding: 0.6rem 1rem;
+  border: 1px solid #2e2e2e;
+  padding: 0.65rem 1rem;
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.85rem;
@@ -239,28 +237,16 @@
 }
 
 .searchBtn:hover {
-  background: #1e293b;
+  background: #2a2a2a;
 }
 
 /* Table Container */
 .tableWrapper {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  overflow-x: auto;
-  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
-}
-
-.tableWrapper::-webkit-scrollbar {
-  height: 6px;
-}
-
-.tableWrapper::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: #141414;
+  border: 1px solid #242424;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 
 .table {
@@ -271,23 +257,21 @@
 }
 
 .table th {
-  background: #f8fafc;
-  color: #64748b;
-  font-size: 0.75rem;
+  background: #191919;
+  color: #8c8c8c;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid #e2e8f0;
-  font-weight: 700;
-  white-space: nowrap;
+  border-bottom: 1px solid #242424;
+  font-weight: 500;
 }
 
 .table td {
   padding: 1.15rem 1.25rem;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 0.88rem;
+  border-bottom: 1px solid #1e1e1e;
+  font-size: 0.9rem;
   vertical-align: middle;
-  color: #1e293b;
 }
 
 .table tbody tr {
@@ -295,12 +279,12 @@
 }
 
 .table tbody tr:hover {
-  background: #f8fafc;
+  background: #1a1a1a;
 }
 
 .emailText {
-  font-weight: 600;
-  color: #0f172a;
+  font-weight: 500;
+  color: #ffffff;
 }
 
 .emailLink {
@@ -314,9 +298,9 @@
 }
 
 .sourceBadge {
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  color: #475569;
+  background: #1c1c1c;
+  border: 1px solid #2e2e2e;
+  color: #aaa;
   padding: 0.25rem 0.65rem;
   border-radius: 6px;
   font-size: 0.75rem;
@@ -345,10 +329,22 @@
   border: 1px solid #a7f3d0;
 }
 
+:global([data-theme="light"]) .statusNotified {
+  background: rgba(34, 197, 94, 0.16);
+  color: #15803d;
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
 .statusPending {
   background: #fffbeb;
   color: #d97706;
   border: 1px solid #fde68a;
+}
+
+:global([data-theme="light"]) .statusPending {
+  background: rgba(234, 179, 8, 0.18);
+  color: #b45309;
+  border-color: rgba(234, 179, 8, 0.4);
 }
 
 .actionBtns {
@@ -393,9 +389,9 @@
 }
 
 .iconBtn {
-  background: #f1f5f9;
-  color: #0f172a;
-  border: 1px solid #e2e8f0;
+  background: #1f1f1f;
+  color: #a0a0a0;
+  border: 1px solid #2e2e2e;
   width: 32px;
   height: 32px;
   border-radius: 6px;
@@ -407,9 +403,8 @@
 }
 
 .iconBtn:hover {
-  background: #0f172a;
+  background: #2a2a2a;
   color: #ffffff;
-  border-color: #0f172a;
 }
 
 .deleteBtn:hover {
@@ -432,11 +427,11 @@
 .emptyState {
   padding: 4rem 2rem;
   text-align: center;
-  color: #64748b;
+  color: #777;
 }
 
 .emptyIcon {
   font-size: 2.5rem;
-  color: #cbd5e1;
+  color: #444;
   margin-bottom: 1rem;
 }

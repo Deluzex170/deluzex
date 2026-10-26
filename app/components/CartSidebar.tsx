@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import {
   fetchAvailableCoupons,
   validateCoupon,
-  AvailableCoupon,
+  AvailableCoupon, fetchPublicShippingSettings, ShippingSettings,
   clearBackendCart,
   getCartSessionId,
 } from "../services/api";
@@ -38,7 +38,22 @@ export default function CartSidebar() {
   const [promoError, setPromoError] = useState<string | null>(null);
   const [availableOffers, setAvailableOffers] = useState<AvailableCoupon[]>([]);
 
-  // Fetch Available Offers when Drawer Opens
+  // Dynamic Shipping & Delivery Settings State
+  const [shippingRules, setShippingRules] = useState<ShippingSettings>({
+    standard_delivery_fee: 99,
+    free_shipping_enabled: true,
+    free_shipping_threshold: 1999,
+    min_order_value_enabled: true,
+    min_order_value: 499,
+    min_order_message: "Minimum order value of ₹{amount} is required to place an order.",
+    cod_enabled: true,
+    cod_extra_fee: 0,
+    cod_max_order_value: 25000,
+    estimated_delivery_days: "3-5 business days",
+    white_glove_note: "Complimentary white-glove packaging on all orders.",
+  });
+
+  // Fetch Available Offers and Shipping Rules when Drawer Opens
   useEffect(() => {
     if (isCartOpen) {
       fetchAvailableCoupons()
@@ -46,17 +61,30 @@ export default function CartSidebar() {
           if (Array.isArray(res)) setAvailableOffers(res);
         })
         .catch(() => {});
+
+      fetchPublicShippingSettings()
+        .then((rules) => {
+          if (rules) setShippingRules(rules);
+        })
+        .catch(() => {});
     }
   }, [isCartOpen]);
 
-  // Recalculate Totals
+  // Recalculate Totals with Dynamic Shipping Policy
   const subtotal = cartTotal;
   const discount = appliedCoupon?.discount_amount || 0;
   const taxableSubtotal = Math.max(0, subtotal - discount);
   const gst = taxableSubtotal * 0.18;
-  const isFreeShipping = appliedCoupon?.discount_type === "free_shipping" || subtotal >= 1999;
-  const delivery = isFreeShipping ? 0 : subtotal > 0 ? 99 : 0;
+  const isFreeShipping =
+    appliedCoupon?.discount_type === "free_shipping" ||
+    (shippingRules.free_shipping_enabled && subtotal >= shippingRules.free_shipping_threshold);
+  const delivery = isFreeShipping ? 0 : subtotal > 0 ? shippingRules.standard_delivery_fee : 0;
   const grandTotal = taxableSubtotal + gst + delivery;
+
+  const isBelowMinOrder =
+    shippingRules.min_order_value_enabled && subtotal > 0 && subtotal < shippingRules.min_order_value;
+  const minOrderDiff = Math.max(0, shippingRules.min_order_value - subtotal);
+  const freeShippingDiff = Math.max(0, shippingRules.free_shipping_threshold - subtotal);
 
   // Re-validate coupon if cart total changes
   useEffect(() => {
@@ -244,6 +272,29 @@ export default function CartSidebar() {
             </svg>
           </button>
         </div>
+
+        {/* Free Shipping Progress Bar */}
+        {shippingRules.free_shipping_enabled && cartItems.length > 0 && (
+          <div style={{ padding: "0.75rem 1.25rem", background: "rgba(196, 154, 69, 0.08)", borderBottom: "1px solid rgba(196, 154, 69, 0.15)" }}>
+            <div style={{ height: "4px", background: "rgba(255, 255, 255, 0.1)", borderRadius: "2px", overflow: "hidden", marginBottom: "0.4rem" }}>
+              <div
+                style={{
+                  height: "100%",
+                  width: `${Math.min(100, Math.round((subtotal / shippingRules.free_shipping_threshold) * 100))}%`,
+                  background: "linear-gradient(90deg, #c49a45, #10b981)",
+                  transition: "width 0.3s ease",
+                }}
+              />
+            </div>
+            <div style={{ fontSize: "0.775rem", color: isFreeShipping ? "#10b981" : "#c49a45", fontWeight: 500 }}>
+              {isFreeShipping ? (
+                "🎉 You unlocked FREE White-Glove Shipping!"
+              ) : (
+                <>Add <strong style={{ color: "#ffffff" }}>₹{freeShippingDiff.toLocaleString("en-IN")}</strong> more to unlock <strong>FREE Delivery</strong></>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Cart Items List */}
         <div className={styles.cartItems}>
@@ -497,12 +548,37 @@ export default function CartSidebar() {
             </div>
           </div>
 
+          {isBelowMinOrder && (
+            <div style={{
+              padding: "0.65rem 0.85rem",
+              background: "rgba(239, 68, 68, 0.12)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: "8px",
+              color: "#fca5a5",
+              fontSize: "0.785rem",
+              marginBottom: "0.75rem",
+              lineHeight: 1.4,
+              display: "flex",
+              alignItems: "center",
+              gap: "0.45rem",
+            }}>
+              <span>⛔</span>
+              <span>
+                {shippingRules.min_order_message.replace("{amount}", shippingRules.min_order_value.toLocaleString("en-IN"))} (Add ₹{minOrderDiff.toLocaleString("en-IN")} more)
+              </span>
+            </div>
+          )}
+
           <button
             className={styles.btnCheckout}
-            disabled={cartItems.length === 0 || isNavigatingCheckout}
+            disabled={cartItems.length === 0 || isBelowMinOrder || isNavigatingCheckout}
             onClick={handleCheckout}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
+            title={isBelowMinOrder ? "Cart amount is below minimum order value" : "Proceed to Checkout"}
           >
+            {isBelowMinOrder ? `Min. Order ₹${shippingRules.min_order_value.toLocaleString("en-IN")} Required` : "Proceed to Checkout"}
+            >
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
+          
             {isNavigatingCheckout ? (
               <>
                 <svg

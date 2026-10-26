@@ -1,23 +1,23 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 from app.models.common import PyObjectId
 
 class CollaborationSubmission(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
-    name: str
+    name: str = Field(..., min_length=1, max_length=100)
     email: EmailStr
-    phone: Optional[str] = None
-    city: Optional[str] = None
-    role: Optional[str] = None
-    studio_or_college: Optional[str] = None
-    has_made_before: Optional[str] = "no"
-    concept_title: str
-    description: Optional[str] = None
-    portfolio_link: Optional[str] = None
-    file_url: Optional[str] = None
-    status: str = "pending"  # "pending", "reviewed", "shortlisted", "archived"
-    source: str = "collaborate_page"  # "collaborate_page" or "homepage_modal"
+    phone: Optional[str] = Field(default=None, max_length=20)
+    city: Optional[str] = Field(default=None, max_length=100)
+    role: Optional[str] = Field(default=None, max_length=100)
+    studio_or_college: Optional[str] = Field(default=None, max_length=200)
+    has_made_before: Optional[str] = Field(default="no", max_length=10)
+    concept_title: str = Field(..., min_length=1, max_length=200)
+    description: Optional[str] = Field(default=None, max_length=5000)
+    portfolio_link: Optional[str] = Field(default=None, max_length=1000)
+    file_url: Optional[str] = Field(default=None, max_length=1000)
+    status: str = Field(default="pending", max_length=50)  # "pending", "reviewed", "shortlisted", "archived"
+    source: str = Field(default="collaborate_page", max_length=50)  # "collaborate_page" or "homepage_modal"
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:

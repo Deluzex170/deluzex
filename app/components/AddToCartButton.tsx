@@ -25,9 +25,10 @@ export default function AddToCartButton({ product, styleClass, variant = "defaul
     setMounted(true);
   }, []);
 
+  const isMadeToOrder = Boolean(product.stock_status?.toLowerCase().includes("order"));
   const isOutOfStock = product.in_stock === false || 
     (product.stock_status && product.stock_status.toUpperCase() === "OUT OF STOCK") || 
-    (product.stock_count !== undefined && product.stock_count !== null && Number(product.stock_count) <= 0);
+    (!isMadeToOrder && product.stock_count !== undefined && product.stock_count !== null && Number(product.stock_count) <= 0);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();

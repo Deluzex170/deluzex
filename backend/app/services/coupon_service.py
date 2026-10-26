@@ -33,10 +33,18 @@ def calculate_discount(coupon: dict, subtotal: float) -> Tuple[float, float, flo
     taxable_subtotal = max(0.0, subtotal - discount)
     gst = round(taxable_subtotal * 0.18, 2)
 
-    if discount_type == "free_shipping" or subtotal >= 1999.0 or subtotal == 0:
+    from app.api.endpoints.shipping_settings import get_shipping_rules
+    shipping_rules = get_shipping_rules()
+    free_enabled = shipping_rules.get("free_shipping_enabled", True)
+    free_threshold = float(shipping_rules.get("free_shipping_threshold", 1999.0))
+    std_fee = float(shipping_rules.get("standard_delivery_fee", 99.0))
+
+    if discount_type == "free_shipping" or subtotal == 0:
+        delivery = 0.0
+    elif free_enabled and subtotal >= free_threshold:
         delivery = 0.0
     else:
-        delivery = 99.0
+        delivery = std_fee
 
     grand_total = round(taxable_subtotal + gst + delivery, 2)
     return discount, taxable_subtotal, gst, delivery, grand_total

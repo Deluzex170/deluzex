@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, HTTPException, Depends, Request, UploadFile, File, Form, Body, status
 from typing import Dict, Any, List, Optional
 from datetime import datetime
@@ -6,6 +7,7 @@ from app import models
 from app.api.deps import get_current_active_admin
 from app.services.imagekit import upload_image_to_imagekit
 from app.core.database import db
+from app.core.sanitizer import sanitize_text, sanitize_phone, sanitize_search_term
 
 router = APIRouter()
 
@@ -47,19 +49,19 @@ async def create_collaboration_submission(
             )
 
         doc = {
-            "name": name.strip(),
+            "name": sanitize_text(name, max_len=100),
             "email": email.strip().lower(),
-            "phone": phone.strip() if phone else None,
-            "city": city.strip() if city else None,
-            "role": role.strip() if role else None,
-            "studio_or_college": studio_or_college.strip() if studio_or_college else None,
-            "has_made_before": has_made_before or "no",
-            "concept_title": concept_title.strip(),
-            "description": description.strip() if description else None,
-            "portfolio_link": portfolio_link.strip() if portfolio_link else None,
+            "phone": sanitize_phone(phone) if phone else None,
+            "city": sanitize_text(city, max_len=100) if city else None,
+            "role": sanitize_text(role, max_len=100) if role else None,
+            "studio_or_college": sanitize_text(studio_or_college, max_len=200) if studio_or_college else None,
+            "has_made_before": sanitize_text(has_made_before, max_len=10) if has_made_before else "no",
+            "concept_title": sanitize_text(concept_title, max_len=200),
+            "description": sanitize_text(description, max_len=5000) if description else None,
+            "portfolio_link": sanitize_text(portfolio_link, max_len=1000) if portfolio_link else None,
             "file_url": file_url,
             "status": "pending",
-            "source": source or "collaborate_page",
+            "source": sanitize_text(source, max_len=50) if source else "collaborate_page",
             "created_at": datetime.utcnow(),
         }
     else:
@@ -76,19 +78,19 @@ async def create_collaboration_submission(
             )
 
         doc = {
-            "name": str(body.get("name", "")).strip(),
+            "name": sanitize_text(str(body.get("name", "")), max_len=100),
             "email": str(body.get("email", "")).strip().lower(),
-            "phone": str(body.get("phone", "")).strip() if body.get("phone") else None,
-            "city": str(body.get("city", "")).strip() if body.get("city") else None,
-            "role": str(body.get("role", "")).strip() if body.get("role") else None,
-            "studio_or_college": str(body.get("studio_or_college", "")).strip() if body.get("studio_or_college") else None,
-            "has_made_before": str(body.get("has_made_before", "no")),
-            "concept_title": str(body.get("concept_title", "")).strip(),
-            "description": str(body.get("description", "")).strip() if body.get("description") else None,
-            "portfolio_link": str(body.get("portfolio_link", "")).strip() if body.get("portfolio_link") else None,
+            "phone": sanitize_phone(str(body.get("phone", ""))) if body.get("phone") else None,
+            "city": sanitize_text(str(body.get("city", "")), max_len=100) if body.get("city") else None,
+            "role": sanitize_text(str(body.get("role", "")), max_len=100) if body.get("role") else None,
+            "studio_or_college": sanitize_text(str(body.get("studio_or_college", "")), max_len=200) if body.get("studio_or_college") else None,
+            "has_made_before": sanitize_text(str(body.get("has_made_before", "no")), max_len=10),
+            "concept_title": sanitize_text(str(body.get("concept_title", "")), max_len=200),
+            "description": sanitize_text(str(body.get("description", "")), max_len=5000) if body.get("description") else None,
+            "portfolio_link": sanitize_text(str(body.get("portfolio_link", "")), max_len=1000) if body.get("portfolio_link") else None,
             "file_url": body.get("file_url") or file_url,
             "status": "pending",
-            "source": str(body.get("source", "homepage_modal")),
+            "source": sanitize_text(str(body.get("source", "homepage_modal")), max_len=50),
             "created_at": datetime.utcnow(),
         }
 
@@ -122,8 +124,9 @@ def get_collaborations(
     if role_filter and role_filter.lower() != "all":
         query["role"] = role_filter
 
-    if search:
-        regex = {"$regex": search.strip(), "$options": "i"}
+    if search and search.strip():
+        term = sanitize_search_term(search)
+        regex = {"$regex": term, "$options": "i"}
         query["$or"] = [
             {"name": regex},
             {"email": regex},

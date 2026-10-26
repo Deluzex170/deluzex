@@ -4,7 +4,13 @@ import React, { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
-import { fetchUserOrders, cancelUserOrder, UserOrder } from "../../services/api";
+import {
+  fetchUserOrders,
+  cancelUserOrder,
+  requestCustomerReturn,
+  uploadCmsImage,
+  UserOrder,
+} from "../../services/api";
 import OrderInvoiceModal from "../../components/OrderInvoiceModal";
 import styles from "./orders.module.css";
 
@@ -18,8 +24,59 @@ const STEP_STAGES = [
   { key: "delivered", label: "Delivered" },
 ];
 
+const CUSTOMER_RETURN_REASONS = [
+  "Damaged in transit / Broken glass or fixture",
+  "Defective electrical component / Not turning on",
+  "Incorrect item or finish color received",
+  "Size / dimension mismatch with room ceiling",
+  "Missing parts, screws or mounting accessories",
+  "Other quality defect",
+];
+
 function StatusBadge({ status }: { status: string }) {
   const s = (status || "Processing").toLowerCase();
+
+  if (s === "return_requested") {
+    return (
+      <span
+        className={styles.statusBadge}
+        style={{ background: "#fffbeb", color: "#b45309", border: "1px solid #fde68a" }}
+      >
+        ● Return Pending
+      </span>
+    );
+  }
+  if (s === "return_in_transit" || s === "return_approved") {
+    return (
+      <span
+        className={styles.statusBadge}
+        style={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}
+      >
+        ● Return Approved
+      </span>
+    );
+  }
+  if (s === "return_rejected") {
+    return (
+      <span
+        className={styles.statusBadge}
+        style={{ background: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca" }}
+      >
+        ● Return Rejected
+      </span>
+    );
+  }
+  if (s === "returned") {
+    return (
+      <span
+        className={styles.statusBadge}
+        style={{ background: "#eef2ff", color: "#4338ca", border: "1px solid #c7d2fe" }}
+      >
+        ● Returned
+      </span>
+    );
+  }
+
   const cls =
     s === "delivered"
       ? styles.statusDelivered
@@ -66,11 +123,109 @@ export default function OrdersPage() {
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
 
-  // Selected order for tracking & detail modal
   const [selectedOrder, setSelectedOrder] = useState<UserOrder | null>(null);
   const [invoiceOrder, setInvoiceOrder] = useState<UserOrder | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<UserOrder | null>(null);
+
+  // Return request modal state
+  const [returnModalOrder, setReturnModalOrder] = useState<UserOrder | null>(null);
+  const [returnReason, setReturnReason] = useState<string>(CUSTOMER_RETURN_REASONS[0]);
+  const [customerNotes, setCustomerNotes] = useState<string>("");
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isSubmittingReturn, setIsSubmittingReturn] = useState<boolean>(false);
+  const [returnError, setReturnError] = useState<string | null>(null);
+  const [returnSuccessMsg, setReturnSuccessMsg] = useState<string | null>(null);
+
+  const handleOpenReturnModal = (order: UserOrder) => {
+    setReturnModalOrder(order);
+    setReturnReason(CUSTOMER_RETURN_REASONS[0]);
+    setCustomerNotes("");
+    setUploadedImages([]);
+    setReturnError(null);
+    setReturnSuccessMsg(null);
+  };
+
+  const handleCloseReturnModal = () => {
+    setReturnModalOrder(null);
+    setReturnError(null);
+    setReturnSuccessMsg(null);
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setIsUploading(true);
+    setReturnError(null);
+
+    try {
+      const uploadPromises = Array.from(files).map((file) => uploadCmsImage(file));
+      const urls = await Promise.all(uploadPromises);
+      setUploadedImages((prev) => [...prev, ...urls]);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to upload photo";
+      setReturnError(msg);
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleRemoveUploadedPhoto = (index: number) => {
+    setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmitReturn = async () => {
+    if (!returnModalOrder) return;
+    const orderId = returnModalOrder.order_id || returnModalOrder.id || returnModalOrder._id;
+    if (!orderId) return;
+
+    if (uploadedImages.length === 0) {
+      setReturnError("Please upload at least 1 photograph of the defective or damaged fixture for inspection.");
+      return;
+    }
+
+    setIsSubmittingReturn(true);
+    setReturnError(null);
+
+    try {
+      const res = await requestCustomerReturn({
+        order_id: orderId,
+        reason: returnReason,
+        customer_notes: customerNotes.trim(),
+        images: uploadedImages,
+        customer_email: userEmail || returnModalOrder.user_email,
+      });
+
+      setReturnSuccessMsg(res.message || "Return request submitted successfully!");
+      await loadOrders();
+
+      if (
+        selectedOrder &&
+        (selectedOrder.order_id === orderId || selectedOrder.id === orderId || selectedOrder._id === orderId)
+      ) {
+        setSelectedOrder((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: "return_requested",
+                return_details: res.return_details as UserOrder["return_details"],
+              }
+            : null
+        );
+      }
+
+      setTimeout(() => {
+        handleCloseReturnModal();
+      }, 2500);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to submit return request";
+      setReturnError(msg);
+    } finally {
+      setIsSubmittingReturn(false);
+    }
+  };
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -284,7 +439,7 @@ export default function OrdersPage() {
                       <StatusBadge status={order.status} />
                     </td>
                     <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
                         <button
                           className={styles.trackLink}
                           onClick={(e) => {
@@ -292,7 +447,7 @@ export default function OrdersPage() {
                             setSelectedOrder(order);
                           }}
                         >
-                          <span>Track Order</span>
+                          <span>Track</span>
                           <span>→</span>
                         </button>
                         <button
@@ -306,6 +461,29 @@ export default function OrdersPage() {
                         >
                           <span>📄 Invoice</span>
                         </button>
+                        {((order.status || "").toLowerCase() === "delivered" ||
+                          order.status === "return_requested" ||
+                          order.return_details) && (
+                          <button
+                            className={styles.returnBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (order.status === "return_requested" || order.return_details) {
+                                setSelectedOrder(order);
+                              } else {
+                                handleOpenReturnModal(order);
+                              }
+                            }}
+                            title="Request return or check reverse pickup status"
+                          >
+                            {order.status === "return_requested" ||
+                            (order.return_details && order.return_details.status === "PENDING_APPROVAL")
+                              ? "⏳ Return Review"
+                              : order.return_details?.status === "APPROVED"
+                              ? "✓ Return Active"
+                              : "🔄 Return Item"}
+                          </button>
+                        )}
                         {isOrderProcessing(order.status) && (
                           <button
                             className={styles.trackLink}
@@ -346,9 +524,95 @@ export default function OrdersPage() {
               </button>
             </div>
 
+            {/* Return & Reverse Logistics Banner */}
+            {selectedOrder.return_details && (
+              <div
+                className={`${styles.returnBanner} ${
+                  selectedOrder.return_details.status === "PENDING_APPROVAL"
+                    ? styles.returnBannerPending
+                    : selectedOrder.return_details.status === "APPROVED"
+                    ? styles.returnBannerApproved
+                    : styles.returnBannerRejected
+                }`}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.5rem" }}>
+                  <div>
+                    <h4 style={{ margin: "0 0 0.25rem", fontSize: "0.95rem", fontWeight: 700 }}>
+                      {selectedOrder.return_details.status === "PENDING_APPROVAL"
+                        ? "⏳ Return Request Under Review"
+                        : selectedOrder.return_details.status === "APPROVED"
+                        ? "✓ Return Approved • Reverse Pickup Scheduled"
+                        : "✕ Return Request Rejected"}
+                    </h4>
+                    <p style={{ margin: "0 0 0.5rem", fontSize: "0.82rem", lineHeight: 1.4 }}>
+                      {selectedOrder.return_details.status === "PENDING_APPROVAL"
+                        ? "Our technical support team is inspecting your uploaded photos and defect notes. Once verified by admin, reverse pickup will be booked with Shiprocket automatically."
+                        : selectedOrder.return_details.status === "APPROVED"
+                        ? `A courier boy will arrive at your address for pickup. Return AWB: ${selectedOrder.return_details.return_awb_code || "Generated"} (${selectedOrder.return_details.courier_name || "Express Courier"}).`
+                        : `Your return request was not approved. Reason: ${selectedOrder.return_details.rejection_reason || "Requirements not met."}`}
+                    </p>
+                    <div style={{ fontSize: "0.78rem" }}>
+                      <strong>Reason:</strong> {selectedOrder.return_details.reason}
+                    </div>
+                  </div>
+                  {selectedOrder.return_details.return_awb_code && (
+                    <a
+                      href={`https://shiprocket.co/tracking/${selectedOrder.return_details.return_awb_code}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        fontSize: "0.78rem",
+                        background: "#166534",
+                        color: "#fff",
+                        padding: "0.3rem 0.65rem",
+                        borderRadius: "6px",
+                        textDecoration: "none",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Track Return on Shiprocket ↗
+                    </a>
+                  )}
+                </div>
+
+                {selectedOrder.return_details.images && selectedOrder.return_details.images.length > 0 && (
+                  <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px dashed rgba(0,0,0,0.1)" }}>
+                    <div style={{ fontSize: "0.75rem", fontWeight: 600, marginBottom: "0.35rem" }}>
+                      Your Uploaded Defect Photos ({selectedOrder.return_details.images.length}):
+                    </div>
+                    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                      {selectedOrder.return_details.images.map((imgUrl, idx) => (
+                        <a key={idx} href={imgUrl} target="_blank" rel="noreferrer" style={{ position: "relative", width: "54px", height: "54px", borderRadius: "6px", overflow: "hidden", border: "1px solid rgba(0,0,0,0.15)", display: "block" }}>
+                          <Image src={imgUrl} alt="Customer upload" fill sizes="60px" style={{ objectFit: "cover" }} />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Live Progress Stepper */}
             <div className={styles.stepperContainer}>
-              <div className={styles.stepperTitle}>Live Shipment Progress</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                <div className={styles.stepperTitle} style={{ margin: 0 }}>Live Shipment Progress</div>
+                {selectedOrder.awb_code && (
+                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                    <div style={{ fontSize: "0.82rem", background: "rgba(212, 175, 55, 0.12)", border: "1px solid rgba(212, 175, 55, 0.3)", color: "#d4af37", padding: "0.25rem 0.65rem", borderRadius: "6px", fontWeight: 600 }}>
+                      🚚 {selectedOrder.courier_name || "Shiprocket Logistics"} • AWB: {selectedOrder.awb_code}
+                    </div>
+                    <a
+                      href={`https://shiprocket.co/tracking/${selectedOrder.awb_code}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ fontSize: "0.8rem", color: "#8C6228", textDecoration: "underline", fontWeight: 600 }}
+                      title="Open tracking directly on official Shiprocket portal"
+                    >
+                      Shiprocket Portal ↗
+                    </a>
+                  </div>
+                )}
+              </div>
               <div className={styles.stepper}>
                 {STEP_STAGES.map((step, idx) => {
                   const currentProgress = getStepProgress(selectedOrder.status);
@@ -370,6 +634,17 @@ export default function OrdersPage() {
                   );
                 })}
               </div>
+
+              {selectedOrder.tracking_activities && selectedOrder.tracking_activities.length > 0 && (
+                <div style={{ marginTop: "1rem", paddingTop: "0.75rem", borderTop: "1px dashed rgba(255,255,255,0.1)" }}>
+                  <div style={{ fontSize: "0.78rem", color: "#9ca3af", marginBottom: "0.35rem" }}>Latest Transit Scans:</div>
+                  {selectedOrder.tracking_activities.slice(-2).reverse().map((act, idx) => (
+                    <div key={idx} style={{ fontSize: "0.8rem", color: "#e5e7eb", marginBottom: "0.25rem" }}>
+                      • <strong style={{ color: "#d4af37" }}>{act.status || act.activity}</strong> {act.location ? `at ${act.location}` : ""} ({act.date})
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Ordered Items */}
@@ -454,7 +729,16 @@ export default function OrdersPage() {
               >
                 📄 View GST Invoice
               </button>
-              {isOrderProcessing(selectedOrder.status) && (
+              {((selectedOrder.status || "").toLowerCase() === "delivered" && !selectedOrder.return_details) && (
+                <button
+                  className={styles.btnCloseModal}
+                  style={{ background: "#8C6228", color: "#fff", fontWeight: 600, border: "none" }}
+                  onClick={() => handleOpenReturnModal(selectedOrder)}
+                >
+                  🔄 Request Return / Replace
+                </button>
+              )}
+              {(selectedOrder.status || "").toLowerCase() === "processing" && (
                 <button
                   className={styles.btnCancelOrder}
                   disabled={cancelLoading}
@@ -467,6 +751,145 @@ export default function OrdersPage() {
                 Close Details
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Customer Return Request Modal */}
+      {returnModalOrder && (
+        <div className={styles.modalOverlay} onClick={handleCloseReturnModal}>
+          <div
+            className={styles.modalContent}
+            style={{ maxWidth: "560px" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <div>
+                <h3>Request Return / Replacement</h3>
+                <p>Order #{returnModalOrder.order_id || returnModalOrder.id || returnModalOrder._id}</p>
+              </div>
+              <button className={styles.closeBtn} onClick={handleCloseReturnModal}>
+                ×
+              </button>
+            </div>
+
+            {returnSuccessMsg ? (
+              <div style={{ textAlign: "center", padding: "2rem 1rem" }}>
+                <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>✅</div>
+                <h4 style={{ color: "#166534", fontSize: "1.15rem", marginBottom: "0.5rem" }}>
+                  Return Request Submitted!
+                </h4>
+                <p style={{ color: "#4b5563", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                  {returnSuccessMsg}
+                </p>
+                <button
+                  className={styles.submitReturnBtn}
+                  style={{ marginTop: "1.25rem", width: "auto", display: "inline-block" }}
+                  onClick={handleCloseReturnModal}
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <div>
+                {returnError && (
+                  <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "0.65rem 0.9rem", borderRadius: "8px", fontSize: "0.85rem", marginBottom: "1rem" }}>
+                    ⚠️ {returnError}
+                  </div>
+                )}
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Reason for Return *</label>
+                  <select
+                    className={styles.formSelect}
+                    value={returnReason}
+                    onChange={(e) => setReturnReason(e.target.value)}
+                  >
+                    {CUSTOMER_RETURN_REASONS.map((reason, idx) => (
+                      <option key={idx} value={reason}>
+                        {reason}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Problem Description / Notes</label>
+                  <textarea
+                    className={styles.formTextarea}
+                    rows={3}
+                    placeholder="Describe the issue with the fixture (e.g. cracked glass globe, electrical connector loose)..."
+                    value={customerNotes}
+                    onChange={(e) => setCustomerNotes(e.target.value)}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>
+                    Upload Photos of Damaged / Defective Fixture *
+                    <span style={{ fontWeight: 400, color: "#6b7280", marginLeft: "0.35rem" }}>
+                      (At least 1 photo required for admin approval)
+                    </span>
+                  </label>
+                  
+                  <label className={styles.uploadZone}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      style={{ display: "none" }}
+                      onChange={handlePhotoUpload}
+                      disabled={isUploading}
+                    />
+                    <div style={{ fontSize: "1.75rem", marginBottom: "0.25rem" }}>📷</div>
+                    <div style={{ fontWeight: 600, color: "#8C6228", fontSize: "0.88rem" }}>
+                      {isUploading ? "Uploading photos..." : "Click to select or drag defect photos"}
+                    </div>
+                    <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "0.25rem" }}>
+                      PNG, JPG, WebP up to 10MB
+                    </div>
+                  </label>
+
+                  {/* Photo Preview Grid */}
+                  {uploadedImages.length > 0 && (
+                    <div className={styles.photoPreviewGrid}>
+                      {uploadedImages.map((imgUrl, idx) => (
+                        <div key={idx} className={styles.photoPreviewCard}>
+                          <Image
+                            src={imgUrl}
+                            alt={`Upload ${idx + 1}`}
+                            fill
+                            sizes="80px"
+                            style={{ objectFit: "cover" }}
+                          />
+                          <button
+                            type="button"
+                            className={styles.btnRemovePhoto}
+                            onClick={() => handleRemoveUploadedPhoto(idx)}
+                            title="Remove photo"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ marginTop: "1.5rem" }}>
+                  <button
+                    type="button"
+                    className={styles.submitReturnBtn}
+                    onClick={handleSubmitReturn}
+                    disabled={isSubmittingReturn || isUploading}
+                  >
+                    {isSubmittingReturn
+                      ? "Submitting Return Request..."
+                      : "Submit Return Request for Admin Approval"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

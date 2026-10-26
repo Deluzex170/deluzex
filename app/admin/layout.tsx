@@ -2,9 +2,24 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import styles from "./admin.module.css";
 import { useAuth } from "../context/AuthContext";
 import { useSidebar } from "../context/SidebarContext";
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-admin-sans",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-admin-mono",
+  display: "swap",
+});
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -12,8 +27,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { logout, isAuthenticated, isAdmin, loading } = useAuth();
   const { sidebarOpen, setSidebarOpen } = useSidebar();
   const [confirmLogout, setConfirmLogout] = React.useState(false);
+  const [theme, setTheme] = React.useState<"dark" | "light">("dark");
 
   const isLoginPage = pathname === "/admin/login";
+
+  React.useEffect(() => {
+    const savedTheme = localStorage.getItem("admin_theme") as "dark" | "light" | null;
+    if (savedTheme === "light" || savedTheme === "dark") {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    localStorage.setItem("admin_theme", nextTheme);
+  };
 
   React.useEffect(() => {
     document.body.style.paddingTop = "0px";
@@ -76,11 +105,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const menuItems = [
     {
-      group: "Admin Control",
+      group: "Operations",
       items: [
         { name: "Overview", path: "/admin", icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
-        { name: "Orders", path: "/admin/orders", icon: "M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z" },
+        { name: "Orders Dispatch", path: "/admin/orders", icon: "M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z" },
+        { name: "Customers", path: "/admin/customers", icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75" },
+        { name: "Client Inquiries", path: "/admin/inquiries", icon: "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
+        { name: "Reviews Moderation", path: "/admin/reviews", icon: "M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" },
         { name: "Coupons & Offers", path: "/admin/coupons", icon: "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" },
+        { name: "Shipping & Delivery", path: "/admin/shipping-settings", icon: "M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" },
         { name: "Customers", path: "/admin/customers", icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75" },
         { name: "Reviews", path: "/admin/reviews", icon: "M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" },
         { name: "Visitor Analytics", path: "/admin/analytics", icon: "M18 20V10 M12 20V4 M6 20v-6" },
@@ -88,29 +121,66 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { name: "Hero Products", path: "/admin/hero-products", icon: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" },
         { name: "Products", path: "/admin/products", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
         { name: "Categories", path: "/admin/categories", icon: "M4 6h16M4 12h16M4 18h16" },
-        { name: "Projects", path: "/admin/projects", icon: "M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z" },
-        { name: "Blogs", path: "/admin/blogs", icon: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20 M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15z" },
+        { name: "Hero Showcase", path: "/admin/hero-products", icon: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" },
+        { name: "Bespoke Submissions", path: "/admin/collaborations", icon: "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" },
+      ]
+    },
+    {
+      group: "Editorial & Content",
+      items: [
         { name: "Website Content", path: "/admin/content", icon: "M4 5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5zm0 8a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-6zm10 0a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-6z" },
-        { name: "Customer Stories", path: "/admin/testimonials", icon: "M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" },
-        { name: "Inquiries", path: "/admin/inquiries", icon: "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
+        { name: "Architectural Projects", path: "/admin/projects", icon: "M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z" },
+        { name: "Journal & Blogs", path: "/admin/blogs", icon: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20 M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15z" },
+        { name: "Client Stories", path: "/admin/testimonials", icon: "M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" },
+        { name: "FAQs Knowledge", path: "/admin/faqs", icon: "M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
         { name: "Newsletter", path: "/admin/newsletter", icon: "M19 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1m2 13a2 2 0 0 1-2-2V7m2 13a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" },
         { name: "Email Templates", path: "/admin/email-templates", icon: "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6" },
-        { name: "Design Submissions", path: "/admin/collaborations", icon: "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" },
-        { name: "FAQs", path: "/admin/faqs", icon: "M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
-        { name: "API Docs (Swagger)", path: "/admin/docs", icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8" }
+      ]
+    },
+    {
+      group: "Intelligence & Security",
+      items: [
+        { name: "Visitor Analytics", path: "/admin/analytics", icon: "M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75" },
+        { name: "Security Audit Logs", path: "/admin/audit-logs", icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z M12 8v4l3 3" },
+        { name: "API Reference", path: "/admin/docs", icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8" }
       ]
     }
   ];
 
   return (
-    <div className={styles.adminRoot} data-admin-root>
+    <div className={`${styles.adminRoot} ${plusJakarta.variable} ${jetbrainsMono.variable} ${plusJakarta.className}`} data-admin-root data-theme={theme}>
       <div className={styles.dashboardContainer}>
         {/* Sidebar */}
         <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarCollapsed}`}>
           <div className={styles.sidebarInner}>
-            <div style={{ padding: "1.25rem 1.5rem 1rem 1.5rem", borderBottom: "1px solid rgba(0, 0, 0, 0.08)", marginBottom: "0.75rem" }}>
-              <Link href="/" title="Storefront" style={{ display: "flex", alignItems: "center" }}>
-                <img src="/images/logos/de_luzex_black.svg" alt="De Luzex" height="32" style={{ height: "32px", width: "auto" }} />
+            <div style={{
+              padding: "0.85rem 0.75rem 1.15rem 0.75rem",
+              borderBottom: "1px solid var(--admin-border)",
+              marginBottom: "0.5rem"
+            }}>
+              <Link href="/" title="Back to Storefront" style={{ display: "flex", flexDirection: "column", gap: "0.45rem", textDecoration: "none" }}>
+                <img
+                  src={theme === "light" ? "/images/logos/de_luzex_black.svg" : "/images/logos/de_luzex_white.svg"}
+                  alt="De Luzex"
+                  height="28"
+                  style={{ height: "28px", width: "auto", maxWidth: "160px" }}
+                />
+                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                  <span style={{
+                    fontSize: "0.62rem",
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    fontWeight: 700,
+                    color: "#C49A45",
+                    background: "rgba(196, 154, 69, 0.12)",
+                    border: "1px solid rgba(196, 154, 69, 0.28)",
+                    padding: "2px 7px",
+                    borderRadius: "4px"
+                  }}>
+                    Atelier Console
+                  </span>
+                  <span style={{ fontSize: "0.62rem", color: "#6B7280" }}>v2.4</span>
+                </div>
               </Link>
             </div>
 
@@ -139,23 +209,49 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
             ))}
 
-            <div className={styles.menuGroup}>
+            <div className={styles.menuGroup} style={{ marginTop: "auto", paddingTop: "0.75rem", borderTop: "1px solid var(--admin-border)", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <button
+                type="button"
+                className={styles.themeToggleBtn}
+                onClick={toggleTheme}
+                title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
+                  {theme === "dark" ? (
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="5" />
+                      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                    </svg>
+                  ) : (
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                    </svg>
+                  )}
+                  <span className={styles.menuLinkText}>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+                </div>
+                <span className={styles.themePill}>{theme === "dark" ? "DARK" : "LIGHT"}</span>
+              </button>
               {confirmLogout ? (
-                <div style={{ padding: "0.6rem 0.75rem", background: "rgba(220, 38, 38, 0.08)", border: "1px solid rgba(220, 38, 38, 0.2)", borderRadius: "8px", margin: "0.25rem 0.75rem" }}>
-                  <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#DC2626", marginBottom: "0.4rem" }}>
+                <div style={{
+                  padding: "0.85rem",
+                  background: "rgba(220, 38, 38, 0.12)",
+                  border: "1px solid rgba(220, 38, 38, 0.3)",
+                  borderRadius: "10px"
+                }}>
+                  <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#F87171", marginBottom: "0.5rem" }}>
                     Confirm Sign Out?
                   </div>
-                  <div style={{ display: "flex", gap: "0.4rem" }}>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
                     <button
                       onClick={handleLogout}
                       style={{
                         flex: 1,
                         background: "#DC2626",
-                        color: "#fff",
-                        padding: "0.35rem 0.6rem",
+                        color: "#FFFFFF",
+                        padding: "0.45rem 0.6rem",
                         borderRadius: "6px",
                         fontSize: "0.75rem",
-                        fontWeight: 600,
+                        fontWeight: 700,
                         border: "none",
                         cursor: "pointer",
                       }}
@@ -165,12 +261,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <button
                       onClick={() => setConfirmLogout(false)}
                       style={{
-                        background: "#fff",
-                        color: "#64748b",
-                        border: "1px solid #cbd5e1",
-                        padding: "0.35rem 0.6rem",
+                        background: "var(--admin-surface)",
+                        color: "var(--admin-text-muted)",
+                        border: "1px solid var(--admin-border)",
+                        padding: "0.45rem 0.6rem",
                         borderRadius: "6px",
                         fontSize: "0.75rem",
+                        fontWeight: 600,
                         cursor: "pointer",
                       }}
                     >
@@ -183,7 +280,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9" />
                   </svg>
-                  <span className={styles.menuLinkText}>Logout</span>
+                  <span className={styles.menuLinkText}>Sign Out</span>
                 </button>
               )}
             </div>

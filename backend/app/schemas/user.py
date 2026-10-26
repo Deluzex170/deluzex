@@ -1,20 +1,26 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional, Any
 from datetime import datetime
 
 class UserRegister(BaseModel):
-    first_name: Optional[str] = "User"
-    last_name: Optional[str] = "Customer"
+    model_config = ConfigDict(extra="forbid")
+
+    first_name: Optional[str] = Field("User", max_length=80)
+    last_name: Optional[str] = Field("Customer", max_length=80)
     email: EmailStr
-    password: str
-    phone: Optional[str] = None
+    password: str = Field(..., min_length=6, max_length=128, description="Password between 6 and 128 characters")
+    phone: Optional[str] = Field(None, max_length=25)
     accept_terms: Optional[bool] = True
 
 class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
+    model_config = ConfigDict(extra="forbid")
+
+    email: str = Field(..., min_length=3, max_length=120, description="Email address or mobile phone number")
+    password: str = Field(..., min_length=1, max_length=128)
 
 class UserData(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     first_name: Optional[str] = ""
     last_name: Optional[str] = ""
@@ -28,28 +34,35 @@ class UserData(BaseModel):
     is_admin: bool = False
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 class WhatsAppSendOtpRequest(BaseModel):
-    phone: str
+    model_config = ConfigDict(extra="forbid")
+
+    phone: str = Field(..., min_length=10, max_length=25)
 
 class WhatsAppVerifyOtpRequest(BaseModel):
-    phone: str
-    otp: str
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
+    model_config = ConfigDict(extra="forbid")
+
+    phone: str = Field(..., min_length=10, max_length=25)
+    otp: str = Field(..., min_length=4, max_length=8)
+    first_name: Optional[str] = Field(None, max_length=80)
+    last_name: Optional[str] = Field(None, max_length=80)
 
 class VerifyEmailOtpRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     email: EmailStr
-    otp: str
+    otp: str = Field(..., min_length=4, max_length=8)
 
 class ResendEmailOtpRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     email: EmailStr
 
 class UserProfileUpdate(BaseModel):
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
+    model_config = ConfigDict(extra="forbid")
+
+    first_name: Optional[str] = Field(None, max_length=80)
+    last_name: Optional[str] = Field(None, max_length=80)
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     avatar_url: Optional[str] = None
@@ -59,16 +72,49 @@ class UserProfileUpdate(BaseModel):
     country: Optional[str] = None
 
 class UserPasswordUpdate(BaseModel):
-    current_password: str
-    new_password: str
+    model_config = ConfigDict(extra="forbid")
+
+    current_password: str = Field(..., min_length=1, max_length=128)
+    new_password: str = Field(..., min_length=6, max_length=128)
 
 class ForgotPasswordRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     email: EmailStr
 
 class ResetPasswordRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     email: EmailStr
-    otp: str
-    new_password: str
+    otp: str = Field(..., min_length=4, max_length=8)
+    new_password: str = Field(..., min_length=6, max_length=128)
+
+class SignupWhatsAppSendOtpRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    phone: str = Field(..., min_length=10, max_length=25)
+    email: Optional[EmailStr] = None
+
+class SignupWhatsAppVerifyRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    phone: str = Field(..., min_length=10, max_length=25)
+    otp: str = Field(..., min_length=4, max_length=8)
+    first_name: str = Field(..., min_length=1, max_length=80)
+    last_name: Optional[str] = Field(default="", max_length=80)
+    email: EmailStr
+    password: str = Field(..., min_length=6, max_length=128)
+
+class ProfilePhoneSendOtpRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    phone: str = Field(..., min_length=10, max_length=25)
+
+class ProfilePhoneVerifyOtpRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    phone: str = Field(..., min_length=10, max_length=25)
+    otp: str = Field(..., min_length=4, max_length=8)
 
 class StandardResponse(BaseModel):
     success: bool

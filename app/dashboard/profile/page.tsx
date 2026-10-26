@@ -14,6 +14,8 @@ import {
   removeUserAvatar,
   deleteUserProfile,
   SavedAddress,
+   sendProfilePhoneOtp,
+  verifyProfilePhoneOtp,
 } from "../../services/api";
 import styles from "./profile.module.css";
 
@@ -153,6 +155,9 @@ export default function ProfilePage() {
   const [phone, setPhone] = useState(() =>
     getInitialUserValue("phone", "+91 9982791722", userRecord)
   );
+  const [originalPhone, setOriginalPhone] = useState(() =>
+    getInitialUserValue("phone", "+91 9982791722", userRecord)
+  );
   const [city, setCity] = useState(() =>
     getInitialUserValue("city", "Ahmedabad", userRecord)
   );
@@ -179,6 +184,13 @@ export default function ProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Phone OTP Modal States
+  const [showPhoneOtpModal, setShowPhoneOtpModal] = useState(false);
+  const [phoneOtp, setPhoneOtp] = useState("");
+  const [isVerifyingPhoneOtp, setIsVerifyingPhoneOtp] = useState(false);
+  const [isSendingPhoneOtp, setIsSendingPhoneOtp] = useState(false);
+  const [phoneOtpTimer, setPhoneOtpTimer] = useState(0);
+
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -189,6 +201,15 @@ export default function ProfilePage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  // Timer countdown for Phone OTP resend
+  useEffect(() => {
+    if (phoneOtpTimer <= 0) return;
+    const interval = setInterval(() => {
+      setPhoneOtpTimer((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [phoneOtpTimer]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -198,7 +219,10 @@ export default function ProfilePage() {
         if (profile.first_name) setFirstName(profile.first_name);
         if (profile.last_name) setLastName(profile.last_name);
         if (profile.email) setEmail(profile.email);
-        if (profile.phone) setPhone(profile.phone);
+        if (profile.phone) {
+          setPhone(profile.phone);
+          setOriginalPhone(profile.phone);
+        }
         if (profile.city) setCity(profile.city);
         if (profile.state) setState(profile.state);
         if (profile.country) setCountry(profile.country);
@@ -239,6 +263,26 @@ export default function ProfilePage() {
       return;
     }
 
+    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+    const cleanOriginal = originalPhone.replace(/\D/g, "").slice(-10);
+
+    // If phone number changed, require WhatsApp OTP verification before saving
+    if (cleanPhone.length === 10 && cleanPhone !== cleanOriginal) {
+      setIsSendingPhoneOtp(true);
+      try {
+        await sendProfilePhoneOtp(cleanPhone);
+        setShowPhoneOtpModal(true);
+        setPhoneOtp("");
+        setPhoneOtpTimer(60);
+        showToast(`WhatsApp OTP sent to +91 ${cleanPhone}`);
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : "Failed to send WhatsApp verification OTP.");
+      } finally {
+        setIsSendingPhoneOtp(false);
+      }
+      return;
+    }
+
     setIsSavingProfile(true);
     try {
       const updatedUser = await updateUserProfile({
@@ -264,6 +308,63 @@ export default function ProfilePage() {
     } finally {
       setIsSavingProfile(false);
     }
+  };
+
+  const handleResendPhoneOtp = async () => {
+    if (phoneOtpTimer > 0) return;
+    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+    try {
+      await sendProfilePhoneOtp(cleanPhone);
+      setPhoneOtpTimer(60);
+      showToast(`New WhatsApp OTP sent to +91 ${cleanPhone}`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Failed to resend OTP.");
+    }
+  };
+
+  const handleVerifyPhoneOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanOtp = phoneOtp.trim();
+    if (cleanOtp.length !== 6) {
+      showToast("Please enter the 6-digit WhatsApp OTP.");
+      return;
+    }
+
+    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+    setIsVerifyingPhoneOtp(true);
+    try {
+      // 1. Verify phone OTP and update phone number in backend
+      await verifyProfilePhoneOtp(cleanPhone, cleanOtp);
+
+      // 2. Also save other profile fields
+      const formattedPhone = `+91 ${cleanPhone}`;
+      const updatedUser = await updateUserProfile({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        email: email.trim(),
+        phone: formattedPhone,
+        city: city.trim(),
+        country: country.trim(),
+      });
+
+      setPhone(formattedPhone);
+      setOriginalPhone(formattedPhone);
+      setShowPhoneOtpModal(false);
+
+      const token = localStorage.getItem("authToken") || "";
+      login(token, updatedUser);
+      showToast("Phone number verified and profile saved successfully!");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Invalid WhatsApp OTP. Please try again.");
+    } finally {
+      setIsVerifyingPhoneOtp(false);
+    }
+  };
+
+  const handleCancelPhoneOtp = () => {
+    setShowPhoneOtpModal(false);
+    setPhone(originalPhone);
+    setPhoneOtp("");
   };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {

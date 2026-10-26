@@ -40,6 +40,17 @@ def verify_and_calculate_order_totals(items, raw_subtotal, coupon_code, email, c
     clean_coupon = None
     expected_discount = 0.0
 
+    from app.api.endpoints.shipping_settings import get_shipping_rules
+    shipping_rules = get_shipping_rules()
+    min_order_enabled = shipping_rules.get("min_order_value_enabled", True)
+    min_order_val = float(shipping_rules.get("min_order_value", 499.0))
+    if min_order_enabled and calculated_subtotal > 0 and calculated_subtotal < min_order_val:
+        custom_msg = shipping_rules.get("min_order_message") or "Minimum order value of ₹{amount} is required to place an order."
+        raise HTTPException(
+            status_code=400,
+            detail=custom_msg.replace("{amount}", f"{min_order_val:,.0f}")
+        )
+
     if coupon_code and coupon_code.strip():
         clean_coupon = coupon_code.strip().upper()
         val_res = validate_coupon_code(clean_coupon, calculated_subtotal, email)
@@ -56,7 +67,13 @@ def verify_and_calculate_order_totals(items, raw_subtotal, coupon_code, email, c
         expected_discount = 0.0
         taxable = calculated_subtotal
         expected_gst = round(taxable * 0.18, 2)
-        expected_delivery = 0.0 if calculated_subtotal >= 1999.0 or calculated_subtotal == 0 else 99.0
+        free_enabled = shipping_rules.get("free_shipping_enabled", True)
+        free_threshold = float(shipping_rules.get("free_shipping_threshold", 1999.0))
+        std_fee = float(shipping_rules.get("standard_delivery_fee", 99.0))
+        if calculated_subtotal == 0 or (free_enabled and calculated_subtotal >= free_threshold):
+            expected_delivery = 0.0
+        else:
+            expected_delivery = std_fee
         expected_total = round(taxable + expected_gst + expected_delivery, 2)
 
     if abs(claimed_total - expected_total) > 0.5:
@@ -357,7 +374,7 @@ def verify_payment(payload: VerifyPaymentRequest, request: Request = None):
         )
         raise HTTPException(status_code=400, detail="Payment verification failed")
 
-    # Mark as paid
+    # Mark as paid and decrement stock atomically
     db.orders.update_one(
         {"_id": oid},
         {
@@ -365,6 +382,7 @@ def verify_payment(payload: VerifyPaymentRequest, request: Request = None):
                 "status": "paid",
                 "razorpay_order_id": payload.razorpay_order_id,
                 "razorpay_payment_id": payload.razorpay_payment_id,
+                "stock_decremented": True,
                 "updated_at": now,
             }
         },
@@ -1111,6 +1129,13 @@ async def razorpay_webhook(request: Request):
                 )
                 try:
                     paid_doc = db.orders.find_one(query)
+                    if paid_doc and not paid_doc.get("stock_decremented"):
+                        try:
+                            decrement_product_stock(paid_doc.get("items", []))
+                            db.orders.update_one(query, {"$set": {"stock_decremented": True}})
+                        except Exception as decr_err:
+                            logger.warning(f"Webhook stock decrement warning for {query}: {decr_err}")
+
                     if paid_doc and not paid_doc.get("order_confirmation_email_sent"):
                         send_order_confirmation_email(paid_doc)
                         db.orders.update_one(query, {"$set": {"order_confirmation_email_sent": True}})

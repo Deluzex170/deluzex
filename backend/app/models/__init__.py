@@ -3,11 +3,11 @@ from app.models.product import Product
 from app.models.project import Project
 from app.models.blog import Blog
 from app.models.testimonial import Testimonial
-from app.models.newsletter import NewsletterSubscriber
+from app.models.newsletter import NewsletterSubscriber, NewsletterSubscriberCreate
 from app.models.cart import CartItem
 from app.models.user import User
 from app.models.audit import AuditLog
-from app.models.contact import ContactMessage
+from app.models.contact import ContactMessage, ContactMessageCreate
 from app.models.order import Order
 from app.models.hero_product import HeroProduct
 from app.models.site_content import SiteContent

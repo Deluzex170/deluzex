@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.endpoints import health, categories, products, projects, testimonials, newsletter, cart, auth, contact, payments, orders, hero_products, blogs, content, addresses, cards, wishlist, analytics, audit, reviews, collaborations, faqs, coupons
+from app.api.endpoints import health, categories, products, projects, testimonials, newsletter, cart, auth, contact, payments, orders, hero_products, blogs, content, addresses, cards, wishlist, analytics, audit, reviews, collaborations, faqs, coupons, shiprocket, shipping_settings
 
 from app.api.endpoints import email_templates
 
@@ -19,6 +19,7 @@ api_router.include_router(cart.router, prefix="/cart", tags=["cart"])
 api_router.include_router(contact.router, prefix="/contact", tags=["contact"])
 api_router.include_router(payments.router, prefix="/payments", tags=["payments"])
 api_router.include_router(orders.router, prefix="/orders", tags=["orders"])
+api_router.include_router(shiprocket.router, prefix="/shiprocket", tags=["shiprocket"])
 api_router.include_router(hero_products.router, prefix="/hero-products", tags=["hero-products"])
 api_router.include_router(content.router, prefix="/content", tags=["content"])
 api_router.include_router(addresses.router, prefix="/user/addresses", tags=["addresses"])
@@ -33,5 +34,7 @@ api_router.include_router(collaborations.router, prefix="/collaborations", tags=
 api_router.include_router(faqs.router, prefix="/faqs", tags=["faqs"])
 api_router.include_router(coupons.router, prefix="/coupons", tags=["coupons"])
 api_router.include_router(coupons.admin_router, prefix="/admin/coupons", tags=["admin-coupons"])
+api_router.include_router(shipping_settings.router, prefix="/shipping-settings", tags=["shipping-settings"])
+
 
 

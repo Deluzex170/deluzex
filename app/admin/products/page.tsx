@@ -137,16 +137,16 @@ export default function AdminProducts() {
           style={{
             marginBottom: "1.5rem",
             padding: "0.9rem 1.25rem",
-            background: "#F0FDF4",
-            border: "1px solid #BBF7D0",
+            background: "rgba(16, 185, 129, 0.12)",
+            border: "1px solid rgba(16, 185, 129, 0.3)",
             borderRadius: "10px",
-            color: "#166534",
+            color: "#34D399",
             fontSize: "0.875rem",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             gap: "0.5rem",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.02)",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
@@ -155,7 +155,7 @@ export default function AdminProducts() {
           </div>
           <button
             onClick={() => setSuccessMsg("")}
-            style={{ background: "transparent", border: "none", color: "#166534", cursor: "pointer", fontSize: "1rem" }}
+            style={{ background: "transparent", border: "none", color: "#34D399", cursor: "pointer", fontSize: "1rem" }}
           >
             ✕
           </button>
@@ -168,15 +168,15 @@ export default function AdminProducts() {
           style={{
             marginBottom: "1.75rem",
             padding: "1.25rem 1.75rem",
-            background: "#FEF2F2",
-            border: "1px solid #FECACA",
+            background: "rgba(239, 68, 68, 0.12)",
+            border: "1px solid rgba(239, 68, 68, 0.35)",
             borderRadius: "12px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             gap: "1.5rem",
             flexWrap: "wrap",
-            boxShadow: "0 4px 12px rgba(239, 68, 68, 0.08)",
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
@@ -185,21 +185,22 @@ export default function AdminProducts() {
                 width: 44,
                 height: 44,
                 borderRadius: "50%",
-                background: "#FEE2E2",
-                color: "#DC2626",
+                background: "rgba(239, 68, 68, 0.2)",
+                color: "#F87171",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0,
+                border: "1px solid rgba(239, 68, 68, 0.3)"
               }}
             >
               <Trash2 size={22} />
             </div>
             <div>
-              <h4 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#991B1B" }}>
+              <h4 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#FFFFFF" }}>
                 Confirm Deletion
               </h4>
-              <p style={{ margin: "0.25rem 0 0", fontSize: "0.875rem", color: "#B91C1C" }}>
+              <p style={{ margin: "0.25rem 0 0", fontSize: "0.875rem", color: "#FCA5A5" }}>
                 Are you sure you want to delete &quot;{itemToDelete.product_title}&quot;? This cannot be undone.
               </p>
             </div>
@@ -208,7 +209,7 @@ export default function AdminProducts() {
             <button
               onClick={() => setItemToDelete(null)}
               className={styles.btnCancel}
-              style={{ background: "#ffffff", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
+              style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", color: "var(--admin-text-main)", padding: "0.65rem 1.25rem" }}
             >
               Cancel
             </button>
@@ -237,16 +238,17 @@ export default function AdminProducts() {
             style={{
               padding: "0.6rem 1.15rem",
               borderRadius: "8px",
-              border: filterTab === "all" ? "1px solid var(--admin-primary)" : "1px solid var(--admin-border)",
-              background: filterTab === "all" ? "var(--admin-primary)" : "#ffffff",
-              color: filterTab === "all" ? "#ffffff" : "var(--admin-text-main)",
-              fontWeight: 600,
+              border: filterTab === "all" ? "1px solid rgba(196, 154, 69, 0.5)" : "1px solid var(--admin-border)",
+              background: filterTab === "all" ? "linear-gradient(135deg, #C49A45 0%, #A88132 100%)" : "var(--admin-surface)",
+              color: filterTab === "all" ? "#0A0A0C" : "var(--admin-text-main)",
+              fontWeight: 700,
               fontSize: "0.875rem",
               cursor: "pointer",
               transition: "all 0.2s",
               display: "inline-flex",
               alignItems: "center",
-              gap: "0.4rem",
+              gap: "0.5rem",
+              boxShadow: filterTab === "all" ? "0 4px 12px rgba(196, 154, 69, 0.2)" : "none",
             }}
           >
             All Products
@@ -255,8 +257,9 @@ export default function AdminProducts() {
                 fontSize: "0.75rem",
                 padding: "2px 8px",
                 borderRadius: "12px",
-                background: filterTab === "all" ? "rgba(255,255,255,0.2)" : "#f1f5f9",
-                color: filterTab === "all" ? "#ffffff" : "var(--admin-text-muted)",
+                background: filterTab === "all" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.08)",
+                color: filterTab === "all" ? "#0A0A0C" : "var(--admin-text-muted)",
+                fontWeight: 700,
               }}
             >
               {products.length}
@@ -269,16 +272,17 @@ export default function AdminProducts() {
             style={{
               padding: "0.6rem 1.15rem",
               borderRadius: "8px",
-              border: filterTab === "new_arrivals" ? "1px solid #C49A45" : "1px solid var(--admin-border)",
-              background: filterTab === "new_arrivals" ? "#C49A45" : "#ffffff",
-              color: filterTab === "new_arrivals" ? "#ffffff" : "var(--admin-text-main)",
-              fontWeight: 600,
+              border: filterTab === "new_arrivals" ? "1px solid rgba(196, 154, 69, 0.5)" : "1px solid var(--admin-border)",
+              background: filterTab === "new_arrivals" ? "linear-gradient(135deg, #C49A45 0%, #A88132 100%)" : "var(--admin-surface)",
+              color: filterTab === "new_arrivals" ? "#0A0A0C" : "var(--admin-text-main)",
+              fontWeight: 700,
               fontSize: "0.875rem",
               cursor: "pointer",
               transition: "all 0.2s",
               display: "inline-flex",
               alignItems: "center",
-              gap: "0.4rem",
+              gap: "0.5rem",
+              boxShadow: filterTab === "new_arrivals" ? "0 4px 12px rgba(196, 154, 69, 0.2)" : "none",
             }}
           >
             <Sparkles size={15} />
@@ -288,8 +292,8 @@ export default function AdminProducts() {
                 fontSize: "0.75rem",
                 padding: "2px 8px",
                 borderRadius: "12px",
-                background: filterTab === "new_arrivals" ? "rgba(255,255,255,0.25)" : "#FEF3C7",
-                color: filterTab === "new_arrivals" ? "#ffffff" : "#92400E",
+                background: filterTab === "new_arrivals" ? "rgba(0, 0, 0, 0.2)" : "rgba(196, 154, 69, 0.15)",
+                color: filterTab === "new_arrivals" ? "#0A0A0C" : "#E5B869",
                 fontWeight: 700,
               }}
             >
@@ -409,29 +413,6 @@ export default function AdminProducts() {
                           }}>
                             {prod.stock_status || "IN STOCK"}
                           </span>
-                          {prod.amazon_link && (
-                            <a
-                              href={prod.amazon_link.startsWith("http") ? prod.amazon_link : `https://${prod.amazon_link}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title={`Amazon Listing: ${prod.amazon_link}`}
-                              style={{
-                                fontSize: "0.7rem",
-                                padding: "1px 7px",
-                                borderRadius: "4px",
-                                fontWeight: 700,
-                                background: "#131921",
-                                color: "#FF9900",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "3px",
-                                textDecoration: "none",
-                                border: "1px solid rgba(255, 153, 0, 0.4)",
-                              }}
-                            >
-                              Amazon ↗
-                            </a>
-                          )}
                         </div>
                         {prod.product_description && (
                           <div
@@ -453,8 +434,9 @@ export default function AdminProducts() {
                         <span
                           style={{
                             display: "inline-block",
-                            background: "#f1f5f9",
-                            color: "#475569",
+                            background: "rgba(255, 255, 255, 0.05)",
+                            color: "#D1D5DB",
+                            border: "1px solid var(--admin-border)",
                             padding: "4px 10px",
                             borderRadius: "6px",
                             fontSize: "0.825rem",
@@ -465,7 +447,7 @@ export default function AdminProducts() {
                         </span>
                       </td>
                       <td>
-                        <span style={{ fontWeight: 700, color: "var(--admin-primary)", fontSize: "0.95rem" }}>
+                        <span style={{ fontWeight: 700, color: "#C49A45", fontSize: "0.95rem" }}>
                           ₹{Number(prod.product_price || 0).toLocaleString()}
                         </span>
                         {prod.price_note && (
@@ -486,28 +468,28 @@ export default function AdminProducts() {
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "0.45rem",
-                            padding: "0.45rem 0.9rem",
+                            padding: "0.45rem 0.95rem",
                             borderRadius: "20px",
                             fontSize: "0.825rem",
                             fontWeight: 600,
                             cursor: isToggling ? "wait" : "pointer",
                             transition: "all 0.2s",
-                            border: isNewArrival ? "1px solid #F59E0B" : "1px solid var(--admin-border)",
-                            background: isNewArrival ? "#FFFBEB" : "#ffffff",
-                            color: isNewArrival ? "#B45309" : "#64748B",
+                            border: isNewArrival ? "1px solid rgba(196, 154, 69, 0.5)" : "1px solid var(--admin-border)",
+                            background: isNewArrival ? "rgba(196, 154, 69, 0.16)" : "var(--admin-surface)",
+                            color: isNewArrival ? "#E5B869" : "var(--admin-text-muted)",
                           }}
                           onMouseEnter={(e) => {
                             if (!isNewArrival) {
                               e.currentTarget.style.borderColor = "#C49A45";
-                              e.currentTarget.style.color = "#C49A45";
-                              e.currentTarget.style.background = "#FEFCE8";
+                              e.currentTarget.style.color = "#FFFFFF";
+                              e.currentTarget.style.background = "rgba(196, 154, 69, 0.08)";
                             }
                           }}
                           onMouseLeave={(e) => {
                             if (!isNewArrival) {
                               e.currentTarget.style.borderColor = "var(--admin-border)";
-                              e.currentTarget.style.color = "#64748B";
-                              e.currentTarget.style.background = "#ffffff";
+                              e.currentTarget.style.color = "var(--admin-text-muted)";
+                              e.currentTarget.style.background = "var(--admin-surface)";
                             }
                           }}
                         >
@@ -515,7 +497,7 @@ export default function AdminProducts() {
                             <span>Updating...</span>
                           ) : isNewArrival ? (
                             <>
-                              <Sparkles size={14} color="#D97706" />
+                              <Sparkles size={14} color="#C49A45" />
                               <span>★ In New Arrivals</span>
                             </>
                           ) : (

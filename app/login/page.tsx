@@ -5,8 +5,14 @@ import styles from "./login.module.css";
 import { useAuth } from "../context/AuthContext";
 import { useDispatch } from "react-redux";
 import { addToCart, openCart } from "../store/cartSlice";
-import WhatsAppAuthSection from "../components/WhatsAppAuthSection";
-import { verifyEmailOtp, resendEmailOtp, requestPasswordReset, resetPasswordWithOtp } from "../services/api";
+import {
+  verifyEmailOtp,
+  resendEmailOtp,
+  requestPasswordReset,
+  resetPasswordWithOtp,
+  sendSignupWhatsAppOtp,
+  verifySignupWhatsApp,
+} from "../services/api";
 
 type ToastProps = {
   type: "success" | "error";
@@ -14,19 +20,32 @@ type ToastProps = {
 };
 
 export default function Login() {
-  const [authMode, setAuthMode] = useState<"login" | "register" | "forgot" | "email_otp">("login");
+  const [authMode, setAuthMode] = useState<"login" | "register" | "forgot" | "email_otp" | "signup_whatsapp_otp">("login");
   const { login } = useAuth();
   const dispatch = useDispatch();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Common fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [resetEmail, setResetEmail] = useState("");
-  const [resetSent, setResetSent] = useState(false);
 
-  // Forgot password OTP + new password state
+  // Signup fields
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [fullNameError, setFullNameError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+
+  // WhatsApp OTP for signup
+  const [whatsappOtp, setWhatsappOtp] = useState("");
+  const [whatsappOtpError, setWhatsappOtpError] = useState("");
+  const [whatsappCooldown, setWhatsappCooldown] = useState(0);
+  const [isVerifyingWhatsApp, setIsVerifyingWhatsApp] = useState(false);
+  const [isResendingWhatsApp, setIsResendingWhatsApp] = useState(false);
+
+  // Forgot password state
+  const [resetEmail, setResetEmail] = useState("");
   const [forgotStep, setForgotStep] = useState<"email" | "otp_password">("email");
   const [resetOtp, setResetOtp] = useState("");
   const [resetOtpError, setResetOtpError] = useState("");
@@ -37,7 +56,7 @@ export default function Login() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
 
-  // Email OTP state
+  // Email OTP state (legacy support)
   const [emailOtp, setEmailOtp] = useState("");
   const [emailOtpError, setEmailOtpError] = useState("");
   const [pendingEmail, setPendingEmail] = useState("");
@@ -45,22 +64,32 @@ export default function Login() {
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [isResendingOtp, setIsResendingOtp] = useState(false);
 
+  // Errors
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [resetEmailError, setResetEmailError] = useState("");
-  
   const [toast, setToast] = useState<ToastProps | null>(null);
 
+  // Countdown timer for email OTP
   useEffect(() => {
     if (resendCooldown > 0) {
-      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      const timer = setTimeout(() => setResendCooldown((prev) => prev - 1), 1000);
       return () => clearTimeout(timer);
     }
   }, [resendCooldown]);
 
+  // Countdown timer for WhatsApp signup OTP
+  useEffect(() => {
+    if (whatsappCooldown > 0) {
+      const timer = setTimeout(() => setWhatsappCooldown((prev) => prev - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [whatsappCooldown]);
+
+  // Toast timer
   useEffect(() => {
     if (toast) {
-      const timer = setTimeout(() => setToast(null), 3500);
+      const timer = setTimeout(() => setToast(null), 4000);
       return () => clearTimeout(timer);
     }
   }, [toast]);
@@ -70,14 +99,14 @@ export default function Login() {
   };
 
   const validatePassword = (val: string) => {
-    if (val.length < 8) return "Password must be at least 8 characters long.";
+    if (val.length < 6) return "Password must be at least 6 characters long.";
     return null;
   };
 
   const handleBlurEmail = () => {
     if (!email.trim()) {
       setEmailError("Email is required.");
-    } else if (!validateEmail(email)) {
+    } else if (authMode === "register" && !validateEmail(email)) {
       setEmailError("Please enter a valid email address.");
     }
   };
@@ -112,30 +141,272 @@ export default function Login() {
     }
     const text = await response.text();
     return {
-      detail: response.status === 404
-        ? "Service endpoint not reachable (404)."
-        : text || "Server communication error.",
+      detail: response.status === 404 ? "Service endpoint not reachable (404)." : text || "Server communication error.",
     };
   };
 
   const authFetch = async (endpoint: string, options: RequestInit): Promise<Response> => {
     const envUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
     try {
-      const res = await fetch(`${envUrl}${endpoint}`, options);
-      return res;
+      return await fetch(`${envUrl}${endpoint}`, options);
     } catch (primaryErr) {
       if (envUrl.startsWith("http")) {
         try {
-          const fallbackRes = await fetch(`/api/v1${endpoint}`, options);
-          return fallbackRes;
+          return await fetch(`/api/v1${endpoint}`, options);
         } catch {
-          // rethrow primary error if fallback also fails
+          // ignore
         }
       }
       throw primaryErr;
     }
   };
 
+  // -------------------------------------------------------------
+  // Regular Sign In (Login with Email or Mobile Number + Password)
+  // -------------------------------------------------------------
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailError("");
+    setPasswordError("");
+
+    let isValid = true;
+    if (!email.trim()) {
+      setEmailError("Email or Mobile number is required.");
+      isValid = false;
+    }
+
+    if (!password.trim()) {
+      setPasswordError("Password is required.");
+      isValid = false;
+    }
+
+    if (!isValid) return;
+
+    setIsLoading(true);
+    try {
+      const response = await authFetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+      const data = await safeParseResponse(response);
+
+      if (response.status === 404 || data?.detail?.includes("ACCOUNT_NOT_FOUND")) {
+        setToast({
+          type: "error",
+          message: "No account found. Switching to Sign Up...",
+        });
+        setTimeout(() => {
+          setAuthMode("register");
+        }, 1500);
+        return;
+      }
+
+      // Check if email verification is needed
+      if (response.status === 403 && (data?.detail?.includes("EMAIL_NOT_VERIFIED") || data?.detail?.includes("verify your email"))) {
+        setPendingEmail(email.trim());
+        setAuthMode("email_otp");
+        setResendCooldown(data.retry_after ?? 0);
+        setToast({ type: "success", message: "Enter verification code sent to your email." });
+        return;
+      }
+
+      if (response.ok && data.success) {
+        setToast({ type: "success", message: "Successfully logged in!" });
+        localStorage.setItem("authToken", data.access_token);
+        login(data.access_token, data.data);
+
+        // Auto-add pending cart product if present
+        try {
+          const pending = window.sessionStorage.getItem("pending_cart_product");
+          if (pending) {
+            const product = JSON.parse(pending);
+            dispatch(addToCart(product));
+            dispatch(openCart());
+            window.sessionStorage.removeItem("pending_cart_product");
+          }
+        } catch {
+          // ignore
+        }
+
+        setTimeout(() => {
+          const redirectParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("redirect") : null;
+          if (redirectParam && (data?.data?.is_admin || !redirectParam.startsWith("/admin"))) {
+            router.push(redirectParam);
+          } else if (data?.data?.is_admin) {
+            router.push("/admin");
+          } else {
+            router.push("/");
+          }
+        }, 1200);
+      } else {
+        setToast({ type: "error", message: parseErrorDetail(data, "Invalid credentials. Please try again.") });
+      }
+    } catch (err: any) {
+      setToast({ type: "error", message: err?.message || "Unable to reach server. Please try again." });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // -------------------------------------------------------------
+  // Sign Up Step 1: Submit Details & Request WhatsApp OTP
+  // -------------------------------------------------------------
+  const handleSignupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFullNameError("");
+    setEmailError("");
+    setPhoneError("");
+    setPasswordError("");
+
+    let isValid = true;
+
+    if (!fullName.trim()) {
+      setFullNameError("Full name is required.");
+      isValid = false;
+    }
+
+    if (!email.trim()) {
+      setEmailError("Email address is required.");
+      isValid = false;
+    } else if (!validateEmail(email)) {
+      setEmailError("Please enter a valid email address.");
+      isValid = false;
+    }
+
+    const cleanDigits = phone.replace(/\D/g, "");
+    if (!cleanDigits || cleanDigits.length < 10) {
+      setPhoneError("Please enter a valid 10-digit mobile number.");
+      isValid = false;
+    }
+
+    const pswError = validatePassword(password);
+    if (pswError) {
+      setPasswordError(pswError);
+      isValid = false;
+    }
+
+    if (!isValid) return;
+
+    setIsLoading(true);
+    try {
+      const fullPhone = cleanDigits.length === 10 ? `+91${cleanDigits}` : `+${cleanDigits}`;
+      const res = await sendSignupWhatsAppOtp(fullPhone, email.trim());
+
+      setToast({
+        type: "success",
+        message: res.message || "A 6-digit verification code has been dispatched to your WhatsApp!",
+      });
+      setWhatsappCooldown(res.retry_after || 60);
+      setWhatsappOtp("");
+      setWhatsappOtpError("");
+      setAuthMode("signup_whatsapp_otp");
+    } catch (err: any) {
+      const msg = err.message || "Failed to dispatch WhatsApp OTP. Please check your number.";
+      setToast({ type: "error", message: msg });
+      if (msg.toLowerCase().includes("whatsapp") || msg.toLowerCase().includes("mobile")) {
+        setPhoneError(msg);
+      } else if (msg.toLowerCase().includes("email")) {
+        setEmailError(msg);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // -------------------------------------------------------------
+  // Sign Up Step 2: Verify WhatsApp OTP & Create Account
+  // -------------------------------------------------------------
+  const handleVerifySignupWhatsAppOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setWhatsappOtpError("");
+
+    const cleanOtp = whatsappOtp.replace(/\D/g, "");
+    if (!cleanOtp || cleanOtp.length !== 6) {
+      setWhatsappOtpError("Please enter the complete 6-digit WhatsApp code.");
+      return;
+    }
+
+    setIsVerifyingWhatsApp(true);
+    try {
+      const cleanDigits = phone.replace(/\D/g, "");
+      const fullPhone = cleanDigits.length === 10 ? `+91${cleanDigits}` : `+${cleanDigits}`;
+      const nameParts = fullName.trim().split(" ");
+      const firstName = nameParts[0] || "User";
+      const lastName = nameParts.slice(1).join(" ") || "Customer";
+
+      const res = await verifySignupWhatsApp({
+        phone: fullPhone,
+        otp: cleanOtp,
+        first_name: firstName,
+        last_name: lastName,
+        email: email.trim(),
+        password,
+      });
+
+      if (res.success && res.access_token) {
+        setToast({
+          type: "success",
+          message: "Account verified & created successfully! Logging you in...",
+        });
+        localStorage.setItem("authToken", res.access_token);
+        login(res.access_token, res.data);
+
+        // Auto-add pending cart product if present
+        try {
+          const pending = window.sessionStorage.getItem("pending_cart_product");
+          if (pending) {
+            const product = JSON.parse(pending);
+            dispatch(addToCart(product));
+            dispatch(openCart());
+            window.sessionStorage.removeItem("pending_cart_product");
+          }
+        } catch {
+          // ignore
+        }
+
+        setTimeout(() => {
+          const redirectParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("redirect") : null;
+          if (redirectParam) {
+            router.push(redirectParam);
+          } else {
+            router.push("/");
+          }
+        }, 1200);
+      } else {
+        throw new Error(res.message || "Verification failed. Please check the code.");
+      }
+    } catch (err: any) {
+      const msg = err.message || "Invalid or expired verification code.";
+      setWhatsappOtpError(msg);
+      setToast({ type: "error", message: msg });
+    } finally {
+      setIsVerifyingWhatsApp(false);
+    }
+  };
+
+  const handleResendSignupWhatsAppOtp = async () => {
+    if (whatsappCooldown > 0 || isResendingWhatsApp) return;
+    setIsResendingWhatsApp(true);
+    try {
+      const cleanDigits = phone.replace(/\D/g, "");
+      const fullPhone = cleanDigits.length === 10 ? `+91${cleanDigits}` : `+${cleanDigits}`;
+      const res = await sendSignupWhatsAppOtp(fullPhone, email.trim());
+      setToast({
+        type: "success",
+        message: res.message || "New 6-digit code sent to your WhatsApp!",
+      });
+      setWhatsappCooldown(res.retry_after || 60);
+    } catch (err: any) {
+      setToast({ type: "error", message: err.message || "Failed to resend code." });
+    } finally {
+      setIsResendingWhatsApp(false);
+    }
+  };
+
+  // -------------------------------------------------------------
+  // Forgot Password Flow
+  // -------------------------------------------------------------
   const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setResetEmailError("");
@@ -151,7 +422,6 @@ export default function Login() {
     setIsLoading(true);
     try {
       const res = await requestPasswordReset(resetEmail.trim());
-      setResetSent(true);
       setForgotStep("otp_password");
       setToast({
         type: "success",
@@ -159,16 +429,8 @@ export default function Login() {
       });
     } catch (err: any) {
       const msg = err?.message || "Failed to send reset code. Please try again.";
-      if (msg.includes("ACCOUNT_NOT_FOUND") || msg.toLowerCase().includes("no account")) {
-        setResetEmailError("No account found with this email. Please check your email or sign up.");
-        setToast({
-          type: "error",
-          message: "No account found with this email. You can sign up below.",
-        });
-      } else {
-        setResetEmailError(msg);
-        setToast({ type: "error", message: msg });
-      }
+      setResetEmailError(msg);
+      setToast({ type: "error", message: msg });
     } finally {
       setIsLoading(false);
     }
@@ -186,15 +448,10 @@ export default function Login() {
       valid = false;
     }
 
-    if (!newPassword.trim()) {
-      setNewPasswordError("New password is required.");
+    const pswErr = validatePassword(newPassword);
+    if (pswErr) {
+      setNewPasswordError(pswErr);
       valid = false;
-    } else {
-      const pswErr = validatePassword(newPassword);
-      if (pswErr) {
-        setNewPasswordError(pswErr);
-        valid = false;
-      }
     }
 
     if (newPassword !== confirmPassword) {
@@ -211,7 +468,6 @@ export default function Login() {
         type: "success",
         message: res.message || "Password reset successfully! Please sign in with your new password.",
       });
-      // Switch to login mode
       setTimeout(() => {
         setEmail(resetEmail.trim());
         setPassword("");
@@ -230,148 +486,9 @@ export default function Login() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    let isValid = true;
-
-    setEmailError("");
-    setPasswordError("");
-
-    if (!email.trim()) {
-      setEmailError("Email is required.");
-      isValid = false;
-    } else if (!validateEmail(email)) {
-      setEmailError("Please enter a valid email address.");
-      isValid = false;
-    }
-
-    if (!password.trim()) {
-      setPasswordError("Password is required.");
-      isValid = false;
-    } else if (authMode === "register") {
-      const pswError = validatePassword(password);
-      if (pswError) {
-        setPasswordError(pswError);
-        isValid = false;
-      }
-    }
-
-    if (!isValid) {
-      setToast({ type: "error", message: "Please check your inputs." });
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      if (authMode === "login") {
-        const response = await authFetch("/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email.trim(), password }),
-        });
-        const data = await safeParseResponse(response);
-
-        // Check if email is not registered -> Offer & switch to sign up
-        if (response.status === 404 || data?.detail?.includes("ACCOUNT_NOT_FOUND")) {
-          setToast({
-            type: "error",
-            message: "No account found with this email. Switching to Sign Up...",
-          });
-          setTimeout(() => {
-            setAuthMode("register");
-          }, 1500);
-          return;
-        }
-
-        // Check if email verification is required
-        if (response.status === 403 && (data?.detail?.includes("EMAIL_NOT_VERIFIED") || data?.detail?.includes("verify your email"))) {
-          setPendingEmail(email.trim());
-          setAuthMode("email_otp");
-          setResendCooldown(data.retry_after ?? 0);
-          setToast({ type: "success", message: "Enter the verification code sent to your email. Check your spam folder too." });
-          return;
-        }
-        
-        if (response.ok && data.success) {
-          setToast({ type: "success", message: "Successfully logged in!" });
-          localStorage.setItem("authToken", data?.access_token);
-          login(data.access_token, data.data);
-
-          // Auto-add pending cart product if present
-          try {
-            const pending = window.sessionStorage.getItem("pending_cart_product");
-            if (pending) {
-              const product = JSON.parse(pending);
-              dispatch(addToCart(product));
-              dispatch(openCart());
-              window.sessionStorage.removeItem("pending_cart_product");
-            }
-          } catch {
-            // ignore
-          }
-
-          setTimeout(() => {
-            const redirectParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
-            if (redirectParam && (data?.data?.is_admin || !redirectParam.startsWith('/admin'))) {
-              router.push(redirectParam);
-            } else if (data?.data?.is_admin) {
-              router.push("/admin");
-            } else {
-              router.push("/");
-            }
-          }, 1200);
-        } else {
-          setToast({ type: "error", message: parseErrorDetail(data, "Invalid email or password. Please try again.") });
-        }
-      } else {
-        // Sign up (register)
-        const nameFromEmail = email.trim().split("@")[0] || "User";
-        const response = await authFetch("/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            first_name: nameFromEmail,
-            last_name: "Customer",
-            email: email.trim(),
-            password,
-              accept_terms: true,
-          }),
-        });
-        const data = await safeParseResponse(response);
-        
-        if (response.ok && data.success) {
-          if (data.requires_verification) {
-            setPendingEmail(email.trim());
-            setAuthMode("email_otp");
-            setResendCooldown(data.retry_after ?? 0);
-            setToast({ type: data.otp_sent ? "success" : "error", message: data.message });
-            return;
-          }
-
-          if (data.access_token && data.data) {
-            setToast({ type: "success", message: "Account created and logged in successfully!" });
-            localStorage.setItem("authToken", data.access_token);
-            login(data.access_token, data.data);
-            setTimeout(() => {
-              router.push("/");
-            }, 1200);
-          } else {
-            setToast({ type: "success", message: "Registration successful! You can now log in." });
-            setAuthMode("login");
-            setPassword("");
-          }
-        } else {
-          setToast({ type: "error", message: parseErrorDetail(data, "Registration failed. Please check your details.") });
-        }
-      }
-    } catch (err: any) {
-      setToast({ type: "error", message: err?.message || "Unable to reach the server. Please try again." });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // -------------------------------------------------------------
+  // Legacy Email OTP Verification
+  // -------------------------------------------------------------
   const handleVerifyEmailOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailOtpError("");
@@ -388,32 +505,14 @@ export default function Login() {
         localStorage.setItem("authToken", data.access_token);
         login(data.access_token, data.data);
 
-        try {
-          const pending = window.sessionStorage.getItem("pending_cart_product");
-          if (pending) {
-            const product = JSON.parse(pending);
-            dispatch(addToCart(product));
-            dispatch(openCart());
-            window.sessionStorage.removeItem("pending_cart_product");
-          }
-        } catch {
-          // ignore
-        }
-
         setTimeout(() => {
-          const redirectParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
-          if (redirectParam && (data?.data?.is_admin || !redirectParam.startsWith('/admin'))) {
-            router.push(redirectParam);
-          } else if (data?.data?.is_admin) {
-            router.push("/admin");
-          } else {
-            router.push("/");
-          }
+          router.push("/");
         }, 1200);
+      } else {
+        setEmailOtpError(data.message || "Invalid verification code.");
       }
     } catch (err: any) {
       setEmailOtpError(err?.message || "Invalid or expired verification code.");
-      setToast({ type: "error", message: err?.message || "Verification failed." });
     } finally {
       setIsVerifyingOtp(false);
     }
@@ -428,7 +527,7 @@ export default function Login() {
       setToast({ type: "success", message: res.message || "A new 6-digit code has been sent to your email." });
       setResendCooldown(45);
     } catch (err: any) {
-      setToast({ type: "error", message: err?.message || "Failed to resend code. Please try again." });
+      setToast({ type: "error", message: err?.message || "Failed to resend code." });
     } finally {
       setIsResendingOtp(false);
     }
@@ -438,6 +537,9 @@ export default function Login() {
     setAuthMode(targetMode);
     setEmailError("");
     setPasswordError("");
+    setFullNameError("");
+    setPhoneError("");
+    setWhatsappOtpError("");
     setResetEmailError("");
     setResetOtpError("");
     setNewPasswordError("");
@@ -453,7 +555,7 @@ export default function Login() {
         <div className={`${styles.toast} ${toast.type === "success" ? styles.toastSuccess : styles.toastError}`}>
           {toast.type === "success" ? (
             <svg className={styles.toastIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           ) : (
             <svg className={styles.toastIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -479,26 +581,103 @@ export default function Login() {
             {authMode === "login"
               ? "Welcome Back"
               : authMode === "register"
-              ? "Elevate Every Space With Light"
+              ? "Create Deluzex Account"
+              : authMode === "signup_whatsapp_otp"
+              ? "WhatsApp Verification"
               : authMode === "email_otp"
               ? "Verify Your Email"
               : "Reset Password"}
           </h1>
-          {authMode === "email_otp" && (
-            <p className={styles.subtitle}>
-              Enter the 6-digit security code sent to your inbox
-            </p>
-          )}
-          {authMode === "forgot" && (
-            <p className={styles.subtitle}>
-              {forgotStep === "email"
-                ? "Enter your registered email to receive a 6-digit verification code"
-                : "Enter the verification code and your new password"}
-            </p>
-          )}
+          <p className={styles.subtitle}>
+            {authMode === "login"
+              ? "Sign in with your email or mobile number"
+              : authMode === "register"
+              ? "Verified with WhatsApp for maximum account security"
+              : authMode === "signup_whatsapp_otp"
+              ? "Enter the 6-digit code received on your WhatsApp"
+              : authMode === "email_otp"
+              ? "Enter the 6-digit code sent to your inbox"
+              : forgotStep === "email"
+              ? "Enter your registered email to receive a reset code"
+              : "Enter the code and set your new password"}
+          </p>
         </div>
 
-        {authMode === "email_otp" ? (
+        {/* --------------------------------------------------------- */}
+        {/* VIEW 1: SIGNUP WHATSAPP OTP VERIFICATION SCREEN          */}
+        {/* --------------------------------------------------------- */}
+        {authMode === "signup_whatsapp_otp" ? (
+          <form className={styles.form} onSubmit={handleVerifySignupWhatsAppOtp} noValidate>
+            <div className={styles.otpInfoBox}>
+              <p className={styles.otpInfoText}>
+                We sent a 6-digit verification code to your WhatsApp:
+                <br />
+                <strong style={{ color: "#D4AF37", fontSize: "15px", letterSpacing: "0.05em" }}>
+                  +91 {phone.replace(/\D/g, "")}
+                </strong>
+              </p>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Enter 6-Digit WhatsApp Code</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                placeholder="••••••"
+                value={whatsappOtp}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                  setWhatsappOtp(val);
+                  if (whatsappOtpError) setWhatsappOtpError("");
+                }}
+                className={`${styles.otpInput} ${whatsappOtpError ? styles.inputError : ""}`}
+                autoFocus
+              />
+              {whatsappOtpError && <span className={styles.errorText}>{whatsappOtpError}</span>}
+            </div>
+
+            <div className={styles.resendRow}>
+              <span>Didn&apos;t receive code?</span>
+              <button
+                type="button"
+                onClick={handleResendSignupWhatsAppOtp}
+                disabled={whatsappCooldown > 0 || isResendingWhatsApp}
+                className={styles.switchBtn}
+                style={{ cursor: whatsappCooldown > 0 ? "not-allowed" : "pointer", opacity: whatsappCooldown > 0 ? 0.6 : 1 }}
+              >
+                {isResendingWhatsApp ? "Sending..." : whatsappCooldown > 0 ? `Resend in ${whatsappCooldown}s` : "Resend WhatsApp Code"}
+              </button>
+            </div>
+
+            <div className={styles.btnRow}>
+              <button
+                type="submit"
+                className={styles.btnPrimary}
+                disabled={isVerifyingWhatsApp || whatsappOtp.length !== 6}
+              >
+                {isVerifyingWhatsApp ? "Verifying..." : "Verify & Create Account"}
+              </button>
+            </div>
+
+            <div className={styles.switchMode}>
+              <p>
+                Incorrect number or details?{" "}
+                <button
+                  type="button"
+                  onClick={() => setAuthMode("register")}
+                  className={styles.switchBtn}
+                >
+                  Edit Information
+                </button>
+              </p>
+            </div>
+          </form>
+        ) : authMode === "email_otp" ? (
+          /* --------------------------------------------------------- */
+          /* VIEW 2: EMAIL OTP VERIFICATION (LEGACY SUPPORT)          */
+          /* --------------------------------------------------------- */
           <form className={styles.form} onSubmit={handleVerifyEmailOtp} noValidate>
             <div className={styles.otpInfoBox}>
               <p className={styles.otpInfoText}>
@@ -557,13 +736,16 @@ export default function Login() {
             </div>
           </form>
         ) : authMode === "forgot" ? (
+          /* --------------------------------------------------------- */
+          /* VIEW 3: FORGOT PASSWORD FLOW                              */
+          /* --------------------------------------------------------- */
           forgotStep === "email" ? (
             <form className={styles.form} onSubmit={handleResetSubmit} noValidate>
               <div className={styles.formGroup}>
                 <label>Enter Your Registered Email</label>
-                <input 
-                  type="email" 
-                  placeholder="Enter your registered email" 
+                <input
+                  type="email"
+                  placeholder="Enter your registered email"
                   value={resetEmail}
                   onChange={(e) => {
                     setResetEmail(e.target.value);
@@ -625,7 +807,7 @@ export default function Login() {
                 <div className={styles.passwordWrapper}>
                   <input
                     type={showNewPassword ? "text" : "password"}
-                    placeholder="At least 8 characters"
+                    placeholder="At least 6 characters"
                     value={newPassword}
                     onChange={(e) => {
                       setNewPassword(e.target.value);
@@ -662,12 +844,7 @@ export default function Login() {
 
               <div className={styles.resendRow}>
                 <span>Didn&apos;t receive code?</span>
-                <button
-                  type="button"
-                  onClick={handleResetSubmit}
-                  disabled={isLoading}
-                  className={styles.switchBtn}
-                >
+                <button type="button" onClick={handleResetSubmit} disabled={isLoading} className={styles.switchBtn}>
                   {isLoading ? "Sending..." : "Resend Code"}
                 </button>
               </div>
@@ -688,13 +865,32 @@ export default function Login() {
               </div>
             </form>
           )
-        ) : (
-          <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        ) : authMode === "register" ? (
+          /* --------------------------------------------------------- */
+          /* VIEW 4: SIGN UP (WHATSAPP VERIFIED REGISTRATION)          */
+          /* --------------------------------------------------------- */
+          <form className={styles.form} onSubmit={handleSignupSubmit} noValidate>
             <div className={styles.formGroup}>
-              <label>Enter Email</label>
-              <input 
-                type="email" 
-                placeholder="Enter your email" 
+              <label>Full Name</label>
+              <input
+                type="text"
+                placeholder="Enter your full name"
+                value={fullName}
+                onChange={(e) => {
+                  setFullName(e.target.value);
+                  if (fullNameError) setFullNameError("");
+                }}
+                className={fullNameError ? styles.inputError : ""}
+                autoFocus
+              />
+              {fullNameError && <span className={styles.errorText}>{fullNameError}</span>}
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Email Address</label>
+              <input
+                type="email"
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -707,11 +903,31 @@ export default function Login() {
             </div>
 
             <div className={styles.formGroup}>
-              <label>Enter Password</label>
+              <label>WhatsApp Mobile Number</label>
+              <div className={styles.phoneInputWrapper}>
+                <span className={styles.countryPrefix}>+91</span>
+                <input
+                  type="tel"
+                  maxLength={10}
+                  placeholder="10-digit mobile number"
+                  value={phone}
+                  onChange={(e) => {
+                    const clean = e.target.value.replace(/\D/g, "").slice(0, 10);
+                    setPhone(clean);
+                    if (phoneError) setPhoneError("");
+                  }}
+                  className={phoneError ? styles.inputError : ""}
+                />
+              </div>
+              {phoneError && <span className={styles.errorText}>{phoneError}</span>}
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Password</label>
               <div className={styles.passwordWrapper}>
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  placeholder={authMode === "login" ? "Enter your password" : "Create new Password"} 
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Create password (min 6 characters)"
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
@@ -740,48 +956,110 @@ export default function Login() {
                 </button>
               </div>
               {passwordError && <span className={styles.errorText}>{passwordError}</span>}
-              {authMode === "login" && (
-                <div className={styles.forgotWrapper}>
-                  <button
-                    type="button"
-                    onClick={() => handleSwitchMode("forgot")}
-                    className={styles.forgotLink}
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
-              )}
             </div>
 
             <div className={styles.btnRow}>
               <button type="submit" className={styles.btnPrimary} disabled={isLoading}>
-                {isLoading
-                  ? (authMode === "login" ? "Signing In..." : "Signing Up...")
-                  : (authMode === "login" ? "Sign In Now" : "Sign Up Now")}
+                {isLoading ? "Sending WhatsApp Code..." : "Verify via WhatsApp & Sign Up"}
               </button>
             </div>
 
-            <WhatsAppAuthSection
-              onSuccess={(token, userData) => {
-                setToast({ type: "success", message: "Logged in successfully via WhatsApp!" });
-                localStorage.setItem("authToken", token);
-                login(token, userData);
-                setTimeout(() => {
-                  router.push("/");
-                }, 1200);
-              }}
-              onError={(msg) => setToast({ type: "error", message: msg })}
-            />
+            <div className={styles.switchMode}>
+              <p>
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => handleSwitchMode("login")}
+                  className={styles.switchBtn}
+                >
+                  Sign In Here
+                </button>
+              </p>
+            </div>
+          </form>
+        ) : (
+          /* --------------------------------------------------------- */
+          /* VIEW 5: REGULAR SIGN IN (EMAIL/PHONE + PASSWORD)          */
+          /* --------------------------------------------------------- */
+          <form className={styles.form} onSubmit={handleLoginSubmit} noValidate>
+            <div className={styles.formGroup}>
+              <label>Email or Mobile Number</label>
+              <input
+                type="text"
+                placeholder="Enter email or 10-digit mobile"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) setEmailError("");
+                }}
+                onBlur={handleBlurEmail}
+                className={emailError ? styles.inputError : ""}
+                autoFocus
+              />
+              {emailError && <span className={styles.errorText}>{emailError}</span>}
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Password</label>
+              <div className={styles.passwordWrapper}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (passwordError) setPasswordError("");
+                  }}
+                  onBlur={handleBlurPassword}
+                  className={passwordError ? styles.inputError : ""}
+                />
+                <button
+                  type="button"
+                  className={styles.eyeToggle}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              {passwordError && <span className={styles.errorText}>{passwordError}</span>}
+
+              <div className={styles.forgotWrapper}>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchMode("forgot")}
+                  className={styles.forgotLink}
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.btnRow}>
+              <button type="submit" className={styles.btnPrimary} disabled={isLoading}>
+                {isLoading ? "Signing In..." : "Sign In Now"}
+              </button>
+            </div>
 
             <div className={styles.switchMode}>
               <p>
-                {authMode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
+                Don&apos;t have an account?{" "}
                 <button
                   type="button"
-                  onClick={() => handleSwitchMode(authMode === "login" ? "register" : "login")}
+                  onClick={() => handleSwitchMode("register")}
                   className={styles.switchBtn}
                 >
-                  {authMode === "login" ? "Sign Up Here" : "Sign In Here"}
+                  Sign Up with WhatsApp
                 </button>
               </p>
             </div>

@@ -37,3 +37,34 @@ def init_db():
         app_logger.error(f"Failed to connect to MongoDB: {exc}")
         return db, 0.0, False
 
+
+def ensure_database_indexes(database=None) -> bool:
+    """
+    Creates essential compound, unique, and TTL database indexes for high performance in production.
+    Idempotent operation: creates indexes only if missing.
+    """
+    target_db = database if database is not None else db
+    try:
+        # Users: Unique email
+        target_db.users.create_index("email", unique=True, sparse=True)
+        # Coupons: Unique promotional code
+        target_db.coupons.create_index("code", unique=True)
+        # Orders: Fast customer queries & order status filtering
+        target_db.orders.create_index([("email", 1), ("created_at", -1)])
+        target_db.orders.create_index("status")
+        target_db.orders.create_index("razorpay_order_id", sparse=True)
+        # Products: Fast category & availability filtering
+        target_db.products.create_index("category")
+        target_db.products.create_index("in_stock")
+        # Cart Items: Fast lookup by user or guest session
+        target_db.cart_items.create_index("user_email")
+        target_db.cart_items.create_index("session_id")
+        # TTL Index: Automatic MongoDB purge of OTPs after 600 seconds
+        target_db.email_otps.create_index("created_at", expireAfterSeconds=600)
+
+        app_logger.info("MongoDB production database indexes verified and established successfully.")
+        return True
+    except Exception as exc:
+        app_logger.warning(f"Database index creation warning: {exc}")
+        return False
+

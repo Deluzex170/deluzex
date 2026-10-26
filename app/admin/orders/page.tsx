@@ -12,6 +12,7 @@ import {
   OrderStats,
 } from "../../services/api";
 import OrderInvoiceModal from "../../components/OrderInvoiceModal";
+import ShiprocketFulfillmentModal from "../../components/ShiprocketFulfillmentModal";
 
 const STATUS_TABS = [
   { key: "All", label: "All Orders" },
@@ -19,6 +20,7 @@ const STATUS_TABS = [
   { key: "paid", label: "Processing / Paid" },
   { key: "shipped", label: "Shipped" },
   { key: "delivered", label: "Delivered" },
+  { key: "return_requested", label: "Returns / Pickups" },
   { key: "cancelled", label: "Cancelled" },
 ];
 
@@ -74,6 +76,7 @@ export default function AdminOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<UserOrder | null>(null);
   const [invoiceOrder, setInvoiceOrder] = useState<UserOrder | null>(null);
+  const [shiprocketOrder, setShiprocketOrder] = useState<UserOrder | null>(null);
 
   // Fulfillment form state
   const [fulfillStatus, setFulfillStatus] = useState<string>("processing");
@@ -113,8 +116,8 @@ export default function AdminOrdersPage() {
   const handleOpenDrawer = (order: UserOrder) => {
     setSelectedOrder(order);
     setFulfillStatus(order.status || "processing");
-    setCourierPartner(order.courier_partner || "");
-    setTrackingNumber(order.tracking_number || "");
+    setCourierPartner(order.courier_partner || order.courier_name || "");
+    setTrackingNumber(order.tracking_number || order.awb_code || "");
     setFulfillNotes(order.notes || "");
     setToastMsg(null);
   };
@@ -188,6 +191,42 @@ export default function AdminOrdersPage() {
     } else if (s === "cod") {
       badgeClass = styles.statusPending;
       label = "COD (Pending)";
+    } else if (s === "return_requested") {
+      return (
+        <span
+          className={styles.statusBadge}
+          style={{ background: "rgba(245, 158, 11, 0.15)", color: "#f59e0b", borderColor: "rgba(245, 158, 11, 0.35)" }}
+        >
+          ● Return Requested
+        </span>
+      );
+    } else if (s === "return_in_transit" || s === "return_approved") {
+      return (
+        <span
+          className={styles.statusBadge}
+          style={{ background: "rgba(16, 185, 129, 0.15)", color: "#10b981", borderColor: "rgba(16, 185, 129, 0.35)" }}
+        >
+          ● Return In Transit
+        </span>
+      );
+    } else if (s === "return_rejected") {
+      return (
+        <span
+          className={styles.statusBadge}
+          style={{ background: "rgba(239, 68, 68, 0.15)", color: "#ef4444", borderColor: "rgba(239, 68, 68, 0.35)" }}
+        >
+          ● Return Rejected
+        </span>
+      );
+    } else if (s === "returned") {
+      return (
+        <span
+          className={styles.statusBadge}
+          style={{ background: "rgba(99, 102, 241, 0.15)", color: "#818cf8", borderColor: "rgba(99, 102, 241, 0.35)" }}
+        >
+          ● Returned & Restocked
+        </span>
+      );
     }
 
     return <span className={`${styles.statusBadge} ${badgeClass}`}>● {label}</span>;
@@ -381,6 +420,38 @@ export default function AdminOrdersPage() {
                           </button>
                           <button
                             className={styles.viewBtn}
+                            onClick={() => setShiprocketOrder(ord)}
+                            title="Ship with Shiprocket, generate AWB, print labels, live track & reverse returns"
+                            style={{
+                              background:
+                                ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
+                                  ? "rgba(245, 158, 11, 0.22)"
+                                  : ord.awb_code
+                                  ? "rgba(124, 58, 237, 0.15)"
+                                  : "rgba(212, 175, 55, 0.15)",
+                              color:
+                                ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
+                                  ? "#f59e0b"
+                                  : ord.awb_code
+                                  ? "#c084fc"
+                                  : "#d4af37",
+                              borderColor:
+                                ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
+                                  ? "rgba(245, 158, 11, 0.6)"
+                                  : ord.awb_code
+                                  ? "rgba(124, 58, 237, 0.35)"
+                                  : "rgba(212, 175, 55, 0.35)",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
+                              ? "⚠️ Review Return"
+                              : ord.awb_code
+                              ? "🚚 Shiprocket"
+                              : "🚀 Ship"}
+                          </button>
+                          <button
+                            className={styles.viewBtn}
                             onClick={() => setInvoiceOrder(ord)}
                             title="View and print GST Tax Invoice"
                             style={{ background: "#fef3c7", color: "#b45309", borderColor: "#fde68a" }}
@@ -443,16 +514,70 @@ export default function AdminOrdersPage() {
                 </div>
               )}
 
+              {/* SHIPROCKET 1-CLICK INTEGRATION BANNER */}
+              <div
+                style={{
+                  background: "linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(212, 175, 55, 0.08) 100%)",
+                  border: "1px solid rgba(124, 58, 237, 0.35)",
+                  borderRadius: "10px",
+                  padding: "1rem 1.15rem",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "1rem",
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "#ffffff", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <span>🚀 Shiprocket Automated Logistics</span>
+                    {selectedOrder.awb_code && (
+                      <span style={{ fontSize: "0.7rem", background: "#7c3aed", color: "#fff", padding: "0.15rem 0.45rem", borderRadius: "4px" }}>
+                        ACTIVE
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: "0.8rem", color: "#9ca3af", marginTop: "0.25rem" }}>
+                    {selectedOrder.awb_code
+                      ? `AWB: ${selectedOrder.awb_code} • ${selectedOrder.courier_name || "Assigned Courier"}`
+                      : "Create shipment, generate AWB, print barcode labels, track live & initiate returns."}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShiprocketOrder(selectedOrder)}
+                  style={{
+                    background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)",
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "0.55rem 1.15rem",
+                    borderRadius: "8px",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {selectedOrder.awb_code ? "🚚 Track & Manage" : "📦 Ship with Shiprocket"}
+                </button>
+              </div>
+
               {/* FULFILLMENT CONTROLS */}
               <div className={styles.sectionBlock}>
-                <div className={styles.sectionBlockTitle}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="1" y="3" width="15" height="13" />
-                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
-                    <circle cx="5.5" cy="18.5" r="2.5" />
-                    <circle cx="18.5" cy="18.5" r="2.5" />
-                  </svg>
-                  Order Status & Courier Dispatch
+                <div className={styles.sectionBlockTitle} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="1" y="3" width="15" height="13" />
+                      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                      <circle cx="5.5" cy="18.5" r="2.5" />
+                      <circle cx="18.5" cy="18.5" r="2.5" />
+                    </svg>
+                    Order Status & Courier Dispatch
+                  </div>
+                  {selectedOrder.awb_code && (
+                    <span style={{ fontSize: "0.72rem", background: "rgba(124, 58, 237, 0.15)", color: "#a78bfa", border: "1px solid rgba(124, 58, 237, 0.3)", padding: "0.15rem 0.5rem", borderRadius: "4px", fontWeight: 500 }}>
+                      ⚡ Auto-Synced with Shiprocket
+                    </span>
+                  )}
                 </div>
 
                 <form className={styles.fulfillForm} onSubmit={handleFulfillSubmit}>
@@ -657,6 +782,32 @@ export default function AdminOrdersPage() {
         <OrderInvoiceModal
           order={invoiceOrder}
           onClose={() => setInvoiceOrder(null)}
+        />
+      )}
+
+      {/* Shiprocket Fulfillment & Returns Modal */}
+      {shiprocketOrder && (
+        <ShiprocketFulfillmentModal
+          order={shiprocketOrder}
+          isOpen={!!shiprocketOrder}
+          onClose={() => setShiprocketOrder(null)}
+          onOrderUpdated={() => {
+            loadData(true);
+            if (selectedOrder && (selectedOrder._id === shiprocketOrder._id || selectedOrder.id === shiprocketOrder.id)) {
+              fetchAdminOrders({}).then((ordersList) => {
+                const fresh = ordersList.find(
+                  (o) => o._id === shiprocketOrder._id || o.id === shiprocketOrder.id
+                );
+                if (fresh) {
+                  setSelectedOrder(fresh);
+                  setFulfillStatus(fresh.status || "processing");
+                  setCourierPartner(fresh.courier_partner || fresh.courier_name || "");
+                  setTrackingNumber(fresh.tracking_number || fresh.awb_code || "");
+                  setFulfillNotes(fresh.notes || "");
+                }
+              });
+            }
+          }}
         />
       )}
     </div>

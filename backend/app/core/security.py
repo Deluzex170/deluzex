@@ -3,9 +3,10 @@ from typing import Any, Union
 from jose import jwt
 import bcrypt
 
-# In a real app, load this from config/env variables
-SECRET_KEY = "super_secret_key_for_deluzex_keep_it_safe"
-ALGORITHM = "HS256"
+from app.core.config import settings
+
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
 # 7 days token expiration for smooth admin and user sessions
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
 

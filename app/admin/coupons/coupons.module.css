@@ -272,8 +272,8 @@
 
 .codeCell {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .codeBadge {
@@ -294,8 +294,7 @@
   white-space: normal;
 }
 
-/* TYPE BADGES */
-.typeBadge {
+.discountBadge {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -332,22 +331,21 @@
   margin-top: 0.2rem;
 }
 
-/* TOGGLE SWITCH */
-.toggleSwitch {
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 24px;
+.tierPillGold {
+  background: rgba(212, 175, 55, 0.18);
+  color: #d4af37;
+  border: 1px solid rgba(212, 175, 55, 0.4);
 }
 
-.toggleSwitch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
+.statusToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
   cursor: pointer;
   top: 0;
   left: 0;
@@ -379,7 +377,7 @@
   transform: translateX(20px);
 }
 
-.actionsCell {
+.actionBtns {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -391,12 +389,14 @@
   border: 1px solid #e2e8f0;
   color: #0f172a;
   border-radius: 6px;
-  padding: 0.45rem;
+  background: transparent;
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.1));
+  color: var(--admin-text-muted, #9ca3af);
   cursor: pointer;
-  display: inline-flex;
+  transition: all 0.2s;
+  display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
 }
 
 .btnIcon:hover {
@@ -413,6 +413,7 @@
 
 /* EMPTY STATE */
 .emptyState {
+  padding: 4rem 2rem;
   text-align: center;
   padding: 4rem 2rem;
   color: #64748b;
@@ -503,14 +504,16 @@
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
+  color: #d4af37;
+  font-weight: 600;
   letter-spacing: 0.06em;
   color: #0f172a;
 }
 
-.templatesChips {
+.templateChips {
   display: flex;
-  gap: 0.5rem;
   flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .templateChip {
