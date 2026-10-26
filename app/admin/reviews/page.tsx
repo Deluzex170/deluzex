@@ -95,7 +95,7 @@ export default function AdminReviewsPage() {
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
-      <span key={i} style={{ color: i < rating ? "#c49a45" : "#444" }}>
+      <span key={i} style={{ color: i < rating ? "#c49a45" : "#cbd5e1" }}>
         ★
       </span>
     ));
@@ -393,10 +393,10 @@ export default function AdminReviewsPage() {
                     <div className={styles.prodThumbFallback}>✦</div>
                   )}
                   <div>
-                    <div style={{ fontWeight: 600, color: "#fff" }}>
+                    <div style={{ fontWeight: 600, color: "#0f172a" }}>
                       {selectedReview.product?.name || "Product"}
                     </div>
-                    <div style={{ fontSize: "0.8rem", color: "#666" }}>
+                    <div style={{ fontSize: "0.8rem", color: "#64748b" }}>
                       ID: {selectedReview.product_id}
                     </div>
                   </div>
@@ -405,7 +405,7 @@ export default function AdminReviewsPage() {
 
               <div>
                 <div className={styles.modalSectionLabel}>Customer Information</div>
-                <div style={{ color: "#fff", fontWeight: 500 }}>{selectedReview.author_name}</div>
+                <div style={{ color: "#0f172a", fontWeight: 600 }}>{selectedReview.author_name}</div>
                 {selectedReview.author_email && (
                   <div style={{ color: "#c49a45", fontSize: "0.85rem" }}>
                     <a href={`mailto:${selectedReview.author_email}`} style={{ color: "inherit", textDecoration: "none" }}>
@@ -414,7 +414,7 @@ export default function AdminReviewsPage() {
                   </div>
                 )}
                 {selectedReview.created_at && (
-                  <div style={{ fontSize: "0.8rem", color: "#666", marginTop: "0.25rem" }}>
+                  <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "0.25rem" }}>
                     Submitted on: {new Date(selectedReview.created_at).toLocaleString()}
                   </div>
                 )}
@@ -447,7 +447,7 @@ export default function AdminReviewsPage() {
 
               <button
                 className={styles.refreshBtn}
-                style={{ color: "#ef4444", borderColor: "rgba(239, 68, 68, 0.3)", background: "rgba(239, 68, 68, 0.1)" }}
+                style={{ color: "#dc2626", borderColor: "#fecaca", background: "#fef2f2" }}
                 onClick={() => handleDelete(selectedReview.id)}
                 disabled={isUpdating === selectedReview.id}
               >

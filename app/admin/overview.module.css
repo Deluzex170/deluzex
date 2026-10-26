@@ -1,29 +1,35 @@
-/* Executive Luxury Admin Dashboard Styles */
+/* Executive Luxury Admin Dashboard Styles - High-End Light Theme */
 
 .container {
-  padding: 2.5rem 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  min-height: calc(100vh - 80px);
-  color: #f3f3f3;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  color: #0f172a;
   font-family: inherit;
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2.25rem;
+  align-items: center;
+  margin-bottom: 2rem;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .titleArea h1 {
-  font-size: 2.25rem;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  margin: 0 0 0.5rem 0;
-  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin: 0 0 0.35rem 0;
+  color: #0f172a;
 }
 
 .goldAccent {
@@ -31,52 +37,60 @@
 }
 
 .subtitle {
-  font-size: 0.95rem;
-  color: #8c8c8c;
+  font-size: 0.925rem;
+  color: #64748b;
   margin: 0;
 }
 
 .refreshBtn {
-  background: rgba(196, 154, 69, 0.1);
-  color: #c49a45;
-  border: 1px solid rgba(196, 154, 69, 0.3);
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
   padding: 0.65rem 1.25rem;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  display: flex;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: all 0.2s ease;
 }
 
 .refreshBtn:hover {
-  background: rgba(196, 154, 69, 0.2);
-  border-color: #c49a45;
+  background: #f8fafc;
+  border-color: #cbd5e1;
   transform: translateY(-1px);
+}
+
+.refreshBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Primary KPI Grid */
 .kpiGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.25rem;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 
 .kpiCard {
-  background: #141414;
-  border: 1px solid #242424;
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.4rem 1.5rem;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
   transition: all 0.2s ease;
 }
 
 .kpiCard:hover {
-  border-color: rgba(196, 154, 69, 0.4);
+  border-color: #cbd5e1;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
   transform: translateY(-2px);
 }
 
@@ -84,27 +98,36 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.6rem;
 }
 
 .kpiLabel {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #8c8c8c;
+  color: #64748b;
+  font-weight: 700;
 }
 
 .kpiIcon {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   color: #c49a45;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(196, 154, 69, 0.1);
 }
 
 .kpiValue {
-  font-size: 2.25rem;
-  font-weight: 600;
-  color: #ffffff;
-  line-height: 1.1;
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.15;
   margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
 }
 
 .goldVal {
@@ -113,7 +136,7 @@
 
 .kpiFootnote {
   font-size: 0.8rem;
-  color: #717171;
+  color: #64748b;
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -121,7 +144,7 @@
 
 /* Quick Nav Grid */
 .quickNavSection {
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 
 .sectionHeader {
@@ -133,8 +156,8 @@
 
 .sectionTitle {
   font-size: 1.15rem;
-  font-weight: 600;
-  color: #e5e5e5;
+  font-weight: 700;
+  color: #0f172a;
   letter-spacing: -0.01em;
 }
 
@@ -145,12 +168,13 @@
 }
 
 .navCard {
-  background: #141414;
-  border: 1px solid #222222;
-  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   padding: 1.15rem 1.25rem;
   text-decoration: none;
-  color: #e0e0e0;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
@@ -158,36 +182,53 @@
 }
 
 .navCard:hover {
-  background: #1a1a1a;
-  border-color: rgba(196, 154, 69, 0.4);
+  background: #fafaf9;
+  border-color: #c49a45;
   transform: translateY(-2px);
-  color: #c49a45;
+  box-shadow: 0 4px 12px rgba(196, 154, 69, 0.1);
 }
 
 .navCardTitle {
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 0.925rem;
   margin-bottom: 0.35rem;
-  color: #ffffff;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navCardTitle::after {
+  content: "→";
+  color: #94a3b8;
+  font-size: 0.9rem;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.navCard:hover .navCardTitle::after {
+  transform: translateX(3px);
+  color: #c49a45;
 }
 
 .navCardDesc {
   font-size: 0.8rem;
-  color: #777777;
+  color: #64748b;
+  line-height: 1.4;
 }
 
 /* Dual Column Feed */
 .dualFeedGrid {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: 1.25fr 0.85fr;
   gap: 1.5rem;
 }
 
 .feedCard {
-  background: #141414;
-  border: 1px solid #242424;
-  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
   padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
 }
 
 .feedCardHeader {
@@ -196,18 +237,27 @@
   align-items: center;
   margin-bottom: 1.25rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.feedCardHeader h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .viewAllLink {
   color: #c49a45;
   font-size: 0.825rem;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
+  transition: color 0.15s;
 }
 
 .viewAllLink:hover {
   text-decoration: underline;
+  color: #a1782e;
 }
 
 /* Order Item Row */
@@ -216,7 +266,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.9rem 0;
-  border-bottom: 1px solid #1c1c1c;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .orderRow:last-child {
@@ -224,14 +274,16 @@
 }
 
 .orderNum {
-  font-weight: 600;
-  color: #ffffff;
+  font-weight: 700;
+  color: #0f172a;
   font-size: 0.9rem;
+  font-family: ui-monospace, monospace;
 }
 
 .orderCust {
   font-size: 0.8rem;
-  color: #777;
+  color: #64748b;
+  margin-top: 2px;
 }
 
 .orderRight {
@@ -239,8 +291,8 @@
 }
 
 .orderAmount {
-  font-weight: 600;
-  color: #c49a45;
+  font-weight: 700;
+  color: #0f172a;
   font-size: 0.95rem;
 }
 
@@ -250,19 +302,21 @@
   font-size: 0.7rem;
   padding: 2px 8px;
   border-radius: 10px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .statusPaid {
-  background: rgba(34, 197, 94, 0.12);
-  color: #4ade80;
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
 }
 
 .statusPending {
-  background: rgba(234, 179, 8, 0.12);
-  color: #facc15;
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
 }
 
 /* Stock Alert Row */
@@ -271,7 +325,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.85rem 0;
-  border-bottom: 1px solid #1c1c1c;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .stockRow:last-child {
@@ -279,8 +333,8 @@
 }
 
 .stockName {
-  font-weight: 500;
-  color: #eee;
+  font-weight: 600;
+  color: #1e293b;
   font-size: 0.875rem;
 }
 
@@ -288,58 +342,62 @@
   font-size: 0.75rem;
   padding: 3px 8px;
   border-radius: 6px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .stockCritical {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
 .stockWarning {
-  background: rgba(234, 179, 8, 0.12);
-  color: #facc15;
-  border: 1px solid rgba(234, 179, 8, 0.3);
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
 }
 
 /* Operational Attention Pill */
 .opAlertCard {
-  background: #181818;
-  border: 1px solid #282828;
-  border-radius: 8px;
-  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.9rem 1.15rem;
   margin-bottom: 0.75rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   text-decoration: none;
   color: inherit;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
 }
 
 .opAlertCard:hover {
+  background: #f1f5f9;
   border-color: #c49a45;
+  transform: translateY(-1px);
 }
 
 .opAlertTitle {
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.875rem;
-  color: #fff;
+  color: #0f172a;
 }
 
 .opAlertSubtitle {
   font-size: 0.775rem;
-  color: #777;
+  color: #64748b;
+  margin-top: 2px;
 }
 
 .opBadge {
   background: rgba(196, 154, 69, 0.15);
-  color: #c49a45;
-  font-weight: 600;
+  color: #b45309;
+  font-weight: 700;
   font-size: 0.8rem;
-  padding: 4px 10px;
+  padding: 3px 10px;
   border-radius: 12px;
+  border: 1px solid rgba(196, 154, 69, 0.25);
 }
 
 @media (max-width: 960px) {

@@ -234,19 +234,19 @@ export default function AdminOrdersPage() {
         </div>
         <div className={styles.kpiCard}>
           <span className={styles.kpiLabel}>Pending / COD</span>
-          <span className={styles.kpiValue} style={{ color: "#eab308" }}>{stats.pending}</span>
+          <span className={styles.kpiValue} style={{ color: "#d97706" }}>{stats.pending}</span>
         </div>
         <div className={styles.kpiCard}>
           <span className={styles.kpiLabel}>In Production</span>
-          <span className={styles.kpiValue} style={{ color: "#60a5fa" }}>{stats.processing}</span>
+          <span className={styles.kpiValue} style={{ color: "#2563eb" }}>{stats.processing}</span>
         </div>
         <div className={styles.kpiCard}>
           <span className={styles.kpiLabel}>Dispatched</span>
-          <span className={styles.kpiValue} style={{ color: "#c084fc" }}>{stats.shipped}</span>
+          <span className={styles.kpiValue} style={{ color: "#9333ea" }}>{stats.shipped}</span>
         </div>
         <div className={styles.kpiCard}>
           <span className={styles.kpiLabel}>Delivered</span>
-          <span className={styles.kpiValue} style={{ color: "#4ade80" }}>{stats.delivered}</span>
+          <span className={styles.kpiValue} style={{ color: "#16a34a" }}>{stats.delivered}</span>
         </div>
         <div className={styles.kpiCard}>
           <span className={styles.kpiLabel}>Gross Revenue</span>
@@ -329,13 +329,13 @@ export default function AdminOrdersPage() {
                       <td>
                         <span className={styles.orderIdText}>{displayId}</span>
                         {ord.tracking_number && (
-                          <div style={{ fontSize: "0.75rem", color: "#c084fc", marginTop: "2px" }}>
+                          <div style={{ fontSize: "0.75rem", color: "#7e22ce", marginTop: "2px", fontWeight: 600 }}>
                             🚚 {ord.tracking_number}
                           </div>
                         )}
                       </td>
                       <td>
-                        <div style={{ color: "#fff", fontSize: "0.85rem" }}>{formatDate(ord.created_at || ord.createdAt)}</div>
+                        <div style={{ color: "#475569", fontSize: "0.85rem", fontWeight: 500 }}>{formatDate(ord.created_at || ord.createdAt)}</div>
                       </td>
                       <td>
                         <div className={styles.customerName}>{customerName}</div>
@@ -357,7 +357,7 @@ export default function AdminOrdersPage() {
                           {ord.items && ord.items.length > 2 && (
                             <span className={styles.itemMoreBadge}>+{ord.items.length - 2}</span>
                           )}
-                          <span style={{ fontSize: "0.82rem", color: "#8e8e93", marginLeft: "4px" }}>
+                          <span style={{ fontSize: "0.82rem", color: "#64748b", marginLeft: "4px" }}>
                             ({ord.items?.reduce((acc, it) => acc + (it.quantity || 1), 0) || 0} pcs)
                           </span>
                         </div>
@@ -383,7 +383,7 @@ export default function AdminOrdersPage() {
                             className={styles.viewBtn}
                             onClick={() => setInvoiceOrder(ord)}
                             title="View and print GST Tax Invoice"
-                            style={{ background: "rgba(196, 154, 69, 0.12)", color: "#c49a45", borderColor: "rgba(196, 154, 69, 0.3)" }}
+                            style={{ background: "#fef3c7", color: "#b45309", borderColor: "#fde68a" }}
                           >
                             📄 Invoice
                           </button>

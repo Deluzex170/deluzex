@@ -195,9 +195,49 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />
         )}
 
-        <main className={styles.mainContent}>
-          {children}
-        </main>
+        <div className={styles.mainWrapper}>
+          <header className={styles.topBar}>
+            <div className={styles.topBarLeft}>
+              <button
+                type="button"
+                className={styles.mobileMenuBtn}
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                aria-label="Toggle navigation menu"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+              </button>
+              <div className={styles.topBarBrand}>
+                <span className={styles.topBarTitle}>De Luzex</span>
+                <span className={styles.topBarBadge}>Executive Admin</span>
+              </div>
+            </div>
+
+            <div className={styles.topBarRight}>
+              <Link
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.storefrontLink}
+                title="Open live customer storefront in a new tab"
+              >
+                <span>Live Storefront</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </Link>
+            </div>
+          </header>
+
+          <main className={styles.mainContent}>
+            {children}
+          </main>
+        </div>
       </div>
     </div>
   );
