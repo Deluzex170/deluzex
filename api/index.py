@@ -11,7 +11,7 @@ if _backend_dir not in sys.path:
 if _root_dir not in sys.path:
     sys.path.append(_root_dir)
 
-# Compatibility entrypoint. Import failures must reach deployment logs instead
+# Compatibility entrypoint. Import failures must reach deployment logs instead.
 # of serving an empty application that turns every real API request into a 404.
 from main import app  # type: ignore[import-not-found] # noqa: E402, F401
 
