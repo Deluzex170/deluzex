@@ -81,8 +81,14 @@ class OrderListResponse(BaseModel):
     orders: List[OrderResponse]
 
 
+class OrderCancelRequest(BaseModel):
+    email: Optional[str] = None
+    reason: Optional[str] = None
+
+
 class OrderCancelResponse(BaseModel):
     success: bool
     order_id: str
     message: str
     status: str
+

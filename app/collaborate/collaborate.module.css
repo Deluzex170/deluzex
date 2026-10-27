@@ -32,15 +32,15 @@
 
 .heroLeft {
   flex: 1;
-  max-width: 560px;
+  max-width: 590px;
   display: flex;
   flex-direction: column;
 }
 
 .heroTagline {
   font-family: var(--font-italianno), cursive;
-  font-size: 42px;
-  color: #D8A56E;
+  font-size: 53px;
+  color: #a57848;
   margin: 0 0 10px;
   line-height: 1;
   letter-spacing: 0.02em;
@@ -48,19 +48,19 @@
 
 .heroTitle {
   font-family: var(--font-libre), 'Adobe Arabic', serif;
-  font-size: 52px;
+  font-size: 67px;
   color: #2E3340;
   font-weight: 400;
-  line-height: 1.15;
+  line-height: 1;
   letter-spacing: -0.02em;
-  margin: 0 0 22px;
+  margin: 0 0 20px;
 }
 
 .heroDesc {
   font-family: var(--font-adobe-arabic, 'Adobe Arabic', sans-serif);
-  font-size: 16px;
+  font-size: 26px;
   color: #636875;
-  line-height: 1.65;
+  line-height: 1;
   margin: 0 0 32px;
   letter-spacing: 0.01em;
 }
@@ -78,7 +78,7 @@
   border: none;
   border-radius: 8px;
   padding: 13px 34px;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 500;
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -156,7 +156,7 @@
 .howSection {
   width: 100%;
   background: #F8F3EC;
-  padding: 80px 80px 40px;
+  padding: 85px 80px 65px;
 }
 
 .howInner {
@@ -165,6 +165,7 @@
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 64px;
 }
 
@@ -173,10 +174,11 @@
   max-width: 480px;
   display: flex;
   flex-direction: column;
+  gap: 52px;
 }
 
 .sectionTag {
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 500;
   text-transform: none;
   letter-spacing: 0.01em;
@@ -186,50 +188,51 @@
 
 .sectionTitle {
   font-family: var(--font-libre), 'Adobe Arabic', serif;
-  font-size: 44px;
+  font-size: 47px;
   color: #2E3340;
   font-weight: 400;
   line-height: 1.18;
   letter-spacing: -0.01em;
-  margin: 0 0 36px;
+  margin: 0;
 }
 
 .designerProfileCard {
   background: #FFFFFF;
-  border: none;
-  border-radius: 12px;
-  padding: 22px 24px 20px;
-  max-width: 350px;
+  border-radius: 16px;
+  padding: 28px 30px 26px;
+  max-width: 100%;
   width: 100%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(216, 165, 110, 0.28);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.02);
+  box-sizing: border-box;
 }
 
 .designerProfileTitle {
   font-family: 'Adobe Arabic', serif;
-  font-size: 22px;
+  font-size: 32px;
   color: #2E3340;
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 .designerProfileDesc {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 16.5px;
+  font-size: 22px;
   color: #636875;
-  line-height: 1.5;
-  margin: 0 0 16px;
+  line-height: 1.35;
+  margin: 0 0 18px;
 }
 
 .designerProfileLink {
   font-family: 'Adobe Arabic', sans-serif;
   color: #D8A56E;
-  font-size: 17px;
-  font-weight: 500;
+  font-size: 22px;
+  font-weight: 600;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   transition: transform 0.2s ease, color 0.2s ease;
 }
 
@@ -248,7 +251,7 @@
 /* Timeline on Right */
 .timelineWrapper {
   flex: 1;
-  max-width: 600px;
+  max-width: 620px;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -257,9 +260,9 @@
 
 .timelineItem {
   display: flex;
-  gap: 24px;
+  gap: 26px;
   position: relative;
-  padding-bottom: 40px;
+  padding-bottom: 44px;
 }
 
 .timelineItem:last-child {
@@ -268,11 +271,11 @@
 
 .timelineConnector {
   position: absolute;
-  top: 48px;
-  left: 21px;
-  width: 1.5px;
+  top: 54px;
+  left: 25px;
+  width: 2px;
   bottom: 8px;
-  background: #997947;
+  background: #c59b60;
 }
 
 .timelineItem:last-child .timelineConnector {
@@ -280,12 +283,12 @@
 }
 
 .timelineIconBox {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: #F6EADB;
-  border: none;
-  box-shadow: none;
+  border: 1.5px solid rgba(216, 165, 110, 0.35);
+  box-shadow: 0 4px 14px rgba(216, 165, 110, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -296,25 +299,25 @@
 
 .timelineContent {
   flex: 1;
-  padding-top: 4px;
+  padding-top: 2px;
 }
 
 .timelineTitle {
   font-family: 'Adobe Arabic', serif;
-  font-size: 21px;
+  font-size: 29px;
   color: #2E3340;
   margin: 0 0 6px;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 .timelineDesc {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 16px;
+  font-size: 22px;
   color: #636875;
-  line-height: 1.5;
+  line-height: 1.35;
   margin: 0;
-  max-width: 460px;
+  max-width: 100%;
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -348,9 +351,9 @@
 
 .showcaseTag {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 14.5px;
+  font-size: 19px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #7A808C;
   display: block;
@@ -358,8 +361,8 @@
 }
 
 .showcaseTitle {
-  font-family: 'Adobe Arabic', serif;
-  font-size: 42px;
+  font-family: var(--font-libre), 'Adobe Arabic', serif;
+  font-size: 48px;
   color: #2E3340;
   margin: 0;
   font-weight: 400;
@@ -368,10 +371,10 @@
 
 .showcaseHeaderDesc {
   font-family: 'Adobe Arabic', sans-serif;
-  max-width: 440px;
-  font-size: 17px;
+  max-width: 480px;
+  font-size: 23px;
   color: #636875;
-  line-height: 1.55;
+  line-height: 1.4;
   margin: 0;
 }
 
@@ -400,10 +403,10 @@
 
 .cardImageBox {
   width: 100%;
-  aspect-ratio: 262 / 245;
+  height: 445px;
   position: relative;
   overflow: hidden;
-  border-radius: 0;
+  border-radius: 8px;
   background: #EAE3D9;
 }
 
@@ -417,12 +420,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .cardTitle {
   font-family: 'Adobe Arabic', serif;
-  font-size: 23px;
+  font-size: 30px;
   color: #202430;
   margin: 0;
   font-weight: 700;
@@ -431,8 +434,8 @@
 }
 
 .cardArrowCircle {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   border: 1px solid #DFD8CF;
   display: flex;
@@ -452,10 +455,10 @@
 
 .cardDesc {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 16px;
+  font-size: 22px;
   color: #636875;
-  line-height: 1.5;
-  margin: 0 0 12px;
+  line-height: 1.35;
+  margin: 0 0 14px;
 }
 
 .designerBadgeWrapper {
@@ -464,14 +467,15 @@
 
 .designerBadge {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 14px;
-  color: #7A808C;
+  font-size: 19px;
+  color: #5D6370;
   background: #FFFFFF;
-  padding: 4px 10px;
-  border-radius: 4px;
+  padding: 6px 14px;
+  border-radius: 6px;
   display: inline-block;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
   font-weight: 500;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .showcaseBottom {
@@ -485,8 +489,8 @@
   color: #FFFFFF;
   border: none;
   border-radius: 8px;
-  padding: 9px 56px;
-  font-size: 18px;
+  padding: 13px 60px;
+  font-size: 24px;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-decoration: none;
@@ -507,59 +511,70 @@
 .faqSection {
   width: 100%;
   background: #261601;
-  padding: 90px 80px;
+  padding: 72px 80px;
   color: #FFFFFF;
 }
 
 .faqInner {
-  width: 640px;
+  width: 1280px;
   max-width: 100%;
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 72px;
+  align-items: start;
 }
 
 .faqHeader {
-  text-align: center;
-  margin-bottom: 44px;
+  text-align: left;
+  position: sticky;
+  top: 24px;
 }
 
 .faqTitle {
   font-family: 'Adobe Arabic', serif;
-  font-size: 46px;
+  font-size: 60px;
   color: #FFFFFF;
   font-weight: 400;
   letter-spacing: 0.01em;
-  margin: 0 0 12px;
-  line-height: 1.15;
+  margin: 0 0 14px;
+  line-height: 1.10;
 }
 
 .faqSubtitle {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 17.5px;
+  font-size: 26px;
   color: #C0B7AC;
-  margin: 0;
+  margin: 0 0 32px;
   letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.faqDivider {
+  width: 40px;
+  height: 2px;
+  background: #D79322;
+  margin: 0 0 28px;
 }
 
 .accordionList {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .accordionItem {
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.03);
   transition: all 0.25s ease;
 }
 
 .accordionItem:hover:not(.accordionItemActive) {
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .accordionItemActive {
@@ -571,7 +586,7 @@
 
 .accordionHeader {
   width: 100%;
-  padding: 16px 22px;
+  padding: 15px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -581,25 +596,27 @@
   cursor: pointer;
   color: inherit;
   font-family: 'Adobe Arabic', serif;
-  font-size: 21px;
+  font-size: 25px;
   font-weight: 600;
   text-align: left;
-  line-height: 1.35;
+  line-height: 1;
 }
 
 .accordionIcon {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 300;
   flex-shrink: 0;
   transition: transform 0.25s ease;
   line-height: 1;
+  width: 22px;
+  text-align: center;
 }
 
 .accordionBody {
-  padding: 0 22px 18px;
-  font-size: 16.5px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.95);
+  padding: 0 20px 15px;
+  font-size: 23px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.92);
   font-family: 'Adobe Arabic', sans-serif;
 }
 
@@ -613,7 +630,7 @@
 .formSection {
   width: 100%;
   background: #F8F3EC;
-  padding: 90px 80px;
+  padding: 70px 80px;
   scroll-margin-top: 80px;
 }
 
@@ -622,21 +639,67 @@
   max-width: 100%;
   margin: 0 auto;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 64px;
+  flex-direction: column;
+  gap: 48px;
 }
 
-.formLeftCol {
-  flex: 1;
-  max-width: 480px;
+/* ── Top Header Row: title left, image right ── */
+.formHeaderRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: center;
+}
+
+.formHeaderLeft {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+.formHeaderImage {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+/* ── Form Card (full width, white) ── */
+.formCard {
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 40px 48px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
+/* ── 2-Column fields grid ── */
+.formFieldsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 32px;
+}
+
+.colSpan2 {
+  grid-column: 1 / -1;
+}
+
+/* ── Centered footer with terms + submit ── */
+.formFooter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #EEE9E0;
 }
 
 .formTag {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 14.5px;
+  font-size: 25px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -647,7 +710,7 @@
 
 .formTitle {
   font-family: 'Adobe Arabic', serif;
-  font-size: 42px;
+  font-size: 55px;
   color: #2E3340;
   font-weight: 400;
   line-height: 1.15;
@@ -656,25 +719,22 @@
 
 .formDesc {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 17px;
+  font-size: 35px;
   color: #636875;
-  line-height: 1.5;
+  line-height: 1;
   margin: 0 0 32px;
 }
 
 .formLeftImage {
-  width: 100%;
-  max-width: 400px;
-  aspect-ratio: 158 / 129;
+  flex: 1;
+  min-height: 200px;
   position: relative;
   overflow: hidden;
-  border-radius: 0;
+  border-radius: 8px;
   box-shadow: none;
 }
 
 .formCard {
-  flex: 1;
-  max-width: 520px;
   width: 100%;
   background: #FFFFFF;
   border-radius: 16px;
@@ -686,9 +746,9 @@
 
 .formSectionHeader {
   font-family: 'Adobe Arabic', serif;
-  font-size: 26px;
+  font-size: 30px;
   color: #2E3340;
-  margin: 0 0 16px;
+  margin: 0 0 10px;
   font-weight: 700;
 }
 
@@ -696,32 +756,32 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  margin-bottom: 24px;
+  margin-bottom: 10px;
 }
 
 .inputField {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 1px;
 }
 
 .inputField label {
   font-family: 'Adobe Arabic', serif;
-  font-size: 20px;
+  font-size: 30px;
   font-weight: 600;
   color: #2E3340;
-  margin: 0 0 4px;
+  margin: 0px;
   letter-spacing: 0.01em;
 }
 
 .inputField input {
   width: 100%;
   height: 44px;
-  padding: 0 14px;
+  padding: 0 10px;
   border-radius: 6px;
   border: 1px solid #E2DCD3;
   background: #FFFFFF;
-  font-size: 17.5px;
+  font-size: 20px;
   color: #2E3340;
   outline: none;
   transition: all 0.2s ease;
@@ -730,7 +790,7 @@
 
 .inputField input::placeholder {
   color: #A09E9B;
-  font-size: 16.5px;
+  font-size: 20px;
   font-family: 'Adobe Arabic', sans-serif;
 }
 
@@ -740,7 +800,7 @@
   border-radius: 6px;
   border: 1px solid #E8E2D8;
   background: #FCFBF9;
-  font-size: 17px;
+  font-size: 20px;
   color: #2E3340;
   outline: none;
   transition: all 0.2s ease;
@@ -763,7 +823,7 @@
 
 .inputHelper {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 14.5px;
+  font-size: 18px;
   color: #7A808C;
   margin-top: 3px;
 }
@@ -856,6 +916,7 @@
     opacity: 0;
     transform: translateY(-4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1031,20 +1092,21 @@
 }
 
 .btnSubmitForm {
-  width: 100%;
+  width: auto;
+  min-width: 280px;
   font-family: 'Adobe Arabic', serif;
   background: #D8A56E;
   color: #FFFFFF;
   border: none;
   border-radius: 8px;
-  padding: 8px 24px;
+  padding: 14px 48px;
   font-size: 19px;
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
   transition: all 0.25s ease;
   box-shadow: 0 4px 14px rgba(216, 165, 110, 0.4);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
 }
@@ -1082,52 +1144,84 @@
   .heroSection {
     padding: 30px 40px 50px;
   }
-  .faqSection,
-  .formSection {
-    padding: 70px 40px;
+
+  .faqSection {
+    padding: 60px 40px;
   }
+
+  .formSection {
+    padding: 60px 40px;
+  }
+
+  .faqInner {
+    grid-template-columns: 280px 1fr;
+    gap: 52px;
+  }
+
   .howSection {
     padding: 60px 40px 30px;
   }
+
   .showcaseSection {
     padding: 30px 40px 60px;
   }
 }
 
 @media (max-width: 960px) {
+
   .heroInner,
   .howInner {
     flex-direction: column;
     gap: 40px;
   }
+
   .formInner {
-    flex-direction: column;
-    align-items: stretch;
+    grid-template-columns: 1fr;
     width: 100%;
     gap: 36px;
   }
+
   .heroLeft,
   .howLeftCol,
   .timelineWrapper {
     max-width: 100%;
   }
-  .formLeftCol {
-    max-width: 100%;
-    width: 100%;
+
+  .formInner {
+    gap: 32px;
   }
+
+  .formHeaderRow {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .formHeaderImage {
+    height: 260px;
+  }
+
   .formCard {
-    max-width: 100%;
-    width: 100%;
-    box-sizing: border-box;
+    padding: 28px 24px;
   }
+
+  .formFieldsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .colSpan2 {
+    grid-column: 1;
+  }
+
   .heroTriptych {
     width: 100%;
     justify-content: center;
   }
+
   .showcaseHeader {
     grid-template-columns: 1fr;
     gap: 16px;
   }
+
   .productCardsGrid {
     display: flex;
     overflow-x: auto;
@@ -1138,9 +1232,11 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
+
   .productCardsGrid::-webkit-scrollbar {
     display: none;
   }
+
   .productCollabCard {
     flex: 0 0 80%;
     max-width: 320px;
@@ -1153,43 +1249,79 @@
   .heroSection {
     padding: 24px 16px 36px;
   }
+
   .faqSection {
-    padding: 50px 16px;
+    padding: 44px 16px;
   }
+
+  .faqInner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .faqHeader {
+    position: static;
+  }
+
+  .faqTitle {
+    font-size: 28px;
+  }
+
   .formSection {
     padding: 40px 16px;
     width: 100%;
     box-sizing: border-box;
     overflow-x: hidden;
   }
+
   .formInner {
     width: 100%;
     align-items: stretch;
   }
+
   .howSection {
     padding: 45px 16px 20px;
   }
+
   .showcaseSection {
     padding: 20px 16px 45px;
     overflow-x: hidden;
   }
+
   .heroTitle {
     font-size: 34px;
   }
+
   .heroTagline {
     font-size: 32px;
   }
+
   .sectionTitle {
     font-size: 30px;
   }
+
+  .showcaseTitle {
+    font-size: 30px;
+  }
+
+  .showcaseHeaderDesc {
+    font-size: 19px;
+  }
+
+  .cardImageBox {
+    height: 295px;
+  }
+
   .faqTitle {
     font-size: 32px;
   }
+
   .heroBtns {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
+
   .btnPrimary {
     width: 50%;
     min-width: 175px;
@@ -1200,6 +1332,7 @@
     text-align: center;
     box-sizing: border-box;
   }
+
   .btnOutline {
     width: 50%;
     min-width: 175px;
@@ -1210,24 +1343,29 @@
     text-align: center;
     box-sizing: border-box;
   }
+
   .heroTriptych {
     flex-direction: column;
     align-items: center;
   }
+
   .triptychLeftCol {
     flex-direction: row;
     width: 100%;
     justify-content: center;
   }
+
   .triptychSmallBox {
     width: 140px;
     height: 140px;
   }
+
   .triptychTallBox {
     width: 100%;
     max-width: 300px;
     height: 340px;
   }
+
   .productCardsGrid {
     display: flex;
     overflow-x: auto;
@@ -1238,26 +1376,32 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
+
   .productCardsGrid::-webkit-scrollbar {
     display: none;
   }
+
   .productCollabCard {
     flex: 0 0 82%;
     max-width: 300px;
     min-width: 240px;
     scroll-snap-align: start;
   }
+
   .row2Col {
     grid-template-columns: 1fr;
   }
+
   .formLeftCol {
     width: 100%;
     max-width: 100%;
   }
+
   .formLeftImage {
     width: 100%;
     max-width: 100%;
   }
+
   .formCard {
     width: 100%;
     max-width: 100%;

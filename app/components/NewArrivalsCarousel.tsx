@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import styles from "../page.module.css";
 import AddToCartButton from "./AddToCartButton";
+import WishlistButton from "./WishlistButton";
 import { Product, fetchProducts } from "../services/api";
 
 interface NewArrivalsCarouselProps {
@@ -130,6 +131,7 @@ export default function NewArrivalsCarousel({ products }: NewArrivalsCarouselPro
                     draggable={false}
                   />
                 </Link>
+                <WishlistButton product={product} variant="floating" />
                 <AddToCartButton product={product} variant="plus" />
               </div>
 

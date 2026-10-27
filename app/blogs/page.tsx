@@ -107,14 +107,14 @@ export default function Blogs() {
             <br />
             Creating Extraordinary Interiors.
           </p>
-          {blogs.length > 0 && (
-            <Link
-              href={`/blogs/${blogs[0].slug || blogs[0].id || blogs[0]._id}`}
-              className={styles.btnOutlineHero}
-            >
-              Read Article
-            </Link>
-          )}
+          {/* {blogs.length > 0 && (
+            // <Link
+            //   href={`/blogs/${blogs[0].slug || blogs[0].id || blogs[0]._id}`}
+            //   className={styles.btnOutlineHero}
+            // >
+            //   Read Article
+            // </Link>
+          )} */}
         </div>
       </section>
 
@@ -157,10 +157,10 @@ export default function Blogs() {
               onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
-          <Link href="/admin/blogs" className={styles.btnAddBlog}>
+          {/* <Link href="/admin/blogs" className={styles.btnAddBlog}>
             <span>+</span>
             <span>Add Your Blog</span>
-          </Link>
+          </Link> */}
         </div>
       </section>
 

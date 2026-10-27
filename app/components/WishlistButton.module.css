@@ -1,0 +1,118 @@
+.wishlistBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Floating overlay on product cards (top right) */
+.floating {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 15;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: #555555;
+}
+
+.floating:hover {
+  background: #FFFFFF;
+  color: #DC2626;
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+}
+
+.floatingActive {
+  background: #FFFFFF;
+  color: #E11D48;
+}
+
+.floatingActive:hover {
+  color: #BE123C;
+}
+
+/* Inline icon variant */
+.icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #666666;
+}
+
+.icon:hover {
+  color: #DC2626;
+  transform: scale(1.1);
+}
+
+.iconActive {
+  color: #E11D48;
+}
+
+/* Pill button variant (used on product detail page) */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.75rem 1.4rem;
+  border-radius: 8px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  background: #FFFFFF;
+  border: 1.5px solid #D9CFC4;
+  color: #333333;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.pill:hover {
+  border-color: #C89B60;
+  color: #8C6228;
+  background: #FAF8F5;
+}
+
+.pillActive {
+  border-color: #FECDD3;
+  background: #FFF1F2;
+  color: #E11D48;
+}
+
+.pillActive:hover {
+  background: #FFE4E6;
+  border-color: #FDA4AF;
+}
+
+/* Heart SVG Icon animations */
+.heartSvg {
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), fill 0.2s ease, stroke 0.2s ease;
+}
+
+.animateBounce {
+  animation: heartPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes heartPop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

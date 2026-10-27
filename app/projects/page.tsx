@@ -471,9 +471,8 @@ export default function Projects() {
                   aria-labelledby="projectTypeLabel"
                   aria-haspopup="listbox"
                   aria-expanded={isProjectTypeOpen}
-                  className={`${styles.customSelectBtn} ${
-                    isProjectTypeOpen ? styles.customSelectBtnOpen : ""
-                  }`}
+                  className={`${styles.customSelectBtn} ${isProjectTypeOpen ? styles.customSelectBtnOpen : ""
+                    }`}
                   onClick={() => setIsProjectTypeOpen((prev) => !prev)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
@@ -496,9 +495,8 @@ export default function Projects() {
                     )?.label || "Select your project type"}
                   </span>
                   <svg
-                    className={`${styles.selectChevron} ${
-                      isProjectTypeOpen ? styles.selectChevronOpen : ""
-                    }`}
+                    className={`${styles.selectChevron} ${isProjectTypeOpen ? styles.selectChevronOpen : ""
+                      }`}
                     width="14"
                     height="14"
                     viewBox="0 0 24 24"
@@ -525,9 +523,8 @@ export default function Projects() {
                           key={pt.value}
                           role="option"
                           aria-selected={isSelected}
-                          className={`${styles.selectOption} ${
-                            isSelected ? styles.selectOptionActive : ""
-                          }`}
+                          className={`${styles.selectOption} ${isSelected ? styles.selectOptionActive : ""
+                            }`}
                           onClick={() => handleSelectProjectType(pt.value)}
                         >
                           <span>{pt.label}</span>

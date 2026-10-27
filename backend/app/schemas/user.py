@@ -26,7 +26,9 @@ class UserData(BaseModel):
     last_name: Optional[str] = ""
     email: Optional[str] = None
     phone: Optional[str] = None
+    avatar_url: Optional[str] = None
     city: Optional[str] = None
+    state: Optional[str] = None
     country: Optional[str] = None
     is_verified: bool = False
     is_admin: bool = False
@@ -62,9 +64,12 @@ class UserProfileUpdate(BaseModel):
     first_name: Optional[str] = Field(None, max_length=80)
     last_name: Optional[str] = Field(None, max_length=80)
     email: Optional[EmailStr] = None
-    phone: Optional[str] = Field(None, max_length=25)
-    city: Optional[str] = Field(None, max_length=80)
-    country: Optional[str] = Field(None, max_length=80)
+    phone: Optional[str] = None
+    avatar_url: Optional[str] = None
+    remove_avatar: Optional[bool] = False
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
 
 class UserPasswordUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")

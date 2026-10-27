@@ -319,6 +319,7 @@ def verify_email_otp(req: schemas.VerifyEmailOtpRequest, request: Request):
             email=user.email,
             phone=user.phone,
             city=user.city,
+            state=user.state,
             country=user.country,
             is_verified=True,
             is_admin=bool(user.is_admin),
@@ -370,7 +371,9 @@ def get_me(current_user: models.User = Depends(deps.get_current_active_user)):
             last_name=current_user.last_name,
             email=current_user.email,
             phone=current_user.phone,
+            avatar_url=current_user.avatar_url,
             city=current_user.city,
+            state=current_user.state,
             country=current_user.country,
             is_verified=current_user.is_verified,
             is_admin=bool(current_user.is_admin),
@@ -393,8 +396,15 @@ def update_me(
         update_fields["phone"] = profile_in.phone.strip()
     if profile_in.city is not None:
         update_fields["city"] = profile_in.city.strip()
+    if profile_in.state is not None:
+        update_fields["state"] = profile_in.state.strip()
     if profile_in.country is not None:
         update_fields["country"] = profile_in.country.strip()
+    if profile_in.remove_avatar:
+        update_fields["avatar_url"] = None
+    elif profile_in.avatar_url is not None:
+        update_fields["avatar_url"] = profile_in.avatar_url.strip()
+
     if profile_in.email is not None and str(profile_in.email).strip().lower() != str(current_user.email).lower():
         clean_email = str(profile_in.email).strip()
         user_oid = ObjectId(current_user.id) if isinstance(current_user.id, str) and ObjectId.is_valid(current_user.id) else current_user.id
@@ -422,12 +432,62 @@ def update_me(
             last_name=updated_user.last_name,
             email=updated_user.email,
             phone=updated_user.phone,
+            avatar_url=updated_user.avatar_url,
             city=updated_user.city,
+            state=updated_user.state,
             country=updated_user.country,
             is_verified=updated_user.is_verified,
             is_admin=bool(updated_user.is_admin),
             created_at=updated_user.created_at
         )
+    )
+
+@router.delete("/me/avatar", response_model=schemas.StandardResponse)
+def remove_avatar(
+    current_user: models.User = Depends(deps.get_current_active_user),
+):
+    from bson import ObjectId
+    user_oid = ObjectId(current_user.id) if isinstance(current_user.id, str) and ObjectId.is_valid(current_user.id) else current_user.id
+    db.users.update_one({"_id": user_oid}, {"$set": {"avatar_url": None}})
+    return schemas.StandardResponse(
+        success=True,
+        message="Profile photo removed successfully.",
+    )
+
+@router.delete("/me", response_model=schemas.StandardResponse)
+def delete_account(
+    request: Request,
+    current_user: models.User = Depends(deps.get_current_active_user),
+):
+    from bson import ObjectId
+    user_oid = ObjectId(current_user.id) if isinstance(current_user.id, str) and ObjectId.is_valid(current_user.id) else current_user.id
+
+    clean_email = (current_user.email or "").strip().lower()
+    if clean_email:
+        db.addresses.delete_many({"email": {"$regex": f"^{re.escape(clean_email)}$", "$options": "i"}})
+        db.cart_items.delete_many({"user_id": str(user_oid)})
+        db.wishlists.delete_many({"user_id": str(user_oid)})
+
+    db.users.delete_one({"_id": user_oid})
+
+    record_audit_event(
+        action="USER_DELETE",
+        action_category="auth",
+        actor_id=str(user_oid),
+        actor_email=current_user.email,
+        actor_name=f"{current_user.first_name} {current_user.last_name}".strip(),
+        actor_role="Customer",
+        target_type="auth",
+        target_id=str(user_oid),
+        target_name="User Self Deletion",
+        description=f"User deleted their own account: {current_user.email}",
+        details="Customer requested permanent deletion of their account profile",
+        request=request
+    )
+
+    return schemas.StandardResponse(
+        success=True,
+        message="Account and profile deleted successfully.",
     )
 
 @router.post("/me/password", response_model=schemas.StandardResponse)
@@ -1239,12 +1299,26 @@ def get_users_admin(
 
     # Fast order aggregation by email and user_id
     pipeline_email = [
-        {"$match": {"$or": [{"email": {"$exists": True, "$ne": None}}, {"customer.email": {"$exists": True, "$ne": None}}]}},
+        {
+            "$match": {
+                "$or": [
+                    {"email": {"$exists": True, "$ne": None}},
+                    {"customer.email": {"$exists": True, "$ne": None}}
+                ]
+            }
+        },
+        {
+            "$project": {
+                "order_email": {"$ifNull": ["$email", "$customer.email"]},
+                "order_total": {"$ifNull": ["$total", "$total_amount"]},
+                "created_at": "$created_at"
+            }
+        },
         {
             "$group": {
-                "_id": {"$toLower": {"$ifNull": ["$email", "$customer.email"]}},
+                "_id": {"$toLower": {"$ifNull": ["$email", "$order_email"]}},
                 "count": {"$sum": 1},
-                "total_spent": {"$sum": {"$ifNull": ["$total", "$total_amount"]}},
+                "total_spent": {"$sum": {"$ifNull": ["$total", "$order_total"]}},
                 "last_order": {"$max": "$created_at"}
             }
         }
@@ -1365,12 +1439,20 @@ def get_user_orders_admin(
     orders_cursor = list(db.orders.find({
         "$or": [
             {"user_id": user_id},
+            {"email": {"$regex": f"^{re.escape(user_email)}$", "$options": "i"}},
             {"customer.email": {"$regex": f"^{re.escape(user_email)}$", "$options": "i"}}
         ]
     }).sort("created_at", -1))
 
     for o in orders_cursor:
         o["id"] = str(o.pop("_id", ""))
+        order_total = o.get("total") if o.get("total") is not None else o.get("total_amount", 0.0)
+        try:
+            order_total = float(order_total)
+        except (ValueError, TypeError):
+            order_total = 0.0
+        o["total"] = order_total
+        o["total_amount"] = order_total
         if isinstance(o.get("created_at"), datetime):
             o["created_at"] = o["created_at"].isoformat()
 
