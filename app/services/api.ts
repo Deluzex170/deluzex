@@ -238,7 +238,8 @@ export interface Product {
   product_main_image?: string;
   product_images?: string[];
 
-  // Technical Specifications & Reference Design Fields
+  slug?: string;
+  product_wattage?: string;
   sku?: string;
   stock_status?: string;
   in_stock?: boolean;
@@ -254,6 +255,7 @@ export interface Product {
   replenishment?: string;
   whatsapp_number?: string;
   phone_number?: string;
+  amazon_link?: string;
   specifications?: ProductSpecification[];
   technical_spec_pdf?: string;
 }
@@ -262,9 +264,12 @@ export interface UserProfile {
   id: string;
   first_name: string;
   last_name: string;
+  name?: string;
+  avatar_url?: string | null;
   email: string;
   phone?: string | null;
   city?: string | null;
+  state?: string | null;
   country?: string | null;
   is_verified: boolean;
   is_admin?: boolean;
@@ -272,11 +277,14 @@ export interface UserProfile {
 }
 
 export interface UserProfileUpdate {
-  first_name: string;
-  last_name: string;
-  email: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
   phone?: string;
+  avatar_url?: string | null;
+  remove_avatar?: boolean;
   city?: string;
+  state?: string;
   country?: string;
 }
 
@@ -414,6 +422,30 @@ export async function updateUserPassword(password: PasswordUpdate): Promise<void
 }
 
 
+export async function removeUserAvatar(): Promise<boolean> {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("user_avatar");
+    try {
+      const stored = JSON.parse(localStorage.getItem("user") || "{}");
+      delete stored.avatar_url;
+      delete stored.avatar;
+      delete stored.image;
+      localStorage.setItem("user", JSON.stringify(stored));
+    } catch {
+      // ignore
+    }
+  }
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/me/avatar`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+    return res.ok;
+  } catch {
+    return true;
+  }
+}
+
 export async function deleteUserProfile(): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/auth/me`, {
     method: "DELETE",
@@ -426,14 +458,13 @@ export async function fetchCategories(): Promise<Category[]> {
   try {
     const res = await fetch(`${API_BASE_URL}/categories`, {
       headers: getAuthHeaders(),
-      next: { revalidate: 60 } // Revalidate cache every 60s
+      cache: "no-store",
     });
     if (!res.ok) throw new Error("Failed to fetch categories");
     const data = await res.json();
-    
+
     // Support direct arrays [...] or response wrappers like { data: [...] }
     return Array.isArray(data) ? data : (data.data || []);
-    return [];
   } catch (error) {
     logger.error("API", "Error fetching categories:", error);
     return []; // Return empty array on failure so UI doesn't crash
@@ -449,7 +480,7 @@ export async function fetchProducts(queryParams?: URLSearchParams | string): Pro
     });
     if (!res.ok) throw new Error("Failed to fetch products");
     const data = await res.json();
-    
+
     return data.data || data || [];
   } catch (error) {
     logger.error("API", "Error fetching products:", error);
@@ -465,7 +496,7 @@ export async function fetchProductById(id: string): Promise<Product | null> {
     });
     if (!res.ok) throw new Error(`Failed to fetch product ${id}`);
     const data = await res.json();
-    
+
     return data.data || data || null;
   } catch (error) {
     logger.error("API", `Error fetching product ${id}:`, error);
@@ -521,23 +552,37 @@ export async function toggleProductNewArrival(id: string | number, isNewArrival?
   return data.data || data;
 }
 
-export async function createCategory(categoryData: JsonObject) {
+export async function createCategory(categoryData: JsonObject | FormData) {
+  const isFormData = categoryData instanceof FormData;
   const res = await fetch(`${API_BASE_URL}/categories`, {
     method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(categoryData)
+    headers: {
+      ...getAuthHeaders(isFormData),
+      ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: isFormData ? categoryData : JSON.stringify(categoryData)
   });
-  if (!res.ok) throw new Error('Failed to create category');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to create category');
+  }
   return res.json();
 }
 
-export async function updateCategory(id: string | number, categoryData: JsonObject) {
+export async function updateCategory(id: string | number, categoryData: JsonObject | FormData) {
+  const isFormData = categoryData instanceof FormData;
   const res = await fetch(`${API_BASE_URL}/categories/${id}`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(categoryData)
+    headers: {
+      ...getAuthHeaders(isFormData),
+      ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: isFormData ? categoryData : JSON.stringify(categoryData)
   });
-  if (!res.ok) throw new Error('Failed to update category');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to update category');
+  }
   return res.json();
 }
 
@@ -1446,6 +1491,45 @@ export async function checkWishlistStatus(
   return { is_wishlisted: false, item_id: null };
 }
 
+export async function toggleWishlistApi(item: {
+  user_email: string;
+  product_id?: string;
+  product_title: string;
+  product_price: number | string;
+  product_image?: string;
+  product_slug?: string;
+}): Promise<{ is_wishlisted: boolean; item_id?: string | null; message?: string; item?: WishlistItem | Record<string, unknown> }> {
+  const res = await fetch(`${API_BASE_URL}/user/wishlist/toggle`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(item),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to update wishlist");
+  }
+  return await res.json();
+}
+
+export async function removeFromWishlistByProductId(productId: string, email: string): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/user/wishlist/product/${encodeURIComponent(productId)}?email=${encodeURIComponent(email)}`,
+      {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      }
+    );
+    return res.ok;
+  } catch (error) {
+    console.error("Failed to remove from wishlist by product id:", error);
+    return false;
+  }
+}
+
 // --- USER ORDERS API ---
 
 export interface OrderItem {
@@ -1546,23 +1630,23 @@ export function normalizeUserOrder(raw: Record<string, unknown>): UserOrder {
   const rawItems = (raw.items || raw.order_items || raw.products || []) as Record<string, unknown>[];
   const items: OrderItem[] = Array.isArray(rawItems)
     ? rawItems.map((it: Record<string, unknown>) => ({
-        product_id: (it.product_id || it.productId || it.id || it._id) as string | number | undefined,
-        title:
-          (it.title as string) ||
-          (it.product_title as string) ||
-          (it.name as string) ||
-          (it.product_name as string) ||
-          "Luxury Luminaire",
-        price: (it.price || it.unit_price || it.product_price || 0) as number | string,
-        quantity: (it.quantity || it.qty || 1) as number,
-        image:
-          (it.image as string) ||
-          (it.image_url as string) ||
-          (it.product_main_image as string) ||
-          (it.img as string) ||
-          "/images/category_chandeliers_1784107850024.png",
-        variant: (it.variant || it.selected_variant || it.product_variant || "") as string,
-      }))
+      product_id: (it.product_id || it.productId || it.id || it._id) as string | number | undefined,
+      title:
+        (it.title as string) ||
+        (it.product_title as string) ||
+        (it.name as string) ||
+        (it.product_name as string) ||
+        "Luxury Luminaire",
+      price: (it.price || it.unit_price || it.product_price || 0) as number | string,
+      quantity: (it.quantity || it.qty || 1) as number,
+      image:
+        (it.image as string) ||
+        (it.image_url as string) ||
+        (it.product_main_image as string) ||
+        (it.img as string) ||
+        "/images/category_chandeliers_1784107850024.png",
+      variant: (it.variant || it.selected_variant || it.product_variant || "") as string,
+    }))
     : [];
 
   const rawTotal = raw.total || raw.total_amount || raw.amount || raw.grand_total || 0;
@@ -1574,15 +1658,15 @@ export function normalizeUserOrder(raw: Record<string, unknown>): UserOrder {
   const rawDate = (raw.date || raw.order_date || raw.created_at || raw.createdAt) as string | undefined;
   const formattedDate = rawDate
     ? new Date(rawDate).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      })
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    })
     : new Date().toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      });
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
 
   return {
     _id: String(raw._id || raw.id || orderId),
@@ -1807,7 +1891,11 @@ export async function cancelUserOrder(orderId: string, email?: string): Promise<
   try {
     const res = await fetch(`${API_BASE_URL}/orders/${cleanId}/cancel`, {
       method: "POST",
-      headers: getAuthHeaders(),
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email: email || "" }),
     });
     return res.ok;
   } catch {
@@ -1985,6 +2073,7 @@ export async function fetchNewsletterSubscribers(filters?: {
   if (filters?.search) params.append("search", filters.search);
 
   const res = await fetch(`${API_BASE_URL}/newsletter/subscribers?${params.toString()}`, {
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch newsletter subscribers");
@@ -1997,7 +2086,7 @@ export async function updateSubscriberNotified(
 ): Promise<{ message: string; subscriber: NewsletterSubscriberItem }> {
   const res = await fetch(`${API_BASE_URL}/newsletter/subscribers/${encodeURIComponent(subscriberId)}/notified`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ is_notified: isNotified }),
   });
   if (!res.ok) {
@@ -2010,6 +2099,7 @@ export async function updateSubscriberNotified(
 export async function deleteNewsletterSubscriber(subscriberId: string): Promise<{ message: string }> {
   const res = await fetch(`${API_BASE_URL}/newsletter/subscribers/${encodeURIComponent(subscriberId)}`, {
     method: "DELETE",
+    headers: getAuthHeaders(),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -2406,8 +2496,10 @@ export async function fetchProductReviews(productId: string): Promise<ProductRev
     logger.error("API", "Error fetching product reviews:", error);
     return {
       average_rating: 0, total_reviews: 0,
-      breakdown: { "5": { count: 0, pct: 0 }, "4": { count: 0, pct: 0 },
-        "3": { count: 0, pct: 0 }, "2": { count: 0, pct: 0 }, "1": { count: 0, pct: 0 } },
+      breakdown: {
+        "5": { count: 0, pct: 0 }, "4": { count: 0, pct: 0 },
+        "3": { count: 0, pct: 0 }, "2": { count: 0, pct: 0 }, "1": { count: 0, pct: 0 }
+      },
       reviews: [],
     };
   }
@@ -2443,6 +2535,7 @@ export async function fetchAdminReviews(filters?: {
   if (filters?.limit !== undefined) params.append("limit", filters.limit.toString());
 
   const res = await fetch(`${API_BASE_URL}/reviews/all?${params.toString()}`, {
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch admin reviews");
@@ -2451,6 +2544,7 @@ export async function fetchAdminReviews(filters?: {
 
 export async function fetchReviewStats(): Promise<ReviewStats> {
   const res = await fetch(`${API_BASE_URL}/reviews/stats`, {
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch review statistics");
@@ -2463,7 +2557,7 @@ export async function updateReviewApproval(
 ): Promise<{ message: string; review: ProductReviewItem }> {
   const res = await fetch(`${API_BASE_URL}/reviews/${encodeURIComponent(reviewId)}/approval`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ is_approved: isApproved }),
   });
   if (!res.ok) {
@@ -2476,6 +2570,7 @@ export async function updateReviewApproval(
 export async function deleteReview(reviewId: string): Promise<{ message: string }> {
   const res = await fetch(`${API_BASE_URL}/reviews/${encodeURIComponent(reviewId)}`, {
     method: "DELETE",
+    headers: getAuthHeaders(),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -2592,9 +2687,13 @@ export async function removeBackendCartItem(
   }
 }
 
-export async function clearBackendCart(identifier: string): Promise<boolean> {
+export async function clearBackendCart(identifier: string, sessionId?: string): Promise<boolean> {
   try {
-    const res = await fetch(`${API_BASE_URL}/cart/${encodeURIComponent(identifier)}`, {
+    let url = `${API_BASE_URL}/cart/${encodeURIComponent(identifier)}`;
+    if (sessionId) {
+      url += `?session_id=${encodeURIComponent(sessionId)}`;
+    }
+    const res = await fetch(url, {
       method: "DELETE",
       headers: getAuthHeaders(),
     });
@@ -3135,6 +3234,7 @@ export async function fetchAdminCustomers(filters?: {
   if (filters?.limit !== undefined) params.append("limit", filters.limit.toString());
 
   const res = await fetch(`${API_BASE_URL}/auth/users?${params.toString()}`, {
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch customers");
@@ -3143,6 +3243,7 @@ export async function fetchAdminCustomers(filters?: {
 
 export async function fetchAdminCustomerStats(): Promise<AdminCustomerStats> {
   const res = await fetch(`${API_BASE_URL}/auth/users/stats`, {
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch customer statistics");
@@ -3155,7 +3256,7 @@ export async function updateCustomerStatus(
 ): Promise<{ message: string; is_active: boolean }> {
   const res = await fetch(`${API_BASE_URL}/auth/users/${encodeURIComponent(userId)}/status`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ is_active: isActive }),
   });
   if (!res.ok) {
@@ -3171,7 +3272,7 @@ export async function updateCustomerRole(
 ): Promise<{ message: string; is_admin: boolean }> {
   const res = await fetch(`${API_BASE_URL}/auth/users/${encodeURIComponent(userId)}/role`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ is_admin: isAdmin }),
   });
   if (!res.ok) {
@@ -3183,6 +3284,7 @@ export async function updateCustomerRole(
 
 export async function fetchCustomerOrders(userId: string): Promise<any[]> {
   const res = await fetch(`${API_BASE_URL}/auth/users/${encodeURIComponent(userId)}/orders`, {
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch customer orders");
@@ -3225,6 +3327,7 @@ export interface DashboardSummaryResponse {
 
 export async function fetchDashboardSummary(): Promise<DashboardSummaryResponse> {
   const res = await fetch(`${API_BASE_URL}/analytics/dashboard-summary`, {
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch dashboard summary");

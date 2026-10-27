@@ -5,12 +5,10 @@ import styles from "./wishlist.module.css";
 import { useDispatch } from "react-redux";
 import { addToCart, openCart } from "../../store/cartSlice";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
-import {
-  fetchUserWishlist,
-  removeFromWishlist,
-  WishlistItem,
-} from "../../services/api";
+import { useWishlist } from "../../context/WishlistContext";
+import { WishlistItem } from "../../services/api";
 
 // Placeholder pendant lamp image using a gradient background
 function LampPlaceholder() {
@@ -47,43 +45,39 @@ export default function WishlistPage() {
   const { user } = useAuth();
   const userEmail = (user as Record<string, string>)?.email || "";
 
-  const [items, setItems] = useState<WishlistItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    wishlistItems: items,
+    removeFromWishlist: globalRemove,
+    refreshWishlist,
+    isLoading: loading,
+  } = useWishlist();
+
   const [search, setSearch] = useState("");
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
-
-  const loadWishlist = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await fetchUserWishlist(userEmail);
-      setItems(data || []);
-    } catch (err) {
-      console.error("Failed to load wishlist from database:", err);
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [userEmail]);
+  const [isMovingAll, setIsMovingAll] = useState(false);
+  const [addingId, setAddingId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadWishlist();
-  }, [loadWishlist]);
+    refreshWishlist();
+  }, [refreshWishlist]);
 
   const removeItem = async (item: WishlistItem) => {
+    const pId = item.product_id || item.id || item._id;
     const itemId = item.id || item._id;
-    if (!itemId) return;
+    const title = item.product_title;
+    if (!pId && !itemId) return;
 
-    // Optimistic UI update
-    setItems((prev) => prev.filter((i) => (i.id || i._id) !== itemId));
     try {
-      await removeFromWishlist(itemId);
+      await globalRemove(pId || itemId || "", itemId, title);
     } catch (err) {
       console.error("Failed to remove item from wishlist:", err);
-      loadWishlist();
+      refreshWishlist();
     }
   };
 
   const handleAddToCart = (item: WishlistItem) => {
+    const pId = String(item.product_id || item.id || item._id || "");
+    setAddingId(pId);
     const rawPrice = String(item.product_price).replace(/[^\d.]/g, "");
     dispatch(
       addToCart({
@@ -95,9 +89,12 @@ export default function WishlistPage() {
       })
     );
     dispatch(openCart());
+    setTimeout(() => setAddingId(null), 600);
   };
 
   const handleMoveAllToCart = () => {
+    if (isMovingAll || items.length === 0) return;
+    setIsMovingAll(true);
     items.forEach((item) => {
       const rawPrice = String(item.product_price).replace(/[^\d.]/g, "");
       dispatch(
@@ -111,6 +108,7 @@ export default function WishlistPage() {
       );
     });
     dispatch(openCart());
+    setTimeout(() => setIsMovingAll(false), 800);
   };
 
   const filtered = items.filter((item) =>
@@ -142,9 +140,19 @@ export default function WishlistPage() {
           className={styles.btnMoveAll}
           type="button"
           onClick={handleMoveAllToCart}
-          disabled={items.length === 0}
+          disabled={items.length === 0 || isMovingAll}
         >
-          Move All To Cart
+          {isMovingAll ? (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+              <svg className={styles.btnSpinner} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                <path d="M12 2a10 10 0 0 1 10 10" />
+              </svg>
+              Moving to Cart...
+            </span>
+          ) : (
+            "Move All To Cart"
+          )}
         </button>
       </div>
 
@@ -188,10 +196,28 @@ export default function WishlistPage() {
                 ? item.product_price
                 : `₹${item.product_price}`;
 
+            const productTarget = item.product_slug || item.product_id || item.id || item._id;
+            const productHref = productTarget ? `/product/${productTarget}` : null;
+
             return (
               <div key={itemId} className={styles.productCard}>
                 <div className={styles.imgWrapper}>
-                  {hasImg ? (
+                  {productHref ? (
+                    <Link href={productHref} className={styles.imgLink} title={`View ${item.product_title}`}>
+                      {hasImg ? (
+                        <img
+                          src={item.product_image!}
+                          alt={item.product_title}
+                          className={styles.productImg}
+                          onError={() =>
+                            setImgErrors((prev) => ({ ...prev, [itemId]: true }))
+                          }
+                        />
+                      ) : (
+                        <LampPlaceholder />
+                      )}
+                    </Link>
+                  ) : hasImg ? (
                     <img
                       src={item.product_image!}
                       alt={item.product_title}
@@ -205,22 +231,55 @@ export default function WishlistPage() {
                   )}
                   <button
                     className={styles.removeBtn}
-                    onClick={() => removeItem(item)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      removeItem(item);
+                    }}
                     aria-label="Remove item"
+                    title="Remove from wishlist"
                   >
                     ✕
                   </button>
                 </div>
                 <div className={styles.productInfo}>
-                  <div className={styles.productName}>{item.product_title}</div>
+                  {productHref ? (
+                    <Link
+                      href={productHref}
+                      className={styles.productNameLink}
+                      title={`View details for ${item.product_title}`}
+                    >
+                      <div className={styles.productName}>{item.product_title}</div>
+                    </Link>
+                  ) : (
+                    <div className={styles.productName}>{item.product_title}</div>
+                  )}
                   <div className={styles.productPrice}>{displayPrice}</div>
-                  <button
-                    className={styles.btnAddToCart}
-                    type="button"
-                    onClick={() => handleAddToCart(item)}
-                  >
-                    Add To Cart
-                  </button>
+                  <div className={styles.actionsRow}>
+                    {productHref && (
+                      <Link href={productHref} className={styles.btnViewDetails}>
+                        View Details
+                      </Link>
+                    )}
+                    <button
+                      className={styles.btnAddToCart}
+                      type="button"
+                      onClick={() => handleAddToCart(item)}
+                      disabled={addingId === String(item.product_id || item.id || item._id || itemId)}
+                    >
+                      {addingId === String(item.product_id || item.id || item._id || itemId) ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                          <svg className={styles.btnSpinner} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                            <path d="M12 2a10 10 0 0 1 10 10" />
+                          </svg>
+                          Adding...
+                        </span>
+                      ) : (
+                        "Add To Cart"
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             );

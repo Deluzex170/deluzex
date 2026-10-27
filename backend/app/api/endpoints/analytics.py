@@ -271,6 +271,7 @@ def get_dashboard_summary(admin: models.User = Depends(deps.get_current_active_a
             "$group": {
                 "_id": None,
                 "total_revenue": {"$sum": {"$ifNull": ["$total", "$total_amount"]}},
+                "total_revenue": {"$sum": {"$ifNull": ["$total", "$total_amount"]}},
                 "total_orders": {"$sum": 1}
             }
         }
@@ -280,6 +281,7 @@ def get_dashboard_summary(admin: models.User = Depends(deps.get_current_active_a
     total_orders = db.orders.count_documents({"status": {"$ne": "cancelled"}})
 
     pending_orders = db.orders.count_documents({
+        "status": {"$in": ["pending", "cod", "confirmed", "processing"]}
         "status": {"$in": ["pending", "cod", "confirmed", "processing"]}
     })
     delivered_orders = db.orders.count_documents({"status": "delivered"})
@@ -309,21 +311,49 @@ def get_dashboard_summary(admin: models.User = Depends(deps.get_current_active_a
         else:
             created_at_str = ""
 
+ # Extract customer full name from shipping address, customer object, or email prefix
+        addr = o.get("shipping_address") or {}
+        first_n = addr.get("first_name", "") if isinstance(addr, dict) else ""
+        last_n = addr.get("last_name", "") if isinstance(addr, dict) else ""
+        full_n = f"{first_n} {last_n}".strip()
+
+        if not full_n and isinstance(o.get("customer"), dict):
+            full_n = o.get("customer", {}).get("name", "")
+        if not full_n and o.get("email"):
+            full_n = o.get("email", "").split("@")[0]
+
+        amt = o.get("total") if o.get("total") is not None else o.get("total_amount", 0.0)
+        try:
+            amt = float(amt)
+        except (ValueError, TypeError):
+            amt = 0.0
         recent_orders.append({
             "id": str(o.get("_id", "")),
             "order_number": o.get("order_number") or f"ORD-{str(o.get('_id', ''))[:6].upper()}",
-            "customer_name": c_name,
+            "customer_name": full_n or "Customer",
             "total_amount": round(float(amount or 0.0), 2),
             "status": o.get("status", "pending"),
             "created_at": created_at_str
         })
 
-    # 2. Inventory Alerts
+    # 2. Inventory Alerts (support stock_count and legacy stock)
     total_products = db.products.count_documents({})
     low_stock_filter = {
         "$or": [
             {"stock_count": {"$lte": 5}},
             {"stock": {"$lte": 5}}
+        ]
+    }
+    stock_filter_low = {
+        "$or": [
+            {"stock_count": {"$lte": 5}},
+            {"stock": {"$lte": 5}}
+        ]
+    }
+    stock_filter_zero = {
+        "$or": [
+            {"stock_count": {"$lte": 0}},
+            {"stock": {"$lte": 0}}
         ]
     }
     low_stock_docs = list(db.products.find(low_stock_filter).limit(6))
@@ -338,6 +368,7 @@ def get_dashboard_summary(admin: models.User = Depends(deps.get_current_active_a
 
     low_stock_items = []
     for p in low_stock_docs:
+        stock_val = p.get("stock_count") if p.get("stock_count") is not None else p.get("stock", 0)
         cnt = p.get("stock_count") if p.get("stock_count") is not None else p.get("stock", 0)
         low_stock_items.append({
             "id": str(p.get("_id", "")),

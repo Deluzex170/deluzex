@@ -6,16 +6,18 @@ import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { addToCart, updateQuantity, removeFromCart } from "../store/cartSlice";
 import { RootState } from "../store/store";
-import { useEffect, useState, useMemo, useRef, Suspense } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { fetchCategories, fetchProducts, Category, Product } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import WishlistButton from "../components/WishlistButton";
 
 const SORT_OPTIONS = [
   { label: "Featured", value: "FEATURED" },
   { label: "Price: Low to High", value: "PRICE: LOW TO HIGH" },
   { label: "Price: High to Low", value: "PRICE: HIGH TO LOW" },
   { label: "Newest Arrivals", value: "NEWEST ARRIVALS" },
+  { label: "Rating: High to Low", value: "RATING: HIGH TO LOW" },
 ];
 
 function ShopContent() {
@@ -37,8 +39,11 @@ function ShopContent() {
   const [sortBy, setSortBy] = useState<string>("FEATURED");
   const [isSortOpen, setIsSortOpen] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
+  const categoriesRef = useRef<HTMLDivElement>(null);
+  const [isCatPaused, setIsCatPaused] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [addingProductId, setAddingProductId] = useState<string | number | null>(null);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -61,6 +66,45 @@ function ShopContent() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isSortOpen]);
+
+  // Category horizontal scroll controls
+  const handleCategoryScroll = useCallback((direction: "prev" | "next") => {
+    if (!categoriesRef.current) return;
+    const container = categoriesRef.current;
+    const card = container.firstElementChild as HTMLElement | null;
+    const cardWidth = card ? card.getBoundingClientRect().width + 24 : 294;
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    const maxScroll = Math.max(0, scrollWidth - clientWidth);
+
+    if (maxScroll <= 5) return;
+
+    if (direction === "next") {
+      if (scrollLeft >= maxScroll - 10) {
+        container.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        const target = Math.min(scrollLeft + cardWidth, maxScroll);
+        container.scrollTo({ left: target, behavior: "smooth" });
+      }
+    } else {
+      if (scrollLeft <= 10) {
+        container.scrollTo({ left: maxScroll, behavior: "smooth" });
+      } else {
+        const target = Math.max(scrollLeft - cardWidth, 0);
+        container.scrollTo({ left: target, behavior: "smooth" });
+      }
+    }
+  }, []);
+
+  // 5-second automatic categories scroll
+  useEffect(() => {
+    if (isCatPaused || categories.length <= 1) return;
+
+    const timer = setInterval(() => {
+      handleCategoryScroll("next");
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [isCatPaused, categories.length, handleCategoryScroll]);
 
   // Sync category and search params from URL
 
@@ -212,7 +256,7 @@ function ShopContent() {
     const matched = categories.find(
       (c) =>
         String(c._id || c.id || c.category_id || "").toLowerCase().trim() ===
-          selectedCategory.toLowerCase().trim() ||
+        selectedCategory.toLowerCase().trim() ||
         c.name.toLowerCase().trim() === selectedCategory.toLowerCase().trim()
     );
     return matched ? matched.name : selectedCategory;
@@ -227,6 +271,7 @@ function ShopContent() {
             src="/images/hero_bg_1784107713316.jpg"
             alt="Shop Hero Background"
             fill
+            priority
             style={{ objectFit: "cover" }}
           />
         </div>
@@ -240,196 +285,264 @@ function ShopContent() {
         </div>
       </section>
 
-      {/* CATEGORIES SECTION */}
+      {/* CATEGORIES SECTION (CAROUSEL WITH 5s AUTO-SCROLL) */}
       <section className={styles.categoriesSection}>
         <div className={styles.sectionHeader}>
           <p className={styles.sectionSub}>Lighting for every interior</p>
           <h2 className={styles.sectionTitle}>Discover Our Categories</h2>
         </div>
-        <div className={styles.categoriesGrid}>
-          {categories.map((cat, i) => {
-            const catId = cat._id || cat.id || cat.category_id || cat.name;
-            const isSelected =
-              selectedCategory !== null &&
-              (selectedCategory.toLowerCase() === cat.name.toLowerCase() ||
-                selectedCategory.toLowerCase() === String(catId).toLowerCase());
 
-            return (
-              <div
-                key={catId || i}
-                onClick={() => handleSelectCategory(cat.name)}
-                className={`${styles.categoryCard} ${isSelected ? styles.categoryCardActive : ""}`}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    handleSelectCategory(cat.name);
-                  }
-                }}
-                aria-label={`Filter by ${cat.name}`}
-              >
-                <Image
-                  src={cat.image_url || "/images/category_chandelier_1784107756268.jpg"}
-                  alt={cat.name}
-                  fill
-                  style={{ objectFit: "cover" }}
-                />
-                <div className={styles.categoryOverlay}>
-                  <h3 className={styles.categoryTitle}>{cat.name}</h3>
+        <div
+          className={styles.categoriesTrackWrapper}
+          onMouseEnter={() => setIsCatPaused(true)}
+          onMouseLeave={() => setIsCatPaused(false)}
+        >
+          {/* Scroll Button Left (Previous) */}
+          <button
+            type="button"
+            className={`${styles.catSideNavBtn} ${styles.catSideNavPrev}`}
+            onClick={() => handleCategoryScroll("prev")}
+            aria-label="Previous categories"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+
+          <div className={styles.categoriesCarousel} ref={categoriesRef}>
+            {categories.map((cat, i) => {
+              const catId = cat._id || cat.id || cat.category_id || cat.name;
+              const isSelected =
+                selectedCategory !== null &&
+                (selectedCategory.toLowerCase() === cat.name.toLowerCase() ||
+                  selectedCategory.toLowerCase() === String(catId).toLowerCase());
+
+              return (
+                <div
+                  key={catId || i}
+                  onClick={() => handleSelectCategory(cat.name)}
+                  className={`${styles.categoryCard} ${isSelected ? styles.categoryCardActive : ""}`}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      handleSelectCategory(cat.name);
+                    }
+                  }}
+                  aria-label={`Filter by ${cat.name}`}
+                >
+                  {cat.image_url && cat.image_url.trim() ? (
+                    <Image
+                      src={cat.image_url.trim()}
+                      alt={cat.name}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      style={{ objectFit: "cover" }}
+                    />
+                  ) : (
+                    <div className={styles.catCardPlaceholder}>
+                      <span className={styles.catCardPlaceholderIcon}>✦</span>
+                      <span className={styles.catCardPlaceholderSub}>Signature Family</span>
+                    </div>
+                  )}
+                  <div className={styles.categoryOverlay}>
+                    <h3 className={styles.categoryTitle}>{cat.name}</h3>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* LUXURY COMPACT BAR (Style A) */}
-      <section className={styles.compactBar}>
-        {/* Left: Compact, elegant search bar */}
-        <div className={styles.compactSearchWrapper}>
-          <span className={styles.compactSearchIcon}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-          </span>
-          <input
-            type="text"
-            className={styles.compactSearchInput}
-            placeholder="Search fixtures, SKU (e.g. ME-DP-105)..."
-            value={searchQuery}
-            onChange={(e) => {
-              const val = e.target.value;
-              setSearchQuery(val);
-              setCurrentPage(1);
-              const params = new URLSearchParams(window.location.search);
-              if (val.trim()) {
-                params.set("search", val.trim());
-              } else {
-                params.delete("search");
-              }
-              const newUrl = params.toString() ? `/shop?${params.toString()}` : "/shop";
-              router.replace(newUrl, { scroll: false });
-            }}
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              className={styles.compactClearBtn}
-              onClick={() => {
-                setSearchQuery("");
-                setCurrentPage(1);
-                const params = new URLSearchParams(window.location.search);
-                params.delete("search");
-                const newUrl = params.toString() ? `/shop?${params.toString()}` : "/shop";
-                router.replace(newUrl, { scroll: false });
-              }}
-              aria-label="Clear search"
-            >
-              &times;
-            </button>
-          )}
-        </div>
-
-        {/* Right: Filter trigger button & Sort dropdown */}
-        <div className={styles.compactActions}>
-          <button
-            type="button"
-            className={`${styles.filterTriggerBtn} ${activeFilterCount > 0 ? styles.filterTriggerBtnActive : ""}`}
-            onClick={() => setIsDrawerOpen(true)}
-            aria-label="Open filter options"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="4" y1="21" x2="4" y2="14"></line>
-              <line x1="4" y1="10" x2="4" y2="3"></line>
-              <line x1="12" y1="21" x2="12" y2="12"></line>
-              <line x1="12" y1="8" x2="12" y2="3"></line>
-              <line x1="20" y1="21" x2="20" y2="16"></line>
-              <line x1="20" y1="12" x2="20" y2="3"></line>
-              <line x1="1" y1="14" x2="7" y2="14"></line>
-              <line x1="9" y1="8" x2="15" y2="8"></line>
-              <line x1="17" y1="16" x2="23" y2="16"></line>
-            </svg>
-            <span>Filters</span>
-            {activeFilterCount > 0 && (
-              <span className={styles.filterCountBadge}>{activeFilterCount}</span>
-            )}
-          </button>
-
-          <div className={styles.compactSort}>
-            <span className={styles.compactSortLabel}>Sort:</span>
-            <select
-              className={styles.compactSortSelect}
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <option>FEATURED</option>
-              <option>PRICE: LOW TO HIGH</option>
-              <option>PRICE: HIGH TO LOW</option>
-              <option>NEWEST ARRIVALS</option>
-              <option>RATING: HIGH TO LOW</option>
-            </select>
+              );
+            })}
           </div>
+
+          {/* Scroll Button Right (Next) */}
+          <button
+            type="button"
+            className={`${styles.catSideNavBtn} ${styles.catSideNavNext}`}
+            onClick={() => handleCategoryScroll("next")}
+            aria-label="Next categories"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
         </div>
       </section>
 
-      {/* ACTIVE FILTER CHIPS (Under bar) */}
-      {(selectedCategory || priceRange !== "ALL" || searchQuery.trim()) && (
-        <div className={styles.activeChipsRow}>
-          <span className={styles.activeChipsLabel}>Active:</span>
-          {selectedCategory && (
-            <button
-              type="button"
-              className={styles.chip}
-              onClick={() => handleSelectCategory(null)}
-              title="Remove category filter"
-            >
-              {activeCategoryDisplayName} <span>&times;</span>
-            </button>
+      {/* PROFESSIONAL LUXURY CONTROL BAR */}
+      <section className={styles.toolbarSection}>
+        <div className={styles.toolbarContainer}>
+          {/* Main Row: Search + Filter Trigger + Custom Sort */}
+          <div className={styles.toolbarMainRow}>
+            {/* Search Input */}
+            <div className={styles.toolbarSearch}>
+              <span className={styles.searchIcon}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </span>
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="Search lights, chandeliers, or categories..."
+                value={searchQuery}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSearchQuery(val);
+                  setCurrentPage(1);
+                  const params = new URLSearchParams(window.location.search);
+                  if (val.trim()) {
+                    params.set("search", val.trim());
+                  } else {
+                    params.delete("search");
+                  }
+                  const newUrl = params.toString() ? `/shop?${params.toString()}` : "/shop";
+                  router.replace(newUrl, { scroll: false });
+                }}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className={styles.searchClearBtn}
+                  onClick={() => {
+                    setSearchQuery("");
+                    setCurrentPage(1);
+                    const params = new URLSearchParams(window.location.search);
+                    params.delete("search");
+                    const newUrl = params.toString() ? `/shop?${params.toString()}` : "/shop";
+                    router.replace(newUrl, { scroll: false });
+                  }}
+                  aria-label="Clear search"
+                >
+                  &times;
+                </button>
+              )}
+            </div>
+
+            {/* Controls Right */}
+            <div className={styles.toolbarActions}>
+              {/* Filter Drawer Trigger */}
+              <button
+                type="button"
+                className={`${styles.filterBtn} ${activeFilterCount > 0 ? styles.filterBtnActive : ""}`}
+                onClick={() => setIsDrawerOpen(true)}
+                aria-label="Open filter options"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="4" y1="21" x2="4" y2="14"></line>
+                  <line x1="4" y1="10" x2="4" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12" y2="3"></line>
+                  <line x1="20" y1="21" x2="20" y2="16"></line>
+                  <line x1="20" y1="12" x2="20" y2="3"></line>
+                  <line x1="1" y1="14" x2="7" y2="14"></line>
+                  <line x1="9" y1="8" x2="15" y2="8"></line>
+                  <line x1="17" y1="16" x2="23" y2="16"></line>
+                </svg>
+                <span>Filters</span>
+                {activeFilterCount > 0 && (
+                  <span className={styles.filterBadge}>{activeFilterCount}</span>
+                )}
+              </button>
+
+              {/* Custom Professional Sort Dropdown */}
+              <div className={styles.sortWrapper} ref={sortRef}>
+                <button
+                  type="button"
+                  className={`${styles.toolbarSelectBtn} ${isSortOpen ? styles.toolbarSelectBtnActive : ""}`}
+                  onClick={() => setIsSortOpen(!isSortOpen)}
+                  aria-haspopup="listbox"
+                  aria-expanded={isSortOpen}
+                >
+                  <span className={styles.selectBtnLabel}>Sort:</span>
+                  <span className={styles.selectBtnValue}>
+                    {SORT_OPTIONS.find((o) => o.value === sortBy)?.label || "Featured"}
+                  </span>
+                  <svg className={`${styles.chevronIcon} ${isSortOpen ? styles.chevronIconOpen : ""}`} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                {isSortOpen && (
+                  <ul className={styles.toolbarDropdownMenu} role="listbox">
+                    {SORT_OPTIONS.map((opt) => (
+                      <li
+                        key={opt.value}
+                        className={`${styles.dropdownItem} ${sortBy === opt.value ? styles.dropdownItemActive : ""}`}
+                        onClick={() => {
+                          setSortBy(opt.value);
+                          setIsSortOpen(false);
+                          setCurrentPage(1);
+                        }}
+                        role="option"
+                        aria-selected={sortBy === opt.value}
+                      >
+                        <span>{opt.label}</span>
+                        {sortBy === opt.value && <span className={styles.dropdownCheck}>✓</span>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Active Chips (Only displayed if filters or search are active) */}
+          {(selectedCategory || priceRange !== "ALL" || searchQuery.trim()) && (
+            <div className={styles.toolbarMetaRow}>
+              <div className={styles.activeChipsGroup}>
+                <span className={styles.activeLabel}>Active:</span>
+                {selectedCategory && (
+                  <button
+                    type="button"
+                    className={styles.activeChip}
+                    onClick={() => handleSelectCategory(null)}
+                    title="Remove category filter"
+                  >
+                    <span>{activeCategoryDisplayName}</span>
+                    <span className={styles.chipRemove}>&times;</span>
+                  </button>
+                )}
+                {priceRange !== "ALL" && (
+                  <button
+                    type="button"
+                    className={styles.activeChip}
+                    onClick={() => setPriceRange("ALL")}
+                    title="Remove price filter"
+                  >
+                    <span>
+                      {priceRange === "UNDER_25K" ? "Under ₹25k" : priceRange === "25K_50K" ? "₹25k - ₹50k" : "Above ₹50k"}
+                    </span>
+                    <span className={styles.chipRemove}>&times;</span>
+                  </button>
+                )}
+                {searchQuery.trim() && (
+                  <button
+                    type="button"
+                    className={styles.activeChip}
+                    onClick={() => {
+                      setSearchQuery("");
+                      const params = new URLSearchParams(window.location.search);
+                      params.delete("search");
+                      const newUrl = params.toString() ? `/shop?${params.toString()}` : "/shop";
+                      router.replace(newUrl, { scroll: false });
+                    }}
+                    title="Clear search term"
+                  >
+                    <span>&quot;{searchQuery}&quot;</span>
+                    <span className={styles.chipRemove}>&times;</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={styles.resetAllBtn}
+                  onClick={handleClearAllFilters}
+                >
+                  Clear all
+                </button>
+              </div>
+            </div>
           )}
-          {priceRange !== "ALL" && (
-            <button
-              type="button"
-              className={styles.chip}
-              onClick={() => setPriceRange("ALL")}
-              title="Remove price filter"
-            >
-              {priceRange === "UNDER_25K"
-                ? "Under ₹25k"
-                : priceRange === "25K_50K"
-                ? "₹25k - ₹50k"
-                : "Above ₹50k"}{" "}
-              <span>&times;</span>
-            </button>
-          )}
-          {searchQuery.trim() && (
-            <button
-              type="button"
-              className={styles.chip}
-              onClick={() => {
-                setSearchQuery("");
-                const params = new URLSearchParams(window.location.search);
-                params.delete("search");
-                const newUrl = params.toString() ? `/shop?${params.toString()}` : "/shop";
-                router.replace(newUrl, { scroll: false });
-              }}
-              title="Clear search term"
-            >
-              &quot;{searchQuery}&quot; <span>&times;</span>
-            </button>
-          )}
-          <button
-            type="button"
-            className={styles.clearAllLink}
-            onClick={handleClearAllFilters}
-          >
-            Reset all
-          </button>
-          <span className={styles.chipsProductCount}>
-            ({filteredProducts.length} {filteredProducts.length === 1 ? "fixture" : "fixtures"})
-          </span>
         </div>
-      )}
+      </section>
 
       {/* LUXURY SLIDE-OUT DRAWER */}
       {isDrawerOpen && (
@@ -540,10 +653,10 @@ function ShopContent() {
       <section className={styles.productsSection}>
         <div className={styles.productGrid}>
           {loading ? (
-            <p style={{ gridColumn: "1 / -1", textAlign: "center", padding: "3rem" }}>Loading products...</p>
+            <p className={styles.loadingMessage}>Loading fixtures...</p>
           ) : currentProducts.length === 0 ? (
-            <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "3rem 1rem" }}>
-              <p style={{ fontSize: "1.2rem", marginBottom: "1rem", color: "var(--color-text)" }}>
+            <div className={styles.emptyStateContainer}>
+              <p className={styles.emptyStateText}>
                 No fixtures found matching your search or filters.
               </p>
               <button
@@ -581,6 +694,9 @@ function ShopContent() {
                         className={styles.productImage}
                       />
                     </Link>
+
+                    {/* Wishlist Button */}
+                    <WishlistButton product={product} variant="floating" />
 
                     {isOutOfStock && (
                       <span className={styles.outOfStockBadge}>Out of Stock</span>
@@ -624,6 +740,7 @@ function ShopContent() {
                       <button
                         type="button"
                         className={styles.addToCartBtn}
+                        disabled={addingProductId === pId}
                         onClick={(e) => {
                           e.preventDefault();
                           if (!isAuthenticated) {
@@ -633,45 +750,69 @@ function ShopContent() {
                             );
                             return;
                           }
+                          setAddingProductId(pId);
                           dispatch(addToCart(product));
+                          setTimeout(() => setAddingProductId(null), 500);
                         }}
                         aria-label="Add to cart"
                       >
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.4"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <line x1="12" y1="5" x2="12" y2="19"></line>
-                          <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
+                        {addingProductId === pId ? (
+                          <svg style={{ animation: "spin 0.75s linear infinite" }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                            <path d="M12 2a10 10 0 0 1 10 10" />
+                          </svg>
+                        ) : (
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                          </svg>
+                        )}
                       </button>
                     )}
                   </div>
 
                   <div className={styles.productInfo}>
+                    <div className={styles.productTopRow}>
+                      {product.product_category &&
+                      product.product_category.trim() &&
+                      product.product_category.toLowerCase() !== "null" &&
+                      product.product_category.toLowerCase() !== "undefined" ? (
+                        <span className={styles.productCategory}>
+                          {product.product_category.replace(/_/g, " ")}
+                        </span>
+                      ) : (
+                        <span />
+                      )}
+                      {product.product_rating && Number(product.product_rating) > 0 ? (
+                        <div className={styles.productRating}>
+                          <svg
+                            className={styles.starIcon}
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                          >
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                          </svg>
+                          <span>{product.product_rating} / 5</span>
+                        </div>
+                      ) : null}
+                    </div>
+
                     <div className={styles.productInfoRow}>
                       <Link href={`/product/${pId}`} className={styles.productNameLink}>
                         <h4 className={styles.productName}>{product.product_title}</h4>
                       </Link>
                       <div className={styles.productPrice}>₹{product.product_price}</div>
-                    </div>
-                    <div className={styles.productRating}>
-                      <svg
-                        className={styles.starIcon}
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                      </svg>
-                      <span>{product.product_rating ? `${product.product_rating} / 5` : "Not rated yet"}</span>
                     </div>
                   </div>
                 </div>
@@ -709,9 +850,8 @@ function ShopContent() {
               return (
                 <div
                   key={pageNum}
-                  className={`${styles.pageItem} ${
-                    currentPage === pageNum ? styles.pageActive : ""
-                  }`}
+                  className={`${styles.pageItem} ${currentPage === pageNum ? styles.pageActive : ""
+                    }`}
                   onClick={() => handlePageChange(pageNum)}
                 >
                   {pageNum}

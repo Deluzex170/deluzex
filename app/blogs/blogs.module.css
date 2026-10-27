@@ -7,7 +7,7 @@
   position: relative;
   height: 60vh;
   min-height: 400px;
-  margin-top: -68px;
+  margin-top: -65px;
   /* pull up behind fixed transparent header */
   padding: 68px 2rem 2.5rem;
   display: flex;
@@ -35,25 +35,25 @@
 }
 
 .heroSub {
-  font-size: 1.1rem;
+  font-size: 2rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.18em;
   color: #D8A56E;
-  margin-top: 5rem;
+  margin-top: 3rem;
   margin-bottom: 0.35rem;
 }
 
 .heroTitle {
   font-family: var(--font-libre), serif;
-  font-size: 4rem;
+  font-size: 3.8rem;
   line-height: 1.1;
   margin-bottom: 1.5rem;
 }
 
 .heroDesc {
-  font-size: 0.95rem;
-  line-height: 1.25;
+  font-size: 1.60rem;
+  line-height: 1;
   opacity: 0.9;
   margin-bottom: 0.45rem;
 }
@@ -430,8 +430,8 @@
   color: #FFFFFF;
   padding: 0.55rem 1.85rem;
   border-radius: 8px;
-  font-size: 0.88rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 700;
   border: none;
   cursor: pointer;
   text-decoration: none;
@@ -454,7 +454,7 @@
   color: #D8A56E;
   padding: 0.55rem 1.85rem;
   border-radius: 8px;
-  font-size: 0.88rem;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   text-decoration: none;

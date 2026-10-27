@@ -33,12 +33,20 @@ def read_products(
     
 @router.get("/{product_id}")
 def read_product(product_id: str):
+    doc = None
     try:
         obj_id = ObjectId(product_id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid product_id format")
+        doc = db.products.find_one({"_id": obj_id})
+    except Exception:
+        pass
 
-    doc = db.products.find_one({"_id": obj_id})
+    if doc is None:
+        doc = (
+            db.products.find_one({"slug": product_id})
+            or db.products.find_one({"sku": product_id})
+            or db.products.find_one({"product_title": product_id})
+        )
+
     if doc is None:
         raise HTTPException(status_code=404, detail="Product not found")
     return models.Product(**doc)
@@ -73,6 +81,7 @@ async def create_product(
     replenishment: Optional[str] = Form(None),
     whatsapp_number: Optional[str] = Form(None),
     phone_number: Optional[str] = Form(None),
+    amazon_link: Optional[str] = Form(None),
     specifications: Optional[str] = Form(None),
     technical_spec_pdf: Optional[UploadFile] = File(None),
     technical_spec_pdf_url: Optional[str] = Form(None),
@@ -150,6 +159,7 @@ async def create_product(
             replenishment=replenishment,
             whatsapp_number=whatsapp_number,
             phone_number=phone_number,
+            amazon_link=amazon_link.strip() if (amazon_link and amazon_link.strip()) else None,
             specifications=parsed_specs if isinstance(parsed_specs, list) else [],
             technical_spec_pdf=pdf_url
         )
@@ -212,6 +222,7 @@ async def update_product(
     replenishment: Optional[str] = Form(None),
     whatsapp_number: Optional[str] = Form(None),
     phone_number: Optional[str] = Form(None),
+    amazon_link: Optional[str] = Form(None),
     specifications: Optional[str] = Form(None),
     technical_spec_pdf: Optional[UploadFile] = File(None),
     technical_spec_pdf_url: Optional[str] = Form(None),
@@ -276,6 +287,9 @@ async def update_product(
     if replenishment is not None: product.replenishment = replenishment
     if whatsapp_number is not None: product.whatsapp_number = whatsapp_number
     if phone_number is not None: product.phone_number = phone_number
+    if amazon_link is not None:
+        trimmed_amazon = amazon_link.strip()
+        product.amazon_link = trimmed_amazon if trimmed_amazon else None
 
     if specifications is not None:
         try:

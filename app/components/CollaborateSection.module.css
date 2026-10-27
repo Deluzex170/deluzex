@@ -45,8 +45,8 @@
 
 .collaborateTagline {
   font-family: var(--font-italianno), cursive;
-  font-size: 42px;
-  color: #D8A56E;
+  font-size: 48px;
+  color: #C28928;
   margin: 0 0 8px;
   line-height: 1;
   letter-spacing: 0.02em;
@@ -54,20 +54,20 @@
 
 .collaborateTitle {
   font-family: var(--font-libre), 'Adobe Arabic', serif;
-  font-size: 42px;
-  color: #2E3340;
-  font-weight: 400;
+  font-size: 46px;
+  color: #141722;
+  font-weight: 500;
   line-height: 1.18;
   letter-spacing: -0.01em;
   margin: 0 0 20px;
 }
 
 .collaborateDesc {
-  font-family: var(--font-adobe-arabic, 'Adobe Arabic', sans-serif);
-  font-size: 15.5px;
-  color: #636875;
-  line-height: 1.6;
-  margin: 0 0 14px;
+  font-family: var(--font-hanken), 'Hanken Grotesk', sans-serif;
+  font-size: 18px;
+  color: #2D303B;
+  line-height: 1.65;
+  margin: 0 0 16px;
   letter-spacing: 0.01em;
 }
 
@@ -80,21 +80,23 @@
 }
 
 .btnSubmitDesign {
-  background: #D8A56E;
+  background: #C89B60;
   color: #FFFFFF;
   border: none;
   border-radius: 8px;
-  padding: 12px 32px;
-  font-size: 18px;
-  font-weight: 500;
+  padding: 14px 34px;
+  font-size: 19px;
+  font-weight: 700;
   letter-spacing: 0.02em;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 4px 12px rgba(216, 165, 110, 0.3);
+  box-shadow: 0 6px 20px rgba(200, 155, 96, 0.35);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
+  font-family: var(--font-hanken), 'Hanken Grotesk', sans-serif;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
 .btnSubmitDesign:hover {
@@ -111,12 +113,13 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: #2E3340;
-  font-size: 17px;
-  font-weight: 500;
+  color: #141722;
+  font-size: 19px;
+  font-weight: 600;
   text-decoration: none;
   transition: all 0.25s ease;
   padding: 8px 4px;
+  font-family: var(--font-hanken), 'Hanken Grotesk', sans-serif;
 }
 
 .linkLearnHow span {

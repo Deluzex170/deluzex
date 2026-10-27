@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Request
 from typing import List, Optional
 from bson import ObjectId
 from app import models
@@ -38,30 +38,51 @@ def read_category(identifier: str):
 
 @router.post("", response_model=models.Category)
 async def create_category(
-    name: str = Form(...),
+    request: Request,
+    name: Optional[str] = Form(None),
     category_id: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
     image_file: Optional[UploadFile] = File(None),
+    image: Optional[UploadFile] = File(None),
     image_url: Optional[str] = Form(None),
     current_user: models.User = Depends(get_current_active_admin)
 ):
     """
-    Create a new category in MongoDB.
+    Create a new category in MongoDB. Supports both JSON and multipart form data.
     """
-    final_image_url = image_url
-    if image_file:
+    content_type = request.headers.get("content-type", "")
+    final_name = name
+    final_cat_id = category_id
+    final_desc = description
+    final_img_url = image_url
+
+    if "application/json" in content_type:
         try:
-            final_image_url = await upload_image_to_imagekit(image_file, folder="/categories")
+            body = await request.json()
+            final_name = body.get("name", final_name)
+            final_cat_id = body.get("category_id", final_cat_id)
+            final_desc = body.get("description", final_desc)
+            final_img_url = body.get("image_url", final_img_url)
+        except Exception:
+            pass
+
+    if not final_name or not str(final_name).strip():
+        raise HTTPException(status_code=422, detail="Category name is required.")
+
+    upload_target = image_file or image
+    if upload_target:
+        try:
+            final_img_url = await upload_image_to_imagekit(upload_target, folder="/categories")
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Image upload failed: {str(e)}")
 
-    cat_id = category_id or name.strip().lower().replace(" ", "-")
+    cat_id = final_cat_id or str(final_name).strip().lower().replace(" ", "-")
 
     category_dict = {
-        "name": name.strip(),
+        "name": str(final_name).strip(),
         "category_id": cat_id,
-        "description": description.strip() if description else None,
-        "image_url": final_image_url
+        "description": str(final_desc).strip() if final_desc else None,
+        "image_url": final_img_url
     }
     
     result = db.categories.insert_one(category_dict)
@@ -72,15 +93,18 @@ async def create_category(
 @router.put("/{identifier}", response_model=models.Category)
 async def update_category(
     identifier: str,
+    request: Request,
     name: Optional[str] = Form(None),
     category_id: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
+    image_file: Optional[UploadFile] = File(None),
     image_url: Optional[str] = Form(None),
     current_user: models.User = Depends(get_current_active_admin)
 ):
     """
     Update an existing category in MongoDB by _id (ObjectId) or category_id.
+    Supports both JSON and multipart form data.
     """
     query = None
     if ObjectId.is_valid(identifier):
@@ -97,18 +121,39 @@ async def update_category(
     if not doc:
         raise HTTPException(status_code=404, detail="Category not found")
 
-    updates = {}
-    if name is not None:
-        updates["name"] = name.strip()
-    if category_id is not None:
-        updates["category_id"] = category_id.strip()
-    if description is not None:
-        updates["description"] = description.strip()
-    if image_url is not None:
-        updates["image_url"] = image_url
-    if image:
+    content_type = request.headers.get("content-type", "")
+    final_name = name
+    final_cat_id = category_id
+    final_desc = description
+    final_img_url = image_url
+
+    if "application/json" in content_type:
         try:
-            updates["image_url"] = await upload_image_to_imagekit(image, folder="/categories")
+            body = await request.json()
+            if "name" in body:
+                final_name = body.get("name")
+            if "category_id" in body:
+                final_cat_id = body.get("category_id")
+            if "description" in body:
+                final_desc = body.get("description")
+            if "image_url" in body:
+                final_img_url = body.get("image_url")
+        except Exception:
+            pass
+
+    updates = {}
+    if final_name is not None:
+        updates["name"] = str(final_name).strip()
+    if final_cat_id is not None:
+        updates["category_id"] = str(final_cat_id).strip()
+    if final_desc is not None:
+        updates["description"] = str(final_desc).strip()
+    if final_img_url is not None:
+        updates["image_url"] = final_img_url
+    upload_target = image or image_file
+    if upload_target:
+        try:
+            updates["image_url"] = await upload_image_to_imagekit(upload_target, folder="/categories")
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Image upload failed: {str(e)}")
 

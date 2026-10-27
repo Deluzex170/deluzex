@@ -148,7 +148,7 @@ export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalP
   const state = shipAddr.state || "Maharashtra";
   const pincode = shipAddr.pin_code || shipAddr.postal_code || shipAddr.pincode || shipAddr.zip || "400001";
 
-  const paymentMethod = order.payment_method || order.paymentMethod || "Online (Razorpay / UPI)";
+  const paymentMethod = order.payment_method || order.paymentMethod || "Online Payment (UPI / Cards)";
   const paymentStatus = (order.payment_status || order.status || "Paid").toUpperCase();
 
   const handlePrint = () => {

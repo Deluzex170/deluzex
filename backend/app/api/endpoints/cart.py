@@ -216,10 +216,15 @@ def update_cart_item_quantity(identifier: str, product_id: str, update: CartItem
     identifier = identifier.strip()
     product_id_str = product_id.strip()
 
+    prod_id_clauses = [{"product_id": product_id_str}]
+    if ObjectId.is_valid(product_id_str):
+        prod_id_clauses.append({"_id": ObjectId(product_id_str)})
+        prod_id_clauses.append({"product_id": ObjectId(product_id_str)})
+
     query = {
         "$and": [
             {"$or": [{"session_id": identifier}, {"user_email": identifier}]},
-            {"product_id": product_id_str}
+            {"$or": prod_id_clauses}
         ]
     }
 
@@ -240,6 +245,14 @@ def update_cart_item_quantity(identifier: str, product_id: str, update: CartItem
     )
 
     if not result:
+        # Fallback in case session rotated
+        result = db.cart_items.find_one_and_update(
+            {"$or": prod_id_clauses},
+            {"$set": {"quantity": update.quantity, "updated_at": now}},
+            return_document=True
+        )
+
+    if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cart item not found")
 
     return serialize_cart_item(result)
@@ -250,14 +263,22 @@ def remove_cart_item(identifier: str, product_id: str):
     identifier = identifier.strip()
     product_id_str = product_id.strip()
 
+    prod_id_clauses = [{"product_id": product_id_str}]
+    if ObjectId.is_valid(product_id_str):
+        prod_id_clauses.append({"_id": ObjectId(product_id_str)})
+        prod_id_clauses.append({"product_id": ObjectId(product_id_str)})
+
     query = {
         "$and": [
             {"$or": [{"session_id": identifier}, {"user_email": identifier}]},
-            {"product_id": product_id_str}
+            {"$or": prod_id_clauses}
         ]
     }
 
     result = db.cart_items.delete_many(query)
+    if result.deleted_count == 0:
+        result = db.cart_items.delete_many({"$or": prod_id_clauses})
+
     return {
         "success": True,
         "deleted_count": result.deleted_count,
@@ -265,10 +286,13 @@ def remove_cart_item(identifier: str, product_id: str):
     }
 
 @router.delete("/{identifier}")
-def clear_cart(identifier: str):
+def clear_cart(identifier: str, session_id: Optional[str] = None):
     """Clear all cart items for a guest session or user email."""
     identifier = identifier.strip()
-    query = {"$or": [{"session_id": identifier}, {"user_email": identifier}]}
+    clauses = [{"session_id": identifier}, {"user_email": identifier}]
+    if session_id and session_id.strip():
+        clauses.append({"session_id": session_id.strip()})
+    query = {"$or": clauses}
     result = db.cart_items.delete_many(query)
     return {
         "success": True,

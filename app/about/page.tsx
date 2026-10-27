@@ -3,11 +3,13 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { fetchSiteContent, fetchProjects } from "../services/api";
+import AnimatedCounter from "../components/animations/AnimatedCounter";
+import ProjectsCarousel from "../components/ProjectsCarousel";
 
 export const dynamic = "force-dynamic";
 
 export default async function About() {
-  const [cmsAbout, projects] = await Promise.all([fetchSiteContent("about"), fetchProjects("is_featured=true")]);
+  const [cmsAbout, allProjects] = await Promise.all([fetchSiteContent("about"), fetchProjects()]);
 
   const heroTitle = cmsAbout?.hero?.title || "Crafting Light For\nExtraordinary Interiors";
   const storyTitle = cmsAbout?.story?.title || "A Passion For Light.\nA Commitment To Excellence.";
@@ -21,7 +23,14 @@ export default async function About() {
 
   const features = cmsAbout?.story?.features || defaultFeatures;
 
-  const stats = cmsAbout?.stats || [];
+  const defaultStats = [
+    { number: "10+", label: "Years Of Excellence", image: "/images/project_lounge_1784107767735.jpg" },
+    { number: "99%", label: "Client Satisfaction", image: "/images/about_chandelier_1784107790569.jpg" },
+    { number: "50+", label: "Lighting Installations", image: "/images/project_lobby_1784107778993.jpg" },
+    { number: "100+", label: "Happy Customers", image: "/images/project_lounge_1784107767735.jpg" },
+  ];
+
+  const stats = (cmsAbout?.stats && cmsAbout.stats.length > 0) ? cmsAbout.stats : defaultStats;
 
   const defaultPillars = [
     {
@@ -82,7 +91,7 @@ export default async function About() {
         </div>
       </section>
 
-      {/* PASSION SECTION */}
+      {/* PASSION / OUR STORY SECTION */}
       <section className={styles.passionSection}>
         <div className={styles.passionContent}>
           <div className={styles.passionText}>
@@ -95,6 +104,7 @@ export default async function About() {
                 </React.Fragment>
               ))}
             </h2>
+            <div className={styles.sectionDivider}></div>
             <p className={styles.passionDesc}>
               {cmsAbout?.story?.description || (
                 <>
@@ -112,24 +122,27 @@ export default async function About() {
                   idx === 0
                     ? "/images/logos/BespokeDesign.svg"
                     : idx === 1
-                    ? "/images/logos/HandcraftedExcellence.svg"
-                    : "/images/logos/PremiumCraftmanship.svg";
+                      ? "/images/logos/HandcraftedExcellence.svg"
+                      : "/images/logos/PremiumCraftmanship.svg";
                 const iconSrc =
                   f.icon && typeof f.icon === "string" && f.icon.startsWith("/images/")
                     ? f.icon
                     : defaultIcon;
 
                 return (
-                  <div key={idx} className={styles.iconItem}>
-                    <Image
-                      src={iconSrc}
-                      alt={f.title || "Feature"}
-                      width={68}
-                      height={68}
-                      className={styles.featureSvg}
-                    />
-                    <span>{f.title}</span>
-                  </div>
+                  <React.Fragment key={idx}>
+                    {idx > 0 && <div className={styles.featureDivider}></div>}
+                    <div className={styles.iconItem}>
+                      <Image
+                        src={iconSrc}
+                        alt={f.title || "Feature"}
+                        width={46}
+                        height={46}
+                        className={styles.featureSvg}
+                      />
+                      <span className={styles.featureLabel}>{f.title}</span>
+                    </div>
+                  </React.Fragment>
                 );
               })}
             </div>
@@ -139,31 +152,41 @@ export default async function About() {
               src={cmsAbout?.story?.image || "/images/project_lounge_1784107767735.jpg"}
               alt="Passion for Light"
               fill
+              className={styles.passionImg}
               style={{ objectFit: "cover" }}
             />
           </div>
         </div>
-      </section>
 
-      {/* STATS SECTION */}
-      <section className={styles.statsBanner}>
-        {stats.map((st: any, idx: number) => (
-          <div key={idx} className={styles.statCard}>
-            <div className={styles.statCardBg}>
-              <Image
-                src={st.image || "/images/stats_trophy.jpg"}
-                alt={st.label || "Statistic"}
-                fill
-                style={{ objectFit: "cover" }}
-              />
-            </div>
-            <div className={styles.statCardOverlay}></div>
-            <div className={styles.statCardContent}>
-              <h3 className={styles.statNumber}>{st.number}</h3>
-              <p className={styles.statLabel}>{st.label}</p>
-            </div>
-          </div>
-        ))}
+        {/* Stats Row */}
+        <div className={styles.statsBanner}>
+          {stats.map((st: any, idx: number) => {
+            const rawNum = String(st.number || "");
+            const numVal = parseInt(rawNum.replace(/\D/g, ""), 10) || 0;
+            const suffixVal = rawNum.replace(/[0-9]/g, "") || "+";
+
+            return (
+              <div key={idx} className={styles.statCard}>
+                <Image
+                  src={st.image || "/images/project_lounge_1784107767735.jpg"}
+                  alt={st.label || "Statistic"}
+                  fill
+                  className={styles.statCardImg}
+                  style={{ objectFit: "cover" }}
+                />
+                <div className={styles.statCardOverlay}>
+                  <AnimatedCounter
+                    target={numVal}
+                    suffix={suffixVal}
+                    className={styles.statNumber}
+                    duration={2 + idx * 0.2}
+                  />
+                  <span className={styles.statLabel}>{st.label}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </section>
 
       {/* WHY CHOOSE US SECTION */}
@@ -218,22 +241,11 @@ export default async function About() {
 
       {/* FEATURED PROJECTS */}
       <section className={styles.projectsSection}>
-        <h2 className={styles.sectionTitleCenter}>Our Featured Projects.</h2>
-        <div className={styles.projectGrid}>
-          {projects.slice(0, 2).map((project) => <Link key={project.id || project._id} href={`/projects/${project.id || project._id}`} className={styles.projectCard}>
-            {project.image_url && <Image src={project.image_url} alt={project.title} fill style={{ objectFit: "cover" }} />}
-            <div className={styles.projectLabelBox}><div>
-              <span className={styles.plbTitle}>{project.title}</span>
-              <span className={styles.plbSub}>View Details &gt;</span>
-            </div></div>
-          </Link>)}
-          {projects.length === 0 && <p>No projects available yet.</p>}
-        </div>
-        <div className={styles.centerBtn}>
-          <Link href="/projects" className={styles.btnExploreProjects}>
-            Explore All Projects
-          </Link>
-        </div>
+        <h2 className={styles.projectsTitle}>Our Featured Projects</h2>
+        <ProjectsCarousel projects={allProjects} />
+        <Link href="/projects" className={styles.btnExploreProjects}>
+          Explore All Projects
+        </Link>
       </section>
 
       {/* CTA SECTION */}
