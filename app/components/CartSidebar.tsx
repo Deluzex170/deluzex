@@ -574,11 +574,8 @@ export default function CartSidebar() {
             disabled={cartItems.length === 0 || isBelowMinOrder || isNavigatingCheckout}
             onClick={handleCheckout}
             title={isBelowMinOrder ? "Cart amount is below minimum order value" : "Proceed to Checkout"}
-          >
-            {isBelowMinOrder ? `Min. Order ₹${shippingRules.min_order_value.toLocaleString("en-IN")} Required` : "Proceed to Checkout"}
-            >
             style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
-          
+          >
             {isNavigatingCheckout ? (
               <>
                 <svg
@@ -595,6 +592,8 @@ export default function CartSidebar() {
                 </svg>
                 <span>Proceeding to Checkout...</span>
               </>
+            ) : isBelowMinOrder ? (
+              `Min. Order ₹${shippingRules.min_order_value.toLocaleString("en-IN")} Required`
             ) : (
               "Proceed to Checkout"
             )}

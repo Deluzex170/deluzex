@@ -238,7 +238,6 @@ export interface Product {
   product_main_image?: string;
   product_images?: string[];
 
-  slug?: string;
   product_wattage?: string;
   sku?: string;
   stock_status?: string;
