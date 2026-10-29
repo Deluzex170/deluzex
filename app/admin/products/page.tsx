@@ -231,7 +231,7 @@ export default function AdminProducts() {
           marginBottom: "1.25rem",
         }}
       >
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
           <button
             type="button"
             onClick={() => setFilterTab("all")}
@@ -303,7 +303,7 @@ export default function AdminProducts() {
         </div>
 
         {/* Search */}
-        <div style={{ position: "relative", minWidth: "260px" }}>
+        <div style={{ position: "relative", minWidth: "min(260px, 100%)" }}>
           <Search
             size={16}
             style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}

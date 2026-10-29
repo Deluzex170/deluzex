@@ -268,7 +268,7 @@ export default function AdminTestimonialsPage() {
     return (
       <div className={styles.sectionContainer} style={{ width: "100%", maxWidth: "100%", margin: 0 }}>
         {/* Navigation Breadcrumb */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
           <button
             onClick={backToList}
             type="button"
@@ -370,7 +370,7 @@ export default function AdminTestimonialsPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(360px, 100%), 1fr))",
                 gap: "2.5rem",
                 padding: "2rem",
               }}
@@ -386,7 +386,7 @@ export default function AdminTestimonialsPage() {
                   </p>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+                <div className={styles.formGrid2} style={{ display: "grid", gap: "1.25rem" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                     <label className={styles.formLabel}>Author Name *</label>
                     <input
@@ -465,7 +465,7 @@ export default function AdminTestimonialsPage() {
 
                 {/* Avatar Photo Source Selector */}
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
                     <label className={styles.formLabel} style={{ margin: 0 }}>
                       Portrait Source
                     </label>
@@ -616,9 +616,11 @@ export default function AdminTestimonialsPage() {
             <div
               style={{
                 display: "flex",
+                flexWrap: "wrap",
+                gap: "1rem",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "1.5rem 2rem",
+                padding: "1.5rem clamp(1rem, 4vw, 2rem)",
                 background: "#f8fafc",
                 borderTop: "1px solid var(--admin-border)",
               }}
@@ -631,7 +633,7 @@ export default function AdminTestimonialsPage() {
               >
                 Cancel
               </button>
-              <div style={{ display: "flex", gap: "1rem" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
                 <button
                   type="submit"
                   disabled={submitting}

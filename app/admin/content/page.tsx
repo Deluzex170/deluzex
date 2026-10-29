@@ -261,6 +261,8 @@ export default function AdminContentPage() {
           marginBottom: "1.75rem",
           borderBottom: "1px solid var(--admin-border)",
           paddingBottom: "0.75rem",
+          overflowX: "auto",
+          scrollbarWidth: "none",
         }}
       >
         <button
@@ -268,6 +270,8 @@ export default function AdminContentPage() {
           onClick={() => setActiveTab("homepage")}
           style={{
             padding: "0.65rem 1.5rem",
+            flexShrink: 0,
+            whiteSpace: "nowrap",
             borderRadius: "8px",
             border: activeTab === "homepage" ? "1px solid var(--admin-primary)" : "1px solid var(--admin-border)",
             background: activeTab === "homepage" ? "var(--admin-primary)" : "#ffffff",
@@ -290,6 +294,8 @@ export default function AdminContentPage() {
           onClick={() => setActiveTab("about")}
           style={{
             padding: "0.65rem 1.5rem",
+            flexShrink: 0,
+            whiteSpace: "nowrap",
             borderRadius: "8px",
             border: activeTab === "about" ? "1px solid var(--admin-primary)" : "1px solid var(--admin-border)",
             background: activeTab === "about" ? "var(--admin-primary)" : "#ffffff",
@@ -312,6 +318,8 @@ export default function AdminContentPage() {
           onClick={() => setActiveTab("site_settings")}
           style={{
             padding: "0.65rem 1.5rem",
+            flexShrink: 0,
+            whiteSpace: "nowrap",
             borderRadius: "8px",
             border: activeTab === "site_settings" ? "1px solid var(--admin-primary)" : "1px solid var(--admin-border)",
             background: activeTab === "site_settings" ? "var(--admin-primary)" : "#ffffff",
@@ -346,7 +354,7 @@ export default function AdminContentPage() {
               </p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "2rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(340px, 100%), 1fr))", gap: "2rem" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                   <label className={styles.formLabel}>Cursive Tagline</label>
@@ -393,7 +401,7 @@ export default function AdminContentPage() {
                   />
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div className={styles.formGrid2} style={{ display: "grid", gap: "1rem" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                     <label className={styles.formLabel}>Button 1 Label</label>
                     <input
@@ -498,7 +506,7 @@ export default function AdminContentPage() {
               </p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+            <div className={styles.formGrid2} style={{ display: "grid", gap: "1.5rem" }}>
               <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                 <label className={styles.formLabel}>Highlighted Gold Phrase</label>
                 <textarea
@@ -542,7 +550,7 @@ export default function AdminContentPage() {
               </p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "2rem", marginBottom: "2rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(340px, 100%), 1fr))", gap: "2rem", marginBottom: "2rem" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                   <label className={styles.formLabel}>Section Headline</label>
@@ -611,7 +619,7 @@ export default function AdminContentPage() {
             <label className={styles.formLabel} style={{ marginBottom: "0.75rem", display: "block" }}>
               Key Statistics Cards (4 Columns)
             </label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))", gap: "1rem" }}>
               {(homepageData.story?.stats || []).map((st: any, idx: number) => (
                 <div
                   key={idx}
@@ -669,7 +677,7 @@ export default function AdminContentPage() {
               </h3>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+            <div className={styles.formGrid2} style={{ display: "grid", gap: "1.5rem" }}>
               <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                 <label className={styles.formLabel}>Banner Title</label>
                 <input
@@ -717,7 +725,7 @@ export default function AdminContentPage() {
               </h3>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "2rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(340px, 100%), 1fr))", gap: "2rem" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                   <label className={styles.formLabel}>Hero Headline</label>
@@ -749,7 +757,7 @@ export default function AdminContentPage() {
                   />
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div className={styles.formGrid2} style={{ display: "grid", gap: "1rem" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                     <label className={styles.formLabel}>Hero Link Text</label>
                     <input
@@ -824,7 +832,7 @@ export default function AdminContentPage() {
               </h3>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "2rem", marginBottom: "1.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(340px, 100%), 1fr))", gap: "2rem", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                   <label className={styles.formLabel}>Story Headline</label>
@@ -892,7 +900,7 @@ export default function AdminContentPage() {
             <label className={styles.formLabel} style={{ marginBottom: "0.75rem", display: "block" }}>
               3 Key Feature Highlights (Under Story)
             </label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
+            <div className={styles.formGrid3} style={{ display: "grid", gap: "1rem" }}>
               {(aboutData.story?.features || []).map((f: any, idx: number) => (
                 <div key={idx} style={{ background: "#f8fafc", padding: "1rem", borderRadius: "10px", border: "1px solid var(--admin-border)" }}>
                   <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--admin-primary)" }}>Feature #{idx + 1}</span>
@@ -923,7 +931,7 @@ export default function AdminContentPage() {
               </h3>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "2rem", marginBottom: "1.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(340px, 100%), 1fr))", gap: "2rem", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                   <label className={styles.formLabel}>Section Title</label>
@@ -991,7 +999,7 @@ export default function AdminContentPage() {
             <label className={styles.formLabel} style={{ marginBottom: "0.75rem", display: "block" }}>
               4 Value Pillars (Title &amp; Description)
             </label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))", gap: "1rem" }}>
               {(aboutData.why_choose_us?.items || []).map((it: any, idx: number) => (
                 <div key={idx} style={{ background: "#f8fafc", padding: "1rem", borderRadius: "10px", border: "1px solid var(--admin-border)" }}>
                   <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--admin-primary)" }}>Pillar #{idx + 1}</span>
@@ -1045,7 +1053,7 @@ export default function AdminContentPage() {
               </h3>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: "1.5rem" }}>
               <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                 <label className={styles.formLabel}>Brand Name</label>
                 <input
@@ -1121,7 +1129,7 @@ export default function AdminContentPage() {
               </p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: "1.5rem" }}>
               {/* Amazon Link */}
               <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                 <label className={styles.formLabel} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -1177,7 +1185,7 @@ export default function AdminContentPage() {
               </h3>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+            <div className={styles.formGrid2} style={{ display: "grid", gap: "1.5rem" }}>
               <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                 <label className={styles.formLabel}>WhatsApp URL / Number</label>
                 <input

@@ -675,31 +675,168 @@
   color: #FFFFFF;
 }
 
+/* ─── Responsive grid helpers for page forms (desktop columns unchanged) ─── */
+.formGrid2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.formGrid3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+@media (max-width: 900px) {
+  .formGrid3 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ─── Mobile / Tablet Drawer Controls (hidden on desktop) ─── */
+.mobileTopBar,
+.drawerCloseBtn {
+  display: none;
+}
+
+.overlay {
+  display: none;
+}
+
 /* ─── Mobile Overrides ─── */
 @media (max-width: 1024px) {
+  .dashboardContainer {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
+  }
   .mainContent {
-    padding: 1.5rem 1.25rem;
+    padding: 0 1.25rem 3rem;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+  /* Lock the content behind the open drawer */
+  .dashboardContainer[data-drawer-open] .mainContent {
+    overflow: hidden;
   }
   .sidebar {
     position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
+    max-width: 85vw;
     z-index: 200;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .sidebarCollapsed {
     transform: translateX(-100%);
+    box-shadow: none;
+    visibility: hidden;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.3s;
   }
   .sidebarOpen {
     transform: translateX(0);
+    visibility: visible;
+  }
+  .overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 150;
+  }
+  .drawerCloseBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 0.35rem;
+    right: 0.1rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid var(--admin-border);
+    color: var(--admin-text-muted);
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+  .drawerCloseBtn:hover,
+  .drawerCloseBtn:focus-visible {
+    color: var(--admin-primary);
+    border-color: var(--admin-primary);
+  }
+  .mobileTopBar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: sticky;
+    top: 0;
+    z-index: 120;
+    margin: 0 -1.25rem 1.25rem;
+    padding: 0.65rem 1.25rem;
+    background: var(--sidebar-bg);
+    border-bottom: 1px solid var(--admin-border);
+    min-height: 56px;
+  }
+  .mobileMenuBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    color: var(--admin-text-main);
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+  .mobileMenuBtn:hover,
+  .mobileMenuBtn:focus-visible {
+    color: var(--admin-primary);
+    border-color: var(--admin-primary);
+  }
+  .mobileTopBarTitle {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--admin-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mobileTopBarLogo {
+    height: 22px;
+    width: 80px;
+    object-fit: contain;
+    object-position: right center;
+    flex-shrink: 0;
+  }
+
+  /* Shared content safety: let form controls and media shrink with their container */
+  .mainContent input,
+  .mainContent select,
+  .mainContent textarea {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .mainContent img,
+  .mainContent video,
+  .mainContent iframe {
+    max-width: 100%;
+  }
+  .headerRow {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 1rem;
   }
 }
 
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
-  z-index: 150;
-}
 
 /* ─── Modals & Forms ─── */
 .modalOverlay {
@@ -1130,3 +1267,37 @@
   color: #0F172A !important;
 }
 
+
+/* ─── Small-screen overrides (kept last so they win over the base rules above) ─── */
+@media (max-width: 640px) {
+  .mainContent {
+    padding: 0 1rem 2.5rem;
+  }
+  .mobileTopBar {
+    margin: 0 -1rem 1rem;
+    padding: 0.6rem 1rem;
+  }
+  .sectionTitle {
+    font-size: 1.5rem;
+  }
+  .gridCols2,
+  .formGrid2,
+  .formGrid3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .modalOverlay {
+    padding: 1rem 0.75rem;
+  }
+  .modalHeader,
+  .modalBody,
+  .modalFooter {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .modalFooter {
+    flex-wrap: wrap;
+  }
+  .modalConfirmCard {
+    padding: 1.5rem 1.25rem;
+  }
+}

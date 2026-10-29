@@ -446,7 +446,7 @@ export default function AdminProjectsPage() {
     return (
       <div className={styles.sectionContainer} style={{ width: "100%", maxWidth: "100%", margin: 0 }}>
         {/* Navigation Breadcrumb */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
           <button
             onClick={backToList}
             type="button"
@@ -539,7 +539,7 @@ export default function AdminProjectsPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(360px, 100%), 1fr))",
                 gap: "2.5rem",
                 padding: "2rem",
               }}
@@ -568,7 +568,7 @@ export default function AdminProjectsPage() {
                   />
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+                <div className={styles.formGrid2} style={{ display: "grid", gap: "1.25rem" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                     <label className={styles.formLabel}>Location</label>
                     <input
@@ -598,7 +598,7 @@ export default function AdminProjectsPage() {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+                <div className={styles.formGrid2} style={{ display: "grid", gap: "1.25rem" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                     <label className={styles.formLabel}>Subtitle / Scope</label>
                     <input
@@ -624,7 +624,7 @@ export default function AdminProjectsPage() {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
+                <div className={styles.formGrid3} style={{ display: "grid", gap: "1rem" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                     <label className={styles.formLabel}>Year / Completion</label>
                     <input
@@ -662,7 +662,7 @@ export default function AdminProjectsPage() {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+                <div className={styles.formGrid2} style={{ display: "grid", gap: "1.25rem" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                     <label className={styles.formLabel}>Sequence Priority Number</label>
                     <input
@@ -1060,7 +1060,7 @@ export default function AdminProjectsPage() {
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(min(140px, 100%), 1fr))",
                         gap: "0.75rem",
                         maxHeight: "340px",
                         overflowY: "auto",
@@ -1569,7 +1569,7 @@ export default function AdminProjectsPage() {
         </div>
 
         {/* Search Input */}
-        <div style={{ position: "relative", minWidth: "260px" }}>
+        <div style={{ position: "relative", minWidth: "min(260px, 100%)" }}>
           <Search
             size={16}
             style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}

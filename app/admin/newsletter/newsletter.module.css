@@ -408,3 +408,50 @@
   color: var(--admin-text-subtle, #444);
   margin-bottom: 1rem;
 }
+
+/* ─── Responsive: tablet & mobile (desktop unchanged) ─── */
+@media (max-width: 1024px) {
+  .container {
+    padding: 0.5rem 0 3rem;
+  }
+  .tableWrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .controlsBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .tabs {
+    max-width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  .tabBtn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .searchForm {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+  .table {
+    min-width: 640px;
+  }
+}
+
+@media (max-width: 768px) {
+  .titleArea h1 {
+    flex-wrap: wrap;
+    font-size: 1.5rem;
+  }
+}

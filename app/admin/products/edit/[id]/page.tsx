@@ -226,11 +226,11 @@ export default function EditProduct() {
         </p>
       </div>
 
-      <div style={{ background: 'var(--color-white)', borderRadius: '12px', padding: '2rem', width: '100%', maxWidth: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
+      <div style={{ background: 'var(--color-white)', borderRadius: '12px', padding: 'clamp(1rem, 4vw, 2rem)', width: '100%', maxWidth: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
         {loading ? (
           <p>Loading product details...</p>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <form onSubmit={handleSubmit} className={styles.formGrid2} style={{ display: 'grid', gap: '1.5rem' }}>
             
             {/* BASIC INFO */}
             <div style={{ gridColumn: '1 / -1' }}>
@@ -599,7 +599,7 @@ export default function EditProduct() {
                 {(currentGallery.length > 0 || newGalleryFiles.length > 0) ? (
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(min(130px, 100%), 1fr))',
                     gap: '0.85rem',
                     marginTop: '1rem',
                   }}>

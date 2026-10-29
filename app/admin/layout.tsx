@@ -51,6 +51,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     };
   }, []);
 
+  // The sidebar state is shared with the storefront, so always enter the admin with the drawer closed
+  React.useEffect(() => {
+    setSidebarOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Let Escape close the mobile/tablet drawer
+  React.useEffect(() => {
+    if (!sidebarOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSidebarOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [sidebarOpen, setSidebarOpen]);
+
   React.useEffect(() => {
     if (!loading && !isLoginPage) {
       if (!isAuthenticated) {
@@ -147,17 +163,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   ];
 
+  const isItemActive = (path: string) => pathname === path || (path !== "/admin" && pathname.startsWith(path));
+  const activeItemName =
+    menuItems.flatMap((group) => group.items).find((item) => isItemActive(item.path))?.name || "Admin";
+
   return (
     <div className={`${styles.adminRoot} ${plusJakarta.variable} ${jetbrainsMono.variable} ${plusJakarta.className}`} data-admin-root data-theme={theme}>
-      <div className={styles.dashboardContainer}>
+      <div className={styles.dashboardContainer} data-drawer-open={sidebarOpen ? "true" : undefined}>
         {/* Sidebar */}
-        <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarCollapsed}`}>
+        <aside
+          id="admin-sidebar"
+          className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarCollapsed}`}
+          aria-label="Admin navigation"
+        >
           <div className={styles.sidebarInner}>
             <div style={{
               padding: "0.85rem 0.75rem 1.15rem 0.75rem",
               borderBottom: "1px solid var(--admin-border)",
-              marginBottom: "0.5rem"
+              marginBottom: "0.5rem",
+              position: "relative"
             }}>
+              {/* Drawer close button (hidden on desktop via CSS) */}
+              <button
+                type="button"
+                className={styles.drawerCloseBtn}
+                onClick={() => setSidebarOpen(false)}
+                aria-label="Close navigation menu"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
               <Link href="/" title="Back to Storefront" style={{ display: "flex", flexDirection: "column", gap: "0.45rem", textDecoration: "none" }}>
                 <img
                   src={theme === "light" ? "/images/logos/de_luzex_black.svg" : "/images/logos/de_luzex_white.svg"}
@@ -189,7 +226,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <h4 className={styles.groupTitle}>{group.group}</h4>
                 <ul className={styles.menuList}>
                   {group.items.map((item, i) => {
-                    const isActive = pathname === item.path || (item.path !== '/admin' && pathname.startsWith(item.path));
+                    const isActive = isItemActive(item.path);
                     return (
                       <li key={i}>
                         <Link
@@ -293,6 +330,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         )}
 
         <main className={styles.mainContent}>
+          {/* Mobile/tablet top bar with the drawer toggle (hidden on desktop via CSS) */}
+          <div className={styles.mobileTopBar}>
+            <button
+              type="button"
+              className={styles.mobileMenuBtn}
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open navigation menu"
+              aria-controls="admin-sidebar"
+              aria-expanded={sidebarOpen}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+            <span className={styles.mobileTopBarTitle}>{activeItemName}</span>
+            <img
+              src={theme === "light" ? "/images/logos/de_luzex_black.svg" : "/images/logos/de_luzex_white.svg"}
+              alt="De Luzex"
+              className={styles.mobileTopBarLogo}
+            />
+          </div>
           {children}
         </main>
       </div>

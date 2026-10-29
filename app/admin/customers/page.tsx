@@ -374,7 +374,7 @@ export default function AdminCustomersPage() {
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
               <div style={{ background: "var(--admin-bg)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
                 <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase" }}>Email Address</div>
                 <div style={{ fontWeight: 500, color: "var(--admin-text-main)", marginTop: "0.25rem" }}>

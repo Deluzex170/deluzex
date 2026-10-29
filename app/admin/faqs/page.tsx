@@ -151,7 +151,7 @@ export default function AdminFaqsPage() {
   };
 
   return (
-    <div style={{ padding: "1.5rem 2rem", maxWidth: "1280px", margin: "0 auto" }}>
+    <div style={{ padding: "1.5rem min(2rem, 4vw)", maxWidth: "1280px", margin: "0 auto" }}>
       {/* Toast Notification */}
       {toastMsg && (
         <div
@@ -159,6 +159,7 @@ export default function AdminFaqsPage() {
             position: "fixed",
             bottom: "2rem",
             right: "2rem",
+            maxWidth: "calc(100vw - 4rem)",
             background: "#0f172a",
             color: "#ffffff",
             padding: "0.85rem 1.4rem",
@@ -403,8 +404,10 @@ export default function AdminFaqsPage() {
               borderRadius: "16px",
               maxWidth: "580px",
               width: "100%",
+              maxHeight: "calc(100dvh - 2rem)",
+              overflowY: "auto",
               boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
-              padding: "2rem",
+              padding: "clamp(1.25rem, 4vw, 2rem)",
               position: "relative",
             }}
             onClick={(e) => e.stopPropagation()}
@@ -477,7 +480,7 @@ export default function AdminFaqsPage() {
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.25rem" }}>
+              <div className={styles.formGrid2} style={{ display: "grid", gap: "1rem", marginBottom: "1.25rem" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#334155", marginBottom: "0.4rem" }}>
                     Category

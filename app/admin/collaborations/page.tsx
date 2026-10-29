@@ -124,7 +124,7 @@ export default function AdminCollaborationsPage() {
   };
 
   return (
-    <div style={{ padding: "1.5rem 2rem", maxWidth: "1400px", margin: "0 auto" }}>
+    <div style={{ padding: "1.5rem min(2rem, 4vw)", maxWidth: "1400px", margin: "0 auto" }}>
       {/* Toast Notification */}
       {toastMsg && (
         <div
@@ -132,6 +132,7 @@ export default function AdminCollaborationsPage() {
             position: "fixed",
             bottom: "2rem",
             right: "2rem",
+            maxWidth: "calc(100vw - 4rem)",
             background: "#0f172a",
             color: "#ffffff",
             padding: "0.85rem 1.4rem",
@@ -150,7 +151,7 @@ export default function AdminCollaborationsPage() {
       )}
 
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.75rem" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", justifyContent: "space-between", alignItems: "center", marginBottom: "1.75rem" }}>
         <div>
           <h1 style={{ fontSize: "1.6rem", fontWeight: 700, color: "#0f172a", margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <Lightbulb color="#C49A45" size={26} />
@@ -183,7 +184,7 @@ export default function AdminCollaborationsPage() {
       </div>
 
       {/* Metric Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "1rem", marginBottom: "1.75rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(210px, 100%), 1fr))", gap: "1rem", marginBottom: "1.75rem" }}>
         <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
           <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 600, textTransform: "uppercase" }}>Total Submissions</span>
           <div style={{ fontSize: "1.85rem", fontWeight: 700, color: "#0f172a", marginTop: "0.35rem" }}>{totalCount}</div>
@@ -534,7 +535,7 @@ export default function AdminCollaborationsPage() {
 
             {/* Designer Profile Card */}
             <div style={{ background: "#f8fafc", borderRadius: "10px", padding: "1.25rem", marginBottom: "1.5rem", border: "1px solid #e2e8f0" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div className={styles.formGrid2} style={{ display: "grid", gap: "1rem" }}>
                 <div>
                   <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>Designer Name</div>
                   <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "#0f172a", marginTop: "0.15rem" }}>{selectedSubmission.name}</div>
@@ -585,7 +586,7 @@ export default function AdminCollaborationsPage() {
             </div>
 
             {/* Additional Info */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+            <div className={styles.formGrid2} style={{ display: "grid", gap: "1rem", marginBottom: "1.5rem" }}>
               <div style={{ background: "#f8fafc", padding: "0.85rem", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
                 <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>Manufactured / Prototyped Before?</div>
                 <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "#0f172a", marginTop: "0.2rem", textTransform: "capitalize" }}>

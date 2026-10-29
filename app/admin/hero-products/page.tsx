@@ -288,7 +288,7 @@ export default function AdminHeroProducts() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(360px, 100%), 1fr))",
                 gap: "2rem",
                 alignItems: "start",
               }}

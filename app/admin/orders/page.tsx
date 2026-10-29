@@ -522,12 +522,13 @@ export default function AdminOrdersPage() {
                   borderRadius: "10px",
                   padding: "1rem 1.15rem",
                   display: "flex",
+                  flexWrap: "wrap",
                   justifyContent: "space-between",
                   alignItems: "center",
                   gap: "1rem",
                 }}
               >
-                <div>
+                <div style={{ flex: "1 1 220px", minWidth: 0 }}>
                   <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "#ffffff", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                     <span>🚀 Shiprocket Automated Logistics</span>
                     {selectedOrder.awb_code && (

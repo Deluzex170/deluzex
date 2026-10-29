@@ -11,8 +11,8 @@ export default function MainSidebar() {
   const { isAdmin } = useAuth();
   const pathname = usePathname();
 
-  // Do not render on dashboard pages, because dashboard has its own sidebar
-  if (pathname.startsWith("/dashboard")) return null;
+  // Do not render on dashboard or admin pages, because they have their own sidebars
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) return null;
 
   return (
     <>

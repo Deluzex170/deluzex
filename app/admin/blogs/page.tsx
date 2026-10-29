@@ -312,7 +312,7 @@ export default function AdminBlogsPage() {
     return (
       <div className={styles.sectionContainer} style={{ width: "100%", maxWidth: "100%", margin: 0 }}>
         {/* Navigation Breadcrumb */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
           <button
             onClick={backToList}
             type="button"
@@ -405,7 +405,7 @@ export default function AdminBlogsPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(360px, 100%), 1fr))",
                 gap: "2.5rem",
                 padding: "2rem",
               }}
@@ -434,7 +434,7 @@ export default function AdminBlogsPage() {
                   />
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+                <div className={styles.formGrid2} style={{ display: "grid", gap: "1.25rem" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                     <label className={styles.formLabel}>Category *</label>
                     <select
@@ -464,7 +464,7 @@ export default function AdminBlogsPage() {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.25rem" }}>
+                <div className={styles.formGrid3} style={{ display: "grid", gap: "1.25rem" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                     <label className={styles.formLabel}>Read Time</label>
                     <input
@@ -549,7 +549,7 @@ export default function AdminBlogsPage() {
 
                 {/* Cover Image Upload */}
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
                     <label className={styles.formLabel} style={{ margin: 0 }}>
                       Cover Image
                     </label>
@@ -674,9 +674,11 @@ export default function AdminBlogsPage() {
             <div
               style={{
                 display: "flex",
+                flexWrap: "wrap",
+                gap: "1rem",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "1.5rem 2rem",
+                padding: "1.5rem clamp(1rem, 4vw, 2rem)",
                 background: "#f8fafc",
                 borderTop: "1px solid var(--admin-border)",
               }}
@@ -689,7 +691,7 @@ export default function AdminBlogsPage() {
               >
                 Cancel
               </button>
-              <div style={{ display: "flex", gap: "1rem" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
                 <button
                   type="submit"
                   disabled={submitting}
@@ -870,7 +872,7 @@ export default function AdminBlogsPage() {
         </div>
 
         {/* Search Input */}
-        <div style={{ position: "relative", minWidth: "260px" }}>
+        <div style={{ position: "relative", minWidth: "min(260px, 100%)" }}>
           <Search
             size={16}
             style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}
