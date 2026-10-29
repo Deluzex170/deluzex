@@ -66,9 +66,9 @@
 .clearCartRow {
   display: flex;
   justify-content: flex-end;
-  padding: 0.9rem 0 1.1rem;
+  padding: 0.45rem 0 0.5rem;
   border-top: 1px dashed #E2D7CC;
-  margin-top: 0.85rem;
+  margin-top: 0.45rem;
 }
 
 .clearCartBtn {
@@ -138,7 +138,7 @@
 .cartItem {
   display: flex;
   gap: 1.1rem;
-  padding: 1.25rem 0;
+  padding: 0.9rem 0;
   border-bottom: 1px solid #E8DFD5;
 }
 
@@ -284,13 +284,13 @@
 
 /* Footer / Summary */
 .footer {
-  padding: 1rem 1.5rem 1.4rem;
+  padding: 0.5rem 1.5rem 1rem;
   background: #F8F1EA;
 }
 
 .breakdownSection {
-  margin-bottom: 0.45rem;
-  padding-bottom: 0.45rem;
+  margin-bottom: 0.25rem;
+  padding-bottom: 0.25rem;
   border-bottom: 1px dashed #E0D6CB;
 }
 
@@ -318,7 +318,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.35rem;
 }
 
 .grandTotalLabel {
@@ -399,7 +399,7 @@
   }
 
   .footer {
-    padding: 1rem 1.25rem 1.5rem;
+    padding: 0.5rem 1.25rem 1rem;
   }
 
   .itemImageWrapper {
@@ -413,8 +413,8 @@
    PROMO CODE & COUPON STYLES IN CART DRAWER
    ========================================================================= */
 .promoSection {
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.65rem;
+  margin-bottom: 0.35rem;
+  padding-bottom: 0.35rem;
   border-bottom: 1px dashed #E0D6CB;
 }
 
@@ -425,7 +425,7 @@
   width: 100%;
   background: none;
   border: none;
-  padding: 0.25rem 0;
+  padding: 0.15rem 0;
   font-family: var(--font-inter), sans-serif;
   font-size: 0.8rem;
   font-weight: 600;

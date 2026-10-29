@@ -710,8 +710,8 @@
 
 .formTitle {
   font-family: 'Adobe Arabic', serif;
-  font-size: 55px;
-  color: #2E3340;
+  font-size: 46px;
+  color: #1A1A1A;
   font-weight: 400;
   line-height: 1.15;
   margin: 0 0 14px;
@@ -719,9 +719,9 @@
 
 .formDesc {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 35px;
+  font-size: 24px;
   color: #636875;
-  line-height: 1;
+  line-height: 1.35;
   margin: 0 0 32px;
 }
 
@@ -762,69 +762,103 @@
 .inputField {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 4px;
 }
 
 .inputField label {
   font-family: 'Adobe Arabic', serif;
-  font-size: 30px;
+  font-size: 24px;
   font-weight: 600;
-  color: #2E3340;
-  margin: 0px;
+  color: #1A1A1A;
+  margin: 0;
   letter-spacing: 0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.requiredStar {
+  color: #D79322;
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .inputField input {
   width: 100%;
-  height: 44px;
-  padding: 0 10px;
-  border-radius: 6px;
+  height: 48px;
+  padding: 0 14px;
+  border-radius: 8px;
   border: 1px solid #E2DCD3;
   background: #FFFFFF;
   font-size: 20px;
-  color: #2E3340;
+  color: #1A1A1A;
   outline: none;
   transition: all 0.2s ease;
   font-family: 'Adobe Arabic', sans-serif;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  box-sizing: border-box;
 }
 
 .inputField input::placeholder {
-  color: #A09E9B;
-  font-size: 20px;
+  color: #8C8275;
+  font-size: 19px;
   font-family: 'Adobe Arabic', sans-serif;
 }
 
 .inputField textarea {
   width: 100%;
-  padding: 12px 14px;
-  border-radius: 6px;
-  border: 1px solid #E8E2D8;
-  background: #FCFBF9;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #E2DCD3;
+  background: #FFFFFF;
   font-size: 20px;
-  color: #2E3340;
+  color: #1A1A1A;
   outline: none;
   transition: all 0.2s ease;
   font-family: 'Adobe Arabic', sans-serif;
   resize: vertical;
-  min-height: 95px;
+  min-height: 105px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  box-sizing: border-box;
 }
 
 .inputField textarea::placeholder {
-  color: #A09E9B;
-  font-size: 16.5px;
+  color: #8C8275;
+  font-size: 19px;
   font-family: 'Adobe Arabic', sans-serif;
 }
 
 .inputField input:focus,
 .inputField textarea:focus {
   border-color: #D79322;
-  box-shadow: 0 0 0 2px rgba(215, 147, 34, 0.15);
+  box-shadow: 0 0 0 3px rgba(215, 147, 34, 0.16);
+  background: #FFFFFF;
+}
+
+.inputError {
+  border-color: #EF4444 !important;
+  background: #FFFDFD !important;
+}
+
+.inputError:focus {
+  border-color: #EF4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+.fieldError {
+  font-family: 'Adobe Arabic', sans-serif;
+  font-size: 17px;
+  color: #DC2626;
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .inputHelper {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 18px;
-  color: #7A808C;
+  font-size: 17px;
+  color: #78716C;
   margin-top: 3px;
 }
 
@@ -834,7 +868,7 @@
   gap: 12px;
 }
 
-/* Custom Select Dropdowns matching Deluzex Theme */
+/* Custom Select Dropdowns */
 .customSelectWrapper {
   position: relative;
   width: 100%;
@@ -842,9 +876,9 @@
 
 .customSelectTrigger {
   width: 100%;
-  height: 44px;
+  height: 48px;
   padding: 0 14px;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid #E2DCD3;
   background: #FFFFFF;
   display: flex;
@@ -855,6 +889,8 @@
   transition: all 0.2s ease;
   font-family: 'Adobe Arabic', sans-serif;
   text-align: left;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  box-sizing: border-box;
 }
 
 .customSelectTrigger:hover {
@@ -863,14 +899,14 @@
 
 .customSelectTriggerOpen {
   border-color: #D79322;
-  box-shadow: 0 0 0 2px rgba(215, 147, 34, 0.18);
+  box-shadow: 0 0 0 3px rgba(215, 147, 34, 0.16);
 }
 
 .customSelectValue {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 17.5px;
-  color: #2E3340;
-  font-weight: 500;
+  font-size: 20px;
+  color: #1A1A1A;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -878,12 +914,12 @@
 
 .customSelectPlaceholder {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 16.5px;
-  color: #A09E9B;
+  font-size: 19px;
+  color: #8C8275;
 }
 
 .customSelectChevron {
-  color: #D79322;
+  color: #D8A56E;
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
   margin-left: 8px;
@@ -927,37 +963,37 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 5px;
+  padding: 8px 14px;
+  border-radius: 6px;
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 17.5px;
-  color: #2E3340;
+  font-size: 19px;
+  color: #1A1A1A;
   cursor: pointer;
   transition: all 0.15s ease;
   user-select: none;
 }
 
 .customSelectOption:hover {
-  background: #F8F3EC;
-  color: #D79322;
+  background: rgba(216, 165, 110, 0.12);
+  color: #B87310;
 }
 
 .customSelectOptionSelected {
-  background: #F8F3EC;
-  color: #D79322;
+  background: rgba(216, 165, 110, 0.14);
+  color: #B87310;
   font-weight: 600;
 }
 
-/* Radio Choice */
+/* Radio Choices */
 .radioGroup {
-  margin: 6px 0 12px;
+  margin: 10px 0 12px;
 }
 
 .radioLabel {
   font-family: 'Adobe Arabic', serif;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
-  color: #2E3340;
+  color: #1A1A1A;
   margin-bottom: 8px;
   display: block;
   letter-spacing: 0.01em;
@@ -966,16 +1002,34 @@
 .radioChoices {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 32px;
 }
 
 .radioOption {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 4px 0;
+  border-radius: 0;
+  border: none;
+  background: transparent;
   cursor: pointer;
   position: relative;
   user-select: none;
+  transition: opacity 0.2s ease;
+  box-shadow: none;
+}
+
+.radioOption:hover {
+  border: none;
+  background: transparent;
+  opacity: 0.85;
+}
+
+.radioOptionActive {
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .radioOption input[type="radio"] {
@@ -983,19 +1037,22 @@
   opacity: 0;
   width: 0;
   height: 0;
+  pointer-events: none;
 }
 
 .customRadio {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
   border-radius: 50%;
-  border: 1.5px solid #2E3340;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
+  border: 1.5px solid #8C8275;
+  background: #FFFFFF;
+  display: grid;
+  place-items: center;
+  transition: border-color 0.2s ease;
   flex-shrink: 0;
+  padding: 0;
+  margin: 0;
 }
 
 .customRadioChecked {
@@ -1003,57 +1060,78 @@
 }
 
 .customRadioDot {
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
   border-radius: 50%;
   background: #D79322;
+  margin: 0;
+  padding: 0;
+  display: block;
 }
 
 .radioText {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 500;
-  color: #2E3340;
+  color: #1A1A1A;
+}
+
+.radioOptionActive .radioText {
+  color: #1A1A1A;
+  font-weight: 500;
 }
 
 /* Drop Zone Upload Box */
 .uploadDropZone {
-  border: 1px solid #EFEAE2;
-  border-radius: 8px;
-  background: #FCFBF9;
-  padding: 22px 18px 20px;
+  border: 1.5px dashed #D8A56E;
+  border-radius: 12px;
+  background: #FDFBF8;
+  padding: 26px 20px 22px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .uploadDropZone:hover {
+  border-color: #B87310;
+  background: #FAF6F0;
+  box-shadow: 0 4px 14px rgba(216, 165, 110, 0.12);
+}
+
+.uploadDropZoneError {
+  border-color: #EF4444 !important;
+  background: #FFF9F9 !important;
+}
+
+.uploadDropZoneSelected {
+  border-style: solid;
   border-color: #D79322;
-  background: #FFFFFF;
+  background: rgba(216, 165, 110, 0.08);
 }
 
 .uploadIcon {
-  color: #7A808C;
+  color: #D8A56E;
   margin-bottom: 2px;
 }
 
 .uploadTitle {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 18px;
+  font-size: 21px;
   font-weight: 600;
-  color: #4A4E58;
+  color: #1A1A1A;
   margin: 6px 0 2px;
 }
 
 .uploadSub {
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 14.5px;
-  color: #9A9EA6;
-  margin: 0 0 12px;
+  font-size: 17px;
+  color: #78716C;
+  margin: 0 0 14px;
 }
 
 .uploadBtn {
@@ -1061,34 +1139,57 @@
   background: #D79322;
   color: #FFFFFF;
   border: none;
-  border-radius: 6px;
-  padding: 7px 24px;
-  font-size: 16px;
+  border-radius: 9999px;
+  padding: 8px 24px;
+  font-size: 18px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.15s;
+  box-shadow: 0 2px 6px rgba(215, 147, 34, 0.25);
 }
 
 .uploadBtn:hover {
-  background: #BF801C;
+  background: #B87310;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(215, 147, 34, 0.35);
+}
+
+.uploadRemoveBtn {
+  font-family: 'Adobe Arabic', sans-serif;
+  background: transparent;
+  color: #DC2626;
+  border: 1px solid #DC2626;
+  border-radius: 9999px;
+  padding: 7px 18px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.uploadRemoveBtn:hover {
+  background: #DC2626;
+  color: #FFFFFF;
 }
 
 /* Checkbox Terms */
 .termsCheckbox {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-family: 'Adobe Arabic', sans-serif;
-  font-size: 16.5px;
-  color: #636875;
-  margin: 14px 0 18px;
+  font-size: 18px;
+  color: #4A4E58;
+  margin: 14px 0 12px;
   cursor: pointer;
+  user-select: none;
 }
 
 .termsCheckbox input {
   accent-color: #D79322;
-  width: 15px;
-  height: 15px;
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
 }
 
 .btnSubmitForm {
@@ -1099,8 +1200,8 @@
   color: #FFFFFF;
   border: none;
   border-radius: 8px;
-  padding: 14px 48px;
-  font-size: 19px;
+  padding: 12px 48px;
+  font-size: 22px;
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
