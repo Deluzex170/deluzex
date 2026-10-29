@@ -76,9 +76,14 @@ const cartSlice = createSlice({
       state.cartTotal = calculateTotal(state.cartItems);
     },
     updateQuantity: (state, action: PayloadAction<{ id: string | number, change: number }>) => {
-      const item = state.cartItems.find(i => i.id === action.payload.id);
-      if (item) {
-        item.quantity = Math.max(1, item.quantity + action.payload.change);
+      const itemIndex = state.cartItems.findIndex(i => i.id === action.payload.id);
+      if (itemIndex !== -1) {
+        const newQty = state.cartItems[itemIndex].quantity + action.payload.change;
+        if (newQty <= 0) {
+          state.cartItems.splice(itemIndex, 1);
+        } else {
+          state.cartItems[itemIndex].quantity = newQty;
+        }
       }
       state.cartTotal = calculateTotal(state.cartItems);
     },

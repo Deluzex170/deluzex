@@ -1147,20 +1147,18 @@ export default function ProductDetail() {
           <div ref={ctlGridRef} className={styles.ctlGrid}>
             {relatedProducts.map((prod: any, i: number) => {
               const prodId = prod._id || prod.id || i;
-              const isSelected = activeCtlId === prodId;
+              const productUrl = `/product/${prod.slug || prod._id || prod.id}`;
               return (
                 <div
                   key={prodId}
                   className={styles.productCard}
-                  onClick={() => setActiveCtlId(isSelected ? null : prodId)}
+                  onClick={() => router.push(productUrl)}
+                  style={{ cursor: "pointer" }}
                 >
-                  <div className={`${styles.productImageWrapper} ${isSelected ? styles.productCardFeatured : ""}`}>
-                    <div
+                  <div className={styles.productImageWrapper}>
+                    <Link
+                      href={productUrl}
                       className={styles.productImageLink}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveCtlId(isSelected ? null : prodId);
-                      }}
                     >
                       <Image
                         src={prod.product_main_image || "/images/logos/de_luzex_black.svg"}
@@ -1169,7 +1167,8 @@ export default function ProductDetail() {
                         sizes="350px"
                         className={styles.productImg}
                       />
-                    </div>
+                    </Link>
+                    <WishlistButton product={prod} variant="floating" />
                     <button
                       type="button"
                       className={styles.productQuickAddBtn}
@@ -1217,7 +1216,7 @@ export default function ProductDetail() {
 
                   <div className={styles.productInfoRow}>
                     <Link
-                      href={`/product/${prod._id || prod.id}`}
+                      href={productUrl}
                       className={styles.productTitleLink}
                       onClick={(e) => {
                         e.stopPropagation();

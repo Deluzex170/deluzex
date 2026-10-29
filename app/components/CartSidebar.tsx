@@ -60,13 +60,13 @@ export default function CartSidebar() {
         .then((res) => {
           if (Array.isArray(res)) setAvailableOffers(res);
         })
-        .catch(() => {});
+        .catch(() => { });
 
       fetchPublicShippingSettings()
         .then((rules) => {
           if (rules) setShippingRules(rules);
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [isCartOpen]);
 
@@ -108,7 +108,7 @@ export default function CartSidebar() {
             setPromoError(res.message || "Coupon no longer meets criteria.");
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     } else if (subtotal === 0 && appliedCoupon) {
       dispatch(removeAppliedCoupon());
     }
@@ -290,7 +290,7 @@ export default function CartSidebar() {
               {isFreeShipping ? (
                 "🎉 You unlocked FREE White-Glove Shipping!"
               ) : (
-                <>Add <strong style={{ color: "#ffffff" }}>₹{freeShippingDiff.toLocaleString("en-IN")}</strong> more to unlock <strong>FREE Delivery</strong></>
+                <>Add <strong style={{ color: "#000000" }}>₹{freeShippingDiff.toLocaleString("en-IN")}</strong> more to unlock <strong>FREE Delivery</strong></>
               )}
             </div>
           </div>
@@ -330,7 +330,7 @@ export default function CartSidebar() {
                     <div className={styles.quantity}>
                       <button
                         type="button"
-                        onClick={() => dispatch(updateQuantity({ id: item.id, change: -1 }))}
+                        onClick={() => { if (item.quantity <= 1) { dispatch(removeFromCart(item.id)); } else { dispatch(updateQuantity({ id: item.id, change: -1 })); } }}
                         aria-label="Decrease quantity"
                       >
                         −
