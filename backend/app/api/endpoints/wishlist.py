@@ -14,7 +14,7 @@ def serialize_wishlist_item(doc: dict) -> dict:
     if not doc:
         return {}
     doc_copy = dict(doc)
-    doc_copy["id"] = str(doc_copy.get("_id", ""))
+    doc_copy["id"] = str(doc_copy.pop("_id", ""))
     return doc_copy
 
 @router.get("", response_model=List[WishlistItemResponse])
