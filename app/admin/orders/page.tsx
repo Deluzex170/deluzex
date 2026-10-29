@@ -356,7 +356,11 @@ export default function AdminOrdersPage() {
               <tbody>
                 {orders.map((ord) => {
                   const idStr = ord.id || ord._id || ord.order_id || "DLX";
-                  const displayId = idStr.length > 10 ? `#${idStr.slice(-8).toUpperCase()}` : `#${idStr}`;
+                  const displayId = ord.order_number
+                    ? `#${ord.order_number}`
+                    : (idStr.length >= 24
+                        ? `#DLX-${new Date(ord.created_at || Date.now()).getFullYear().toString().slice(-2)}${String(new Date(ord.created_at || Date.now()).getMonth() + 1).padStart(2, "0")}-${idStr.slice(-4).toUpperCase()}`
+                        : `#${idStr}`);
                   const address = ord.shipping_address;
                   const customerName =
                     ord.customer_name ||

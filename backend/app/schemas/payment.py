@@ -38,6 +38,7 @@ class CreateOrderRequest(BaseModel):
 class CreateOrderResponse(BaseModel):
     success: bool
     order_id: str
+    order_number: Optional[str] = None
     razorpay_order_id: str
     amount: int
     currency: str
@@ -58,6 +59,7 @@ class VerifyPaymentRequest(BaseModel):
 class VerifyPaymentResponse(BaseModel):
     success: bool
     order_id: str
+    order_number: Optional[str] = None
     message: str
 
 
@@ -81,6 +83,7 @@ class CodOrderRequest(BaseModel):
 class CodOrderResponse(BaseModel):
     success: bool
     order_id: str
+    order_number: Optional[str] = None
     message: str
 
 

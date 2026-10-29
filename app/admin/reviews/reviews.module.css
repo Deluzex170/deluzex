@@ -217,12 +217,33 @@
   background: var(--admin-surface, #141414);
   border: 1px solid var(--admin-border, #242424);
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  width: 100%;
+}
+
+.tableWrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tableWrapper::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tableWrapper::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.5);
 }
 
 .table {
   width: 100%;
+  min-width: 960px;
   border-collapse: collapse;
   text-align: left;
 }

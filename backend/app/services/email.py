@@ -231,7 +231,7 @@ def send_password_reset_email(to_email: str, otp: str, user_name: str = "") -> D
 
 def build_order_confirmation_email_html(order: Dict[str, Any]) -> str:
     order_id = str(order.get("_id") or order.get("id") or "")
-    short_id = order_id[:8].upper() if order_id else "DELUXE"
+    short_id = order.get("order_number") or (order_id[:8].upper() if order_id else "DELUXE")
     
     addr = order.get("shipping_address") or {}
     first_name = addr.get("first_name", "")
@@ -404,7 +404,7 @@ def build_order_confirmation_email_html(order: Dict[str, Any]) -> str:
 
 def build_order_confirmation_email_text(order: Dict[str, Any]) -> str:
     order_id = str(order.get("_id") or order.get("id") or "")
-    short_id = order_id[:8].upper() if order_id else "DELUXE"
+    short_id = order.get("order_number") or (order_id[:8].upper() if order_id else "DELUXE")
     
     addr = order.get("shipping_address") or {}
     first_name = addr.get("first_name", "")
@@ -458,7 +458,7 @@ def send_order_confirmation_email(order: Any) -> Dict[str, Any]:
             return {"success": False, "error": "No recipient email address in order."}
 
         order_id = str(order_data.get("_id") or order_data.get("id") or "")
-        short_id = order_id[:8].upper() if order_id else "DELUXE"
+        short_id = order.get("order_number") or (order_id[:8].upper() if order_id else "DELUXE")
 
         subject = f"Order Confirmation #{short_id} - Deluzex Luxury Lighting"
         html_body = build_order_confirmation_email_html(order_data)
@@ -504,7 +504,7 @@ def build_shipping_notification_email_html(order: Dict[str, Any], tracking_numbe
     Build rich luxury responsive HTML email for order shipment dispatch.
     """
     order_id = str(order.get("_id") or order.get("id") or "")
-    short_id = order_id[:8].upper() if order_id else "DELUXE"
+    short_id = order.get("order_number") or (order_id[:8].upper() if order_id else "DELUXE")
     
     addr = order.get("shipping_address") or {}
     first_name = addr.get("first_name", "")
@@ -658,7 +658,7 @@ def build_shipping_notification_email_text(order: Dict[str, Any], tracking_numbe
     Fallback plaintext version of shipping dispatch notification.
     """
     order_id = str(order.get("_id") or order.get("id") or "")
-    short_id = order_id[:8].upper() if order_id else "DELUXE"
+    short_id = order.get("order_number") or (order_id[:8].upper() if order_id else "DELUXE")
     
     addr = order.get("shipping_address") or {}
     first_name = addr.get("first_name", "")
@@ -714,7 +714,7 @@ def send_shipping_notification_email(order: Any, tracking_number: str = "", cour
             return {"success": False, "error": "No recipient email address in order."}
 
         order_id = str(order_data.get("_id") or order_data.get("id") or "")
-        short_id = order_id[:8].upper() if order_id else "DELUXE"
+        short_id = order.get("order_number") or (order_id[:8].upper() if order_id else "DELUXE")
 
         tracking = (tracking_number or order_data.get("tracking_number") or "").strip()
         courier = (courier_partner or order_data.get("courier_partner") or "Courier Partner").strip()

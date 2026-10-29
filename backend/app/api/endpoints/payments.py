@@ -14,6 +14,7 @@ from app.core.config import settings
 from app.core.database import db
 from app import models
 from app.services.inventory import decrement_product_stock, validate_stock_availability
+from app.services.order_identifiers import generate_order_identifiers
 from app.services.email import send_order_confirmation_email
 from app.schemas.payment import (
     CodOrderRequest,
@@ -193,10 +194,12 @@ def create_order(payload: CreateOrderRequest, request: Request = None):
     try:
         razorpay_order = razorpay_service.create_razorpay_order(amount_paise, receipt)
     except ValueError as exc:
+        logger.error(f"[Payments] Configuration error: {exc}")
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Exception as exc:
+        logger.error(f"[Payments] Razorpay order creation failed: {exc}", exc_info=True)
         raise HTTPException(
-            status_code=502, detail="Failed to initialize secure payment session"
+            status_code=502, detail=f"Payment gateway session error: {str(exc)}"
         ) from exc
 
     # If existing order in pending/failed state, RESUME and update it instead of creating duplicates
@@ -268,7 +271,13 @@ def create_order(payload: CreateOrderRequest, request: Request = None):
         "status": "initiated",
     }]
 
+    pre_id = ObjectId()
+    ord_num, inv_num = generate_order_identifiers(str(pre_id), now)
+
     db_order = models.Order(
+        id=pre_id,
+        order_number=ord_num,
+        invoice_number=inv_num,
         email=payload.email,
         phone=payload.phone,
         shipping_address=payload.shipping_address,
@@ -291,9 +300,10 @@ def create_order(payload: CreateOrderRequest, request: Request = None):
         created_at=now,
     )
 
-    result = db.orders.insert_one(
-        db_order.model_dump(by_alias=True, exclude_none=True)
-    )
+    order_doc = db_order.model_dump(by_alias=True, exclude_none=True)
+    if "_id" in order_doc:
+        order_doc["_id"] = ObjectId(order_doc["_id"])
+    result = db.orders.insert_one(order_doc)
     order_id = str(result.inserted_id)
 
     record_audit_event(
@@ -312,6 +322,7 @@ def create_order(payload: CreateOrderRequest, request: Request = None):
     return CreateOrderResponse(
         success=True,
         order_id=order_id,
+        order_number=ord_num,
         razorpay_order_id=razorpay_order["id"],
         amount=amount_paise,
         currency=razorpay_order.get("currency", "INR"),
@@ -402,6 +413,13 @@ def verify_payment(payload: VerifyPaymentRequest, request: Request = None):
         db.orders.update_one({"_id": oid}, {"$set": {"order_confirmation_email_sent": True}})
     except Exception as email_err:
         logger.warning(f"Order confirmation email dispatch skipped on verify for #{payload.order_id}: {email_err}")
+
+    # Auto-push paid order & shipping address to Shiprocket (Zero wallet balance required)
+    try:
+        from app.services.shiprocket import sync_order_to_shiprocket
+        sync_order_to_shiprocket(confirmed_order)
+    except Exception as sr_err:
+        logger.warning(f"[POST /payments/verify] Automatic Shiprocket sync skipped: {sr_err}")
 
     record_audit_event(
         action="ORDER_PAYMENT_SUCCESS",
@@ -558,7 +576,13 @@ def create_cod_order(payload: CodOrderRequest, request: Request = None):
                 message="Order placed successfully via Cash on Delivery",
             )
 
+    pre_id = ObjectId()
+    ord_num, inv_num = generate_order_identifiers(str(pre_id), now)
+
     db_order = models.Order(
+        id=pre_id,
+        order_number=ord_num,
+        invoice_number=inv_num,
         email=payload.email,
         phone=payload.phone,
         shipping_address=payload.shipping_address,
@@ -575,9 +599,10 @@ def create_cod_order(payload: CodOrderRequest, request: Request = None):
         created_at=now,
     )
 
-    result = db.orders.insert_one(
-        db_order.model_dump(by_alias=True, exclude_none=True)
-    )
+    order_doc = db_order.model_dump(by_alias=True, exclude_none=True)
+    if "_id" in order_doc:
+        order_doc["_id"] = ObjectId(order_doc["_id"])
+    result = db.orders.insert_one(order_doc)
     order_id = str(result.inserted_id)
 
     # Record coupon usage and auto-deactivate if quota reached
@@ -611,6 +636,7 @@ def create_cod_order(payload: CodOrderRequest, request: Request = None):
     return CodOrderResponse(
         success=True,
         order_id=order_id,
+        order_number=ord_num,
         message="Order placed successfully via Cash on Delivery",
     )
 
@@ -1139,6 +1165,13 @@ async def razorpay_webhook(request: Request):
                     if paid_doc and not paid_doc.get("order_confirmation_email_sent"):
                         send_order_confirmation_email(paid_doc)
                         db.orders.update_one(query, {"$set": {"order_confirmation_email_sent": True}})
+
+                    if paid_doc and not paid_doc.get("shiprocket_order_id"):
+                        try:
+                            from app.services.shiprocket import sync_order_to_shiprocket
+                            sync_order_to_shiprocket(paid_doc)
+                        except Exception as sr_err:
+                            logger.warning(f"Webhook Shiprocket sync skipped: {sr_err}")
                 except Exception as email_err:
                     logger.warning(f"Webhook email dispatch skipped for {query}: {email_err}")
                 record_audit_event(

@@ -114,6 +114,17 @@ const isOrderProcessing = (status?: string) => {
   return s === "processing" || s === "pending" || s === "paid" || s === "confirmed" || s === "cod" || s === "placed";
 };
 
+function formatOrderReference(order: any): string {
+  if (order?.order_number) return `#${order.order_number}`;
+  const rawId = String(order?.id || order?._id || order?.order_id || "");
+  if (rawId.length >= 24) {
+    const d = order?.created_at ? new Date(order.created_at) : new Date();
+    const yymm = `${d.getFullYear().toString().slice(-2)}${String(d.getMonth() + 1).padStart(2, "0")}`;
+    return `#DLX-${yymm}-${rawId.slice(-4).toUpperCase()}`;
+  }
+  return rawId ? `#${rawId}` : "#DLX";
+}
+
 export default function OrdersPage() {
   const { user } = useAuth();
   const userEmail = (user as Record<string, string>)?.email || "";
@@ -262,7 +273,7 @@ export default function OrdersPage() {
     const q = search.toLowerCase().trim();
     if (!q) return statusMatch;
 
-    const matchesId = (order.order_id || order.id || "").toLowerCase().includes(q);
+    const matchesId = (order.order_number || order.order_id || order.id || "").toLowerCase().includes(q);
     const matchesItem = (order.items || []).some((item) =>
       (item.title || "").toLowerCase().includes(q)
     );
@@ -425,7 +436,7 @@ export default function OrdersPage() {
                         </div>
                       </div>
                     </td>
-                    <td className={styles.orderId}>#{order.order_id || order.id}</td>
+                    <td className={styles.orderId}>{formatOrderReference(order)}</td>
                     <td className={styles.orderDate}>{orderDate}</td>
                     <td className={styles.amount}>
                       {formatCurrency(orderTotal)}
@@ -497,7 +508,7 @@ export default function OrdersPage() {
             {/* Modal Header */}
             <div className={styles.modalHeader}>
               <div>
-                <h3>Order #{selectedOrder.order_id || selectedOrder.id}</h3>
+                <h3>Order {formatOrderReference(selectedOrder)}</h3>
                 <p>
                   Placed on {selectedOrder.date || (selectedOrder.created_at ? new Date(selectedOrder.created_at).toLocaleDateString("en-IN") : "Recent")} • {selectedOrder.payment_status || "Paid"} via {selectedOrder.payment_method || "Online"}
                 </p>

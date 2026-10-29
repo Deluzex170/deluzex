@@ -10,6 +10,7 @@ from app.api import deps
 from app.core.database import db
 from app.core.audit import record_audit_event
 from app.services.inventory import decrement_product_stock, restore_product_stock
+from app.services.order_identifiers import generate_order_identifiers
 from app.services.email import send_order_confirmation_email, send_shipping_notification_email
 from app.schemas.order import (
     OrderCancelResponse,
@@ -27,6 +28,12 @@ router = APIRouter()
 def _format_order(doc: dict) -> dict:
     """Format MongoDB order document for response serialization."""
     doc["_id"] = str(doc["_id"])
+    if not doc.get("order_number") or not doc.get("invoice_number"):
+        ord_num, inv_num = generate_order_identifiers(doc["_id"], doc.get("created_at"))
+        if not doc.get("order_number"):
+            doc["order_number"] = ord_num
+        if not doc.get("invoice_number"):
+            doc["invoice_number"] = inv_num
     return doc
 
 
@@ -66,7 +73,7 @@ def get_my_orders(
         docs = list(db.orders.find().sort("created_at", -1).skip(skip).limit(limit))
 
     logger.info(f"[GET /my-orders] Found {len(docs)} orders for user {current_user.email}")
-    return [models.Order(**doc) for doc in docs]
+    return [models.Order(**_format_order(doc)) for doc in docs]
 
 
 @router.get("/stats")
@@ -175,7 +182,7 @@ def list_orders(
         .limit(limit)
     )
     logger.info(f"[GET /orders] Query: {query} -> Found {len(docs)} orders")
-    return [models.Order(**doc) for doc in docs]
+    return [models.Order(**_format_order(doc)) for doc in docs]
 
 
 @router.get("/{order_id}", response_model=models.Order)
@@ -224,7 +231,7 @@ def get_order(
             )
 
     logger.info(f"[GET /orders/{order_id}] Successfully retrieved order")
-    return models.Order(**doc)
+    return models.Order(**_format_order(doc))
 
 
 @router.post("", response_model=models.Order, status_code=status.HTTP_201_CREATED)
@@ -235,7 +242,14 @@ def create_order(payload: OrderCreateRequest):
     initial_status = "cod" if payload.payment_method == "cod" else "pending"
     logger.info(f"[POST /orders] Creating order for email={payload.email}, total={payload.total}, payment_method={payload.payment_method}")
 
+    now = datetime.utcnow()
+    pre_id = ObjectId()
+    ord_num, inv_num = generate_order_identifiers(str(pre_id), now)
+
     db_order = models.Order(
+        id=pre_id,
+        order_number=ord_num,
+        invoice_number=inv_num,
         user_id=payload.user_id,
         email=payload.email,
         phone=payload.phone,
@@ -251,9 +265,10 @@ def create_order(payload: OrderCreateRequest):
         created_at=datetime.utcnow(),
     )
 
-    result = db.orders.insert_one(
-        db_order.model_dump(by_alias=True, exclude_none=True)
-    )
+    order_doc = db_order.model_dump(by_alias=True, exclude_none=True)
+    if "_id" in order_doc:
+        order_doc["_id"] = ObjectId(order_doc["_id"])
+    result = db.orders.insert_one(order_doc)
     db_order.id = str(result.inserted_id)
     logger.info(f"[POST /orders] Created order with ID={db_order.id}")
 
@@ -266,6 +281,13 @@ def create_order(payload: OrderCreateRequest):
         db.orders.update_one({"_id": ObjectId(db_order.id)}, {"$set": {"order_confirmation_email_sent": True}})
     except Exception as email_err:
         logger.warning(f"[POST /orders] Order confirmation email dispatch skipped for #{db_order.id}: {email_err}")
+
+    # Auto-push order & shipping address to Shiprocket (Zero wallet balance required)
+    try:
+        from app.services.shiprocket import sync_order_to_shiprocket
+        sync_order_to_shiprocket(db_order)
+    except Exception as sr_err:
+        logger.warning(f"[POST /orders] Automatic Shiprocket order sync skipped: {sr_err}")
 
     return db_order
 
@@ -364,7 +386,7 @@ def update_order_status(
         request=request
     )
 
-    return models.Order(**doc)
+    return models.Order(**_format_order(doc))
 
 
 @router.delete("/{order_id}")

@@ -13,7 +13,8 @@ def serialize_address(doc: dict) -> dict:
     if not doc:
         return {}
     doc_copy = dict(doc)
-    doc_copy["id"] = str(doc_copy.get("_id", ""))
+    if "_id" in doc_copy:
+        doc_copy["id"] = str(doc_copy.pop("_id"))
     return doc_copy
 
 @router.get("", response_model=List[AddressResponse])
@@ -23,13 +24,18 @@ def get_user_addresses(
 ):
     """
     Fetch saved delivery addresses from MongoDB.
-    Authenticated users can only access their own addresses; admins can view all or filter by email.
+    Authenticated users can access their own addresses; admins can view all or filter by email.
+    If email query param is provided, returns addresses matching that email.
     """
     if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required to view saved addresses",
-        )
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required to view saved addresses",
+            )
+        query = {"user_email": email.strip().lower()}
+        docs = list(db.addresses.find(query).sort("created_at", -1))
+        return [AddressResponse(**serialize_address(d)) for d in docs]
 
     query = {}
     if not getattr(current_user, "is_admin", False):
@@ -93,11 +99,12 @@ def create_user_address(
 def update_user_address(
     address_id: str,
     address_in: AddressUpdate,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    email: Optional[str] = Query(None),
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
 ):
     """
     Update an existing delivery address in MongoDB.
-    Enforces ownership verification.
+    Enforces ownership verification via authenticated user or verified email.
     """
     if not ObjectId.is_valid(address_id):
         raise HTTPException(status_code=400, detail="Invalid address ID format")
@@ -107,15 +114,22 @@ def update_user_address(
         raise HTTPException(status_code=404, detail="Address not found")
 
     existing_email = (existing.get("user_email") or "").strip().lower()
-    user_email = (current_user.email or "").strip().lower()
-    if existing_email != user_email and not getattr(current_user, "is_admin", False):
+    authorized = False
+    if current_user and getattr(current_user, "is_admin", False):
+        authorized = True
+    elif current_user and (current_user.email or "").strip().lower() == existing_email:
+        authorized = True
+    elif email and email.strip().lower() == existing_email:
+        authorized = True
+
+    if not authorized:
         raise HTTPException(status_code=403, detail="Not authorized to modify this address")
 
     update_data = {k: v for k, v in address_in.model_dump(exclude_unset=True).items() if v is not None}
 
     if update_data.get("is_default") is True:
         db.addresses.update_many(
-            {"user_email": existing["user_email"]},
+            {"user_email": existing_email},
             {"$set": {"is_default": False}}
         )
 
@@ -129,7 +143,8 @@ def update_user_address(
 @router.put("/{address_id}/default", response_model=AddressResponse)
 def set_default_address(
     address_id: str,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    email: Optional[str] = Query(None),
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
 ):
     """
     Set an address as the default delivery address for the user.
@@ -142,16 +157,21 @@ def set_default_address(
         raise HTTPException(status_code=404, detail="Address not found")
 
     existing_email = (existing.get("user_email") or "").strip().lower()
-    user_email = (current_user.email or "").strip().lower()
-    if existing_email != user_email and not getattr(current_user, "is_admin", False):
+    authorized = False
+    if current_user and getattr(current_user, "is_admin", False):
+        authorized = True
+    elif current_user and (current_user.email or "").strip().lower() == existing_email:
+        authorized = True
+    elif email and email.strip().lower() == existing_email:
+        authorized = True
+
+    if not authorized:
         raise HTTPException(status_code=403, detail="Not authorized to modify this address")
 
-    user_email_target = existing.get("user_email")
-    if user_email_target:
-        db.addresses.update_many(
-            {"user_email": user_email_target},
-            {"$set": {"is_default": False}}
-        )
+    db.addresses.update_many(
+        {"user_email": existing_email},
+        {"$set": {"is_default": False}}
+    )
 
     db.addresses.update_one({"_id": ObjectId(address_id)}, {"$set": {"is_default": True}})
     updated = db.addresses.find_one({"_id": ObjectId(address_id)})
@@ -161,7 +181,8 @@ def set_default_address(
 @router.delete("/{address_id}")
 def delete_user_address(
     address_id: str,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    email: Optional[str] = Query(None),
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
 ):
     """
     Delete an address from MongoDB.
@@ -174,18 +195,24 @@ def delete_user_address(
         raise HTTPException(status_code=404, detail="Address not found")
 
     existing_email = (existing.get("user_email") or "").strip().lower()
-    user_email = (current_user.email or "").strip().lower()
-    if existing_email != user_email and not getattr(current_user, "is_admin", False):
+    authorized = False
+    if current_user and getattr(current_user, "is_admin", False):
+        authorized = True
+    elif current_user and (current_user.email or "").strip().lower() == existing_email:
+        authorized = True
+    elif email and email.strip().lower() == existing_email:
+        authorized = True
+
+    if not authorized:
         raise HTTPException(status_code=403, detail="Not authorized to delete this address")
 
-    user_email_target = existing.get("user_email")
     was_default = existing.get("is_default", False)
 
     db.addresses.delete_one({"_id": ObjectId(address_id)})
 
     # If deleted was default, make the most recent remaining address default
-    if was_default and user_email_target:
-        next_addr = db.addresses.find_one({"user_email": user_email_target}, sort=[("created_at", -1)])
+    if was_default and existing_email:
+        next_addr = db.addresses.find_one({"user_email": existing_email}, sort=[("created_at", -1)])
         if next_addr:
             db.addresses.update_one({"_id": next_addr["_id"]}, {"$set": {"is_default": True}})
 

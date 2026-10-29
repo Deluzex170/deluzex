@@ -19,6 +19,8 @@ import {
   recordPaymentFailure,
   fetchUserAddresses,
   saveUserAddress,
+  updateUserAddress,
+  deleteUserAddress,
   savePlacedOrder,
   SavedAddress,
   fetchAvailableCoupons,
@@ -254,6 +256,73 @@ export default function CheckoutPage() {
     if (addr.phone) setPhone(addr.phone);
   }, []);
 
+  const [isUpdatingAddress, setIsUpdatingAddress] = useState(false);
+  const [addressUpdateMessage, setAddressUpdateMessage] = useState<string | null>(null);
+
+  const handleDeleteSavedAddress = async (addr: SavedAddress, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const addrId = addr.id || addr._id;
+    if (!addrId) return;
+    if (!window.confirm("Are you sure you want to delete this delivery address?")) return;
+
+    const activeEmail = ((user as Record<string, string>)?.email) || email || "";
+    try {
+      const ok = await deleteUserAddress(addrId, activeEmail);
+      if (ok) {
+        setSavedAddresses((prev) => {
+          const updated = prev.filter((a) => (a.id || a._id) !== addrId);
+          if (selectedAddressId === addrId) {
+            if (updated.length > 0) {
+              applyAddress(updated[0]);
+            } else {
+              setSelectedAddressId(null);
+            }
+          }
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error("Failed to delete address:", err);
+    }
+  };
+
+  const handleUpdateCurrentSavedAddress = async () => {
+    if (!selectedAddressId) return;
+    if (!firstName.trim() || !street.trim() || !city.trim() || !state.trim() || !pinCode.trim()) {
+      setErrorMessage("Please complete all required address fields before updating.");
+      return;
+    }
+
+    setIsUpdatingAddress(true);
+    setAddressUpdateMessage(null);
+    const activeEmail = ((user as Record<string, string>)?.email) || email || "";
+    try {
+      const updated = await updateUserAddress(
+        selectedAddressId,
+        {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          street: street.trim(),
+          city: city.trim(),
+          state: state.trim(),
+          pin_code: pinCode.trim(),
+          phone: phone.trim(),
+        },
+        activeEmail
+      );
+      setSavedAddresses((prev) =>
+        prev.map((a) => ((a.id || a._id) === selectedAddressId ? { ...a, ...updated } : a))
+      );
+      setAddressUpdateMessage("Saved address updated successfully!");
+      setTimeout(() => setAddressUpdateMessage(null), 4000);
+    } catch (err: any) {
+      console.error("Failed to update saved address:", err);
+      setErrorMessage(err?.message || "Failed to update saved address.");
+    } finally {
+      setIsUpdatingAddress(false);
+    }
+  };
+
   // Pre-fill user profile if logged in
   useEffect(() => {
     if (user) {
@@ -419,7 +488,8 @@ export default function CheckoutPage() {
             setFailedOrder(null);
 
             dispatch(clearCart());
-            router.push(`/checkout/success?orderId=${encodeURIComponent(params.order_id)}`);
+            const onum = (verifyRes as any)?.order_number ? `&orderNumber=${encodeURIComponent((verifyRes as any).order_number)}` : "";
+            router.push(`/checkout/success?orderId=${encodeURIComponent(params.order_id)}${onum}`);
           } else {
             throw new Error(verifyRes.message || "Payment verification could not be confirmed.");
           }
@@ -469,7 +539,8 @@ export default function CheckoutPage() {
 
         if (orderRes.is_already_paid) {
           dispatch(clearCart());
-          router.push(`/checkout/success?orderId=${encodeURIComponent(orderRes.order_id)}`);
+          const onum = (orderRes as any)?.order_number ? `&orderNumber=${encodeURIComponent((orderRes as any).order_number)}` : "";
+          router.push(`/checkout/success?orderId=${encodeURIComponent(orderRes.order_id)}${onum}`);
           return;
         }
 
@@ -623,7 +694,8 @@ export default function CheckoutPage() {
             sessionStorage.removeItem("deluzex_checkout_idem");
           }
           dispatch(clearCart());
-          router.push(`/checkout/success?orderId=${encodeURIComponent(codRes.order_id)}&method=cod`);
+          const onum = (codRes as any)?.order_number ? `&orderNumber=${encodeURIComponent((codRes as any).order_number)}` : "";
+          router.push(`/checkout/success?orderId=${encodeURIComponent(codRes.order_id)}&method=cod${onum}`);
           return;
         } else {
           throw new Error(codRes.message || "Failed to confirm Cash on Delivery order.");
@@ -837,11 +909,56 @@ export default function CheckoutPage() {
                     >
                       <div className={styles.savedItemHeader}>
                         <span className={styles.savedBadge}>{addr.type || "Home"}</span>
-                        {isSelected && (
-                          <span style={{ color: "#C89B60", fontSize: "0.85rem", fontWeight: 700 }}>
-                            ✓ Selected
-                          </span>
-                        )}
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          {isSelected && (
+                            <span style={{ color: "#C89B60", fontSize: "0.82rem", fontWeight: 700 }}>
+                              ✓ Selected
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            title="Edit / Load address into form"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              applyAddress(addr);
+                            }}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              cursor: "pointer",
+                              padding: "2px 4px",
+                              color: "#888",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            title="Delete address"
+                            onClick={(e) => handleDeleteSavedAddress(addr, e)}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              cursor: "pointer",
+                              padding: "2px 4px",
+                              color: "#c0392b",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                              <path d="M10 11v6M14 11v6" />
+                              <path d="M9 6V4h6v2" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                       <div className={styles.savedItemName}>
                         {addr.first_name} {addr.last_name}
@@ -937,6 +1054,41 @@ export default function CheckoutPage() {
                 />
               </div>
             </div>
+
+            {selectedAddressId && isAuthenticated && (
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.5rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={handleUpdateCurrentSavedAddress}
+                  disabled={isUpdatingAddress}
+                  style={{
+                    background: "rgba(200, 155, 96, 0.08)",
+                    border: "1px solid #C89B60",
+                    color: "#C89B60",
+                    borderRadius: "6px",
+                    padding: "0.45rem 0.9rem",
+                    fontSize: "0.82rem",
+                    fontWeight: 600,
+                    cursor: isUpdatingAddress ? "not-allowed" : "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.4rem",
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                    <polyline points="17 21 17 13 7 13 7 21" />
+                    <polyline points="7 3 7 8 15 8" />
+                  </svg>
+                  {isUpdatingAddress ? "Updating Address..." : "Save changes to this address"}
+                </button>
+                {addressUpdateMessage && (
+                  <span style={{ color: "#27ae60", fontSize: "0.82rem", fontWeight: 600 }}>
+                    ✓ {addressUpdateMessage}
+                  </span>
+                )}
+              </div>
+            )}
 
             {isAuthenticated && (
               <label className={styles.checkboxWrapper}>

@@ -334,7 +334,7 @@ export default function AdminContentPage() {
           }}
         >
           <Settings size={18} />
-          Site Identity &amp; Footer
+          Site Identity, Footer &amp; Invoice Settings
         </button>
       </div>
 
@@ -1110,6 +1110,123 @@ export default function AdminContentPage() {
                   type="text"
                   value={settingsData.working_hours || ""}
                   onChange={(e) => setSettingsData({ ...settingsData, working_hours: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+            </div>
+          </div>
+
+          
+          {/* Tax Invoice & Registered Entity Details */}
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+            <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                <FileText size={20} color="var(--admin-primary)" />
+                <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+                  Tax Invoice &amp; Official Company Registered Information
+                </h3>
+              </div>
+              <p style={{ margin: "0.35rem 0 0 0", fontSize: "0.85rem", color: "var(--admin-text-muted)" }}>
+                This legal business information, GSTIN, CIN, and registered address are dynamically rendered on customer tax invoices and order receipts.
+              </p>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: "1.5rem" }}>
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label className={styles.formLabel}>Legal Company Name (Registered Entity)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. De Luzex Living Pvt. Ltd."
+                  value={settingsData.legal_company_name ?? "De Luzex Living Pvt. Ltd."}
+                  onChange={(e) => setSettingsData({ ...settingsData, legal_company_name: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label className={styles.formLabel}>Atelier Subtitle</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Luxury Luminaire Atelier"
+                  value={settingsData.atelier_subtitle ?? "Luxury Luminaire Atelier"}
+                  onChange={(e) => setSettingsData({ ...settingsData, atelier_subtitle: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label className={styles.formLabel}>GSTIN (GST Identification Number)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 27AABCD1234E1Z5"
+                  value={settingsData.gstin ?? "27AABCD1234E1Z5"}
+                  onChange={(e) => setSettingsData({ ...settingsData, gstin: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label className={styles.formLabel}>CIN (Corporate Identification Number)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. U74999MH2024PTC123456"
+                  value={settingsData.cin ?? "U74999MH2024PTC123456"}
+                  onChange={(e) => setSettingsData({ ...settingsData, cin: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label className={styles.formLabel}>Invoice Concierge Email</label>
+                <input
+                  type="email"
+                  placeholder="concierge@deluzex.com"
+                  value={settingsData.invoice_email ?? (settingsData.email || "concierge@deluzex.com")}
+                  onChange={(e) => setSettingsData({ ...settingsData, invoice_email: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label className={styles.formLabel}>Invoice Concierge Phone</label>
+                <input
+                  type="text"
+                  placeholder="+91 98765 43210"
+                  value={settingsData.invoice_phone ?? (settingsData.phone || "+91 98765 43210")}
+                  onChange={(e) => setSettingsData({ ...settingsData, invoice_phone: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0, gridColumn: "span 2" }}>
+                <label className={styles.formLabel}>Registered Office Address (Line 1)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Level 14, Crest Tower, Bandra Kurla Complex"
+                  value={settingsData.address_line1 ?? "Level 14, Crest Tower, Bandra Kurla Complex"}
+                  onChange={(e) => setSettingsData({ ...settingsData, address_line1: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0, gridColumn: "span 2" }}>
+                <label className={styles.formLabel}>City, State, Pincode &amp; Country (Line 2)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Mumbai, Maharashtra, 400051 India"
+                  value={settingsData.address_line2 ?? "Mumbai, Maharashtra, 400051 India"}
+                  onChange={(e) => setSettingsData({ ...settingsData, address_line2: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0, gridColumn: "span 2" }}>
+                <label className={styles.formLabel}>Signatory / Declaration Label</label>
+                <input
+                  type="text"
+                  placeholder="e.g. For De Luzex Living Pvt. Ltd."
+                  value={settingsData.signatory_company ?? "For De Luzex Living Pvt. Ltd."}
+                  onChange={(e) => setSettingsData({ ...settingsData, signatory_company: e.target.value })}
                   className={styles.formInput}
                 />
               </div>

@@ -8,13 +8,21 @@ import styles from "../checkout.module.css";
 function SuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
+  const orderNumber = searchParams.get("orderNumber");
   // COD orders are confirmed but not yet paid, so they must not claim a confirmed payment
   const isCod = searchParams.get("method") === "cod";
   const [copied, setCopied] = useState(false);
 
+  const displayOrderRef = orderNumber
+    ? (orderNumber.startsWith("#") ? orderNumber : `#${orderNumber}`)
+    : (orderId && orderId.length === 24
+        ? `#DLX-${new Date().getFullYear().toString().slice(-2)}${String(new Date().getMonth() + 1).padStart(2, "0")}-${orderId.slice(-4).toUpperCase()}`
+        : (orderId?.startsWith("DLX-") ? `#${orderId}` : (orderId ? `#${orderId}` : "")));
+
   const handleCopyOrderId = () => {
-    if (orderId) {
-      navigator.clipboard.writeText(orderId);
+    const textToCopy = displayOrderRef || orderId || "";
+    if (textToCopy) {
+      navigator.clipboard.writeText(textToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     }
@@ -130,7 +138,7 @@ function SuccessContent() {
                 Order Reference
               </span>
               <strong style={{ fontSize: "1.05rem", color: "#2B2B2B", wordBreak: "break-all" }}>
-                {orderId}
+                {displayOrderRef}
               </strong>
             </div>
             <button
