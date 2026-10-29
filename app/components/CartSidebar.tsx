@@ -11,10 +11,12 @@ import {
   clearCart,
   setAppliedCoupon,
   removeAppliedCoupon,
+  setStockLimits,
+  getMaxQuantity,
 } from "../store/cartSlice";
 import { useAuth } from "../context/AuthContext";
 import { useRouter } from "next/navigation";
-import { fetchAvailableCoupons, validateCoupon, AvailableCoupon, fetchPublicShippingSettings, ShippingSettings } from "../services/api";
+import { fetchProductById, fetchAvailableCoupons, validateCoupon, AvailableCoupon, fetchPublicShippingSettings, ShippingSettings } from "../services/api";
 import styles from "./CartSidebar.module.css";
 
 export default function CartSidebar() {
@@ -22,7 +24,7 @@ export default function CartSidebar() {
   const { isCartOpen, cartItems, cartTotal, appliedCoupon } = useSelector(
     (state: RootState) => state.cart
   );
-  const { isAuthenticated, user } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
 
   // Promo Code State
@@ -63,6 +65,30 @@ export default function CartSidebar() {
         .catch(() => {});
     }
   }, [isCartOpen]);
+
+  // Refresh inventory caps so quantities can't be raised beyond available stock
+  const cartItemIds = cartItems.map((item) => String(item.id)).join(",");
+  useEffect(() => {
+    if (!isCartOpen || !cartItemIds) return;
+    let cancelled = false;
+    Promise.all(
+      cartItemIds.split(",").map((id) =>
+        fetchProductById(id)
+          .then((product) => [id, product] as const)
+          .catch(() => [id, null] as const)
+      )
+    ).then((results) => {
+      if (cancelled) return;
+      const limits: Record<string, number | undefined> = {};
+      for (const [id, product] of results) {
+        if (product) limits[id] = getMaxQuantity(product);
+      }
+      dispatch(setStockLimits(limits));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isCartOpen, cartItemIds, dispatch]);
 
   // Recalculate Totals with Dynamic Shipping Policy
   const subtotal = cartTotal;
@@ -147,12 +173,9 @@ export default function CartSidebar() {
     setPromoError(null);
   };
 
+  // Guests check out with just their contact details; no login required
   const handleCheckout = () => {
-    if (isAuthenticated) {
-      router.push("/checkout");
-    } else {
-      router.push("/login?redirect=/checkout");
-    }
+    router.push("/checkout");
     dispatch(closeCart());
   };
 
@@ -245,6 +268,12 @@ export default function CartSidebar() {
                       <button
                         type="button"
                         onClick={() => dispatch(updateQuantity({ id: item.id, change: 1 }))}
+                        disabled={item.maxQuantity !== undefined && item.quantity >= item.maxQuantity}
+                        title={
+                          item.maxQuantity !== undefined && item.quantity >= item.maxQuantity
+                            ? `Only ${item.maxQuantity} in stock`
+                            : undefined
+                        }
                         aria-label="Increase quantity"
                       >
                         +
@@ -279,6 +308,9 @@ export default function CartSidebar() {
                       </button>
                     </div>
                   </div>
+                  {item.maxQuantity !== undefined && item.quantity >= item.maxQuantity && (
+                    <p className={styles.stockLimitNote}>Only {item.maxQuantity} left in stock</p>
+                  )}
                 </div>
               </div>
             ))

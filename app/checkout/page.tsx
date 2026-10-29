@@ -69,7 +69,7 @@ function loadRazorpayScript(): Promise<boolean> {
 export default function CheckoutPage() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const { user } = useAuth();
+  const { user, isAuthenticated, openLoginModal } = useAuth();
   const errorRef = useRef<HTMLDivElement>(null);
   const { cartItems, cartTotal, appliedCoupon: reduxCoupon } = useSelector(
     (state: RootState) => state.cart
@@ -265,9 +265,10 @@ export default function CheckoutPage() {
     }
   }, [user, email, phone, firstName, lastName]);
 
-  // Load saved addresses for user
+  // Load saved addresses for signed-in users only (guests must not see addresses tied to a typed email)
   useEffect(() => {
-    const activeEmail = email || ((user as Record<string, string>)?.email) || "";
+    if (!isAuthenticated) return;
+    const activeEmail = ((user as Record<string, string>)?.email) || "";
     if (activeEmail) {
       fetchUserAddresses(activeEmail).then((list) => {
         setSavedAddresses(list);
@@ -277,7 +278,7 @@ export default function CheckoutPage() {
         }
       });
     }
-  }, [email, user, applyAddress, selectedAddressId]);
+  }, [isAuthenticated, user, applyAddress, selectedAddressId]);
 
   const scrollToError = () => {
     setTimeout(() => {
@@ -346,7 +347,7 @@ export default function CheckoutPage() {
       const userId = userObj?._id || userObj?.id || "";
 
       // Save address if requested
-      if (saveAddressToProfile) {
+      if (isAuthenticated && saveAddressToProfile) {
         saveUserAddress({
           user_id: userId,
           user_email: email.trim(),
@@ -622,7 +623,7 @@ export default function CheckoutPage() {
             sessionStorage.removeItem("deluzex_checkout_idem");
           }
           dispatch(clearCart());
-          router.push(`/checkout/success?orderId=${encodeURIComponent(codRes.order_id)}`);
+          router.push(`/checkout/success?orderId=${encodeURIComponent(codRes.order_id)}&method=cod`);
           return;
         } else {
           throw new Error(codRes.message || "Failed to confirm Cash on Delivery order.");
@@ -764,6 +765,18 @@ export default function CheckoutPage() {
           {/* Section 1: Contact Information */}
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>1. Contact Information</h2>
+            {!isAuthenticated && (
+              <div className={styles.guestBanner}>
+                <span>Checking out as a guest. Your order updates go to the email and phone below.</span>
+                <button
+                  type="button"
+                  className={styles.guestSignInBtn}
+                  onClick={() => openLoginModal(undefined, "Sign in to use your saved addresses and track orders in your account.")}
+                >
+                  Sign in instead
+                </button>
+              </div>
+            )}
             <div className={styles.formGroup}>
               <label className={styles.label}>Email Address (for Order Confirmation & Invoice) *</label>
               <input
@@ -925,16 +938,18 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <label className={styles.checkboxWrapper}>
-              <input
-                type="checkbox"
-                checked={saveAddressToProfile}
-                onChange={(e) => setSaveAddressToProfile(e.target.checked)}
-              />
-              <span className={styles.checkboxLabel}>
-                Save this address to my profile for fast one-click checkout in future
-              </span>
-            </label>
+            {isAuthenticated && (
+              <label className={styles.checkboxWrapper}>
+                <input
+                  type="checkbox"
+                  checked={saveAddressToProfile}
+                  onChange={(e) => setSaveAddressToProfile(e.target.checked)}
+                />
+                <span className={styles.checkboxLabel}>
+                  Save this address to my profile for fast one-click checkout in future
+                </span>
+              </label>
+            )}
           </div>
 
           {/* Section 3: Razorpay Payment Gateway Hub */}

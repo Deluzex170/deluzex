@@ -925,6 +925,11 @@
   opacity: 0.75;
 }
 
+.cartQuantityControl button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .cartQuantityControl span {
   color: white;
   font-size: 14px;

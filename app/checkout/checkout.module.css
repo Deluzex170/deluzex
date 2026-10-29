@@ -1711,3 +1711,38 @@
 }
 
 
+
+/* Guest checkout notice */
+.guestBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  background: rgba(200, 155, 96, 0.08);
+  border: 1px solid rgba(200, 155, 96, 0.3);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #4A4B54;
+  line-height: 1.5;
+}
+
+.guestSignInBtn {
+  background: none;
+  border: 1px solid #C89B60;
+  color: #8A6430;
+  border-radius: 9999px;
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.guestSignInBtn:hover {
+  background: #C89B60;
+  color: #ffffff;
+}

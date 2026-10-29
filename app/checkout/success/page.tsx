@@ -8,6 +8,8 @@ import styles from "../checkout.module.css";
 function SuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
+  // COD orders are confirmed but not yet paid, so they must not claim a confirmed payment
+  const isCod = searchParams.get("method") === "cod";
   const [copied, setCopied] = useState(false);
 
   const handleCopyOrderId = () => {
@@ -81,7 +83,7 @@ function SuccessContent() {
             marginBottom: "0.5rem",
           }}
         >
-          Payment Confirmed
+          {isCod ? "Order Confirmed" : "Payment Confirmed"}
         </span>
 
         <h1
@@ -104,7 +106,9 @@ function SuccessContent() {
             lineHeight: 1.6,
           }}
         >
-          Thank you for choosing Deluzex. Your payment has been verified and your order details are securely recorded. A confirmation email and SMS updates will be sent to you shortly.
+          {isCod
+            ? "Thank you for choosing Deluzex. Your Cash on Delivery order is confirmed — please keep the payment ready (cash or UPI) when your order arrives. A confirmation email and SMS updates will be sent to you shortly."
+            : "Thank you for choosing Deluzex. Your payment has been verified and your order details are securely recorded. A confirmation email and SMS updates will be sent to you shortly."}
         </p>
 
         {orderId && (

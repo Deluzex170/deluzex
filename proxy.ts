@@ -19,7 +19,8 @@ export function proxy(request: NextRequest) {
   
   const isAdminLogin = pathname === '/admin/login';
   const isAdminRoute = (pathname === '/admin' || pathname.startsWith('/admin/')) && !isAdminLogin;
-  const protectedRoutes = ['/checkout'];
+  // Checkout is open to guests; only account areas need a session
+  const protectedRoutes: string[] = [];
   const isProtectedRoute = protectedRoutes.some(route => pathname === route || pathname.startsWith(route + '/'));
 
   // Define routes meant only for unauthenticated regular users

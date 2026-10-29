@@ -3,8 +3,9 @@
 import styles from "./productDetail.module.css";
 import Image from "next/image";
 import Link from "next/link";
-import { useDispatch } from "react-redux";
-import { addToCart, openCart } from "../../store/cartSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart, openCart, getMaxQuantity } from "../../store/cartSlice";
+import { RootState } from "../../store/store";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useMemo } from "react";
 import {
@@ -24,6 +25,7 @@ import PincodeChecker from "../../components/PincodeChecker";
 export default function ProductDetail() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const cartItems = useSelector((state: RootState) => state.cart.cartItems);
   const { user, isAuthenticated, isAdmin, openLoginModal } = useAuth();
   const userEmail = (user as Record<string, string>)?.email || "";
   const params = useParams();
@@ -230,21 +232,31 @@ export default function ProductDetail() {
     : product.stock_status || "IN STOCK";
 
   // Action Button Handlers
+  const cartProductId = String(product.id || params.slug || "");
+  const quantityInCart = cartItems.find((item) => String(item.id) === cartProductId)?.quantity || 0;
+  const maxQuantity = getMaxQuantity(product);
+  const isAtStockLimit = maxQuantity !== undefined && quantityInCart >= maxQuantity;
+
+  const dispatchAddToCart = () =>
+    dispatch(
+      addToCart({
+        id: cartProductId,
+        product_title: product.product_title,
+        product_price: product.product_price,
+        product_main_image: currentImage || product.product_main_image,
+        quantity: 1,
+        max_quantity: maxQuantity,
+      })
+    );
+
   const handleBuyNow = () => {
     if (!product) return;
     if (isOutOfStock) {
       alert("This item is currently sold out. You can submit an inquiry below for custom commissioning.");
       return;
     }
-    dispatch(
-      addToCart({
-        id: String(product.id || params.slug || ""),
-        product_title: product.product_title,
-        product_price: product.product_price,
-        product_main_image: currentImage || product.product_main_image,
-        quantity: 1,
-      })
-    );
+    // Already holding all available units: go straight to checkout without adding more
+    if (!isAtStockLimit) dispatchAddToCart();
     router.push("/checkout");
   };
 
@@ -254,15 +266,11 @@ export default function ProductDetail() {
       alert("This item is currently out of stock.");
       return;
     }
-    dispatch(
-      addToCart({
-        id: String(product.id || params.slug || ""),
-        product_title: product.product_title,
-        product_price: product.product_price,
-        product_main_image: currentImage || product.product_main_image,
-        quantity: 1,
-      })
-    );
+    if (isAtStockLimit) {
+      alert(`Only ${maxQuantity} units available — they're all in your cart already.`);
+      return;
+    }
+    dispatchAddToCart();
     setAddedToCartToast(true);
     setTimeout(() => setAddedToCartToast(false), 2500);
   };
@@ -1151,12 +1159,11 @@ export default function ProductDetail() {
                   onClick={() => setActiveCtlId(isSelected ? null : prodId)}
                 >
                   <div className={`${styles.productImageWrapper} ${isSelected ? styles.productCardFeatured : ""}`}>
-                    <div
+                    <Link
+                      href={`/product/${prod._id || prod.id}`}
                       className={styles.productImageLink}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveCtlId(isSelected ? null : prodId);
-                      }}
+                      aria-label={`View ${prod.product_title}`}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <Image
                         src={prod.product_main_image || "/images/logos/de_luzex_black.svg"}
@@ -1165,7 +1172,7 @@ export default function ProductDetail() {
                         sizes="350px"
                         className={styles.productImg}
                       />
-                    </div>
+                    </Link>
                     <button
                       type="button"
                       className={styles.productQuickAddBtn}
@@ -1173,6 +1180,11 @@ export default function ProductDetail() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        const relatedMax = getMaxQuantity(prod);
+                        if (prod.in_stock === false || relatedMax === 0) {
+                          alert("This item is currently out of stock.");
+                          return;
+                        }
                         dispatch(
                           addToCart({
                             id: String(prod.id || prod._id || Math.random()),
@@ -1180,6 +1192,7 @@ export default function ProductDetail() {
                             price: Number(prod.product_price) || 0,
                             product_main_image: prod.product_main_image || "/images/logos/de_luzex_black.svg",
                             quantity: 1,
+                            max_quantity: relatedMax,
                           })
                         );
                         dispatch(openCart());

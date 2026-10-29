@@ -4,12 +4,11 @@ import styles from "./shop.module.css";
 import Image from "next/image";
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
-import { addToCart, updateQuantity, removeFromCart } from "../store/cartSlice";
+import { addToCart, updateQuantity, removeFromCart, getMaxQuantity } from "../store/cartSlice";
 import { RootState } from "../store/store";
 import { useEffect, useState, useMemo, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { fetchCategories, fetchProducts, Category, Product } from "../services/api";
-import { useAuth } from "../context/AuthContext";
 
 const SORT_OPTIONS = [
   { label: "Featured", value: "FEATURED" },
@@ -26,7 +25,6 @@ function ShopContent() {
   const searchParam = searchParams.get("search") || searchParams.get("q") || "";
   const priceParam = searchParams.get("price") || "ALL";
 
-  const { isAuthenticated, openLoginModal } = useAuth();
   const cartItems = useSelector((state: RootState) => state.cart.cartItems);
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -610,12 +608,14 @@ function ShopContent() {
                           type="button"
                           onClick={(e) => {
                             e.preventDefault();
-                            if (!isAuthenticated) {
-                              openLoginModal(product, "Please log in to update your cart items.");
-                              return;
-                            }
-                            dispatch(updateQuantity({ id: pId, change: 1 }));
+                            dispatch(updateQuantity({ id: pId, change: 1, max_quantity: getMaxQuantity(product) }));
                           }}
+                          disabled={cartItem.maxQuantity !== undefined && cartItem.quantity >= cartItem.maxQuantity}
+                          title={
+                            cartItem.maxQuantity !== undefined && cartItem.quantity >= cartItem.maxQuantity
+                              ? `Only ${cartItem.maxQuantity} in stock`
+                              : undefined
+                          }
                         >
                           +
                         </button>
@@ -626,14 +626,7 @@ function ShopContent() {
                         className={styles.addToCartBtn}
                         onClick={(e) => {
                           e.preventDefault();
-                          if (!isAuthenticated) {
-                            openLoginModal(
-                              product,
-                              `Please log in to add ${product.product_title || "this lamp"} to your cart.`
-                            );
-                            return;
-                          }
-                          dispatch(addToCart(product));
+                          dispatch(addToCart({ ...product, max_quantity: getMaxQuantity(product) }));
                         }}
                         aria-label="Add to cart"
                       >
