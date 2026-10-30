@@ -1987,7 +1987,7 @@ textarea.control {
 .adminRoot .mainContent :is(
   input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]),
   select
-):not(:is([class*="searchBox"], [class*="searchForm"] [class*="Box"]) *) {
+):not(:is([class*="searchBox"], [class*="searchForm"] [class*="Box"]) *):not(:where([class^="ag-"], [class*=" ag-"]) *) {
   height: var(--a-control-h) !important;
   min-height: 0 !important;
   padding-top: 0 !important;
@@ -1998,7 +1998,7 @@ textarea.control {
   box-sizing: border-box;
 }
 
-.adminRoot .mainContent textarea {
+.adminRoot .mainContent textarea:not(:where([class^="ag-"], [class*=" ag-"]) *) {
   min-height: var(--a-textarea-min);
   padding: var(--a-space-2) var(--a-space-3) !important;
   font-size: var(--a-fs-sm) !important;
@@ -2015,7 +2015,7 @@ textarea.control {
 
 /* Buttons: text buttons get one height; vertical padding never grows them.
    Buttons that set their own height (icon / round buttons) are left alone. */
-.adminRoot .mainContent button:not([style*="height"]):not([class*="close"]):not([class*="Close"]):not([aria-label*="lose"]) {
+.adminRoot .mainContent button:not([style*="height"]):not([class*="close"]):not([class*="Close"]):not([aria-label*="lose"]):not(:where([class^="ag-"], [class*=" ag-"]) *) {
   min-height: var(--a-control-h-sm);
   padding-top: 0 !important;
   padding-bottom: 0 !important;
@@ -2120,4 +2120,68 @@ textarea.control {
 .adminRoot .mainContent table td {
   padding-top: var(--a-space-2) !important;
   padding-bottom: var(--a-space-2) !important;
+}
+
+/* Count chip inside segmented tabs */
+.segmentedCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: var(--a-fw-bold);
+  font-variant-numeric: tabular-nums;
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-muted);
+  border: 1px solid var(--admin-border);
+}
+
+.segmentedBtnActive .segmentedCount {
+  background: var(--admin-primary-glow);
+  color: var(--admin-primary);
+  border-color: var(--admin-border-gold);
+}
+
+/* Products: homepage New Arrivals toggle pill (used inside the grid) */
+.featureToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+  color: var(--admin-text-muted);
+  font-size: var(--a-fs-xs);
+  font-weight: var(--a-fw-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.featureToggle:hover:not(:disabled) {
+  border-color: var(--admin-primary);
+  color: var(--admin-text-main);
+  background: var(--admin-primary-glow);
+}
+
+.featureToggle:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.featureToggle:focus-visible {
+  outline: 2px solid var(--admin-primary);
+  outline-offset: 1px;
+}
+
+.featureToggleOn {
+  border-color: var(--admin-border-gold);
+  background: var(--admin-primary-glow);
+  color: var(--admin-primary);
 }

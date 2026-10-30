@@ -2,7 +2,18 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
+import type { ColDef } from "ag-grid-community";
+import type { CustomCellRendererProps } from "ag-grid-react";
+import { FileText, Trash2 } from "lucide-react";
 import styles from "./orders.module.css";
+import AdminDataGrid from "../../components/admin/AdminDataGrid";
+import {
+  CurrencyRenderer,
+  DateRenderer,
+  ImageThumbnailRenderer,
+  StackedCell,
+  dateComparator,
+} from "../../components/admin/gridRenderers";
 import {
   fetchAdminOrders,
   fetchOrderStats,
@@ -35,6 +46,25 @@ const COURIER_OPTIONS = [
   "Shadowfax",
   "Other Local Logistics",
 ];
+
+function orderDisplayId(ord: UserOrder): string {
+  const idStr = ord.id || ord._id || ord.order_id || "DLX";
+  if (ord.order_number) return `#${ord.order_number}`;
+  if (idStr.length >= 24) {
+    const d = new Date(ord.created_at || Date.now());
+    return `#DLX-${d.getFullYear().toString().slice(-2)}${String(d.getMonth() + 1).padStart(2, "0")}-${idStr.slice(-4).toUpperCase()}`;
+  }
+  return `#${idStr}`;
+}
+
+function orderCustomerName(ord: UserOrder): string {
+  const address = ord.shipping_address;
+  return (
+    ord.customer_name ||
+    (address ? `${address.first_name || ""} ${address.last_name || ""}`.trim() : "") ||
+    "Valued Client"
+  );
+}
 
 function formatCurrency(val: number | string | undefined): string {
   if (val === undefined || val === null) return "₹0";
@@ -232,6 +262,147 @@ export default function AdminOrdersPage() {
     return <span className={`${styles.statusBadge} ${badgeClass}`}>● {label}</span>;
   };
 
+  // Orders grid columns — every action calls the same handlers as the old table
+  const columnDefs = useMemo<ColDef<UserOrder>[]>(() => [
+    {
+      headerName: "Order ID",
+      colId: "orderId",
+      minWidth: 170,
+      valueGetter: (p) => (p.data ? orderDisplayId(p.data) : ""),
+      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => (
+        <StackedCell
+          title={<span className={styles.orderIdText}>{p.value}</span>}
+          subtitle={p.data?.tracking_number ? `AWB ${p.data.tracking_number}` : undefined}
+        />
+      ),
+    },
+    {
+      headerName: "Date",
+      colId: "date",
+      minWidth: 180,
+      sort: "desc",
+      valueGetter: (p) => p.data?.created_at || p.data?.createdAt || "",
+      comparator: dateComparator,
+      filter: "agDateColumnFilter",
+      filterValueGetter: (p) => {
+        const v = p.data?.created_at || p.data?.createdAt;
+        return v ? new Date(v) : null;
+      },
+      cellRenderer: DateRenderer,
+    },
+    {
+      headerName: "Customer",
+      colId: "customer",
+      minWidth: 230,
+      flex: 1.6,
+      valueGetter: (p) => (p.data ? orderCustomerName(p.data) : ""),
+      getQuickFilterText: (p) => [orderCustomerName(p.data), p.data.user_email, p.data.user_phone].filter(Boolean).join(" "),
+      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => (
+        <StackedCell
+          title={p.value}
+          subtitle={[p.data?.user_email || "No email", p.data?.user_phone].filter(Boolean).join(" · ")}
+        />
+      ),
+    },
+    {
+      headerName: "Items",
+      colId: "items",
+      minWidth: 140,
+      filter: "agNumberColumnFilter",
+      valueGetter: (p) => p.data?.items?.reduce((acc, it) => acc + (it.quantity || 1), 0) || 0,
+      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => {
+        const items = p.data?.items || [];
+        return (
+          <div className={styles.itemThumbGroup}>
+            {items.slice(0, 2).map((item, idx) => (
+              <span key={idx} className={styles.itemThumb} title={`${item.title} (x${item.quantity})`}>
+                <ImageThumbnailRenderer {...p} value={item.image || "/images/card1.jpg"} size={28} />
+              </span>
+            ))}
+            {items.length > 2 && <span className={styles.itemMoreBadge}>+{items.length - 2}</span>}
+            <span className={styles.itemPcs}>{p.value} pcs</span>
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Total",
+      colId: "total",
+      minWidth: 130,
+      type: "rightAligned",
+      filter: "agNumberColumnFilter",
+      valueGetter: (p) => Number(p.data?.total || p.data?.amount || 0),
+      cellRenderer: CurrencyRenderer,
+    },
+    {
+      headerName: "Payment",
+      colId: "payment",
+      minWidth: 150,
+      valueGetter: (p) => (p.data?.payment_method?.toLowerCase() === "cod" ? "Cash on Delivery" : "Online (Razorpay)"),
+      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => <span className={styles.paymentMethodBadge}>{p.value}</span>,
+    },
+    {
+      headerName: "Status",
+      colId: "status",
+      minWidth: 170,
+      valueGetter: (p) => p.data?.status || "pending",
+      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => renderStatusBadge(p.data?.status),
+    },
+    {
+      headerName: "Actions",
+      colId: "actions",
+      width: 268,
+      minWidth: 268,
+      maxWidth: 268,
+      flex: 0,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      pinned: "right",
+      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => {
+        const ord = p.data;
+        if (!ord) return null;
+        const idStr = ord.id || ord._id || ord.order_id || "DLX";
+        const needsReturnReview = ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested";
+        return (
+          <div className={styles.rowActions}>
+            <button type="button" className={styles.rowActionBtn} onClick={() => handleOpenDrawer(ord)}>
+              Manage
+            </button>
+            <button
+              type="button"
+              className={[styles.rowActionBtn, needsReturnReview ? styles.rowActionWarn : styles.rowActionGold].join(" ")}
+              onClick={() => setShiprocketOrder(ord)}
+              title="Ship with Shiprocket, generate AWB, print labels, live track & reverse returns"
+            >
+              {needsReturnReview ? "Review Return" : ord.awb_code ? "Shiprocket" : "Ship"}
+            </button>
+            <button
+              type="button"
+              className={styles.rowIconBtn}
+              onClick={() => setInvoiceOrder(ord)}
+              title="View and print GST Tax Invoice"
+              aria-label={`Invoice for ${orderDisplayId(ord)}`}
+            >
+              <FileText size={14} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className={[styles.rowIconBtn, styles.rowIconDanger].join(" ")}
+              onClick={() => handleDeleteOrder(idStr)}
+              title="Delete order record"
+              aria-label={`Delete order ${orderDisplayId(ord)}`}
+            >
+              <Trash2 size={14} aria-hidden="true" />
+            </button>
+          </div>
+        );
+      },
+    },
+  // Handlers only use state setters and the orders list via functional updates
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [selectedOrder]);
+
   return (
     <div className={styles.container}>
       {/* HEADER */}
@@ -293,197 +464,49 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
-      {/* SEARCH AND FILTER TABS */}
-      <div className={styles.controlsBar}>
-        <div className={styles.searchWrapper}>
-          <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="text"
-            className={styles.searchInput}
-            placeholder="Search by Order ID, customer, phone, or tracking..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        <div className={styles.tabsRow}>
-          {STATUS_TABS.map((tab) => (
-            <button
-              key={tab.key}
-              className={`${styles.tabBtn} ${activeTab === tab.key ? styles.tabBtnActive : ""}`}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ORDERS TABLE */}
-      <div className={styles.tableCard}>
-        {loading ? (
-          <div className={styles.emptyState}>
-            <p>Retrieving orders from MongoDB Atlas...</p>
-          </div>
-        ) : orders.length === 0 ? (
-          <div className={styles.emptyState}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <path d="M16 10a4 4 0 0 1-8 0" />
-            </svg>
-            <h3>No Orders Found</h3>
-            <p>No orders match the current filter criteria or search query.</p>
-          </div>
-        ) : (
-          <div className={styles.tableWrapper}>
-            <table className={styles.ordersTable}>
-              <thead>
-                <tr>
-                  <th>Order Reference</th>
-                  <th>Date & Time</th>
-                  <th>Customer Information</th>
-                  <th>Articles</th>
-                  <th>Total Amount</th>
-                  <th>Payment Mode</th>
-                  <th>Fulfillment Status</th>
-                  <th style={{ textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((ord) => {
-                  const idStr = ord.id || ord._id || ord.order_id || "DLX";
-                  const displayId = ord.order_number
-                    ? `#${ord.order_number}`
-                    : (idStr.length >= 24
-                        ? `#DLX-${new Date(ord.created_at || Date.now()).getFullYear().toString().slice(-2)}${String(new Date(ord.created_at || Date.now()).getMonth() + 1).padStart(2, "0")}-${idStr.slice(-4).toUpperCase()}`
-                        : `#${idStr}`);
-                  const address = ord.shipping_address;
-                  const customerName =
-                    ord.customer_name ||
-                    (address ? `${address.first_name || ""} ${address.last_name || ""}`.trim() : "") ||
-                    "Valued Client";
-
-                  return (
-                    <tr key={idStr}>
-                      <td>
-                        <span className={styles.orderIdText}>{displayId}</span>
-                        {ord.tracking_number && (
-                          <div style={{ fontSize: "0.75rem", color: "#7e22ce", marginTop: "2px", fontWeight: 600 }}>
-                            🚚 {ord.tracking_number}
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        <div style={{ color: "var(--admin-text-secondary)", fontSize: "0.85rem", fontWeight: 500 }}>{formatDate(ord.created_at || ord.createdAt)}</div>
-                      </td>
-                      <td>
-                        <div className={styles.customerName}>{customerName}</div>
-                        <div className={styles.customerSub}>
-                          {ord.user_email || "No email"}
-                          {ord.user_phone && <> · {ord.user_phone}</>}
-                        </div>
-                      </td>
-                      <td>
-                        <div className={styles.itemThumbGroup}>
-                          {ord.items && ord.items.slice(0, 2).map((item, idx) => (
-                            <div key={idx} className={styles.itemThumb} title={`${item.title} (x${item.quantity})`}>
-                              <Image
-                                src={item.image || "/images/card1.jpg"}
-                                alt={item.title || "Luminaire"}
-                                fill
-                                style={{ objectFit: "cover" }}
-                              />
-                            </div>
-                          ))}
-                          {ord.items && ord.items.length > 2 && (
-                            <span className={styles.itemMoreBadge}>+{ord.items.length - 2}</span>
-                          )}
-                          <span style={{ fontSize: "0.82rem", color: "var(--admin-text-muted)", marginLeft: "4px" }}>
-                            ({ord.items?.reduce((acc, it) => acc + (it.quantity || 1), 0) || 0} pcs)
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={styles.amountText}>{formatCurrency(ord.total || ord.amount)}</span>
-                      </td>
-                      <td>
-                        <span className={styles.paymentMethodBadge}>
-                          {ord.payment_method?.toLowerCase() === "cod" ? "Cash on Delivery" : "Razorpay Online"}
-                        </span>
-                      </td>
-                      <td>{renderStatusBadge(ord.status)}</td>
-                      <td style={{ textAlign: "right" }}>
-                        <div className={styles.actionBtnGroup} style={{ justifyContent: "flex-end" }}>
-                          <button
-                            className={styles.viewBtn}
-                            onClick={() => handleOpenDrawer(ord)}
-                          >
-                            Manage
-                          </button>
-                          <button
-                            className={styles.viewBtn}
-                            onClick={() => setShiprocketOrder(ord)}
-                            title="Ship with Shiprocket, generate AWB, print labels, live track & reverse returns"
-                            style={{
-                              background:
-                                ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
-                                  ? "rgba(245, 158, 11, 0.22)"
-                                  : ord.awb_code
-                                  ? "rgba(124, 58, 237, 0.15)"
-                                  : "rgba(212, 175, 55, 0.15)",
-                              color:
-                                ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
-                                  ? "#f59e0b"
-                                  : ord.awb_code
-                                  ? "#c084fc"
-                                  : "#d4af37",
-                              borderColor:
-                                ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
-                                  ? "rgba(245, 158, 11, 0.6)"
-                                  : ord.awb_code
-                                  ? "rgba(124, 58, 237, 0.35)"
-                                  : "rgba(212, 175, 55, 0.35)",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
-                              ? "⚠️ Review Return"
-                              : ord.awb_code
-                              ? "🚚 Shiprocket"
-                              : "🚀 Ship"}
-                          </button>
-                          <button
-                            className={styles.viewBtn}
-                            onClick={() => setInvoiceOrder(ord)}
-                            title="View and print GST Tax Invoice"
-                            style={{ background: "#fef3c7", color: "#b45309", borderColor: "#fde68a" }}
-                          >
-                            📄 Invoice
-                          </button>
-                          <button
-                            className={styles.deleteBtn}
-                            onClick={() => handleDeleteOrder(idStr)}
-                            title="Delete order record"
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {/* ORDERS GRID (AG Grid Community). Search + status tabs stay server-side. */}
+      <AdminDataGrid<UserOrder>
+        ariaLabel="Customer orders"
+        rowData={orders}
+        columnDefs={columnDefs}
+        loading={loading}
+        getRowId={(o) => String(o.id || o._id || o.order_id || o.order_number)}
+        showSearch={false}
+        emptyTitle="No orders found"
+        emptyDescription="No orders match the current status filter or search."
+        toolbar={
+          <>
+            <div className={styles.searchWrapper}>
+              <svg className={styles.searchIcon} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                type="search"
+                className={styles.searchInput}
+                placeholder="Search order ID, customer, phone, tracking…"
+                aria-label="Search orders"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className={styles.tabsRow} role="tablist" aria-label="Filter orders by status">
+              {STATUS_TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === tab.key}
+                  className={`${styles.tabBtn} ${activeTab === tab.key ? styles.tabBtnActive : ""}`}
+                  onClick={() => setActiveTab(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </>
+        }
+      />
 
       {/* DETAIL & FULFILLMENT DRAWER */}
       {selectedOrder && (

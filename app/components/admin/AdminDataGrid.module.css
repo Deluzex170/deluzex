@@ -1,0 +1,202 @@
+/* AdminDataGrid — toolbar, frame and overlays on the admin design tokens.
+   Grid internals are themed through deluzexGridTheme (AdminDataGrid.tsx). */
+
+.gridShell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--a-space-3, 12px);
+  width: 100%;
+  min-width: 0;
+}
+
+/* Toolbar: search + optional filters + record count, wraps on narrow screens */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--a-space-3, 12px);
+  padding: var(--a-space-2, 8px) var(--a-space-3, 12px);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--a-radius-lg, 12px);
+}
+
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 0 1 300px;
+  min-width: 200px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  color: var(--admin-text-subtle);
+  pointer-events: none;
+}
+
+.search input {
+  width: 100%;
+  height: var(--a-control-h, 36px);
+  padding: 0 12px 0 34px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--a-radius-md, 8px);
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-main);
+  font-size: var(--a-fs-sm, 13px);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.search input::placeholder {
+  color: var(--admin-text-subtle);
+}
+
+.search input:focus-visible {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px var(--admin-primary-glow);
+}
+
+.toolbarFilters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--a-space-2, 8px);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.toolbarEnd {
+  display: flex;
+  align-items: center;
+  gap: var(--a-space-2, 8px);
+  margin-left: auto;
+}
+
+.count {
+  font-size: var(--a-fs-xs, 12px);
+  color: var(--admin-text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Frame: the card around the grid; the grid scrolls horizontally inside it */
+.gridFrame {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--a-radius-lg, 12px);
+  overflow: hidden;
+  background: var(--admin-surface);
+  box-shadow: var(--a-shadow-card);
+}
+
+/* Header labels: compact uppercase, matching the rest of the admin */
+.gridFrame :global(.ag-header-cell-text) {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Keep the admin's global table/button standards out of the grid internals */
+.gridFrame :global(.ag-root-wrapper) button {
+  min-height: 0;
+}
+
+.gridFrame :global(.ag-cell) {
+  display: flex;
+  align-items: center;
+}
+
+.gridFrame :global(.ag-cell-wrapper) {
+  width: 100%;
+}
+
+.gridFrame :global(.ag-paging-panel) {
+  font-size: var(--a-fs-xs, 12px);
+  color: var(--admin-text-muted);
+  gap: var(--a-space-3, 12px);
+}
+
+.gridFrame :global(.ag-paging-page-size .ag-picker-field-wrapper) {
+  min-height: 30px;
+  border-radius: var(--a-radius-sm, 6px);
+}
+
+/* Overlays (loading / empty) — let the optional empty-state action be clicked */
+.gridFrame :global(.ag-overlay) {
+  pointer-events: none;
+}
+
+.overlay {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: var(--a-space-8, 32px) var(--a-space-4, 16px);
+  text-align: center;
+  max-width: 420px;
+}
+
+.overlayIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-bottom: 4px;
+  color: var(--admin-primary);
+  background: var(--admin-primary-glow);
+  border: 1px solid var(--admin-border-gold);
+}
+
+.overlayTitle {
+  font-size: var(--a-fs-base, 14px);
+  font-weight: var(--a-fw-semibold, 600);
+  color: var(--admin-text-main);
+}
+
+.overlayText {
+  font-size: var(--a-fs-xs, 12px);
+  color: var(--admin-text-muted);
+  line-height: 1.5;
+}
+
+.overlayAction {
+  margin-top: var(--a-space-2, 8px);
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2.5px solid var(--admin-primary-glow);
+  border-top-color: var(--admin-primary);
+  animation: gridSpin 0.8s linear infinite;
+}
+
+@keyframes gridSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .search {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .toolbarEnd {
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
