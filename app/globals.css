@@ -41,6 +41,40 @@
 }
 
 :root {
+  /* ─── Storefront design tokens ───
+     Sizes are chosen for how they read in the brand fonts: Adobe Arabic's Latin
+     glyphs are optically small (20px reads like ~15px Inter), so the body token
+     is 1rem (20px) while headings, controls and spacing stay compact. */
+  --sf-fs-2xs: 0.7rem;   /* 14px  - badges, fine print */
+  --sf-fs-xs: 0.8rem;    /* 16px  - captions, helper text */
+  --sf-fs-sm: 0.875rem;  /* 17.5px - form labels, meta */
+  --sf-fs-base: 1rem;    /* 20px  - body (reads ~15px) */
+  --sf-fs-md: 1.1rem;    /* 22px  - emphasis, prices */
+  --sf-fs-h3: clamp(1.15rem, 1rem + 0.35vw, 1.3rem);
+  --sf-fs-h2: clamp(1.3rem, 1rem + 0.7vw, 1.6rem);
+  --sf-fs-h1: clamp(1.6rem, 1rem + 1.4vw, 2rem);
+  --sf-lh-tight: 1.2;
+  --sf-lh-base: 1.55;
+  --sf-space-1: 4px;
+  --sf-space-2: 8px;
+  --sf-space-3: 12px;
+  --sf-space-4: 16px;
+  --sf-space-5: 20px;
+  --sf-space-6: 24px;
+  --sf-space-8: 32px;
+  --sf-space-10: 40px;
+  --sf-space-12: 48px;
+  --sf-section-y: clamp(32px, 2rem + 2vw, 72px);
+  --sf-control-h: 48px;
+  --sf-control-h-sm: 44px;
+  --sf-radius-sm: 4px;
+  --sf-radius: 8px;
+  --sf-radius-lg: 12px;
+  --sf-header-h: 68px;
+  --sf-container: 1200px;
+  --sf-gutter: clamp(16px, 4vw, 32px);
+  --sf-focus-ring: 0 0 0 3px rgba(200, 155, 96, 0.35);
+
   --color-primary: #D79322;
   --color-primary-hover: #b87c1c;
   --color-stroke: #d8a56e;

@@ -1886,3 +1886,131 @@
   background: #C89B60;
   color: #ffffff;
 }
+
+/* ─── Design-token layer (kept last so it wins over the legacy rules above) ─── */
+.container {
+  padding: var(--sf-space-8) var(--sf-gutter) var(--sf-space-12);
+}
+
+.checkoutStepper {
+  margin-bottom: var(--sf-space-6);
+}
+
+.stepCircle {
+  width: 28px;
+  height: 28px;
+  font-size: var(--sf-fs-xs);
+}
+
+.stepLabel {
+  font-size: var(--sf-fs-sm);
+}
+
+.stepConnector {
+  margin: 0 var(--sf-space-3);
+}
+
+.title {
+  font-size: var(--sf-fs-h1);
+  line-height: var(--sf-lh-tight);
+  margin-bottom: var(--sf-space-6);
+}
+
+.checkoutGrid {
+  gap: var(--sf-space-10);
+  align-items: start;
+}
+
+.section {
+  margin-bottom: var(--sf-space-8);
+}
+
+.sectionTitle {
+  font-size: var(--sf-fs-h2);
+  line-height: var(--sf-lh-tight);
+  margin-bottom: var(--sf-space-5);
+}
+
+.formGroup {
+  margin-bottom: var(--sf-space-4);
+}
+
+.label {
+  font-size: var(--sf-fs-sm);
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+
+.input {
+  height: var(--sf-control-h);
+  padding: 0 var(--sf-space-4);
+  font-size: var(--sf-fs-base);
+  border-radius: var(--sf-radius);
+  box-sizing: border-box;
+}
+
+.input:focus {
+  box-shadow: var(--sf-focus-ring);
+}
+
+.summaryCard {
+  padding: var(--sf-space-6);
+  border-radius: var(--sf-radius-lg);
+}
+
+.summaryTitle {
+  font-size: var(--sf-fs-h2);
+  line-height: var(--sf-lh-tight);
+  margin-bottom: var(--sf-space-5);
+}
+
+.itemPriceRow {
+  justify-content: space-between;
+  font-variant-numeric: tabular-nums;
+}
+
+.itemPrice {
+  font-size: var(--sf-fs-md);
+}
+
+.itemUnitPrice {
+  font-size: var(--sf-fs-xs);
+}
+
+.qtyControlGroup {
+  height: 36px;
+  padding: 0 4px;
+  gap: 2px;
+}
+
+.qtyBtn {
+  width: 28px;
+  height: 28px;
+}
+
+.qtyBtn:focus-visible {
+  outline: 2px solid #C89B60;
+  outline-offset: 1px;
+}
+
+.qtyValue {
+  font-size: var(--sf-fs-sm);
+  min-width: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1024px) {
+  .checkoutGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sf-space-8);
+  }
+}
+
+@media (max-width: 640px) {
+  .stepLabel {
+    font-size: var(--sf-fs-xs);
+  }
+  .summaryCard {
+    padding: var(--sf-space-4);
+  }
+}
