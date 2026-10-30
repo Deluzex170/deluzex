@@ -393,10 +393,10 @@ export default function AdminReviewsPage() {
                     <div className={styles.prodThumbFallback}>✦</div>
                   )}
                   <div>
-                    <div style={{ fontWeight: 600, color: "#0f172a" }}>
+                    <div style={{ fontWeight: 600, color: "var(--admin-text-main)" }}>
                       {selectedReview.product?.name || "Product"}
                     </div>
-                    <div style={{ fontSize: "0.8rem", color: "#64748b" }}>
+                    <div style={{ fontSize: "0.8rem", color: "var(--admin-text-muted)" }}>
                       ID: {selectedReview.product_id}
                     </div>
                   </div>
@@ -405,7 +405,7 @@ export default function AdminReviewsPage() {
 
               <div>
                 <div className={styles.modalSectionLabel}>Customer Information</div>
-                <div style={{ color: "#0f172a", fontWeight: 600 }}>{selectedReview.author_name}</div>
+                <div style={{ color: "var(--admin-text-main)", fontWeight: 600 }}>{selectedReview.author_name}</div>
                 {selectedReview.author_email && (
                   <div style={{ color: "#c49a45", fontSize: "0.85rem" }}>
                     <a href={`mailto:${selectedReview.author_email}`} style={{ color: "inherit", textDecoration: "none" }}>
@@ -414,7 +414,7 @@ export default function AdminReviewsPage() {
                   </div>
                 )}
                 {selectedReview.created_at && (
-                  <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "0.25rem" }}>
+                  <div style={{ fontSize: "0.8rem", color: "var(--admin-text-muted)", marginTop: "0.25rem" }}>
                     Submitted on: {new Date(selectedReview.created_at).toLocaleString()}
                   </div>
                 )}

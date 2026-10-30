@@ -5,7 +5,7 @@
   max-width: 100%;
   margin: 0;
   padding: 0;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-family: inherit;
   animation: fadeIn 0.3s ease-out forwards;
 }
@@ -27,14 +27,14 @@
 .titleArea h1 {
   font-size: 2rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--admin-text-main);
   letter-spacing: -0.025em;
   margin: 0 0 0.35rem 0;
 }
 
 .titleArea p {
   font-size: 0.925rem;
-  color: #64748b;
+  color: var(--admin-text-muted);
   margin: 0;
 }
 
@@ -43,10 +43,10 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.65rem 1.25rem;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
   border-radius: 8px;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
@@ -55,8 +55,8 @@
 }
 
 .refreshBtn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
   transform: translateY(-1px);
 }
 
@@ -69,8 +69,8 @@
 }
 
 .kpiCard {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
   border-radius: 14px;
   padding: 1.25rem 1.4rem;
   display: flex;
@@ -81,7 +81,7 @@
 
 .kpiCard:hover {
   transform: translateY(-2px);
-  border-color: #cbd5e1;
+  border-color: var(--admin-border);
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
 }
 
@@ -89,7 +89,7 @@
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #64748b;
+  color: var(--admin-text-muted);
   font-weight: 700;
   margin-bottom: 0.4rem;
 }
@@ -97,7 +97,7 @@
 .kpiValue {
   font-size: 1.85rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--admin-text-main);
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
@@ -108,8 +108,8 @@
 
 /* CONTROLS (SEARCH & TABS) */
 .controlsBar {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
   border-radius: 12px;
   padding: 0.85rem 1.25rem;
   margin-bottom: 1.5rem;
@@ -138,17 +138,17 @@
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
+  color: var(--admin-text-subtle);
   pointer-events: none;
 }
 
 .searchInput {
   width: 100%;
   padding: 0.65rem 1rem 0.65rem 2.6rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface-muted);
+  border: 1px solid var(--admin-border);
   border-radius: 8px;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-size: 0.875rem;
   outline: none;
   box-sizing: border-box;
@@ -157,7 +157,7 @@
 
 .searchInput:focus {
   border-color: #3b82f6;
-  background: #ffffff;
+  background: var(--admin-surface);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
@@ -175,10 +175,10 @@
 
 .tabBtn {
   padding: 0.55rem 0.95rem;
-  background: #f1f5f9;
+  background: var(--admin-surface-muted);
   border: 1px solid transparent;
   border-radius: 8px;
-  color: #64748b;
+  color: var(--admin-text-muted);
   font-size: 0.825rem;
   font-weight: 600;
   cursor: pointer;
@@ -187,21 +187,21 @@
 }
 
 .tabBtn:hover {
-  color: #0f172a;
+  color: var(--admin-text-main);
   background: #e2e8f0;
 }
 
 .tabBtnActive {
   background: #0f172a !important;
   color: #ffffff !important;
-  border-color: #0f172a !important;
+  border-color: var(--admin-text-main) !important;
   box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
 }
 
 /* TABLE */
 .tableCard {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
@@ -233,14 +233,14 @@
 }
 
 .ordersTable th {
-  background: #f8fafc;
+  background: var(--admin-surface-muted);
   padding: 1rem 1.25rem;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #64748b;
+  color: var(--admin-text-muted);
   font-weight: 700;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--admin-border);
   white-space: nowrap;
 }
 
@@ -248,7 +248,7 @@
   padding: 1.1rem 1.25rem;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
-  color: #1e293b;
+  color: var(--admin-text-main);
 }
 
 .ordersTable tbody tr {
@@ -256,26 +256,26 @@
 }
 
 .ordersTable tbody tr:hover {
-  background: #f8fafc;
+  background: var(--admin-surface-muted);
 }
 
 .orderIdText {
   font-family: ui-monospace, monospace;
   font-size: 0.88rem;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-weight: 700;
   white-space: nowrap;
 }
 
 .customerName {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--admin-text-main);
   margin-bottom: 2px;
 }
 
 .customerSub {
   font-size: 0.78rem;
-  color: #64748b;
+  color: var(--admin-text-muted);
 }
 
 .itemThumbGroup {
@@ -290,8 +290,8 @@
   height: 38px;
   border-radius: 6px;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
-  background: #f1f5f9;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface-muted);
 }
 
 .itemMoreBadge {
@@ -306,13 +306,13 @@
 
 .amountText {
   font-weight: 700;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-size: 0.95rem;
 }
 
 .paymentMethodBadge {
   font-size: 0.72rem;
-  color: #64748b;
+  color: var(--admin-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-weight: 600;
@@ -371,10 +371,10 @@
 
 .viewBtn {
   padding: 0.45rem 0.85rem;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface-muted);
+  border: 1px solid var(--admin-border);
   border-radius: 6px;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
@@ -387,7 +387,7 @@
 .viewBtn:hover {
   background: #0f172a;
   color: #ffffff;
-  border-color: #0f172a;
+  border-color: var(--admin-text-main);
 }
 
 .deleteBtn {
@@ -410,7 +410,7 @@
 .emptyState {
   padding: 4rem 2rem;
   text-align: center;
-  color: #64748b;
+  color: var(--admin-text-muted);
 }
 
 .emptyState svg {
@@ -435,8 +435,8 @@
   width: 100%;
   max-width: 650px;
   height: 100vh;
-  background: #ffffff;
-  border-left: 1px solid #e2e8f0;
+  background: var(--admin-surface);
+  border-left: 1px solid var(--admin-border);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -451,8 +451,8 @@
 
 .drawerHeader {
   padding: 1.25rem 1.75rem;
-  border-bottom: 1px solid #e2e8f0;
-  background: #f8fafc;
+  border-bottom: 1px solid var(--admin-border);
+  background: var(--admin-surface-muted);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -464,7 +464,7 @@
 .drawerTitle {
   margin: 0;
   font-size: 1.25rem;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
@@ -472,7 +472,7 @@
 .closeBtn {
   background: transparent;
   border: none;
-  color: #64748b;
+  color: var(--admin-text-muted);
   cursor: pointer;
   font-size: 1.3rem;
   padding: 4px;
@@ -485,7 +485,7 @@
 
 .closeBtn:hover {
   background: #e2e8f0;
-  color: #0f172a;
+  color: var(--admin-text-main);
 }
 
 .drawerBody {
@@ -496,8 +496,8 @@
 }
 
 .sectionBlock {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface-muted);
+  border: 1px solid var(--admin-border);
   border-radius: 12px;
   padding: 1.25rem;
 }
@@ -506,7 +506,7 @@
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-weight: 700;
   margin-bottom: 0.85rem;
   display: flex;
@@ -524,14 +524,14 @@
 .detailItem label {
   display: block;
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--admin-text-muted);
   margin-bottom: 2px;
   font-weight: 500;
 }
 
 .detailItem p {
   margin: 0;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-weight: 600;
 }
 
@@ -547,7 +547,7 @@
   align-items: center;
   gap: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--admin-border);
 }
 
 .drawerItemRow:last-child {
@@ -561,8 +561,8 @@
   height: 50px;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
   flex-shrink: 0;
 }
 
@@ -573,19 +573,19 @@
 .drawerItemTitle {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--admin-text-main);
   margin-bottom: 2px;
 }
 
 .drawerItemQtyPrice {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--admin-text-muted);
 }
 
 .drawerItemTotal {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--admin-text-main);
 }
 
 /* FINANCIAL TOTALS */
@@ -599,7 +599,7 @@
 .totalRow {
   display: flex;
   justify-content: space-between;
-  color: #64748b;
+  color: var(--admin-text-muted);
 }
 
 .grandTotalRow {
@@ -607,10 +607,10 @@
   justify-content: space-between;
   font-size: 1.15rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--admin-text-main);
   padding-top: 0.75rem;
   margin-top: 0.5rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--admin-border);
 }
 
 .grandTotalAmount {
@@ -632,17 +632,17 @@
 
 .formGroup label {
   font-size: 0.78rem;
-  color: #475569;
+  color: var(--admin-text-secondary);
   font-weight: 600;
 }
 
 .selectInput,
 .textInput {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
   border-radius: 8px;
   padding: 0.65rem 0.9rem;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-size: 0.88rem;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -685,8 +685,8 @@
 
 .drawerFooter {
   padding: 1.25rem 1.75rem;
-  border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
+  border-top: 1px solid var(--admin-border);
+  background: var(--admin-surface-muted);
   display: flex;
   justify-content: flex-end;
 }

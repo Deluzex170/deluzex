@@ -320,7 +320,7 @@ export default function AdminBlogsPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: "0.5rem",
-              background: "#ffffff",
+              background: "var(--admin-surface)",
               border: "1px solid var(--admin-border)",
               borderRadius: "8px",
               color: "var(--admin-text-main)",
@@ -379,7 +379,7 @@ export default function AdminBlogsPage() {
         </div>
 
         {/* Full-Page Form Card - 100% Width */}
-        <div className={styles.card} style={{ width: "100%", maxWidth: "100%", background: "#ffffff", padding: 0, overflow: "hidden" }}>
+        <div className={styles.card} style={{ width: "100%", maxWidth: "100%", background: "var(--admin-surface)", padding: 0, overflow: "hidden" }}>
           <form onSubmit={isEdit ? handleEditSubmit : handleCreateSubmit}>
             {errorMsg && (
               <div
@@ -615,7 +615,7 @@ export default function AdminBlogsPage() {
 
                   <div
                     style={{
-                      background: "#ffffff",
+                      background: "var(--admin-surface)",
                       borderRadius: "16px",
                       overflow: "hidden",
                       border: "1px solid var(--admin-border)",
@@ -623,11 +623,11 @@ export default function AdminBlogsPage() {
                       maxWidth: "420px",
                     }}
                   >
-                    <div style={{ position: "relative", width: "100%", height: "200px", background: "#f1f5f9", overflow: "hidden" }}>
+                    <div style={{ position: "relative", width: "100%", height: "200px", background: "var(--admin-surface-muted)", overflow: "hidden" }}>
                       {previewUrl ? (
                         <Image src={previewUrl} alt="Preview" fill sizes="420px" style={{ objectFit: "cover" }} />
                       ) : (
-                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8" }}>
+                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--admin-text-subtle)" }}>
                           <ImageIcon size={32} />
                         </div>
                       )}
@@ -679,7 +679,7 @@ export default function AdminBlogsPage() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 padding: "1.5rem clamp(1rem, 4vw, 2rem)",
-                background: "#f8fafc",
+                background: "var(--admin-surface-muted)",
                 borderTop: "1px solid var(--admin-border)",
               }}
             >
@@ -807,7 +807,7 @@ export default function AdminBlogsPage() {
             <button
               onClick={() => setBlogToDelete(null)}
               className={styles.btnCancel}
-              style={{ background: "#ffffff", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
+              style={{ background: "var(--admin-surface)", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
             >
               Cancel
             </button>
@@ -875,7 +875,7 @@ export default function AdminBlogsPage() {
         <div style={{ position: "relative", minWidth: "min(260px, 100%)" }}>
           <Search
             size={16}
-            style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}
+            style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--admin-text-subtle)" }}
           />
           <input
             type="text"
@@ -894,7 +894,7 @@ export default function AdminBlogsPage() {
           style={{
             padding: "1.25rem 1.75rem",
             borderBottom: "1px solid var(--admin-border)",
-            background: "#f8fafc",
+            background: "var(--admin-surface-muted)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -1031,14 +1031,14 @@ export default function AdminBlogsPage() {
                             borderRadius: "8px",
                             overflow: "hidden",
                             position: "relative",
-                            background: "#f1f5f9",
+                            background: "var(--admin-surface-muted)",
                             border: "1px solid var(--admin-border)",
                           }}
                         >
                           {blog.image ? (
                             <Image src={blog.image} alt={blog.title || "Blog"} fill sizes="48px" style={{ objectFit: "cover" }} />
                           ) : (
-                            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8" }}>
+                            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--admin-text-subtle)" }}>
                               <BookOpen size={20} />
                             </div>
                           )}
@@ -1070,8 +1070,8 @@ export default function AdminBlogsPage() {
                         <span
                           style={{
                             display: "inline-block",
-                            background: "#f1f5f9",
-                            color: "#475569",
+                            background: "var(--admin-surface-muted)",
+                            color: "var(--admin-text-secondary)",
                             padding: "4px 10px",
                             borderRadius: "6px",
                             fontSize: "0.825rem",

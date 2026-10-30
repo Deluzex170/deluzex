@@ -329,7 +329,7 @@ export default function AdminProducts() {
           <div style={{ position: "relative", minWidth: "min(260px, 100%)" }}>
             <Search
               size={16}
-              style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}
+              style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--admin-text-subtle)" }}
             />
             <input
               type="text"
@@ -391,7 +391,7 @@ export default function AdminProducts() {
                             borderRadius: "8px",
                             overflow: "hidden",
                             position: "relative",
-                            background: "#f1f5f9",
+                            background: "var(--admin-surface-muted)",
                             border: "1px solid var(--admin-border)",
                           }}
                         >
@@ -411,7 +411,7 @@ export default function AdminProducts() {
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                color: "#94a3b8",
+                                color: "var(--admin-text-subtle)",
                               }}
                             >
                               <Package size={20} />
@@ -424,7 +424,7 @@ export default function AdminProducts() {
                           {prod.product_title}
                         </div>
                         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "4px", flexWrap: "wrap" }}>
-                          <span style={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600 }}>
+                          <span style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", fontWeight: 600 }}>
                             SKU: {prod.sku || "ME-DP-105"}
                           </span>
                           <span style={{
@@ -475,7 +475,7 @@ export default function AdminProducts() {
                           ₹{Number(prod.product_price || 0).toLocaleString()}
                         </span>
                         {prod.price_note && (
-                          <div style={{ fontSize: "0.72rem", color: "#64748B", marginTop: "2px" }}>
+                          <div style={{ fontSize: "0.72rem", color: "var(--admin-text-muted)", marginTop: "2px" }}>
                             {prod.price_note}
                           </div>
                         )}

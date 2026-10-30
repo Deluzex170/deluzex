@@ -180,11 +180,11 @@ export default function AdminFaqsPage() {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.75rem", flexWrap: "wrap", gap: "1rem" }}>
         <div>
-          <h1 style={{ fontSize: "1.6rem", fontWeight: 700, color: "#0f172a", margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <h1 style={{ fontSize: "1.6rem", fontWeight: 700, color: "var(--admin-text-main)", margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <HelpCircle color="#C49A45" size={26} />
             Frequently Asked Questions (FAQ) Manager
           </h1>
-          <p style={{ color: "#64748b", margin: "0.25rem 0 0 0", fontSize: "0.92rem" }}>
+          <p style={{ color: "var(--admin-text-muted)", margin: "0.25rem 0 0 0", fontSize: "0.92rem" }}>
             Manage questions, answers, and ordering across the Collaborate and Customer Support pages.
           </p>
         </div>
@@ -196,13 +196,13 @@ export default function AdminFaqsPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: "0.5rem",
-              background: "#ffffff",
-              border: "1px solid #e2e8f0",
+              background: "var(--admin-surface)",
+              border: "1px solid var(--admin-border)",
               borderRadius: "8px",
               padding: "0.6rem 1rem",
               fontSize: "0.85rem",
               fontWeight: 600,
-              color: "#334155",
+              color: "var(--admin-text-secondary)",
               cursor: "pointer",
             }}
           >
@@ -245,7 +245,7 @@ export default function AdminFaqsPage() {
             style={{
               background: categoryFilter === tab.value ? "#0f172a" : "#ffffff",
               color: categoryFilter === tab.value ? "#ffffff" : "#64748b",
-              border: "1px solid #e2e8f0",
+              border: "1px solid var(--admin-border)",
               borderRadius: "8px",
               padding: "0.5rem 1.1rem",
               fontSize: "0.85rem",
@@ -260,15 +260,15 @@ export default function AdminFaqsPage() {
       </div>
 
       {/* FAQs Table */}
-      <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
+      <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
         {loading ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "#64748b" }}>
+          <div style={{ padding: "3rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
             <p>Loading FAQs...</p>
           </div>
         ) : faqs.length === 0 ? (
-          <div style={{ padding: "3.5rem", textAlign: "center", color: "#64748b" }}>
+          <div style={{ padding: "3.5rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
             <HelpCircle size={40} color="#cbd5e1" style={{ margin: "0 auto 1rem auto" }} />
-            <h3 style={{ fontSize: "1.1rem", color: "#334155", margin: "0 0 0.5rem 0" }}>No FAQs found</h3>
+            <h3 style={{ fontSize: "1.1rem", color: "var(--admin-text-secondary)", margin: "0 0 0.5rem 0" }}>No FAQs found</h3>
             <p style={{ fontSize: "0.88rem", maxWidth: "400px", margin: "0 auto 1.5rem auto" }}>
               Click "Seed Default FAQs" or "Add New Question" to add entries for your visitors.
             </p>
@@ -277,7 +277,7 @@ export default function AdminFaqsPage() {
           <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
             <table style={{ width: "100%", minWidth: "850px", borderCollapse: "collapse", textAlign: "left", fontSize: "0.88rem" }}>
               <thead>
-                <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontWeight: 600 }}>
+                <tr style={{ background: "var(--admin-surface-muted)", borderBottom: "1px solid var(--admin-border)", color: "var(--admin-text-secondary)", fontWeight: 600 }}>
                   <th style={{ padding: "0.85rem 1rem", width: "70px" }}>Seq</th>
                   <th style={{ padding: "0.85rem 1.25rem" }}>Question &amp; Answer</th>
                   <th style={{ padding: "0.85rem 1rem", width: "130px" }}>Category</th>
@@ -295,14 +295,14 @@ export default function AdminFaqsPage() {
                       onMouseEnter={(e) => (e.currentTarget.style.background = "#fafafa")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
-                      <td style={{ padding: "0.85rem 1rem", fontWeight: 700, color: "#64748b" }}>
+                      <td style={{ padding: "0.85rem 1rem", fontWeight: 700, color: "var(--admin-text-muted)" }}>
                         #{faq.sequence || index + 1}
                       </td>
                       <td style={{ padding: "0.85rem 1.25rem" }}>
-                        <div style={{ fontWeight: 600, color: "#0f172a", marginBottom: "0.25rem" }}>
+                        <div style={{ fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "0.25rem" }}>
                           {faq.question}
                         </div>
-                        <div style={{ color: "#64748b", fontSize: "0.82rem", lineHeight: "1.5", maxWidth: "680px" }}>
+                        <div style={{ color: "var(--admin-text-muted)", fontSize: "0.82rem", lineHeight: "1.5", maxWidth: "680px" }}>
                           {faq.answer}
                         </div>
                       </td>
@@ -348,11 +348,11 @@ export default function AdminFaqsPage() {
                             title="Edit FAQ"
                             onClick={() => openEditModal(faq)}
                             style={{
-                              background: "#f8fafc",
-                              border: "1px solid #e2e8f0",
+                              background: "var(--admin-surface-muted)",
+                              border: "1px solid var(--admin-border)",
                               borderRadius: "6px",
                               padding: "0.4rem",
-                              color: "#334155",
+                              color: "var(--admin-text-secondary)",
                               cursor: "pointer",
                             }}
                           >
@@ -400,7 +400,7 @@ export default function AdminFaqsPage() {
         >
           <div
             style={{
-              background: "#ffffff",
+              background: "var(--admin-surface)",
               borderRadius: "16px",
               maxWidth: "580px",
               width: "100%",
@@ -418,7 +418,7 @@ export default function AdminFaqsPage() {
                 position: "absolute",
                 top: "1.25rem",
                 right: "1.25rem",
-                background: "#f1f5f9",
+                background: "var(--admin-surface-muted)",
                 border: "none",
                 borderRadius: "50%",
                 width: "32px",
@@ -432,13 +432,13 @@ export default function AdminFaqsPage() {
               <X size={16} />
             </button>
 
-            <h2 style={{ fontSize: "1.35rem", fontWeight: 700, color: "#0f172a", margin: "0 0 1.25rem 0" }}>
+            <h2 style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 1.25rem 0" }}>
               {editingFaq ? "Edit FAQ" : "Add New FAQ"}
             </h2>
 
             <form onSubmit={handleSaveFaq}>
               <div style={{ marginBottom: "1rem" }}>
-                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#334155", marginBottom: "0.4rem" }}>
+                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "var(--admin-text-secondary)", marginBottom: "0.4rem" }}>
                   Question *
                 </label>
                 <input
@@ -451,7 +451,7 @@ export default function AdminFaqsPage() {
                     width: "100%",
                     padding: "0.65rem 0.85rem",
                     borderRadius: "8px",
-                    border: "1px solid #e2e8f0",
+                    border: "1px solid var(--admin-border)",
                     fontSize: "0.9rem",
                     outline: "none",
                   }}
@@ -459,7 +459,7 @@ export default function AdminFaqsPage() {
               </div>
 
               <div style={{ marginBottom: "1rem" }}>
-                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#334155", marginBottom: "0.4rem" }}>
+                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "var(--admin-text-secondary)", marginBottom: "0.4rem" }}>
                   Answer *
                 </label>
                 <textarea
@@ -472,7 +472,7 @@ export default function AdminFaqsPage() {
                     width: "100%",
                     padding: "0.65rem 0.85rem",
                     borderRadius: "8px",
-                    border: "1px solid #e2e8f0",
+                    border: "1px solid var(--admin-border)",
                     fontSize: "0.9rem",
                     outline: "none",
                     lineHeight: "1.5",
@@ -482,7 +482,7 @@ export default function AdminFaqsPage() {
 
               <div className={styles.formGrid2} style={{ display: "grid", gap: "1rem", marginBottom: "1.25rem" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#334155", marginBottom: "0.4rem" }}>
+                  <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "var(--admin-text-secondary)", marginBottom: "0.4rem" }}>
                     Category
                   </label>
                   <select
@@ -492,10 +492,10 @@ export default function AdminFaqsPage() {
                       width: "100%",
                       padding: "0.65rem 0.85rem",
                       borderRadius: "8px",
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid var(--admin-border)",
                       fontSize: "0.9rem",
                       outline: "none",
-                      background: "#ffffff",
+                      background: "var(--admin-surface)",
                     }}
                   >
                     <option value="collaborate">Collaborate Page</option>
@@ -505,7 +505,7 @@ export default function AdminFaqsPage() {
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#334155", marginBottom: "0.4rem" }}>
+                  <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "var(--admin-text-secondary)", marginBottom: "0.4rem" }}>
                     Display Sequence
                   </label>
                   <input
@@ -517,7 +517,7 @@ export default function AdminFaqsPage() {
                       width: "100%",
                       padding: "0.65rem 0.85rem",
                       borderRadius: "8px",
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid var(--admin-border)",
                       fontSize: "0.9rem",
                       outline: "none",
                     }}
@@ -526,7 +526,7 @@ export default function AdminFaqsPage() {
               </div>
 
               <div style={{ marginBottom: "1.5rem" }}>
-                <label style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.88rem", color: "#334155" }}>
+                <label style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.88rem", color: "var(--admin-text-secondary)" }}>
                   <input
                     type="checkbox"
                     checked={formState.is_active}
@@ -541,7 +541,7 @@ export default function AdminFaqsPage() {
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   style={{
-                    background: "#f1f5f9",
+                    background: "var(--admin-surface-muted)",
                     border: "none",
                     borderRadius: "8px",
                     padding: "0.65rem 1.25rem",
@@ -591,7 +591,7 @@ export default function AdminFaqsPage() {
         >
           <div
             style={{
-              background: "#ffffff",
+              background: "var(--admin-surface)",
               borderRadius: "12px",
               maxWidth: "420px",
               width: "100%",
@@ -615,17 +615,17 @@ export default function AdminFaqsPage() {
             >
               <Trash2 size={24} />
             </div>
-            <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#0f172a", margin: "0 0 0.5rem 0" }}>
+            <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 0.5rem 0" }}>
               Delete FAQ?
             </h3>
-            <p style={{ fontSize: "0.88rem", color: "#64748b", margin: "0 0 1.5rem 0" }}>
+            <p style={{ fontSize: "0.88rem", color: "var(--admin-text-muted)", margin: "0 0 1.5rem 0" }}>
               Are you sure you want to delete this FAQ: &quot;{itemToDelete.question}&quot;?
             </p>
             <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
               <button
                 onClick={() => setItemToDelete(null)}
                 style={{
-                  background: "#f1f5f9",
+                  background: "var(--admin-surface-muted)",
                   border: "none",
                   borderRadius: "8px",
                   padding: "0.6rem 1.25rem",

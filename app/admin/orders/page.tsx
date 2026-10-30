@@ -378,7 +378,7 @@ export default function AdminOrdersPage() {
                         )}
                       </td>
                       <td>
-                        <div style={{ color: "#475569", fontSize: "0.85rem", fontWeight: 500 }}>{formatDate(ord.created_at || ord.createdAt)}</div>
+                        <div style={{ color: "var(--admin-text-secondary)", fontSize: "0.85rem", fontWeight: 500 }}>{formatDate(ord.created_at || ord.createdAt)}</div>
                       </td>
                       <td>
                         <div className={styles.customerName}>{customerName}</div>
@@ -400,7 +400,7 @@ export default function AdminOrdersPage() {
                           {ord.items && ord.items.length > 2 && (
                             <span className={styles.itemMoreBadge}>+{ord.items.length - 2}</span>
                           )}
-                          <span style={{ fontSize: "0.82rem", color: "#64748b", marginLeft: "4px" }}>
+                          <span style={{ fontSize: "0.82rem", color: "var(--admin-text-muted)", marginLeft: "4px" }}>
                             ({ord.items?.reduce((acc, it) => acc + (it.quantity || 1), 0) || 0} pcs)
                           </span>
                         </div>

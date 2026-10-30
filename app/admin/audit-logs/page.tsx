@@ -352,15 +352,15 @@ export default function AuditLogsPage() {
                       </td>
 
                       <td>
-                        <div style={{ fontFamily: "monospace", fontSize: "0.8rem", color: "#64748b" }}>
+                        <div style={{ fontFamily: "monospace", fontSize: "0.8rem", color: "var(--admin-text-muted)" }}>
                           {log.ip_address || "127.0.0.1"}
                         </div>
-                        <div style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
+                        <div style={{ fontSize: "0.72rem", color: "var(--admin-text-subtle)" }}>
                           {log.user_agent ? log.user_agent.split(" ")[0] : "Direct API"}
                         </div>
                       </td>
 
-                      <td style={{ whiteSpace: "nowrap", fontSize: "0.82rem", color: "#64748b" }}>
+                      <td style={{ whiteSpace: "nowrap", fontSize: "0.82rem", color: "var(--admin-text-muted)" }}>
                         {formatTimeAgo(log.created_at)}
                       </td>
 
@@ -382,7 +382,7 @@ export default function AuditLogsPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "3.5rem 1rem", color: "#94a3b8" }}>
+                  <td colSpan={7} style={{ textAlign: "center", padding: "3.5rem 1rem", color: "var(--admin-text-subtle)" }}>
                     No audit records matching your current filter criteria.
                   </td>
                 </tr>
@@ -442,7 +442,7 @@ export default function AuditLogsPage() {
               {/* State Diff if changes exist */}
               {selectedLog.changes && (
                 <div>
-                  <h4 style={{ margin: "0.5rem 0", fontSize: "0.9rem", color: "#0f172a" }}>
+                  <h4 style={{ margin: "0.5rem 0", fontSize: "0.9rem", color: "var(--admin-text-main)" }}>
                     State Modification Diff
                   </h4>
                   <div className={styles.diffContainer}>
@@ -471,7 +471,7 @@ export default function AuditLogsPage() {
 
               {/* Raw JSON viewer */}
               <div>
-                <h4 style={{ margin: "0.5rem 0", fontSize: "0.9rem", color: "#0f172a" }}>
+                <h4 style={{ margin: "0.5rem 0", fontSize: "0.9rem", color: "var(--admin-text-main)" }}>
                   Full Telemetry Record
                 </h4>
                 <div className={styles.jsonViewer}>

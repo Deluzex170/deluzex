@@ -454,7 +454,7 @@ export default function AdminProjectsPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: "0.5rem",
-              background: "#ffffff",
+              background: "var(--admin-surface)",
               border: "1px solid var(--admin-border)",
               borderRadius: "8px",
               color: "var(--admin-text-main)",
@@ -513,7 +513,7 @@ export default function AdminProjectsPage() {
         </div>
 
         {/* Full-Page Form Card - 100% Width */}
-        <div className={styles.card} style={{ width: "100%", maxWidth: "100%", background: "#ffffff", padding: 0, overflow: "hidden" }}>
+        <div className={styles.card} style={{ width: "100%", maxWidth: "100%", background: "var(--admin-surface)", padding: 0, overflow: "hidden" }}>
           <form onSubmit={isEdit ? handleEditSubmit : handleCreateSubmit}>
             {errorMsg && (
               <div
@@ -737,7 +737,7 @@ export default function AdminProjectsPage() {
                   style={{
                     display: "flex",
                     gap: "0.5rem",
-                    background: "#f1f5f9",
+                    background: "var(--admin-surface-muted)",
                     padding: "4px",
                     borderRadius: "8px",
                     width: "fit-content",
@@ -844,7 +844,7 @@ export default function AdminProjectsPage() {
                     style={{
                       borderRadius: "14px",
                       overflow: "hidden",
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid var(--admin-border)",
                       background: "#121212",
                       boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
                       position: "relative",
@@ -868,7 +868,7 @@ export default function AdminProjectsPage() {
                             flexDirection: "column",
                             alignItems: "center",
                             justifyContent: "center",
-                            color: "#64748b",
+                            color: "var(--admin-text-muted)",
                             gap: "0.5rem",
                           }}
                         >
@@ -958,7 +958,7 @@ export default function AdminProjectsPage() {
                             width: "30px",
                             height: "30px",
                             borderRadius: "50%",
-                            background: "#ffffff",
+                            background: "var(--admin-surface)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -1047,7 +1047,7 @@ export default function AdminProjectsPage() {
                       style={{
                         padding: "1.5rem",
                         textAlign: "center",
-                        background: "#f8fafc",
+                        background: "var(--admin-surface-muted)",
                         borderRadius: "10px",
                         border: "1px dashed var(--admin-border)",
                         color: "var(--admin-text-muted)",
@@ -1131,7 +1131,7 @@ export default function AdminProjectsPage() {
                                   onClick={() => handleSetCover(imgUrl)}
                                   title="Set as Main Cover"
                                   style={{
-                                    background: "#ffffff",
+                                    background: "var(--admin-surface)",
                                     color: "#111827",
                                     border: "none",
                                     borderRadius: "4px",
@@ -1244,7 +1244,7 @@ export default function AdminProjectsPage() {
                       style={{
                         padding: "1.5rem",
                         textAlign: "center",
-                        background: "#f8fafc",
+                        background: "var(--admin-surface-muted)",
                         borderRadius: "10px",
                         border: "1px dashed var(--admin-border)",
                         color: "var(--admin-text-muted)",
@@ -1263,7 +1263,7 @@ export default function AdminProjectsPage() {
                             alignItems: "center",
                             justifyContent: "space-between",
                             padding: "0.75rem 1rem",
-                            background: "#ffffff",
+                            background: "var(--admin-surface)",
                             border: "1px solid var(--admin-border)",
                             borderRadius: "8px",
                             gap: "1rem",
@@ -1339,7 +1339,7 @@ export default function AdminProjectsPage() {
               style={{
                 borderTop: "1px solid var(--admin-border)",
                 padding: "1.25rem 2rem",
-                background: "#f8fafc",
+                background: "var(--admin-surface-muted)",
                 display: "flex",
                 justifyContent: "flex-end",
                 gap: "1rem",
@@ -1350,7 +1350,7 @@ export default function AdminProjectsPage() {
                 type="button"
                 onClick={backToList}
                 className={styles.btnCancel}
-                style={{ background: "#ffffff", border: "1px solid var(--admin-border)", padding: "0.75rem 1.5rem" }}
+                style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", padding: "0.75rem 1.5rem" }}
               >
                 Cancel
               </button>
@@ -1503,7 +1503,7 @@ export default function AdminProjectsPage() {
             <button
               onClick={() => setProjectToDelete(null)}
               className={styles.btnCancel}
-              style={{ background: "#ffffff", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
+              style={{ background: "var(--admin-surface)", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
             >
               Cancel
             </button>
@@ -1572,7 +1572,7 @@ export default function AdminProjectsPage() {
         <div style={{ position: "relative", minWidth: "min(260px, 100%)" }}>
           <Search
             size={16}
-            style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}
+            style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--admin-text-subtle)" }}
           />
           <input
             type="text"
@@ -1591,7 +1591,7 @@ export default function AdminProjectsPage() {
           style={{
             padding: "1.25rem 1.75rem",
             borderBottom: "1px solid var(--admin-border)",
-            background: "#f8fafc",
+            background: "var(--admin-surface-muted)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -1663,7 +1663,7 @@ export default function AdminProjectsPage() {
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "0.35rem",
-                            background: "#f8fafc",
+                            background: "var(--admin-surface-muted)",
                             padding: "4px 8px",
                             borderRadius: "8px",
                             border: "1px solid var(--admin-border)",
@@ -1728,7 +1728,7 @@ export default function AdminProjectsPage() {
                             borderRadius: "8px",
                             overflow: "hidden",
                             position: "relative",
-                            background: "#f1f5f9",
+                            background: "var(--admin-surface-muted)",
                             border: "1px solid var(--admin-border)",
                           }}
                         >
@@ -1747,7 +1747,7 @@ export default function AdminProjectsPage() {
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                color: "#94a3b8",
+                                color: "var(--admin-text-subtle)",
                               }}
                             >
                               <ImageIcon size={20} />
@@ -1796,7 +1796,7 @@ export default function AdminProjectsPage() {
                             fontSize: "0.775rem",
                             padding: "3px 8px",
                             borderRadius: "6px",
-                            background: "#f1f5f9",
+                            background: "var(--admin-surface-muted)",
                             color: "var(--admin-text-main)",
                             fontWeight: 500,
                           }}

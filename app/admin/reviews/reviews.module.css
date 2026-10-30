@@ -5,7 +5,7 @@
   max-width: 100%;
   margin: 0;
   padding: 0;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-family: inherit;
   animation: fadeIn 0.3s ease-out forwards;
 }
@@ -29,7 +29,7 @@
   font-weight: 700;
   letter-spacing: -0.025em;
   margin: 0 0 0.35rem 0;
-  color: #0f172a;
+  color: var(--admin-text-main);
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -41,14 +41,14 @@
 
 .subtitle {
   font-size: 0.925rem;
-  color: #64748b;
+  color: var(--admin-text-muted);
   margin: 0;
 }
 
 .refreshBtn {
-  background: #ffffff;
-  color: #0f172a;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface);
+  color: var(--admin-text-main);
+  border: 1px solid var(--admin-border);
   padding: 0.65rem 1.25rem;
   border-radius: 8px;
   cursor: pointer;
@@ -62,8 +62,8 @@
 }
 
 .refreshBtn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
   transform: translateY(-1px);
 }
 
@@ -76,8 +76,8 @@
 }
 
 .kpiCard {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
   border-radius: 14px;
   padding: 1.35rem 1.5rem;
   position: relative;
@@ -87,7 +87,7 @@
 }
 
 .kpiCard:hover {
-  border-color: #cbd5e1;
+  border-color: var(--admin-border);
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
   transform: translateY(-2px);
 }
@@ -96,7 +96,7 @@
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #64748b;
+  color: var(--admin-text-muted);
   font-weight: 700;
   margin-bottom: 0.4rem;
 }
@@ -104,7 +104,7 @@
 .kpiValue {
   font-size: 2rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--admin-text-main);
   line-height: 1.15;
   display: flex;
   align-items: baseline;
@@ -127,7 +127,7 @@
 
 .kpiDesc {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--admin-text-muted);
   margin-top: 0.4rem;
 }
 
@@ -139,16 +139,16 @@
   gap: 1rem;
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
-  background: #ffffff;
+  background: var(--admin-surface);
   padding: 0.85rem 1.25rem;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--admin-border);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .tabs {
   display: flex;
-  background: #f1f5f9;
+  background: var(--admin-surface-muted);
   border-radius: 8px;
   padding: 3px;
   gap: 3px;
@@ -157,7 +157,7 @@
 .tabBtn {
   background: transparent;
   border: none;
-  color: #64748b;
+  color: var(--admin-text-muted);
   padding: 0.55rem 1.1rem;
   border-radius: 6px;
   font-size: 0.825rem;
@@ -170,17 +170,17 @@
 }
 
 .tabBtn:hover {
-  color: #0f172a;
+  color: var(--admin-text-main);
 }
 
 .activeTab {
-  background: #ffffff;
-  color: #0f172a;
+  background: var(--admin-surface);
+  color: var(--admin-text-main);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .tabBadge {
-  background: #f1f5f9;
+  background: var(--admin-surface-muted);
   font-size: 0.75rem;
   padding: 2px 7px;
   border-radius: 10px;
@@ -202,9 +202,9 @@
 
 .searchInput {
   flex: 1;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #0f172a;
+  background: var(--admin-surface-muted);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text-main);
   padding: 0.6rem 0.95rem;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -214,7 +214,7 @@
 
 .searchInput:focus {
   border-color: #3b82f6;
-  background: #ffffff;
+  background: var(--admin-surface);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
@@ -236,8 +236,8 @@
 
 /* Reviews Table Container */
 .tableWrapper {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
   border-radius: 14px;
   overflow-x: auto;
   box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
@@ -263,13 +263,13 @@
 }
 
 .table th {
-  background: #f8fafc;
-  color: #64748b;
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-muted);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--admin-border);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -279,7 +279,7 @@
   border-bottom: 1px solid #f1f5f9;
   font-size: 0.88rem;
   vertical-align: middle;
-  color: #1e293b;
+  color: var(--admin-text-main);
 }
 
 .table tbody tr {
@@ -287,7 +287,7 @@
 }
 
 .table tbody tr:hover {
-  background: #f8fafc;
+  background: var(--admin-surface-muted);
 }
 
 /* Product Info Cell */
@@ -303,8 +303,8 @@
   height: 44px;
   border-radius: 8px;
   object-fit: cover;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface-muted);
+  border: 1px solid var(--admin-border);
   flex-shrink: 0;
 }
 
@@ -312,8 +312,8 @@
   width: 44px;
   height: 44px;
   border-radius: 8px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface-muted);
+  border: 1px solid var(--admin-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -324,7 +324,7 @@
 
 .prodName {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--admin-text-main);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -332,18 +332,18 @@
 
 .prodId {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--admin-text-muted);
 }
 
 /* Author Cell */
 .authorName {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--admin-text-main);
 }
 
 .authorEmail {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--admin-text-muted);
 }
 
 /* Rating Cell */
@@ -361,7 +361,7 @@
 
 .ratingNumber {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--admin-text-muted);
   font-weight: 600;
 }
 
@@ -373,7 +373,7 @@
 
 .reviewTitle {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-size: 0.875rem;
   margin-bottom: 0.25rem;
   overflow: hidden;
@@ -382,7 +382,7 @@
 }
 
 .reviewTextPreview {
-  color: #64748b;
+  color: var(--admin-text-muted);
   font-size: 0.825rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -460,9 +460,9 @@
 }
 
 .iconBtn {
-  background: #f1f5f9;
-  color: #0f172a;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-main);
+  border: 1px solid var(--admin-border);
   width: 32px;
   height: 32px;
   border-radius: 6px;
@@ -476,7 +476,7 @@
 .iconBtn:hover {
   background: #0f172a;
   color: #ffffff;
-  border-color: #0f172a;
+  border-color: var(--admin-text-main);
 }
 
 .deleteBtn:hover {
@@ -489,7 +489,7 @@
 .emptyState {
   padding: 4rem 2rem;
   text-align: center;
-  color: #64748b;
+  color: var(--admin-text-muted);
 }
 
 .emptyIcon {
@@ -513,8 +513,8 @@
 }
 
 .modalContent {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
   border-radius: 16px;
   width: 100%;
   max-width: 600px;
@@ -524,16 +524,16 @@
   padding: 2rem;
   position: relative;
   animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  color: #0f172a;
+  color: var(--admin-text-main);
 }
 
 .modalClose {
   position: absolute;
   top: 1.25rem;
   right: 1.25rem;
-  background: #f1f5f9;
+  background: var(--admin-surface-muted);
   border: none;
-  color: #64748b;
+  color: var(--admin-text-muted);
   font-size: 1.3rem;
   cursor: pointer;
   padding: 0.25rem;
@@ -549,19 +549,19 @@
 
 .modalClose:hover {
   background: #e2e8f0;
-  color: #0f172a;
+  color: var(--admin-text-main);
 }
 
 .modalHeader {
   margin-bottom: 1.5rem;
   padding-bottom: 1.25rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--admin-border);
 }
 
 .modalHeader h2 {
   font-size: 1.35rem;
   margin: 0 0 0.5rem 0;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-weight: 700;
 }
 
@@ -575,17 +575,17 @@
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #64748b;
+  color: var(--admin-text-muted);
   margin-bottom: 0.35rem;
   font-weight: 700;
 }
 
 .modalTextContent {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface-muted);
+  border: 1px solid var(--admin-border);
   border-radius: 8px;
   padding: 1rem;
-  color: #1e293b;
+  color: var(--admin-text-main);
   font-size: 0.95rem;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -594,7 +594,7 @@
 .modalFooter {
   margin-top: 2rem;
   padding-top: 1.25rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--admin-border);
   display: flex;
   justify-content: space-between;
   align-items: center;

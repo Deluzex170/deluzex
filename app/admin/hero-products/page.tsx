@@ -314,153 +314,161 @@ export default function AdminHeroProducts() {
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(min(360px, 100%), 1fr))",
-                gap: "2rem",
+                gap: "var(--a-space-5)",
                 alignItems: "start",
               }}
             >
               {/* Left Column: Form Fields */}
-              <div className={styles.card} style={{ padding: "2rem" }}>
-                <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-primary)" }}>
-                  Fixture Specifications
-                </h3>
+              <div className={styles.panel}>
+                <h3 className={styles.panelTitle}>Fixture Specifications</h3>
 
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Lamp Name *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Cylindrical Floor Lamp"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className={styles.formInput}
-                  />
-                </div>
-
-                <div className={styles.gridCols2}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Price (₹) *</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: "var(--a-space-4)" }}>
+                  <div className={styles.field}>
+                    <label htmlFor="hero-name" className={styles.fieldLabel}>Lamp Name *</label>
                     <input
-                      type="number"
-                      step="0.01"
-                      required
-                      placeholder="231"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      className={styles.formInput}
-                    />
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Accessibility Alt Text *</label>
-                    <input
+                      id="hero-name"
                       type="text"
                       required
-                      placeholder="e.g. Modern gold floor lamp"
-                      value={formData.alt}
-                      onChange={(e) => setFormData({ ...formData, alt: e.target.value })}
-                      className={styles.formInput}
+                      placeholder="e.g. Cylindrical Floor Lamp"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className={styles.control}
                     />
                   </div>
-                </div>
 
-                <div className={styles.formGroup} style={{ marginBottom: "2rem" }}>
-                  <label className={styles.formLabel}>Product Photograph *</label>
-
-                  <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem" }}>
-                    <button
-                      type="button"
-                      onClick={() => setImageTab("file")}
-                      className={imageTab === "file" ? styles.tabBtnActive : styles.tabBtn}
-                      style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem", borderRadius: "6px" }}
-                    >
-                      Upload File
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setImageTab("url")}
-                      className={imageTab === "url" ? styles.tabBtnActive : styles.tabBtn}
-                      style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem", borderRadius: "6px" }}
-                    >
-                      Image URL
-                    </button>
-                  </div>
-
-                  {imageTab === "file" ? (
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      style={{
-                        border: "2px dashed #cbd5e1",
-                        borderRadius: "10px",
-                        padding: "1.5rem",
-                        textAlign: "center",
-                        cursor: "pointer",
-                        background: "#f8fafc",
-                        transition: "border-color 0.2s",
-                      }}
-                    >
+                  <div className={styles.gridCols2}>
+                    <div className={styles.field}>
+                      <label htmlFor="hero-price" className={styles.fieldLabel}>Price (₹) *</label>
                       <input
-                        type="file"
-                        ref={fileInputRef}
-                        accept="image/*"
-                        style={{ display: "none" }}
-                        onChange={handleFileChange}
+                        id="hero-price"
+                        type="number"
+                        step="0.01"
+                        required
+                        placeholder="231"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        className={styles.control}
                       />
-                      <Upload size={28} color="#94a3b8" style={{ margin: "0 auto 0.5rem" }} />
-                      <p style={{ margin: "0 0 0.25rem", fontSize: "0.875rem", fontWeight: 600, color: "var(--admin-primary)" }}>
-                        {selectedFile ? selectedFile.name : "Click to select a photo"}
-                      </p>
-                      <span style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)" }}>
-                        PNG, JPG, WEBP up to 5MB
-                      </span>
                     </div>
-                  ) : (
-                    <input
-                      type="text"
-                      placeholder="https://... or /images/..."
-                      value={formData.image}
-                      onChange={handleImageUrlChange}
-                      className={styles.formInput}
-                    />
-                  )}
-                </div>
 
-                <div style={{ display: "flex", gap: "0.75rem" }}>
-                  <button
-                    type="button"
-                    onClick={backToTable}
-                    className={styles.btnCancel}
-                    style={{ flex: 1, padding: "0.75rem" }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className={styles.primaryButton}
-                    style={{ flex: 2, justifyContent: "center", padding: "0.75rem" }}
-                  >
-                    <Save size={18} />
-                    <span>{submitting ? "Saving Fixture..." : viewMode === "create" ? "Add Hero Fixture" : "Save Changes"}</span>
-                  </button>
+                    <div className={styles.field}>
+                      <label htmlFor="hero-alt" className={styles.fieldLabel} title="Accessibility Alt Text">Alt Text *</label>
+                      <input
+                        id="hero-alt"
+                        type="text"
+                        required
+                        placeholder="e.g. Modern gold floor lamp"
+                        value={formData.alt}
+                        onChange={(e) => setFormData({ ...formData, alt: e.target.value })}
+                        className={styles.control}
+                        title={formData.alt}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.field}>
+                    <span className={styles.fieldLabel} id="hero-photo-label">Product Photograph *</span>
+
+                    <div className={styles.segmented} role="tablist" aria-labelledby="hero-photo-label" style={{ alignSelf: "flex-start" }}>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={imageTab === "file"}
+                        onClick={() => setImageTab("file")}
+                        className={`${styles.segmentedBtn} ${imageTab === "file" ? styles.segmentedBtnActive : ""}`}
+                      >
+                        <Upload size={14} aria-hidden="true" />
+                        Upload File
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={imageTab === "url"}
+                        onClick={() => setImageTab("url")}
+                        className={`${styles.segmentedBtn} ${imageTab === "url" ? styles.segmentedBtnActive : ""}`}
+                      >
+                        <ImageIcon size={14} aria-hidden="true" />
+                        Image URL
+                      </button>
+                    </div>
+
+                    {imageTab === "file" ? (
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => fileInputRef.current?.click()}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            fileInputRef.current?.click();
+                          }
+                        }}
+                        className={styles.dropzone}
+                        style={{ marginTop: 0 }}
+                      >
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={handleFileChange}
+                        />
+                        <Upload size={22} color="var(--admin-text-subtle)" style={{ margin: "0 auto var(--a-space-2)" }} />
+                        <p style={{ margin: "0 0 2px", fontSize: "var(--a-fs-sm)", fontWeight: 600, color: "var(--admin-primary)" }}>
+                          {selectedFile ? selectedFile.name : "Click to select a photo"}
+                        </p>
+                        <span style={{ fontSize: "var(--a-fs-xs)", color: "var(--admin-text-muted)" }}>
+                          PNG, JPG, WEBP up to 5MB
+                        </span>
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        aria-label="Image URL"
+                        placeholder="https://... or /images/..."
+                        value={formData.image}
+                        onChange={handleImageUrlChange}
+                        className={styles.control}
+                      />
+                    )}
+                  </div>
+
+                  <div style={{ display: "flex", gap: "var(--a-space-3)", marginTop: "var(--a-space-2)" }}>
+                    <button
+                      type="button"
+                      onClick={backToTable}
+                      className={`${styles.btn} ${styles.btnSecondary}`}
+                      style={{ flex: 1 }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className={`${styles.btn} ${styles.btnPrimary}`}
+                      style={{ flex: 2 }}
+                    >
+                      <Save size={16} aria-hidden="true" />
+                      <span>{submitting ? "Saving Fixture..." : viewMode === "create" ? "Add Hero Fixture" : "Save Changes"}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
               {/* Right Column: Live Hero Carousel Card Preview */}
-              <div className={styles.card} style={{ padding: "2rem" }}>
-                <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-primary)" }}>
-                  Homepage Hero Preview
-                </h3>
+              <div className={styles.panel}>
+                <h3 className={styles.panelTitle}>Homepage Hero Preview</h3>
 
                 <div
                   style={{
                     background: "#2A1F14",
                     borderRadius: "16px",
-                    padding: "2rem",
+                    padding: "var(--a-space-6)",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: "1.5rem",
+                    gap: "var(--a-space-4)",
                   }}
                 >
                   <div
@@ -469,7 +477,7 @@ export default function AdminHeroProducts() {
                       width: "200px",
                       height: "260px",
                       borderRadius: "18px",
-                      background: "#fff",
+                      background: "var(--admin-surface)",
                       overflow: "hidden",
                       boxShadow: "0 16px 36px rgba(0, 0, 0, 0.35)",
                       border: "1.5px solid rgba(255, 255, 255, 0.35)",
@@ -491,7 +499,7 @@ export default function AdminHeroProducts() {
                           flexDirection: "column",
                           alignItems: "center",
                           justifyContent: "center",
-                          color: "#94a3b8",
+                          color: "var(--admin-text-subtle)",
                           gap: "0.5rem",
                         }}
                       >
@@ -518,10 +526,10 @@ export default function AdminHeroProducts() {
                   </div>
 
                   <div style={{ textAlign: "center", color: "#fff" }}>
-                    <h4 style={{ margin: "0 0 0.25rem", fontSize: "1.1rem", fontFamily: "var(--font-libre), serif" }}>
+                    <h4 style={{ margin: "0 0 0.25rem", fontSize: "var(--a-fs-lg)", fontFamily: "var(--font-libre), serif", color: "#F5EFE6" }}>
                       {formData.name || "Lamp Title"}
                     </h4>
-                    <p style={{ margin: 0, fontSize: "0.8rem", color: "rgba(255,255,255,0.7)" }}>
+                    <p style={{ margin: 0, fontSize: "var(--a-fs-xs)", color: "rgba(245, 239, 230, 0.78)" }}>
                       {formData.alt || "Lamp accessibility caption"}
                     </p>
                   </div>
@@ -652,7 +660,7 @@ export default function AdminHeroProducts() {
                   disabled={deleting}
                   onClick={() => setItemToDelete(null)}
                   className={styles.btnCancel}
-                  style={{ background: "#ffffff", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
+                  style={{ background: "var(--admin-surface)", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
                 >
                   Cancel
                 </button>
@@ -734,7 +742,7 @@ export default function AdminHeroProducts() {
                                 borderRadius: "8px",
                                 overflow: "hidden",
                                 position: "relative",
-                                background: "#f1f5f9",
+                                background: "var(--admin-surface-muted)",
                                 border: "1px solid var(--admin-border)",
                                 display: "flex",
                                 alignItems: "center",
@@ -773,7 +781,7 @@ export default function AdminHeroProducts() {
                                 type="button"
                                 onClick={() => startEdit(prod)}
                                 className={styles.actionButton}
-                                style={{ background: "#f1f5f9", padding: "0.4rem 0.75rem", fontSize: "0.8rem", borderRadius: "6px" }}
+                                style={{ background: "var(--admin-surface-muted)", padding: "0.4rem 0.75rem", fontSize: "0.8rem", borderRadius: "6px" }}
                               >
                                 <Pencil size={13} color="#475569" />
                                 <span>Edit</span>

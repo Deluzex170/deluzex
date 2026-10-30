@@ -87,6 +87,12 @@ body:has([data-admin-root]) {
   padding-top: 0 !important;
 }
 
+/* The 125% root above enlarges the storefront's Adobe Arabic text. The admin
+   uses Plus Jakarta Sans, so give it a compact 14px rem instead. */
+html:has([data-admin-root]) {
+  font-size: 87.5%;
+}
+
 body:has([data-coming-soon]) {
   padding-top: 0 !important;
   overflow: hidden;

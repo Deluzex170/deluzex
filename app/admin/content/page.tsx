@@ -483,7 +483,7 @@ export default function AdminContentPage() {
                       justifyContent: "center",
                       gap: "0.5rem",
                       padding: "0.6rem 1rem",
-                      background: "#f1f5f9",
+                      background: "var(--admin-surface-muted)",
                       borderRadius: "8px",
                     }}
                   >
@@ -608,7 +608,7 @@ export default function AdminContentPage() {
                   type="button"
                   onClick={() => triggerImageUpload("homepage", "story.image")}
                   className={styles.actionButton}
-                  style={{ width: "100%", padding: "0.5rem", background: "#f1f5f9", borderRadius: "8px" }}
+                  style={{ width: "100%", padding: "0.5rem", background: "var(--admin-surface-muted)", borderRadius: "8px" }}
                 >
                   <Upload size={14} color="#C49A45" /> {uploadingField === "story.image" ? "Uploading..." : "Replace Story Image"}
                 </button>
@@ -624,7 +624,7 @@ export default function AdminContentPage() {
                 <div
                   key={idx}
                   style={{
-                    background: "#f8fafc",
+                    background: "var(--admin-surface-muted)",
                     border: "1px solid var(--admin-border)",
                     borderRadius: "10px",
                     padding: "1rem",
@@ -816,7 +816,7 @@ export default function AdminContentPage() {
                   type="button"
                   onClick={() => triggerImageUpload("about", "hero.bg_image")}
                   className={styles.actionButton}
-                  style={{ width: "100%", padding: "0.5rem", background: "#f1f5f9", borderRadius: "8px" }}
+                  style={{ width: "100%", padding: "0.5rem", background: "var(--admin-surface-muted)", borderRadius: "8px" }}
                 >
                   <Upload size={14} color="#C49A45" /> {uploadingField === "hero.bg_image" ? "Uploading..." : "Upload New Hero Background"}
                 </button>
@@ -889,7 +889,7 @@ export default function AdminContentPage() {
                   type="button"
                   onClick={() => triggerImageUpload("about", "story.image")}
                   className={styles.actionButton}
-                  style={{ width: "100%", padding: "0.5rem", background: "#f1f5f9", borderRadius: "8px" }}
+                  style={{ width: "100%", padding: "0.5rem", background: "var(--admin-surface-muted)", borderRadius: "8px" }}
                 >
                   <Upload size={14} color="#C49A45" /> {uploadingField === "story.image" ? "Uploading..." : "Replace Story Image"}
                 </button>
@@ -902,7 +902,7 @@ export default function AdminContentPage() {
             </label>
             <div className={styles.formGrid3} style={{ display: "grid", gap: "1rem" }}>
               {(aboutData.story?.features || []).map((f: any, idx: number) => (
-                <div key={idx} style={{ background: "#f8fafc", padding: "1rem", borderRadius: "10px", border: "1px solid var(--admin-border)" }}>
+                <div key={idx} style={{ background: "var(--admin-surface-muted)", padding: "1rem", borderRadius: "10px", border: "1px solid var(--admin-border)" }}>
                   <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--admin-primary)" }}>Feature #{idx + 1}</span>
                   <input
                     type="text"
@@ -988,7 +988,7 @@ export default function AdminContentPage() {
                   type="button"
                   onClick={() => triggerImageUpload("about", "why_choose_us.image")}
                   className={styles.actionButton}
-                  style={{ width: "100%", padding: "0.5rem", background: "#f1f5f9", borderRadius: "8px" }}
+                  style={{ width: "100%", padding: "0.5rem", background: "var(--admin-surface-muted)", borderRadius: "8px" }}
                 >
                   <Upload size={14} color="#C49A45" /> {uploadingField === "why_choose_us.image" ? "Uploading..." : "Replace Showcase Image"}
                 </button>
@@ -1001,7 +1001,7 @@ export default function AdminContentPage() {
             </label>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))", gap: "1rem" }}>
               {(aboutData.why_choose_us?.items || []).map((it: any, idx: number) => (
-                <div key={idx} style={{ background: "#f8fafc", padding: "1rem", borderRadius: "10px", border: "1px solid var(--admin-border)" }}>
+                <div key={idx} style={{ background: "var(--admin-surface-muted)", padding: "1rem", borderRadius: "10px", border: "1px solid var(--admin-border)" }}>
                   <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--admin-primary)" }}>Pillar #{idx + 1}</span>
                   <input
                     type="text"

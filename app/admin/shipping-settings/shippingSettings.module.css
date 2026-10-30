@@ -176,7 +176,7 @@
   width: 18px;
   left: 2px;
   bottom: 2px;
-  background-color: #ffffff;
+  background-color: var(--admin-surface);
   transition: 0.3s;
   border-radius: 50%;
 }
@@ -514,7 +514,7 @@
 /* Light Theme Overrides */
 :global([data-admin-root][data-theme="light"]) .card,
 :global([data-admin-root][data-theme="light"]) .simulatorCard {
-  background: #ffffff;
+  background: var(--admin-surface);
   border-color: #e5e7eb;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }

@@ -276,7 +276,7 @@ export default function AdminTestimonialsPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: "0.5rem",
-              background: "#ffffff",
+              background: "var(--admin-surface)",
               border: "1px solid var(--admin-border)",
               borderRadius: "8px",
               color: "var(--admin-text-main)",
@@ -340,7 +340,7 @@ export default function AdminTestimonialsPage() {
           style={{
             width: "100%",
             maxWidth: "100%",
-            background: "#ffffff",
+            background: "var(--admin-surface)",
             padding: 0,
             overflow: "hidden",
           }}
@@ -621,7 +621,7 @@ export default function AdminTestimonialsPage() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 padding: "1.5rem clamp(1rem, 4vw, 2rem)",
-                background: "#f8fafc",
+                background: "var(--admin-surface-muted)",
                 borderTop: "1px solid var(--admin-border)",
               }}
             >
@@ -749,7 +749,7 @@ export default function AdminTestimonialsPage() {
             <button
               onClick={() => setItemToDelete(null)}
               className={styles.btnCancel}
-              style={{ background: "#ffffff", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
+              style={{ background: "var(--admin-surface)", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
             >
               Cancel
             </button>
@@ -766,7 +766,7 @@ export default function AdminTestimonialsPage() {
           style={{
             padding: "1.25rem 1.75rem",
             borderBottom: "1px solid var(--admin-border)",
-            background: "#f8fafc",
+            background: "var(--admin-surface-muted)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -836,7 +836,7 @@ export default function AdminTestimonialsPage() {
                             borderRadius: "50%",
                             overflow: "hidden",
                             position: "relative",
-                            background: "#f1f5f9",
+                            background: "var(--admin-surface-muted)",
                             border: "2px solid #E8E0D8",
                             boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
                           }}
@@ -857,7 +857,7 @@ export default function AdminTestimonialsPage() {
                                 justifyContent: "center",
                                 width: "100%",
                                 height: "100%",
-                                background: "#f8fafc",
+                                background: "var(--admin-surface-muted)",
                               }}
                             >
                               <ImageIcon size={20} color="#94a3b8" />
@@ -874,8 +874,8 @@ export default function AdminTestimonialsPage() {
                         <span
                           style={{
                             display: "inline-block",
-                            background: "#f1f5f9",
-                            color: "#475569",
+                            background: "var(--admin-surface-muted)",
+                            color: "var(--admin-text-secondary)",
                             padding: "4px 10px",
                             borderRadius: "6px",
                             fontSize: "0.825rem",
@@ -908,7 +908,7 @@ export default function AdminTestimonialsPage() {
                         <p
                           style={{
                             margin: 0,
-                            color: "#475569",
+                            color: "var(--admin-text-secondary)",
                             fontSize: "0.9rem",
                             lineHeight: 1.6,
                             display: "-webkit-box",

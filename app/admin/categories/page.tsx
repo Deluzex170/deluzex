@@ -184,7 +184,7 @@ export default function AdminCategories() {
               disabled={deleting}
               onClick={() => setItemToDelete(null)}
               className={styles.btnCancel}
-              style={{ background: "#ffffff", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
+              style={{ background: "var(--admin-surface)", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
             >
               Cancel
             </button>
@@ -260,7 +260,7 @@ export default function AdminCategories() {
                             borderRadius: "8px",
                             overflow: "hidden",
                             position: "relative",
-                            background: "#f1f5f9",
+                            background: "var(--admin-surface-muted)",
                             border: "1px solid var(--admin-border)",
                             display: "flex",
                             alignItems: "center",
@@ -307,7 +307,7 @@ export default function AdminCategories() {
                           <Link
                             href={`/admin/categories/edit/${catId}`}
                             className={styles.actionButton}
-                            style={{ background: "#f1f5f9", padding: "0.4rem 0.75rem", fontSize: "0.8rem", borderRadius: "6px" }}
+                            style={{ background: "var(--admin-surface-muted)", padding: "0.4rem 0.75rem", fontSize: "0.8rem", borderRadius: "6px" }}
                           >
                             <Edit3 size={13} color="#475569" />
                             <span>Edit</span>

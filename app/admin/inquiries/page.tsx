@@ -154,8 +154,8 @@ export default function AdminInquiries() {
           <div className={styles.kpiValue} style={{ color: "#16a34a" }}>{stats.resolved}</div>
         </div>
         <div className={styles.kpiCard}>
-          <div className={styles.kpiLabel} style={{ color: "#64748b" }}>Archived</div>
-          <div className={styles.kpiValue} style={{ color: "#64748b" }}>{stats.archived}</div>
+          <div className={styles.kpiLabel} style={{ color: "var(--admin-text-muted)" }}>Archived</div>
+          <div className={styles.kpiValue} style={{ color: "var(--admin-text-muted)" }}>{stats.archived}</div>
         </div>
       </div>
 
@@ -339,8 +339,8 @@ export default function AdminInquiries() {
                 </div>
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f8fafc", border: "1px solid #e2e8f0", padding: "0.85rem 1.25rem", borderRadius: "10px" }}>
-                <span style={{ fontSize: "0.85rem", color: "#475569", fontWeight: 600 }}>Update Status:</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--admin-surface-muted)", border: "1px solid var(--admin-border)", padding: "0.85rem 1.25rem", borderRadius: "10px" }}>
+                <span style={{ fontSize: "0.85rem", color: "var(--admin-text-secondary)", fontWeight: 600 }}>Update Status:</span>
                 <select
                   className={`${styles.statusSelect} ${styles[`status_${(selectedInquiry.status || "new").toLowerCase()}`] || styles.status_new}`}
                   value={(selectedInquiry.status || "new").toLowerCase()}

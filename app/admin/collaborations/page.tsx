@@ -117,7 +117,7 @@ export default function AdminCollaborationsPage() {
       case "reviewed":
         return { background: "rgba(59, 130, 246, 0.12)", color: "#3b82f6", border: "1px solid rgba(59, 130, 246, 0.3)" };
       case "archived":
-        return { background: "rgba(100, 116, 139, 0.12)", color: "#64748b", border: "1px solid rgba(100, 116, 139, 0.3)" };
+        return { background: "rgba(100, 116, 139, 0.12)", color: "var(--admin-text-muted)", border: "1px solid rgba(100, 116, 139, 0.3)" };
       default:
         return { background: "rgba(245, 158, 11, 0.12)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.3)" };
     }
@@ -153,11 +153,11 @@ export default function AdminCollaborationsPage() {
       {/* Header */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", justifyContent: "space-between", alignItems: "center", marginBottom: "1.75rem" }}>
         <div>
-          <h1 style={{ fontSize: "1.6rem", fontWeight: 700, color: "#0f172a", margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <h1 style={{ fontSize: "1.6rem", fontWeight: 700, color: "var(--admin-text-main)", margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <Lightbulb color="#C49A45" size={26} />
             Lighting Design Submissions
           </h1>
-          <p style={{ color: "#64748b", margin: "0.25rem 0 0 0", fontSize: "0.92rem" }}>
+          <p style={{ color: "var(--admin-text-muted)", margin: "0.25rem 0 0 0", fontSize: "0.92rem" }}>
             Review, evaluate, and shortlist original lighting concepts submitted by designers, architects, and creators.
           </p>
         </div>
@@ -168,13 +168,13 @@ export default function AdminCollaborationsPage() {
             display: "inline-flex",
             alignItems: "center",
             gap: "0.5rem",
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
+            background: "var(--admin-surface)",
+            border: "1px solid var(--admin-border)",
             borderRadius: "8px",
             padding: "0.55rem 1rem",
             fontSize: "0.85rem",
             fontWeight: 600,
-            color: "#334155",
+            color: "var(--admin-text-secondary)",
             cursor: "pointer",
           }}
         >
@@ -185,26 +185,26 @@ export default function AdminCollaborationsPage() {
 
       {/* Metric Cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(210px, 100%), 1fr))", gap: "1rem", marginBottom: "1.75rem" }}>
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
-          <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 600, textTransform: "uppercase" }}>Total Submissions</span>
-          <div style={{ fontSize: "1.85rem", fontWeight: 700, color: "#0f172a", marginTop: "0.35rem" }}>{totalCount}</div>
+        <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
+          <span style={{ fontSize: "0.8rem", color: "var(--admin-text-muted)", fontWeight: 600, textTransform: "uppercase" }}>Total Submissions</span>
+          <div style={{ fontSize: "1.85rem", fontWeight: 700, color: "var(--admin-text-main)", marginTop: "0.35rem" }}>{totalCount}</div>
         </div>
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
+        <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
           <span style={{ fontSize: "0.8rem", color: "#f59e0b", fontWeight: 600, textTransform: "uppercase" }}>Pending Review</span>
           <div style={{ fontSize: "1.85rem", fontWeight: 700, color: "#f59e0b", marginTop: "0.35rem" }}>{pendingCount}</div>
         </div>
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
+        <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
           <span style={{ fontSize: "0.8rem", color: "#10b981", fontWeight: 600, textTransform: "uppercase" }}>Shortlisted</span>
           <div style={{ fontSize: "1.85rem", fontWeight: 700, color: "#10b981", marginTop: "0.35rem" }}>{shortlistedCount}</div>
         </div>
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
+        <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
           <span style={{ fontSize: "0.8rem", color: "#3b82f6", fontWeight: 600, textTransform: "uppercase" }}>Reviewed / Contacted</span>
           <div style={{ fontSize: "1.85rem", fontWeight: 700, color: "#3b82f6", marginTop: "0.35rem" }}>{reviewedCount}</div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "1rem 1.25rem", marginBottom: "1.25rem", display: "flex", flexWrap: "wrap", gap: "1rem", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", padding: "1rem 1.25rem", marginBottom: "1.25rem", display: "flex", flexWrap: "wrap", gap: "1rem", justifyContent: "space-between", alignItems: "center" }}>
         {/* Status Tabs */}
         <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
           {["all", "pending", "reviewed", "shortlisted", "archived"].map((st) => (
@@ -243,7 +243,7 @@ export default function AdminCollaborationsPage() {
                 padding: "0.5rem 0.75rem 0.5rem 2.25rem",
                 fontSize: "0.85rem",
                 borderRadius: "8px",
-                border: "1px solid #e2e8f0",
+                border: "1px solid var(--admin-border)",
                 outline: "none",
               }}
             />
@@ -267,15 +267,15 @@ export default function AdminCollaborationsPage() {
       </div>
 
       {/* Submissions Table */}
-      <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
+      <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
         {loading ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "#64748b" }}>
+          <div style={{ padding: "3rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
             <p>Loading design submissions...</p>
           </div>
         ) : submissions.length === 0 ? (
-          <div style={{ padding: "3.5rem", textAlign: "center", color: "#64748b" }}>
+          <div style={{ padding: "3.5rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
             <Lightbulb size={40} color="#cbd5e1" style={{ margin: "0 auto 1rem auto" }} />
-            <h3 style={{ fontSize: "1.1rem", color: "#334155", margin: "0 0 0.5rem 0" }}>No submissions found</h3>
+            <h3 style={{ fontSize: "1.1rem", color: "var(--admin-text-secondary)", margin: "0 0 0.5rem 0" }}>No submissions found</h3>
             <p style={{ fontSize: "0.88rem", maxWidth: "400px", margin: "0 auto" }}>
               {statusFilter !== "all"
                 ? `There are no submissions currently in '${statusFilter}' status.`
@@ -286,7 +286,7 @@ export default function AdminCollaborationsPage() {
           <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
             <table style={{ width: "100%", minWidth: "950px", borderCollapse: "collapse", textAlign: "left", fontSize: "0.88rem" }}>
               <thead>
-                <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontWeight: 600 }}>
+                <tr style={{ background: "var(--admin-surface-muted)", borderBottom: "1px solid var(--admin-border)", color: "var(--admin-text-secondary)", fontWeight: 600 }}>
                   <th style={{ padding: "0.85rem 1.25rem" }}>Designer</th>
                   <th style={{ padding: "0.85rem 1rem" }}>Contact Details</th>
                   <th style={{ padding: "0.85rem 1rem" }}>Concept Title</th>
@@ -313,7 +313,7 @@ export default function AdminCollaborationsPage() {
                       onMouseEnter={(e) => (e.currentTarget.style.background = "#fafafa")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
-                      <td style={{ padding: "0.85rem 1.25rem", fontWeight: 600, color: "#0f172a" }}>
+                      <td style={{ padding: "0.85rem 1.25rem", fontWeight: 600, color: "var(--admin-text-main)" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                           <div
                             style={{
@@ -335,23 +335,23 @@ export default function AdminCollaborationsPage() {
                         </div>
                       </td>
                       <td style={{ padding: "0.85rem 1rem" }}>
-                        <div style={{ color: "#0f172a" }}>{sub.email}</div>
-                        {sub.phone && <div style={{ fontSize: "0.78rem", color: "#64748b" }}>{sub.phone}</div>}
+                        <div style={{ color: "var(--admin-text-main)" }}>{sub.email}</div>
+                        {sub.phone && <div style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)" }}>{sub.phone}</div>}
                       </td>
                       <td style={{ padding: "0.85rem 1rem", maxWidth: "220px" }}>
-                        <div style={{ fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <div style={{ fontWeight: 600, color: "var(--admin-text-main)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           {sub.concept_title}
                         </div>
                         {sub.description && (
-                          <div style={{ fontSize: "0.78rem", color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          <div style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {sub.description}
                           </div>
                         )}
                       </td>
-                      <td style={{ padding: "0.85rem 1rem", color: "#475569" }}>
+                      <td style={{ padding: "0.85rem 1rem", color: "var(--admin-text-secondary)" }}>
                         <div>{sub.role || "Designer"}</div>
                         {sub.studio_or_college && (
-                          <div style={{ fontSize: "0.78rem", color: "#64748b" }}>{sub.studio_or_college}</div>
+                          <div style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)" }}>{sub.studio_or_college}</div>
                         )}
                       </td>
                       <td style={{ padding: "0.85rem 1rem" }}>
@@ -364,7 +364,7 @@ export default function AdminCollaborationsPage() {
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "0.3rem",
-                              background: "#f1f5f9",
+                              background: "var(--admin-surface-muted)",
                               color: "#2563eb",
                               padding: "0.3rem 0.6rem",
                               borderRadius: "6px",
@@ -394,7 +394,7 @@ export default function AdminCollaborationsPage() {
                             Portfolio
                           </a>
                         ) : (
-                          <span style={{ color: "#94a3b8", fontSize: "0.8rem" }}>None</span>
+                          <span style={{ color: "var(--admin-text-subtle)", fontSize: "0.8rem" }}>None</span>
                         )}
                       </td>
                       <td style={{ padding: "0.85rem 1rem" }}>
@@ -411,7 +411,7 @@ export default function AdminCollaborationsPage() {
                           {sub.source === "homepage_modal" ? "Home Modal" : "Collaborate Page"}
                         </span>
                       </td>
-                      <td style={{ padding: "0.85rem 1rem", color: "#64748b", fontSize: "0.82rem" }}>
+                      <td style={{ padding: "0.85rem 1rem", color: "var(--admin-text-muted)", fontSize: "0.82rem" }}>
                         {dateStr}
                       </td>
                       <td style={{ padding: "0.85rem 1rem" }}>
@@ -441,11 +441,11 @@ export default function AdminCollaborationsPage() {
                             title="View Full Details"
                             onClick={() => setSelectedSubmission(sub)}
                             style={{
-                              background: "#f8fafc",
-                              border: "1px solid #e2e8f0",
+                              background: "var(--admin-surface-muted)",
+                              border: "1px solid var(--admin-border)",
                               borderRadius: "6px",
                               padding: "0.4rem",
-                              color: "#334155",
+                              color: "var(--admin-text-secondary)",
                               cursor: "pointer",
                             }}
                           >
@@ -493,7 +493,7 @@ export default function AdminCollaborationsPage() {
         >
           <div
             style={{
-              background: "#ffffff",
+              background: "var(--admin-surface)",
               borderRadius: "16px",
               maxWidth: "680px",
               width: "100%",
@@ -512,7 +512,7 @@ export default function AdminCollaborationsPage() {
                 position: "absolute",
                 top: "1.25rem",
                 right: "1.25rem",
-                background: "#f1f5f9",
+                background: "var(--admin-surface-muted)",
                 border: "none",
                 borderRadius: "50%",
                 width: "32px",
@@ -529,28 +529,28 @@ export default function AdminCollaborationsPage() {
             <span style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", color: "#C49A45", letterSpacing: "0.08em" }}>
               Submission Details
             </span>
-            <h2 style={{ fontSize: "1.45rem", fontWeight: 700, color: "#0f172a", margin: "0.3rem 0 1.25rem 0" }}>
+            <h2 style={{ fontSize: "1.45rem", fontWeight: 700, color: "var(--admin-text-main)", margin: "0.3rem 0 1.25rem 0" }}>
               {selectedSubmission.concept_title}
             </h2>
 
             {/* Designer Profile Card */}
-            <div style={{ background: "#f8fafc", borderRadius: "10px", padding: "1.25rem", marginBottom: "1.5rem", border: "1px solid #e2e8f0" }}>
+            <div style={{ background: "var(--admin-surface-muted)", borderRadius: "10px", padding: "1.25rem", marginBottom: "1.5rem", border: "1px solid var(--admin-border)" }}>
               <div className={styles.formGrid2} style={{ display: "grid", gap: "1rem" }}>
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>Designer Name</div>
-                  <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "#0f172a", marginTop: "0.15rem" }}>{selectedSubmission.name}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Designer Name</div>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--admin-text-main)", marginTop: "0.15rem" }}>{selectedSubmission.name}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>Email Address</div>
-                  <div style={{ fontSize: "0.95rem", color: "#0f172a", marginTop: "0.15rem" }}>
+                  <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Email Address</div>
+                  <div style={{ fontSize: "0.95rem", color: "var(--admin-text-main)", marginTop: "0.15rem" }}>
                     <a href={`mailto:${selectedSubmission.email}`} style={{ color: "#2563eb", textDecoration: "none" }}>
                       {selectedSubmission.email}
                     </a>
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>Phone / WhatsApp</div>
-                  <div style={{ fontSize: "0.95rem", color: "#0f172a", marginTop: "0.15rem" }}>
+                  <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Phone / WhatsApp</div>
+                  <div style={{ fontSize: "0.95rem", color: "var(--admin-text-main)", marginTop: "0.15rem" }}>
                     {selectedSubmission.phone ? (
                       <a href={`https://wa.me/${selectedSubmission.phone.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" style={{ color: "#10b981", textDecoration: "none" }}>
                         {selectedSubmission.phone}
@@ -561,41 +561,41 @@ export default function AdminCollaborationsPage() {
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>City / Location</div>
-                  <div style={{ fontSize: "0.95rem", color: "#0f172a", marginTop: "0.15rem" }}>{selectedSubmission.city || "Not specified"}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>City / Location</div>
+                  <div style={{ fontSize: "0.95rem", color: "var(--admin-text-main)", marginTop: "0.15rem" }}>{selectedSubmission.city || "Not specified"}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>Design Background</div>
-                  <div style={{ fontSize: "0.95rem", color: "#0f172a", marginTop: "0.15rem" }}>{selectedSubmission.role || "Architect / Designer"}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Design Background</div>
+                  <div style={{ fontSize: "0.95rem", color: "var(--admin-text-main)", marginTop: "0.15rem" }}>{selectedSubmission.role || "Architect / Designer"}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>Studio / Firm / College</div>
-                  <div style={{ fontSize: "0.95rem", color: "#0f172a", marginTop: "0.15rem" }}>{selectedSubmission.studio_or_college || "Independent"}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Studio / Firm / College</div>
+                  <div style={{ fontSize: "0.95rem", color: "var(--admin-text-main)", marginTop: "0.15rem" }}>{selectedSubmission.studio_or_college || "Independent"}</div>
                 </div>
               </div>
             </div>
 
             {/* Concept Details */}
             <div style={{ marginBottom: "1.5rem" }}>
-              <div style={{ fontSize: "0.8rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.4rem" }}>
+              <div style={{ fontSize: "0.8rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.4rem" }}>
                 Concept Description &amp; Inspiration
               </div>
-              <p style={{ background: "#f8fafc", padding: "1rem", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "0.9rem", lineHeight: "1.6", color: "#334155", margin: 0 }}>
+              <p style={{ background: "var(--admin-surface-muted)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--admin-border)", fontSize: "0.9rem", lineHeight: "1.6", color: "var(--admin-text-secondary)", margin: 0 }}>
                 {selectedSubmission.description || "No detailed description provided."}
               </p>
             </div>
 
             {/* Additional Info */}
             <div className={styles.formGrid2} style={{ display: "grid", gap: "1rem", marginBottom: "1.5rem" }}>
-              <div style={{ background: "#f8fafc", padding: "0.85rem", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>Manufactured / Prototyped Before?</div>
-                <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "#0f172a", marginTop: "0.2rem", textTransform: "capitalize" }}>
+              <div style={{ background: "var(--admin-surface-muted)", padding: "0.85rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
+                <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Manufactured / Prototyped Before?</div>
+                <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--admin-text-main)", marginTop: "0.2rem", textTransform: "capitalize" }}>
                   {selectedSubmission.has_made_before || "No"}
                 </div>
               </div>
-              <div style={{ background: "#f8fafc", padding: "0.85rem", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>Submission Source</div>
-                <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "#0f172a", marginTop: "0.2rem" }}>
+              <div style={{ background: "var(--admin-surface-muted)", padding: "0.85rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
+                <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Submission Source</div>
+                <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--admin-text-main)", marginTop: "0.2rem" }}>
                   {selectedSubmission.source === "homepage_modal" ? "Homepage Modal" : "/collaborate Page"}
                 </div>
               </div>
@@ -604,7 +604,7 @@ export default function AdminCollaborationsPage() {
             {/* Portfolio Link & Files */}
             {(selectedSubmission.portfolio_link || selectedSubmission.file_url) && (
               <div style={{ marginBottom: "1.5rem" }}>
-                <div style={{ fontSize: "0.8rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.5rem" }}>
+                <div style={{ fontSize: "0.8rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.5rem" }}>
                   Design Attachments &amp; Portfolio
                 </div>
                 <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
@@ -639,14 +639,14 @@ export default function AdminCollaborationsPage() {
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "0.5rem",
-                        background: "#f1f5f9",
-                        color: "#0f172a",
+                        background: "var(--admin-surface-muted)",
+                        color: "var(--admin-text-main)",
                         padding: "0.6rem 1.2rem",
                         borderRadius: "8px",
                         fontSize: "0.85rem",
                         fontWeight: 600,
                         textDecoration: "none",
-                        border: "1px solid #cbd5e1",
+                        border: "1px solid var(--admin-border)",
                       }}
                     >
                       <ExternalLink size={16} />
@@ -658,9 +658,9 @@ export default function AdminCollaborationsPage() {
             )}
 
             {/* Status Changer Footer */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "1.25rem", borderTop: "1px solid #e2e8f0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "1.25rem", borderTop: "1px solid var(--admin-border)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#334155" }}>Current Status:</span>
+                <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--admin-text-secondary)" }}>Current Status:</span>
                 <select
                   value={selectedSubmission.status}
                   onChange={(e) => handleStatusChange(selectedSubmission._id || selectedSubmission.id || "", e.target.value)}
@@ -682,7 +682,7 @@ export default function AdminCollaborationsPage() {
               <button
                 onClick={() => setSelectedSubmission(null)}
                 style={{
-                  background: "#f1f5f9",
+                  background: "var(--admin-surface-muted)",
                   border: "none",
                   borderRadius: "8px",
                   padding: "0.55rem 1.25rem",
@@ -715,7 +715,7 @@ export default function AdminCollaborationsPage() {
         >
           <div
             style={{
-              background: "#ffffff",
+              background: "var(--admin-surface)",
               borderRadius: "12px",
               maxWidth: "420px",
               width: "100%",
@@ -739,17 +739,17 @@ export default function AdminCollaborationsPage() {
             >
               <Trash2 size={24} />
             </div>
-            <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#0f172a", margin: "0 0 0.5rem 0" }}>
+            <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 0.5rem 0" }}>
               Delete Submission?
             </h3>
-            <p style={{ fontSize: "0.88rem", color: "#64748b", margin: "0 0 1.5rem 0" }}>
+            <p style={{ fontSize: "0.88rem", color: "var(--admin-text-muted)", margin: "0 0 1.5rem 0" }}>
               Are you sure you want to delete the submission for <strong>{itemToDelete.concept_title}</strong> by {itemToDelete.name}? This action cannot be undone.
             </p>
             <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
               <button
                 onClick={() => setItemToDelete(null)}
                 style={{
-                  background: "#f1f5f9",
+                  background: "var(--admin-surface-muted)",
                   border: "none",
                   borderRadius: "8px",
                   padding: "0.6rem 1.25rem",

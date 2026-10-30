@@ -202,7 +202,7 @@ export default function VisitorAnalyticsPage() {
               </svg>
               Device Breakdown
             </h3>
-            <span style={{ fontSize: "0.82rem", color: "#64748b" }}>{totalDeviceVisits} total hits</span>
+            <span style={{ fontSize: "0.82rem", color: "var(--admin-text-muted)" }}>{totalDeviceVisits} total hits</span>
           </div>
 
           <div className={styles.deviceBarWrapper}>
@@ -260,7 +260,7 @@ export default function VisitorAnalyticsPage() {
               </svg>
               Top Visited Pages
             </h3>
-            <span style={{ fontSize: "0.82rem", color: "#64748b" }}>Ranked by visits</span>
+            <span style={{ fontSize: "0.82rem", color: "var(--admin-text-muted)" }}>Ranked by visits</span>
           </div>
 
           <div className={styles.topPagesList}>
@@ -272,7 +272,7 @@ export default function VisitorAnalyticsPage() {
                 </div>
               ))
             ) : (
-              <p style={{ color: "#94a3b8", fontSize: "0.875rem", margin: "1rem 0" }}>
+              <p style={{ color: "var(--admin-text-subtle)", fontSize: "0.875rem", margin: "1rem 0" }}>
                 No page view data recorded yet.
               </p>
             )}
@@ -290,7 +290,7 @@ export default function VisitorAnalyticsPage() {
               </svg>
               Registered Members Who Visited ({members.length})
             </h3>
-            <p style={{ margin: "0.25rem 0 0 0", fontSize: "0.85rem", color: "#64748b" }}>
+            <p style={{ margin: "0.25rem 0 0 0", fontSize: "0.85rem", color: "var(--admin-text-muted)" }}>
               Logged-in customers currently browsing or recently visited your store.
             </p>
           </div>
@@ -311,14 +311,14 @@ export default function VisitorAnalyticsPage() {
                   <div className={styles.memberInfo}>
                     <div className={styles.memberName}>{m.name || "Customer Member"}</div>
                     <div className={styles.memberEmail}>{m.email}</div>
-                    <div style={{ marginTop: "0.4rem", fontSize: "0.75rem", color: "#64748b" }}>
+                    <div style={{ marginTop: "0.4rem", fontSize: "0.75rem", color: "var(--admin-text-muted)" }}>
                       Last page: <span className={styles.pathTag}>{m.last_path || "/"}</span>
                     </div>
                   </div>
                   <div className={styles.memberStats}>
                     <div className={styles.memberVisitsCount}>{m.total_visits}</div>
                     <div className={styles.memberVisitsLabel}>Visits</div>
-                    <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.3rem" }}>
+                    <div style={{ fontSize: "0.72rem", color: "var(--admin-text-subtle)", marginTop: "0.3rem" }}>
                       {formatTimeAgo(m.last_seen)}
                     </div>
                   </div>
@@ -400,18 +400,18 @@ export default function VisitorAnalyticsPage() {
                     <td>
                       {log.is_member ? (
                         <div>
-                          <div style={{ fontWeight: 700, color: "#0f172a" }}>
+                          <div style={{ fontWeight: 700, color: "var(--admin-text-main)" }}>
                             {log.user_name || "Registered Member"}
                           </div>
-                          <div style={{ fontSize: "0.78rem", color: "#64748b" }}>{log.user_email}</div>
+                          <div style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)" }}>{log.user_email}</div>
                         </div>
                       ) : (
                         <div>
-                          <div style={{ fontWeight: 600, color: "#334155" }}>Guest Visitor</div>
+                          <div style={{ fontWeight: 600, color: "var(--admin-text-secondary)" }}>Guest Visitor</div>
                           <div
                             style={{
                               fontSize: "0.72rem",
-                              color: "#94a3b8",
+                              color: "var(--admin-text-subtle)",
                               fontFamily: "monospace",
                             }}
                           >
@@ -447,18 +447,18 @@ export default function VisitorAnalyticsPage() {
                       </div>
                     </td>
 
-                    <td style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "#64748b" }}>
+                    <td style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "var(--admin-text-muted)" }}>
                       {log.ip_address || "127.0.0.1"}
                     </td>
 
-                    <td style={{ whiteSpace: "nowrap", fontSize: "0.82rem", color: "#64748b" }}>
+                    <td style={{ whiteSpace: "nowrap", fontSize: "0.82rem", color: "var(--admin-text-muted)" }}>
                       {formatTimeAgo(log.created_at)}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "#94a3b8" }}>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "var(--admin-text-subtle)" }}>
                     No visitor logs found matching your filter criteria.
                   </td>
                 </tr>
