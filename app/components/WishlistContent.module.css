@@ -381,3 +381,123 @@
     align-items: flex-start;
   }
 }
+
+/* ─── Design-token layer: responsive product grid (2 / 3 / 4 columns) ─── */
+.title {
+  font-size: var(--sf-fs-h1);
+  line-height: var(--sf-lh-tight);
+}
+
+.subtitle {
+  font-size: var(--sf-fs-sm);
+}
+
+.toolbar {
+  flex-wrap: wrap;
+}
+
+/* Search and "Move all" share one control height */
+.searchBox {
+  height: var(--sf-control-h-sm);
+  padding: 0 var(--sf-space-4);
+  box-sizing: border-box;
+  flex: 0 1 360px;
+  min-width: 0;
+}
+
+.searchBox input {
+  font-size: var(--sf-fs-sm);
+}
+
+.searchBox:focus-within {
+  box-shadow: var(--sf-focus-ring);
+}
+
+.btnMoveAll {
+  height: var(--sf-control-h-sm);
+  padding: 0 var(--sf-space-5);
+  box-sizing: border-box;
+  font-size: var(--sf-fs-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.productGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sf-space-4);
+  padding: var(--sf-space-4);
+}
+
+/* Equal-height cards: the price + actions block always sits at the bottom */
+.productCard {
+  display: flex;
+  flex-direction: column;
+}
+
+.removeBtn {
+  width: 32px;
+  height: 32px;
+}
+
+.removeBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--sf-focus-ring);
+}
+
+.productInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--sf-space-3);
+}
+
+.productName {
+  font-size: var(--sf-fs-sm);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.6em;
+}
+
+.productPrice {
+  font-size: var(--sf-fs-md);
+  margin-top: auto;
+  margin-bottom: var(--sf-space-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.btnViewDetails,
+.btnAddToCart {
+  height: var(--sf-control-h-sm);
+  padding: 0 var(--sf-space-2);
+  box-sizing: border-box;
+  font-size: var(--sf-fs-xs);
+}
+
+@media (max-width: 1279px) {
+  .productGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .productGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sf-space-3);
+    padding: var(--sf-space-3);
+  }
+  .searchBox {
+    flex: 1 1 100%;
+  }
+  .btnMoveAll {
+    width: 100%;
+  }
+  .actionsRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -304,3 +304,63 @@
     backdrop-filter: blur(2px);
   }
 }
+
+/* ─── Design-token layer: one scale for sidebar and page content ─── */
+.sidebarInner {
+  padding: var(--sf-space-5) var(--sf-space-3) var(--sf-space-8);
+  gap: var(--sf-space-5);
+}
+
+.menuGroup {
+  gap: 2px;
+}
+
+.groupTitle {
+  font-size: var(--sf-fs-2xs);
+  letter-spacing: 0.12em;
+  padding-left: var(--sf-space-3);
+  margin-bottom: var(--sf-space-1);
+}
+
+.menuLink,
+.logoutBtn {
+  min-height: var(--sf-control-h-sm);
+  padding: 0 var(--sf-space-3);
+  gap: var(--sf-space-3);
+  font-size: var(--sf-fs-base);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.menuLinkText {
+  text-overflow: ellipsis;
+}
+
+.menuLink:focus-visible,
+.logoutBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--sf-focus-ring);
+}
+
+/* Admin-only shortcut, kept apart from the customer links */
+.adminGroup {
+  margin-top: var(--sf-space-2);
+  padding-top: var(--sf-space-4);
+  border-top: 1px dashed rgba(0, 0, 0, 0.15);
+}
+
+.mainContent {
+  padding: var(--sf-space-8) var(--sf-gutter) var(--sf-space-12);
+}
+
+@media (max-width: 1024px) {
+  .mainContent {
+    padding: var(--sf-space-5) var(--sf-gutter) var(--sf-space-10);
+  }
+}
+
+/* Every account page title uses the same heading token */
+.mainContent h1 {
+  font-size: var(--sf-fs-h1);
+  line-height: var(--sf-lh-tight);
+}
