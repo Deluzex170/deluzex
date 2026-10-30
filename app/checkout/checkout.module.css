@@ -2014,3 +2014,18 @@
     padding: var(--sf-space-4);
   }
 }
+
+/* Coupon row: same control height as the rest of the form, shrinks on phones */
+.couponInput {
+  min-width: 0;
+  height: var(--sf-control-h);
+  padding: 0 var(--sf-space-4);
+  box-sizing: border-box;
+}
+
+.btnApplyCoupon {
+  height: var(--sf-control-h);
+  padding: 0 var(--sf-space-5);
+  box-sizing: border-box;
+  flex-shrink: 0;
+}

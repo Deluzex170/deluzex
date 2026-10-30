@@ -1989,3 +1989,29 @@
     column-gap: var(--sf-space-3);
   }
 }
+
+/* Grid tracks must be allowed to shrink below their content's min width */
+.heroGrid {
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+}
+
+.galleryColumn,
+.infoColumn {
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .heroGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Review header wraps its rating under the reviewer on narrow phones */
+.reviewHeader {
+  flex-wrap: wrap;
+  row-gap: var(--sf-space-1);
+}
+
+.reviewUserInfo {
+  min-width: 0;
+}

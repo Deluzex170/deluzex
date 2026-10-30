@@ -1132,7 +1132,7 @@ export default function AdminProjectsPage() {
                                   title="Set as Main Cover"
                                   style={{
                                     background: "var(--admin-surface)",
-                                    color: "#111827",
+                                    color: "var(--admin-text-main)",
                                     border: "none",
                                     borderRadius: "4px",
                                     padding: "4px 6px",
