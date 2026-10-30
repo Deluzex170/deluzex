@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { uploadFileToCloudinary } from "@/lib/upload";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import styles from "../../../../admin/admin.module.css";
@@ -180,7 +181,21 @@ export default function EditProduct() {
       const retainedGallery = currentGallery.filter(url => Boolean(url));
       payload.append("existing_images", JSON.stringify(retainedGallery));
 
+      let mainImageUrl = "";
       if (mainImage) {
+        try {
+          const uploadRes = await uploadFileToCloudinary(mainImage, "products");
+          if (uploadRes?.url) {
+            mainImageUrl = uploadRes.url;
+          }
+        } catch (uploadErr) {
+          console.warn("Direct upload fallback:", uploadErr);
+        }
+      }
+
+      if (mainImageUrl) {
+        payload.append("product_main_image_url", mainImageUrl);
+      } else if (mainImage) {
         payload.append("product_main_image", mainImage);
       }
       
@@ -284,10 +299,18 @@ export default function EditProduct() {
             </div>
 
             <div>
-              <label style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--color-text)' }}>Category *</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <label style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--color-text)', margin: 0 }}>Category *</label>
+                <Link href="/admin/categories" target="_blank" style={{ fontSize: '0.75rem', color: '#C49A45', textDecoration: 'none' }}>
+                  + Manage Categories
+                </Link>
+              </div>
               <select required name="product_category" value={formData.product_category} onChange={handleChange} style={inputStyle}>
                 <option value="" disabled>Select a category</option>
-                {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                {formData.product_category && !categories.some(c => c.name === formData.product_category) && (
+                  <option value={formData.product_category}>{formData.product_category} (Current)</option>
+                )}
+                {categories.map((c, idx) => <option key={c.id || c._id || c.name || idx} value={c.name}>{c.name}</option>)}
               </select>
             </div>
 

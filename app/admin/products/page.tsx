@@ -7,6 +7,8 @@ import {
   fetchProducts,
   deleteProduct,
   toggleProductNewArrival,
+  fetchCategories,
+  Category,
   Product,
 } from "../../services/api";
 import {
@@ -23,6 +25,8 @@ import {
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTab, setFilterTab] = useState<"all" | "new_arrivals">("all");
@@ -32,6 +36,7 @@ export default function AdminProducts() {
 
   useEffect(() => {
     loadProducts();
+    fetchCategories().then(setCategories).catch(console.error);
   }, []);
 
   async function loadProducts() {
@@ -102,6 +107,7 @@ export default function AdminProducts() {
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       if (filterTab === "new_arrivals" && !p.is_new_arrival) return false;
+      if (selectedCategory !== "all" && p.product_category !== selectedCategory) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const titleMatch = p.product_title?.toLowerCase().includes(q);
@@ -110,7 +116,7 @@ export default function AdminProducts() {
       }
       return true;
     });
-  }, [products, filterTab, searchQuery]);
+  }, [products, filterTab, searchQuery, selectedCategory]);
 
   return (
     <div className={styles.sectionContainer} style={{ width: "100%", maxWidth: "100%" }}>
@@ -302,20 +308,38 @@ export default function AdminProducts() {
           </button>
         </div>
 
-        {/* Search */}
-        <div style={{ position: "relative", minWidth: "min(260px, 100%)" }}>
-          <Search
-            size={16}
-            style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}
-          />
-          <input
-            type="text"
-            placeholder="Search by title or category..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+        {/* Filters Group (Category Filter + Search) */}
+        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
+          {/* Category Filter */}
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
             className={styles.formInput}
-            style={{ paddingLeft: "2.25rem", paddingRight: "1rem", margin: 0 }}
-          />
+            style={{ margin: 0, height: "42px", padding: "0 0.85rem", minWidth: "160px", fontSize: "0.85rem" }}
+          >
+            <option value="all">All Categories</option>
+            {categories.map((c, idx) => (
+              <option key={c.id || c._id || c.name || idx} value={c.name}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+
+          {/* Search */}
+          <div style={{ position: "relative", minWidth: "min(260px, 100%)" }}>
+            <Search
+              size={16}
+              style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}
+            />
+            <input
+              type="text"
+              placeholder="Search by title or category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={styles.formInput}
+              style={{ paddingLeft: "2.25rem", paddingRight: "1rem", margin: 0, height: "42px" }}
+            />
+          </div>
         </div>
       </div>
 

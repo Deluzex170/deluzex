@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import Image from "next/image";
 import styles from "../admin.module.css";
+import { uploadFileToCloudinary } from "@/lib/upload";
 import {
   Plus,
   Pencil,
@@ -139,14 +140,26 @@ export default function AdminHeroProducts() {
     setErrorMsg("");
 
     try {
+      let finalImageUrl = formData.image.trim();
+      if (selectedFile) {
+        try {
+          const uploadRes = await uploadFileToCloudinary(selectedFile, "cms");
+          if (uploadRes?.url) {
+            finalImageUrl = uploadRes.url;
+          }
+        } catch (uploadErr) {
+          console.warn("Direct upload fallback:", uploadErr);
+        }
+      }
+
       const body = new FormData();
       body.append("name", formData.name.trim());
       body.append("price", String(Number(formData.price)));
       body.append("alt", formData.alt.trim());
-      if (selectedFile) {
+      if (finalImageUrl) {
+        body.append("image", finalImageUrl);
+      } else if (selectedFile) {
         body.append("image_file", selectedFile);
-      } else if (formData.image.trim()) {
-        body.append("image", formData.image.trim());
       }
 
       await createHeroProduct(body);
@@ -174,14 +187,26 @@ export default function AdminHeroProducts() {
     setErrorMsg("");
 
     try {
+      let finalImageUrl = formData.image.trim();
+      if (selectedFile) {
+        try {
+          const uploadRes = await uploadFileToCloudinary(selectedFile, "cms");
+          if (uploadRes?.url) {
+            finalImageUrl = uploadRes.url;
+          }
+        } catch (uploadErr) {
+          console.warn("Direct upload fallback:", uploadErr);
+        }
+      }
+
       const body = new FormData();
       body.append("name", formData.name.trim());
       body.append("price", String(Number(formData.price)));
       body.append("alt", formData.alt.trim());
-      if (selectedFile) {
+      if (finalImageUrl) {
+        body.append("image", finalImageUrl);
+      } else if (selectedFile) {
         body.append("image_file", selectedFile);
-      } else if (formData.image.trim()) {
-        body.append("image", formData.image.trim());
       }
 
       await updateHeroProduct(prodId, body);

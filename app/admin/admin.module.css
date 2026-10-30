@@ -529,17 +529,7 @@
 }
 
 .topBar {
-  height: 60px;
-  background: var(--admin-surface);
-  border-bottom: 1px solid var(--admin-border);
-  padding: 0 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 90;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  display: none;
 }
 
 .topBarLeft {
@@ -835,7 +825,17 @@
 
 @media (max-width: 1024px) {
   .topBar {
+    display: flex;
+    height: 58px;
+    background: var(--admin-surface);
+    border-bottom: 1px solid var(--admin-border);
     padding: 0 1.25rem;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   }
   .mobileMenuBtn {
     display: flex;

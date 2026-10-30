@@ -178,7 +178,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         >
           <div className={styles.sidebarInner}>
             <div style={{
-              padding: "0.85rem 0.75rem 1.15rem 0.75rem",
+              padding: "1.1rem 1rem",
               borderBottom: "1px solid var(--admin-border)",
               marginBottom: "0.5rem",
               position: "relative"
@@ -195,29 +195,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
-              <Link href="/" title="Back to Storefront" style={{ display: "flex", flexDirection: "column", gap: "0.45rem", textDecoration: "none" }}>
+              <Link href="/admin" title="De Luzex Admin" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
                 <img
                   src={theme === "light" ? "/images/logos/de_luzex_black.svg" : "/images/logos/de_luzex_white.svg"}
                   alt="De Luzex"
-                  height="28"
-                  style={{ height: "28px", width: "auto", maxWidth: "160px" }}
+                  height="30"
+                  style={{ height: "30px", width: "auto", maxWidth: "160px", display: "block" }}
                 />
-                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                  <span style={{
-                    fontSize: "0.62rem",
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
-                    fontWeight: 700,
-                    color: "#C49A45",
-                    background: "rgba(196, 154, 69, 0.12)",
-                    border: "1px solid rgba(196, 154, 69, 0.28)",
-                    padding: "2px 7px",
-                    borderRadius: "4px"
-                  }}>
-                    Atelier Console
-                  </span>
-                  <span style={{ fontSize: "0.62rem", color: "#6B7280" }}>v2.4</span>
-                </div>
               </Link>
             </div>
 
@@ -345,28 +329,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <line x1="3" y1="18" x2="21" y2="18"></line>
                 </svg>
               </button>
-              <div className={styles.topBarBrand}>
-                <span className={styles.topBarTitle}>De Luzex</span>
-                <span className={styles.topBarBadge}>Executive Admin</span>
-              </div>
             </div>
 
-            <div className={styles.topBarRight}>
-              <Link
-                href="/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.storefrontLink}
-                title="Open live customer storefront in a new tab"
-              >
-                <span>Live Storefront</span>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                  <polyline points="15 3 21 3 21 9"></polyline>
-                  <line x1="10" y1="14" x2="21" y2="3"></line>
-                </svg>
-              </Link>
-            </div>
+
           </header>
 
           <main className={styles.mainContent}>
