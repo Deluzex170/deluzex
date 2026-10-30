@@ -48,6 +48,60 @@ export default function AuditLogsPage() {
       loadData(false);
     }, 30000);
     
+    return () => clearInterval(interval);
+  }, []);
+  // Filter or search update
+  useEffect(() => {
+    const handler = setTimeout(async () => {
+      try {
+        const logsData = await fetchAuditLogs({
+          category,
+          search: search.trim() || undefined,
+          status: statusFilter || undefined,
+        });
+        setLogs(logsData);
+      } catch (err) {
+        console.error("Error filtering audit logs:", err);
+      }
+    }, 250);
+    return () => clearTimeout(handler);
+  }, [category, search, statusFilter]);
+
+  const handleManualRefresh = () => {
+    setIsRefreshing(true);
+    loadData(false);
+  };
+
+  const formatTimeAgo = (dateStr: string) => {
+    if (!dateStr) return "N/A";
+    const date = new Date(dateStr.endsWith("Z") ? dateStr : dateStr + "Z");
+    const diffSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
+    if (isNaN(diffSeconds)) return dateStr;
+    if (diffSeconds < 60) return "Just now";
+    if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
+    if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h ago`;
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const getActionBadgeClass = (action: string, status: string) => {
+    if (status === "FAILED" || action.includes("DELETE") || action.includes("FAIL")) {
+      return styles.actionDanger;
+    }
+    if (action.includes("UPDATE") || action.includes("PATCH") || action.includes("EDIT")) {
+      return styles.actionUpdate;
+    }
+    if (action.includes("LOGIN") || action.includes("CREATE") || action.includes("REGISTER")) {
+      return styles.actionSuccess;
+    }
+    return styles.actionNeutral;
+  };
+
   const columnDefs = useMemo<ColDef<AuditLogItem>[]>(
     () => [
       {
@@ -188,62 +242,8 @@ export default function AuditLogsPage() {
     []
   );
 
-  return () => clearInterval(interval);
-  }, []);
 
-  // Filter or search update
-  useEffect(() => {
-    const handler = setTimeout(async () => {
-      try {
-        const logsData = await fetchAuditLogs({
-          category,
-          search: search.trim() || undefined,
-          status: statusFilter || undefined,
-        });
-        setLogs(logsData);
-      } catch (err) {
-        console.error("Error filtering audit logs:", err);
-      }
-    }, 250);
-    return () => clearTimeout(handler);
-  }, [category, search, statusFilter]);
-
-  const handleManualRefresh = () => {
-    setIsRefreshing(true);
-    loadData(false);
-  };
-
-  const formatTimeAgo = (dateStr: string) => {
-    if (!dateStr) return "N/A";
-    const date = new Date(dateStr.endsWith("Z") ? dateStr : dateStr + "Z");
-    const diffSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
-
-    if (isNaN(diffSeconds)) return dateStr;
-    if (diffSeconds < 60) return "Just now";
-    if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
-    if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h ago`;
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const getActionBadgeClass = (action: string, status: string) => {
-    if (status === "FAILED" || action.includes("DELETE") || action.includes("FAIL")) {
-      return styles.actionDanger;
-    }
-    if (action.includes("UPDATE") || action.includes("PATCH") || action.includes("EDIT")) {
-      return styles.actionUpdate;
-    }
-    if (action.includes("LOGIN") || action.includes("CREATE") || action.includes("REGISTER")) {
-      return styles.actionSuccess;
-    }
-    return styles.actionNeutral;
-  };
-
-  return (
+    return (
     <div className={styles.container}>
       {/* HEADER */}
       <div className={styles.header}>
@@ -417,7 +417,7 @@ export default function AuditLogsPage() {
           rowData={logs}
           columnDefs={columnDefs}
           loading={isLoading}
-          getRowId={(s) => String(s.id || s.created_at)}
+          getRowId={(s: AuditLogItem) => String(s.id || s.created_at)}
           quickFilterText={search}
           emptyTitle="No audit records found"
           emptyDescription="No events match your current filter criteria."

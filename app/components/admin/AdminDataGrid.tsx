@@ -123,7 +123,7 @@ export interface AdminDataGridProps<T> {
   ariaLabel?: string;
 }
 
-export default function AdminDataGrid<T>({
+export function AdminDataGrid<T>({
   rowData,
   columnDefs,
   loading = false,
@@ -265,3 +265,5 @@ export default function AdminDataGrid<T>({
     </div>
   );
 }
+
+export default AdminDataGrid;

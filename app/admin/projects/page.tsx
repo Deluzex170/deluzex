@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useMemo } from "react";
+import type { ColDef } from "ag-grid-community";
+import { AdminDataGrid } from "../../components/admin/AdminDataGrid";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "../admin.module.css";
@@ -426,6 +428,7 @@ export default function AdminProjectsPage() {
       }
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
+        
         return (
           proj.title?.toLowerCase().includes(q) ||
           proj.location?.toLowerCase().includes(q) ||
@@ -436,6 +439,280 @@ export default function AdminProjectsPage() {
       return true;
     });
   }, [projects, selectedCategory, searchQuery]);
+
+  const columnDefs = useMemo<ColDef<Project>[]>(
+    () => [
+      {
+        field: "sequence",
+        headerName: "Seq Order",
+        width: 130,
+        cellRenderer: (params: any) => {
+          const project = params.data as Project;
+          if (!project) return null;
+          const projId = project.id || project._id;
+          const idx = params.node?.rowIndex ?? 0;
+          const isFirst = idx === 0;
+          const isLast = idx === (filteredProjects.length - 1);
+          const isMoving = movingId === projId;
+          return (
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.35rem",
+                background: "var(--admin-surface-muted)",
+                padding: "3px 8px",
+                borderRadius: "8px",
+                border: "1px solid var(--admin-border)",
+                height: "32px",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "monospace",
+                  fontWeight: 700,
+                  fontSize: "0.82rem",
+                  color: "var(--admin-primary)",
+                  minWidth: "22px",
+                }}
+              >
+                #{project.sequence || idx + 1}
+              </span>
+              <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                <button
+                  type="button"
+                  disabled={isFirst || isMoving}
+                  onClick={() => handleSwap(project, "up")}
+                  title="Move Up in Sequence"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: isFirst ? "not-allowed" : "pointer",
+                    padding: "0 1px",
+                    opacity: isFirst ? 0.25 : 0.8,
+                    color: "var(--admin-text-main)",
+                    lineHeight: 1,
+                  }}
+                >
+                  <ArrowUp size={12} />
+                </button>
+                <button
+                  type="button"
+                  disabled={isLast || isMoving}
+                  onClick={() => handleSwap(project, "down")}
+                  title="Move Down in Sequence"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: isLast ? "not-allowed" : "pointer",
+                    padding: "0 1px",
+                    opacity: isLast ? 0.25 : 0.8,
+                    color: "var(--admin-text-main)",
+                    lineHeight: 1,
+                  }}
+                >
+                  <ArrowDown size={12} />
+                </button>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        field: "image_url",
+        headerName: "Photo",
+        width: 76,
+        cellRenderer: (params: any) => {
+          const project = params.data as Project;
+          if (!project) return null;
+          return (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+              <div
+                style={{
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "8px",
+                  overflow: "hidden",
+                  position: "relative",
+                  background: "var(--admin-surface-muted)",
+                  border: "1px solid var(--admin-border)",
+                }}
+              >
+                {project.image_url ? (
+                  <Image src={project.image_url} alt={project.title} fill style={{ objectFit: "cover" }} />
+                ) : (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "var(--admin-text-subtle)",
+                    }}
+                  >
+                    <ImageIcon size={18} />
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        field: "title",
+        headerName: "Project Title",
+        flex: 1.5,
+        minWidth: 220,
+        cellRenderer: (params: any) => {
+          const project = params.data as Project;
+          if (!project) return null;
+          return (
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", overflow: "hidden" }}>
+              <div style={{ fontWeight: 600, color: "var(--admin-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {project.title}
+              </div>
+              <div style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", gap: "6px", alignItems: "center" }}>
+                {project.subtitle && <span>{project.subtitle}</span>}
+                {project.gallery_images && project.gallery_images.length > 0 && (
+                  <span style={{ color: "#C49A45", fontWeight: 600, fontSize: "0.72rem" }}>
+                    • {project.gallery_images.length} photo{project.gallery_images.length > 1 ? "s" : ""}
+                  </span>
+                )}
+                {project.videos && project.videos.length > 0 && (
+                  <span style={{ color: "#2563eb", fontWeight: 600, fontSize: "0.72rem" }}>
+                    • {project.videos.length} video{project.videos.length > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        field: "location",
+        headerName: "Location",
+        width: 150,
+        cellRenderer: (params: any) => {
+          const project = params.data as Project;
+          if (!project) return null;
+          return (
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", fontSize: "0.82rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "var(--admin-text-main)" }}>
+                <MapPin size={12} color="#C49A45" />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{project.location || "—"}</span>
+              </div>
+              {project.installations_count && (
+                <div style={{ fontSize: "0.74rem", color: "var(--admin-text-muted)" }}>
+                  {project.installations_count}
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        field: "category",
+        headerName: "Category",
+        width: 130,
+        cellRenderer: (params: any) => {
+          const project = params.data as Project;
+          if (!project) return null;
+          return (
+            <span
+              style={{
+                fontSize: "0.76rem",
+                padding: "3px 8px",
+                borderRadius: "6px",
+                background: "var(--admin-surface-muted)",
+                color: "var(--admin-text-main)",
+                fontWeight: 500,
+              }}
+            >
+              {project.category || "Residential"}
+            </span>
+          );
+        },
+      },
+      {
+        field: "is_featured",
+        headerName: "Featured",
+        width: 120,
+        cellRenderer: (params: any) => {
+          const project = params.data as Project;
+          if (!project) return null;
+          return (
+            <button
+              type="button"
+              onClick={() => handleToggleFeatured(project)}
+              title={project.is_featured ? "Featured on homepage (click to remove)" : "Click to feature on homepage"}
+              style={{
+                background: project.is_featured ? "#fffbeb" : "#f8fafc",
+                border: `1px solid ${project.is_featured ? "#fde68a" : "#e2e8f0"}`,
+                color: project.is_featured ? "#b45309" : "#94a3b8",
+                padding: "3px 8px",
+                borderRadius: "14px",
+                fontSize: "0.74rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              <Star size={11} fill={project.is_featured ? "#b45309" : "none"} />
+              {project.is_featured ? "Featured" : "Standard"}
+            </button>
+          );
+        },
+      },
+      {
+        headerName: "Actions",
+        width: 130,
+        pinned: "right",
+        cellRenderer: (params: any) => {
+          const project = params.data as Project;
+          if (!project) return null;
+          const projId = project.id || project._id;
+          return (
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.4rem", alignItems: "center", height: "100%" }}>
+              <Link
+                href={`/projects/${projId}`}
+                target="_blank"
+                className={styles.actionButton}
+                title="View Live Project Showcase"
+                style={{ padding: "0.3rem" }}
+              >
+                <Eye size={14} />
+              </Link>
+              <button
+                type="button"
+                onClick={() => startEdit(project)}
+                className={styles.actionButton}
+                title="Edit Project"
+                style={{ padding: "0.3rem" }}
+              >
+                <Pencil size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setProjectToDelete(project)}
+                className={`${styles.actionButton} ${styles.actionButtonDelete}`}
+                title="Delete Project"
+                style={{ padding: "0.3rem" }}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    [filteredProjects, movingId]
+  );
+
+
+
 
   // =========================================================================
   // VIEW: FULL-PAGE CREATE OR EDIT FORM
@@ -1620,253 +1897,16 @@ export default function AdminProjectsPage() {
           </span>
         </div>
 
-        {loading ? (
-          <div style={{ padding: "4rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-            Loading projects...
-          </div>
-        ) : filteredProjects.length === 0 ? (
-          <div style={{ padding: "4rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-            <p style={{ fontSize: "1rem", marginBottom: "1rem" }}>
-              No projects found. Click &quot;Add New Project&quot; to showcase your first installation.
-            </p>
-            <button onClick={startCreate} className={styles.primaryButton}>
-              <Plus size={18} /> Add First Project
-            </button>
-          </div>
-        ) : (
-          <div className={styles.tableWrapper} style={{ width: "100%", overflowX: "auto" }}>
-            <table className={styles.table} style={{ width: "100%", tableLayout: "auto" }}>
-              <thead>
-                <tr>
-                  <th style={{ width: "130px", textAlign: "center" }}>Sequence Order</th>
-                  <th style={{ width: "80px" }}>Photo</th>
-                  <th style={{ width: "28%" }}>Project Title</th>
-                  <th style={{ width: "18%" }}>Location</th>
-                  <th style={{ width: "14%" }}>Category</th>
-                  <th style={{ width: "120px", textAlign: "center" }}>Featured</th>
-                  <th style={{ width: "140px", textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProjects.map((project, idx) => {
-                  const projId = project.id || project._id;
-                  const isMoving = movingId === projId;
-                  const isFirst = idx === 0;
-                  const isLast = idx === filteredProjects.length - 1;
-
-                  return (
-                    <tr key={projId || idx}>
-                      {/* Sequence Column with Move Up / Move Down buttons */}
-                      <td style={{ textAlign: "center" }}>
-                        <div
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "0.35rem",
-                            background: "var(--admin-surface-muted)",
-                            padding: "4px 8px",
-                            borderRadius: "8px",
-                            border: "1px solid var(--admin-border)",
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontFamily: "monospace",
-                              fontWeight: 700,
-                              fontSize: "0.85rem",
-                              color: "var(--admin-primary)",
-                              minWidth: "24px",
-                            }}
-                          >
-                            #{project.sequence || idx + 1}
-                          </span>
-                          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                            <button
-                              type="button"
-                              disabled={isFirst || isMoving}
-                              onClick={() => handleSwap(project, "up")}
-                              title="Move Up in Sequence"
-                              style={{
-                                background: "none",
-                                border: "none",
-                                cursor: isFirst ? "not-allowed" : "pointer",
-                                padding: "1px 2px",
-                                opacity: isFirst ? 0.25 : 0.8,
-                                color: "var(--admin-text-main)",
-                                lineHeight: 1,
-                              }}
-                            >
-                              <ArrowUp size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              disabled={isLast || isMoving}
-                              onClick={() => handleSwap(project, "down")}
-                              title="Move Down in Sequence"
-                              style={{
-                                background: "none",
-                                border: "none",
-                                cursor: isLast ? "not-allowed" : "pointer",
-                                padding: "1px 2px",
-                                opacity: isLast ? 0.25 : 0.8,
-                                color: "var(--admin-text-main)",
-                                lineHeight: 1,
-                              }}
-                            >
-                              <ArrowDown size={13} />
-                            </button>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Photo */}
-                      <td>
-                        <div
-                          style={{
-                            width: "56px",
-                            height: "56px",
-                            borderRadius: "8px",
-                            overflow: "hidden",
-                            position: "relative",
-                            background: "var(--admin-surface-muted)",
-                            border: "1px solid var(--admin-border)",
-                          }}
-                        >
-                          {project.image_url ? (
-                            <Image
-                              src={project.image_url}
-                              alt={project.title}
-                              fill
-                              style={{ objectFit: "cover" }}
-                            />
-                          ) : (
-                            <div
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                color: "var(--admin-text-subtle)",
-                              }}
-                            >
-                              <ImageIcon size={20} />
-                            </div>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Title & Subtitle */}
-                      <td>
-                        <div style={{ fontWeight: 600, color: "var(--admin-primary)", fontSize: "0.95rem" }}>
-                          {project.title}
-                        </div>
-                        <div style={{ fontSize: "0.8rem", color: "var(--admin-text-muted)", marginTop: "2px", display: "flex", gap: "6px", alignItems: "center" }}>
-                          {project.subtitle && <span>{project.subtitle}</span>}
-                          {project.gallery_images && project.gallery_images.length > 0 && (
-                            <span style={{ color: "#C49A45", fontWeight: 600, fontSize: "0.75rem" }}>
-                              • {project.gallery_images.length} photo{project.gallery_images.length > 1 ? "s" : ""}
-                            </span>
-                          )}
-                          {project.videos && project.videos.length > 0 && (
-                            <span style={{ color: "#2563eb", fontWeight: 600, fontSize: "0.75rem" }}>
-                              • {project.videos.length} video{project.videos.length > 1 ? "s" : ""}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Location */}
-                      <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "0.85rem", color: "var(--admin-text-main)" }}>
-                          <MapPin size={13} color="#C49A45" />
-                          <span>{project.location || "—"}</span>
-                        </div>
-                        {project.installations_count && (
-                          <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", marginTop: "2px" }}>
-                            {project.installations_count}
-                          </div>
-                        )}
-                      </td>
-
-                      {/* Category */}
-                      <td>
-                        <span
-                          style={{
-                            fontSize: "0.775rem",
-                            padding: "3px 8px",
-                            borderRadius: "6px",
-                            background: "var(--admin-surface-muted)",
-                            color: "var(--admin-text-main)",
-                            fontWeight: 500,
-                          }}
-                        >
-                          {project.category || "Residential"}
-                        </span>
-                      </td>
-
-                      {/* Featured Toggle */}
-                      <td style={{ textAlign: "center" }}>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleFeatured(project)}
-                          title={project.is_featured ? "Featured on homepage (click to remove)" : "Click to feature on homepage"}
-                          style={{
-                            background: project.is_featured ? "#fffbeb" : "#f8fafc",
-                            border: `1px solid ${project.is_featured ? "#fde68a" : "#e2e8f0"}`,
-                            color: project.is_featured ? "#b45309" : "#94a3b8",
-                            padding: "4px 10px",
-                            borderRadius: "16px",
-                            fontSize: "0.75rem",
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
-                            transition: "all 0.2s",
-                          }}
-                        >
-                          <Star size={12} fill={project.is_featured ? "#b45309" : "none"} />
-                          {project.is_featured ? "Featured" : "Standard"}
-                        </button>
-                      </td>
-
-                      {/* Actions */}
-                      <td style={{ textAlign: "right" }}>
-                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
-                          <Link
-                            href={`/projects/${projId}`}
-                            target="_blank"
-                            className={styles.actionButton}
-                            title="View Live Project Showcase"
-                          >
-                            <Eye size={15} />
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => startEdit(project)}
-                            className={styles.actionButton}
-                            title="Edit Project"
-                          >
-                            <Pencil size={15} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setProjectToDelete(project)}
-                            className={`${styles.actionButton} ${styles.actionButtonDelete}`}
-                            title="Delete Project"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <AdminDataGrid<Project>
+          ariaLabel="Architectural Projects"
+          rowData={filteredProjects}
+          columnDefs={columnDefs}
+          loading={loading}
+          getRowId={(s: Project) => String(s.id || s._id || s.title)}
+          quickFilterText={searchQuery}
+          emptyTitle="No projects found"
+          emptyDescription="Click 'Add New Project' to showcase your first installation."
+        />
       </div>
     </div>
   );

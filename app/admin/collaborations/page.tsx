@@ -503,7 +503,7 @@ export default function AdminCollaborationsPage() {
         rowData={submissions}
         columnDefs={columnDefs}
         loading={loading}
-        getRowId={(s) => String(s._id || s.id || s.email)}
+        getRowId={(s: CollaborationSubmission) => String(s._id || s.id || s.email)}
         quickFilterText={searchQuery}
         emptyTitle="No submissions found"
         emptyDescription={

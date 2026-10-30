@@ -265,10 +265,6 @@ export default function AdminTestimonialsPage() {
   // =========================================================================
   // VIEW 1: FULL-PAGE CREATE OR EDIT FORM (USES 100% OF PAGE WIDTH)
   // =========================================================================
-  if (viewMode === "create" || viewMode === "edit") {
-    const isEdit = viewMode === "edit";
-
-    
   const columnDefs = useMemo<ColDef<Testimonial>[]>(
     () => [
       {
@@ -456,6 +452,11 @@ export default function AdminTestimonialsPage() {
     []
   );
 
+
+    if (viewMode === "create" || viewMode === "edit") {
+    const isEdit = viewMode === "edit";
+
+    
   return (
       <div className={styles.sectionContainer} style={{ width: "100%", maxWidth: "100%", margin: 0 }}>
         {/* Navigation Breadcrumb */}
@@ -991,7 +992,7 @@ export default function AdminTestimonialsPage() {
           rowData={testimonials}
           columnDefs={columnDefs}
           loading={loading}
-          getRowId={(s) => String(s._id || s.id || s.author_name)}
+          getRowId={(s: Testimonial) => String(s._id || s.id || s.author_name)}
           quickFilterText={searchQuery}
           emptyTitle="No customer stories found"
           emptyDescription="Click 'Add Testimonial' to publish your first story on the homepage."

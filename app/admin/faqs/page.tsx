@@ -405,7 +405,7 @@ export default function AdminFaqsPage() {
         rowData={faqs}
         columnDefs={columnDefs}
         loading={loading}
-        getRowId={(s) => String(s._id || s.id || s.question)}
+        getRowId={(s: FAQItem) => String(s._id || s.id || s.question)}
         quickFilterText={searchQuery}
         emptyTitle="No FAQs found"
         emptyDescription="Click 'Seed Default FAQs' or 'Add New Question' to add entries for your visitors."

@@ -56,7 +56,7 @@ export default function AdminNewsletterPage() {
     try {
       const newStatus = !currentStatus;
       const res = await updateSubscriberNotified(subscriberId, newStatus);
-      if (res.success && res.subscriber) {
+      if (res && res.subscriber) {
         setData((prev) => ({
           ...prev,
           pending: newStatus ? Math.max(0, prev.pending - 1) : prev.pending + 1,
@@ -76,7 +76,7 @@ export default function AdminNewsletterPage() {
   const handleDeleteSubscriber = async (subscriberId: string) => {
     try {
       const res = await deleteNewsletterSubscriber(subscriberId);
-      if (res.success) {
+      if (res) {
         const item = data.subscribers.find(
           (s) => s.id === subscriberId || s._id === subscriberId
         );
