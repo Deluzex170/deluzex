@@ -13,6 +13,7 @@ from app.services.inventory import decrement_product_stock, restore_product_stoc
 from app.services.order_identifiers import generate_order_identifiers
 from app.services.email import send_order_confirmation_email, send_shipping_notification_email
 from app.schemas.order import (
+    OrderCancelRequest,
     OrderCancelResponse,
     OrderCreateRequest,
     OrderListResponse,
@@ -173,7 +174,15 @@ def list_orders(
                 query["phone"] = phone.strip()
 
     if order_status and order_status.lower() != "all":
-        query["status"] = {"$regex": f"^{re.escape(order_status.strip())}$", "$options": "i"}
+        norm_status = order_status.strip().lower()
+        if norm_status in ("pending", "cod"):
+            query["status"] = {"$in": ["pending", "cod"]}
+        elif norm_status in ("paid", "processing"):
+            query["status"] = {"$in": ["paid", "processing"]}
+        elif norm_status in ("shipped", "out_for_delivery"):
+            query["status"] = {"$in": ["shipped", "out_for_delivery"]}
+        else:
+            query["status"] = {"$regex": f"^{re.escape(order_status.strip())}$", "$options": "i"}
 
     docs = list(
         db.orders.find(query)
@@ -194,17 +203,26 @@ def get_order(
     Get full details of a specific order by its MongoDB Order ID.
     Enforces privacy: only the order owner or an admin can view order details.
     """
+    clean_id = order_id.replace("#", "").strip()
     logger.info(f"[GET /orders/{order_id}] Fetching order details")
+    doc = None
     try:
-        obj_id = ObjectId(order_id)
+        doc = db.orders.find_one({"_id": ObjectId(clean_id)})
     except Exception:
-        logger.warning(f"[GET /orders/{order_id}] Invalid ObjectId format")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid order ID format",
-        )
+        pass
 
-    doc = db.orders.find_one({"_id": obj_id})
+    if doc is None:
+        doc = db.orders.find_one({
+            "$or": [
+                {"order_id": clean_id},
+                {"order_id": order_id},
+                {"custom_order_id": clean_id},
+                {"custom_order_id": order_id},
+                {"id": clean_id},
+                {"id": order_id},
+            ]
+        })
+
     if doc is None:
         logger.warning(f"[GET /orders/{order_id}] Order not found in database")
         raise HTTPException(
@@ -302,18 +320,35 @@ def update_order_status(
     """
     Update the status, tracking number, courier partner, or notes of an existing order (Admin only).
     """
+    clean_id = order_id.replace("#", "").strip()
     logger.info(f"[PATCH /orders/{order_id}/status] Updating status to '{payload.status}' by {admin.email}")
+    prev_doc = None
     try:
-        obj_id = ObjectId(order_id)
+        prev_doc = db.orders.find_one({"_id": ObjectId(clean_id)})
     except Exception:
-        logger.warning(f"[PATCH /orders/{order_id}/status] Invalid ObjectId format")
+        pass
+
+    if prev_doc is None:
+        prev_doc = db.orders.find_one({
+            "$or": [
+                {"order_id": clean_id},
+                {"order_id": order_id},
+                {"custom_order_id": clean_id},
+                {"custom_order_id": order_id},
+                {"id": clean_id},
+                {"id": order_id},
+            ]
+        })
+
+    if prev_doc is None:
+        logger.warning(f"[PATCH /orders/{order_id}/status] Order not found")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid order ID format",
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found",
         )
 
-    prev_doc = db.orders.find_one({"_id": obj_id})
-    old_status = prev_doc.get("status") if prev_doc else None
+    obj_id = prev_doc["_id"]
+    old_status = prev_doc.get("status")
 
     update_fields = {
         "status": payload.status,
@@ -337,6 +372,14 @@ def update_order_status(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Order not found",
         )
+
+    # Sync inventory stock if transitioning to or from cancelled
+    new_status = str(payload.status).lower()
+    old_status_clean = str(old_status).lower() if old_status else ""
+    if new_status == "cancelled" and old_status_clean != "cancelled":
+        restore_product_stock(prev_doc.get("items", []))
+    elif old_status_clean == "cancelled" and new_status != "cancelled":
+        decrement_product_stock(prev_doc.get("items", []))
 
     doc = db.orders.find_one({"_id": obj_id})
     if not doc:
@@ -398,20 +441,32 @@ def delete_order(
     """
     Delete an order (Admin only).
     """
+    clean_id = order_id.replace("#", "").strip()
+    doc = None
     try:
-        obj_id = ObjectId(order_id)
+        doc = db.orders.find_one({"_id": ObjectId(clean_id)})
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid order ID format",
-        )
+        pass
 
-    doc = db.orders.find_one({"_id": obj_id})
+    if doc is None:
+        doc = db.orders.find_one({
+            "$or": [
+                {"order_id": clean_id},
+                {"order_id": order_id},
+                {"custom_order_id": clean_id},
+                {"custom_order_id": order_id},
+                {"id": clean_id},
+                {"id": order_id},
+            ]
+        })
+
     if doc is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Order not found",
         )
+
+    obj_id = doc["_id"]
 
     db.orders.delete_one({"_id": obj_id})
     record_audit_event(
@@ -432,23 +487,33 @@ def delete_order(
 @router.put("/{order_id}/cancel", response_model=OrderCancelResponse)
 def cancel_order(
     order_id: str,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    payload: Optional[OrderCancelRequest] = None,
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
 ):
     """
     Cancel an order if it is in a cancellable state (pending, paid, cod, processing).
-    Enforces authorization: Only the customer who owns the order or an Admin can cancel it.
+    Enforces authorization: Only the customer who owns the order (via token or email) or an Admin can cancel it.
     """
-    logger.info(f"[POST /orders/{order_id}/cancel] Attempting to cancel order by {current_user.email}")
+    clean_id = order_id.replace("#", "").strip()
+    logger.info(f"[POST /orders/{order_id}/cancel] Attempting to cancel order #{clean_id}")
+    doc = None
     try:
-        obj_id = ObjectId(order_id)
+        doc = db.orders.find_one({"_id": ObjectId(clean_id)})
     except Exception:
-        logger.warning(f"[POST /orders/{order_id}/cancel] Invalid ObjectId format")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid order ID format",
-        )
+        pass
 
-    doc = db.orders.find_one({"_id": obj_id})
+    if doc is None:
+        doc = db.orders.find_one({
+            "$or": [
+                {"order_id": clean_id},
+                {"order_id": order_id},
+                {"custom_order_id": clean_id},
+                {"custom_order_id": order_id},
+                {"id": clean_id},
+                {"id": order_id},
+            ]
+        })
+
     if doc is None:
         logger.warning(f"[POST /orders/{order_id}/cancel] Order not found")
         raise HTTPException(
@@ -456,21 +521,30 @@ def cancel_order(
             detail="Order not found",
         )
 
+    obj_id = doc["_id"]
+
     # Check ownership or admin
     order_email = (doc.get("email") or "").strip().lower()
-    user_email = (current_user.email or "").strip().lower()
     order_uid = str(doc.get("user_id") or "")
-    user_id_str = str(current_user.id) if current_user.id else None
-    is_owner = (order_email and order_email == user_email) or (user_id_str and order_uid == user_id_str)
 
-    if not is_owner and not getattr(current_user, "is_admin", False):
-        logger.warning(f"[POST /orders/{order_id}/cancel] User {current_user.email} unauthorized to cancel order #{order_id}")
+    is_owner = False
+    if current_user:
+        user_email = (current_user.email or "").strip().lower()
+        user_id_str = str(current_user.id) if current_user.id else None
+        is_owner = (order_email and order_email == user_email) or (user_id_str and order_uid == user_id_str) or getattr(current_user, "is_admin", False)
+
+    if not is_owner and payload and payload.email:
+        req_email = (payload.email or "").strip().lower()
+        is_owner = bool(order_email and order_email == req_email)
+
+    if not is_owner:
+        logger.warning(f"[POST /orders/{order_id}/cancel] Unauthorized attempt to cancel order #{order_id}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to cancel this order",
         )
 
-    current_status = doc.get("status")
+    current_status = str(doc.get("status") or "").lower()
     non_cancellable = ["shipped", "out_for_delivery", "delivered", "cancelled"]
     if current_status in non_cancellable:
         logger.warning(f"[POST /orders/{order_id}/cancel] Cannot cancel order with status '{current_status}'")
@@ -479,16 +553,18 @@ def cancel_order(
             detail=f"Order cannot be cancelled as it is already '{current_status}'",
         )
 
+    update_fields = {
+        "status": "cancelled",
+        "updated_at": datetime.utcnow(),
+    }
+    if payload and payload.reason:
+        update_fields["cancel_reason"] = payload.reason
+
     db.orders.update_one(
         {"_id": obj_id},
-        {
-            "$set": {
-                "status": "cancelled",
-                "updated_at": datetime.utcnow(),
-            }
-        },
+        {"$set": update_fields},
     )
-    logger.info(f"[POST /orders/{order_id}/cancel] Order cancelled successfully")
+    logger.info(f"[POST /orders/{order_id}/cancel] Order #{order_id} cancelled successfully")
 
     # Restore inventory stock back to products
     restore_product_stock(doc.get("items", []))

@@ -20,6 +20,7 @@ import {
   Product,
 } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
+import WishlistButton from "../../components/WishlistButton";
 import PincodeChecker from "../../components/PincodeChecker";
 
 export default function ProductDetail() {
@@ -60,6 +61,9 @@ export default function ProductDetail() {
   const [inquiryLoading, setInquiryLoading] = useState(false);
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [addedToCartToast, setAddedToCartToast] = useState(false);
+  const [isBuyingNow, setIsBuyingNow] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [addingRelatedId, setAddingRelatedId] = useState<string | number | null>(null);
   const [inquiryForm, setInquiryForm] = useState({
     name: "",
     email: "",
@@ -67,18 +71,6 @@ export default function ProductDetail() {
     quantity: "50",
     message: "",
   });
-  const [accordionsOpen, setAccordionsOpen] = useState<{ [key: string]: boolean }>({
-    download: true,
-    specs: true,
-    dimensions: true,
-  });
-
-  const toggleAccordion = (key: string) => {
-    setAccordionsOpen((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
   const ctlGridRef = useRef<HTMLDivElement>(null);
   const [activeCtlId, setActiveCtlId] = useState<string | number | null>(null);
 
@@ -199,20 +191,54 @@ export default function ProductDetail() {
     `Hello Deluzex team! I am interested in inquiring about "${product.product_title}" (SKU: ${product.sku || "N/A"}). Please provide quotation and volume pricing details.`
   );
 
-  // Technical Specifications data
-  const specRows = [
-    { key: "Dimensions", value: product.dimensions || "Not provided" },
-    { key: "Finish", value: product.finish || product.product_finishing || "Not provided" },
-    { key: "Material", value: product.material || product.product_material || "Not provided" },
-    { key: "Colorway", value: product.colorway || product.product_style || "Not provided" },
-    { key: "Piece Weight", value: product.piece_weight || "Not provided" },
-    { key: "Care", value: product.care || "Not provided" },
-    { key: "MOQ Rule", value: product.moq_rule || "Not provided" },
-    { key: "Replenishment", value: product.replenishment || "Not provided" },
-  ];
+  // Helper to test if an admin-provided value is genuine and not null/empty/placeholder
+  const isValidDetail = (val: unknown): boolean => {
+    if (val === null || val === undefined) return false;
+    const str = String(val).trim();
+    if (!str) return false;
+    const lower = str.toLowerCase();
+    return (
+      lower !== "null" &&
+      lower !== "undefined" &&
+      lower !== "not provided" &&
+      lower !== "not_provided" &&
+      lower !== "not available" &&
+      lower !== "not_available" &&
+      lower !== "none" &&
+      lower !== "n/a" &&
+      lower !== "na"
+    );
+  };
 
-  // Additional dynamic specs configured by admin
-  const extraSpecs = Array.isArray(product.specifications) ? product.specifications : [];
+  // Unified Specifications - single clean list combining core attributes & custom dynamic specifications
+  const baseSpecs = [
+    { key: "SKU", value: product.sku },
+    { key: "Dimensions", value: product.dimensions },
+    { key: "Finish", value: product.finish || product.product_finishing },
+    { key: "Material", value: product.material || product.product_material },
+    { key: "Colorway", value: product.colorway || product.product_style },
+    { key: "Voltage", value: product.product_voltage },
+    { key: "Wattage", value: product.product_wattage },
+    { key: "Piece Weight", value: product.piece_weight },
+    { key: "Care", value: product.care },
+    { key: "MOQ Rule", value: product.moq_rule },
+    { key: "Replenishment", value: product.replenishment },
+  ].filter((s) => isValidDetail(s.value));
+
+  const extraSpecs = (Array.isArray(product.specifications) ? product.specifications : []).filter(
+    (spec) => isValidDetail(spec?.key) && isValidDetail(spec?.value)
+  );
+
+  // Combine and deduplicate by lowercase key so admin custom specs take precedence or don't duplicate
+  const seenKeys = new Set<string>();
+  const allSpecifications: { key: string; value: unknown }[] = [];
+  for (const item of [...baseSpecs, ...extraSpecs]) {
+    const normKey = String(item.key).trim().toLowerCase();
+    if (!seenKeys.has(normKey)) {
+      seenKeys.add(normKey);
+      allSpecifications.push(item);
+    }
+  }
 
   // Stock status text & class
   const isMadeToOrder = Boolean(product.stock_status?.toLowerCase().includes("order"));
@@ -250,18 +276,19 @@ export default function ProductDetail() {
     );
 
   const handleBuyNow = () => {
-    if (!product) return;
+    if (!product || isBuyingNow) return;
     if (isOutOfStock) {
       alert("This item is currently sold out. You can submit an inquiry below for custom commissioning.");
       return;
     }
+    setIsBuyingNow(true);
     // Already holding all available units: go straight to checkout without adding more
     if (!isAtStockLimit) dispatchAddToCart();
     router.push("/checkout");
   };
 
   const handleAddToCart = () => {
-    if (!product) return;
+    if (!product || isAddingToCart) return;
     if (isOutOfStock) {
       alert("This item is currently out of stock.");
       return;
@@ -270,8 +297,12 @@ export default function ProductDetail() {
       alert(`Only ${maxQuantity} units available — they're all in your cart already.`);
       return;
     }
+    setIsAddingToCart(true);
     dispatchAddToCart();
     setAddedToCartToast(true);
+    setTimeout(() => {
+      setIsAddingToCart(false);
+    }, 600);
     setTimeout(() => setAddedToCartToast(false), 2500);
   };
 
@@ -314,10 +345,6 @@ export default function ProductDetail() {
   };
 
   const handleOpenReviewModal = () => {
-    if (!isAuthenticated) {
-      openLoginModal(undefined, "Please sign in to write a review.");
-      return;
-    }
     const defaultName = (user as any)?.name || `${(user as any)?.first_name || ""} ${(user as any)?.last_name || ""}`.trim() || "";
     const defaultEmail = userEmail || "";
     setReviewForm((prev) => ({
@@ -330,10 +357,6 @@ export default function ProductDetail() {
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAuthenticated) {
-      openLoginModal(undefined, "Please sign in to write a review.");
-      return;
-    }
     if (!product) return;
     if (!reviewForm.name.trim()) {
       alert("Please enter your name.");
@@ -343,24 +366,32 @@ export default function ProductDetail() {
       alert("Please enter your review comments.");
       return;
     }
+    const targetProductId = String(product.id || (product as any)._id || params.slug);
+    if (!targetProductId) {
+      alert("Product ID is missing.");
+      return;
+    }
+
     setReviewSubmitting(true);
     try {
       const res = await submitProductReview({
-        product_id: String(product.id || params.slug),
+        product_id: targetProductId,
         author_name: reviewForm.name.trim(),
         author_email: reviewForm.email.trim() || undefined,
         rating: reviewRating,
         title: reviewForm.title.trim() || undefined,
         text: reviewForm.text.trim(),
       });
-      setReviewsStats(res.stats);
-      setReviewSuccessMsg("Thank you! Your review has been submitted.");
+      if (res && res.stats) {
+        setReviewsStats(res.stats);
+      }
+      setReviewSuccessMsg("Thank you! Your review has been submitted successfully.");
       setTimeout(() => {
         setShowReviewModal(false);
         setReviewSuccessMsg("");
         setReviewForm({ name: "", email: "", title: "", text: "" });
         setReviewRating(5);
-      }, 1400);
+      }, 1800);
     } catch (err: any) {
       console.error("Failed to submit review:", err);
       alert(err?.message || "Failed to submit review. Please try again.");
@@ -388,6 +419,7 @@ export default function ProductDetail() {
                   priority
                 />
               ) : null}
+              {product && <WishlistButton product={product} variant="floating" size={22} />}
             </div>
 
             {/* 4 Thumbnail Selector Grid matching Figma */}
@@ -461,10 +493,11 @@ export default function ProductDetail() {
             </div>
 
             {/* Product Description */}
-            <p className={styles.description}>
-              {product.product_description ||
-                "Our signature rustic flat plate crafted from refined red terracotta clays. Extremely low absorption, fired at intense heat to guarantee chip protection."}
-            </p>
+            {isValidDetail(product.product_description) && (
+              <p className={styles.description}>
+                {product.product_description}
+              </p>
+            )}
 
             {/* Stock Availability Indicator */}
             {isOutOfStock ? (
@@ -519,20 +552,44 @@ export default function ProductDetail() {
                 type="button"
                 className={styles.btnBuyNow}
                 onClick={handleBuyNow}
-                disabled={isOutOfStock}
+                disabled={isOutOfStock || isBuyingNow}
                 style={isOutOfStock ? { opacity: 0.45, cursor: "not-allowed", background: "#333" } : undefined}
               >
-                {isOutOfStock ? "Sold Out" : "Buy it Now"}
+                {isBuyingNow ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
+                    <svg className={styles.btnSpinner} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    Proceeding to Checkout...
+                  </span>
+                ) : isOutOfStock ? (
+                  "Sold Out"
+                ) : (
+                  "Buy it Now"
+                )}
               </button>
 
               <button
                 type="button"
                 className={styles.btnAddToCart}
                 onClick={handleAddToCart}
-                disabled={isOutOfStock}
+                disabled={isOutOfStock || isAddingToCart}
                 style={isOutOfStock ? { opacity: 0.45, cursor: "not-allowed" } : undefined}
               >
-                {isOutOfStock ? "Out of Stock" : "Add to cart"}
+                {isAddingToCart ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
+                    <svg className={styles.btnSpinner} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    Adding to cart...
+                  </span>
+                ) : isOutOfStock ? (
+                  "Out of Stock"
+                ) : (
+                  "Add to cart"
+                )}
               </button>
 
               <button
@@ -542,6 +599,28 @@ export default function ProductDetail() {
               >
                 {isOutOfStock ? "Inquire for Commission" : "Email and Inquiry"}
               </button>
+
+              {isValidDetail(product.amazon_link) && (
+                <a
+                  href={String(product.amazon_link).trim().startsWith("http") ? String(product.amazon_link).trim() : `https://${String(product.amazon_link).trim()}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.btnAmazon}
+                  title="Buy directly on Amazon"
+                >
+                  <span className={styles.btnAmazonIcon}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M13.62 14.51c-2.04 1.5-4.99 2.3-7.56 2.3-3.6 0-6.83-1.34-9.27-3.58-.19-.18-.02-.43.22-.29 2.64 1.54 5.86 2.47 9.21 2.47 2.28 0 4.77-.56 7.02-1.71.35-.18.64.27.38.81zm.9-1.14c-.26-.34-1.73-.14-2.39-.06-.2.02-.23-.15-.05-.28 1.17-.83 3.09-.59 3.32-.3.23.29-.06 2.22-1.17 3.13-.17.14-.33.06-.25-.12.25-.6.8-2.04.54-2.37zm2.18-5.32c-.44.75-.95 1.48-1.54 2.18-.17.2-.42.08-.34-.14.49-1.28.8-2.67.92-4.08.02-.27.35-.38.5-.16.48.71 1.05 1.37 1.68 1.98.2.19.04.46-.2.43-.34-.05-.68-.12-1.02-.21z"/>
+                    </svg>
+                  </span>
+                  <span>Buy on Amazon</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.85 }}>
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                </a>
+              )}
             </div>
 
             {/* Shiprocket Pincode Delivery Estimator */}
@@ -549,166 +628,39 @@ export default function ProductDetail() {
 
             <div className={styles.divider} />
 
-            {/* Technical Specifications Section */}
-            <div className={styles.specsSection} id="specifications">
-              <div className={styles.specsHeaderRow}>
-                <div className={styles.specsHeader}>TECHNICAL SPECIFICATIONS</div>
+            {/* Unified Product Specifications Section */}
+            {allSpecifications.length > 0 && (
+              <div className={styles.specsSection} id="specifications">
+                <div className={styles.specsHeaderRow}>
+                  <div className={styles.specsHeader}>PRODUCT SPECIFICATIONS</div>
+                  {isValidDetail(product.technical_spec_pdf) && (
+                    <button
+                      type="button"
+                      className={styles.specsDownloadBtn}
+                      onClick={() => setShowPdfModal(true)}
+                      title="View & Download Technical Specification Datasheet (PDF)"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                      </svg>
+                      Datasheet (PDF)
+                    </button>
+                  )}
+                </div>
+                <div className={styles.specsList}>
+                  {allSpecifications.map((spec, idx) => (
+                    <div key={idx} className={styles.specRow}>
+                      <div className={styles.specKey}>{spec.key}</div>
+                      <div className={styles.specVal}>{String(spec.value)}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className={styles.divider} style={{ marginTop: "1.15rem", marginBottom: 0 }} />
               </div>
-              <div className={styles.specsList}>
-                {specRows.map(
-                  (spec, idx) =>
-                    spec.value && (
-                      <div key={idx} className={styles.specRow}>
-                        <div className={styles.specKey}>{spec.key}</div>
-                        <div className={styles.specVal}>{spec.value}</div>
-                      </div>
-                    )
-                )}
-                {/* Custom Admin Added Specifications */}
-                {extraSpecs.map(
-                  (spec, idx) =>
-                    spec.key &&
-                    spec.value && (
-                      <div key={`custom-${idx}`} className={styles.specRow}>
-                        <div className={styles.specKey}>{spec.key}</div>
-                        <div className={styles.specVal}>{spec.value}</div>
-                      </div>
-                    )
-                )}
-              </div>
-              <div className={styles.divider} style={{ marginTop: "1.15rem", marginBottom: 0 }} />
-            </div>
+            )}
           </div>
         </div>
-
-        {/* ==================== PRODUCT SHOWCASE & ACCORDIONS SECTION ==================== */}
-        <section className={styles.showcaseSection}>
-          <div className={styles.showcaseGrid}>
-            {/* Left Column: Golden bordered luxury showcase card */}
-            <div className={styles.showcaseCard}>
-              <div className={styles.showcaseImageWrapper}>
-                <Image
-                  src={
-                    galleryImages[1] ||
-                    currentImage ||
-                    product.product_main_image ||
-                    "/images/logos/de_luzex_black.svg"
-                  }
-                  alt={product.product_title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  className={styles.showcaseImg}
-                />
-              </div>
-            </div>
-
-            {/* Right Column: 3 Accordions matching design */}
-            <div className={styles.accordionContainer}>
-              {/* 1. DOWNLOAD */}
-              <div className={styles.accordionItem}>
-                <button
-                  type="button"
-                  className={styles.accordionHeader}
-                  onClick={() => toggleAccordion("download")}
-                  aria-expanded={accordionsOpen.download}
-                >
-                  <span className={styles.accordionTitle}>DOWNLOAD</span>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    className={`${styles.accordionChevron} ${accordionsOpen.download ? styles.accordionChevronOpen : ""}`}
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
-                {accordionsOpen.download && (
-                  <div className={styles.accordionContent}>
-                    <button
-                      type="button"
-                      className={styles.downloadLink}
-                      onClick={() => setShowPdfModal(true)}
-                    >
-                      Installation Guide
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.downloadLink}
-                      onClick={() => setShowPdfModal(true)}
-                    >
-                      Datasheet
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* 2. PRODUCT SPECIFICATIONS */}
-              <div className={styles.accordionItem}>
-                <button
-                  type="button"
-                  className={styles.accordionHeader}
-                  onClick={() => toggleAccordion("specs")}
-                  aria-expanded={accordionsOpen.specs}
-                >
-                  <span className={styles.accordionTitle}>PRODUCT SPECIFICATIONS</span>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    className={`${styles.accordionChevron} ${accordionsOpen.specs ? styles.accordionChevronOpen : ""}`}
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
-                {accordionsOpen.specs && (
-                  <div className={styles.accordionContent}>
-                    <p className={styles.specItem}>
-                      Material: {product.material || product.product_material || "Not provided"}
-                    </p>
-
-                    <p className={styles.specItem}>Voltage: {product.product_voltage || "Not provided"}</p>
-
-                  </div>
-                )}
-              </div>
-
-              {/* 3. DIMENSIONS */}
-              <div className={styles.accordionItem}>
-                <button
-                  type="button"
-                  className={styles.accordionHeader}
-                  onClick={() => toggleAccordion("dimensions")}
-                  aria-expanded={accordionsOpen.dimensions}
-                >
-                  <span className={styles.accordionTitle}>DIMENSIONS</span>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    className={`${styles.accordionChevron} ${accordionsOpen.dimensions ? styles.accordionChevronOpen : ""}`}
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
-                {accordionsOpen.dimensions && (
-                  <div className={styles.accordionContent}>
-
-                    <p className={styles.specItem}>Weight: {product.piece_weight || "Not provided"}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
 
       {/* Floating Added to Cart Toast */}
@@ -1017,129 +969,181 @@ export default function ProductDetail() {
             <div>
               <h2 className={styles.reviewsTitle}>Customer Reviews</h2>
             </div>
-          </div>
-
-          <div className={styles.reviewsDivider} />
-
-          <div className={styles.ratingSummary}>
-            <div className={styles.ratingScore}>
-              <h3>{(reviewsStats?.average_rating ?? 0).toFixed(1)}</h3>
-              <div className={styles.stars}>
-                {"★".repeat(Math.round(reviewsStats?.average_rating ?? 0))}
-                {"☆".repeat(5 - Math.round(reviewsStats?.average_rating ?? 0))}
-              </div>
-              <p>{reviewsStats?.total_reviews ? `${reviewsStats.total_reviews} Ratings` : "No ratings yet"}</p>
-            </div>
-            <div className={styles.ratingBars}>
-              {[5, 4, 3, 2, 1].map((score) => ({
-                score: String(score), count: `${reviewsStats?.breakdown?.[String(score)]?.count ?? 0} Reviews`,
-                pct: reviewsStats?.breakdown?.[String(score)]?.pct ?? 0,
-              })).map((bar, idx) => (
-                <div key={idx} className={styles.ratingBarRow}>
-                  <div className={styles.barTrack}>
-                    <div className={styles.barFill} style={{ width: `${bar.pct}%` }}></div>
-                  </div>
-                  <div className={styles.barMeta}>
-                    <span className={styles.barScore}>{bar.score}</span>
-                    <span className={styles.barReviewsCount}>{bar.count}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.reviewList}>
-            {(reviewsStats?.reviews && reviewsStats.reviews.length > 0
-              ? (showAllReviews ? reviewsStats.reviews : reviewsStats.reviews.slice(0, 3)).map((rev) => ({
-                  id: rev.id,
-                  author_name: rev.author_name,
-                  time_ago: rev.created_at
-                    ? new Date(rev.created_at).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    : "Recent",
-                  rating: rev.rating || 5,
-                  text: rev.text,
-                  photos: [],
-                }))
-              : []
-            ).map((rev: any, i: number) => {
-              const starCount = Math.max(1, Math.min(5, rev.rating || 5));
-
-              return (
-                <div key={rev.id || i} className={styles.reviewItem}>
-                  <div className={styles.reviewHeader}>
-                    <div className={styles.reviewUser}>
-                      <div className={styles.avatarCircle}>
-                        <img
-                          src="/images/logos/de_luzex_white.svg"
-                          alt="De Luzex"
-                          className={styles.avatarImg}
-                        />
-                      </div>
-                      <div className={styles.reviewUserInfo}>
-                        <span className={styles.reviewName}>{rev.author_name}</span>
-                        <span className={styles.reviewSeparatorDot}>·</span>
-                        <span className={styles.reviewDate}>{rev.time_ago}</span>
-                      </div>
-                    </div>
-                    <div className={styles.reviewRatingRight}>
-                      <span className={styles.reviewScoreNumber}>{(rev.rating || 5).toFixed(1)}</span>
-                      <span className={styles.reviewStarsGold}>
-                        {"★".repeat(starCount)}
-                      </span>
-                    </div>
-                  </div>
-                  <p className={styles.reviewText}>{rev.text}</p>
-                  {Array.isArray(rev.photos) && rev.photos.length > 0 && (
-                    <div className={styles.reviewPhotosRow}>
-                      {rev.photos.map((photoSrc: string, pIdx: number) => (
-                        <div key={pIdx} className={styles.reviewPhotoThumb}>
-                          <Image
-                            src={photoSrc}
-                            alt={`Review photo ${pIdx + 1}`}
-                            fill
-                            sizes="72px"
-                            className={styles.reviewThumbImg}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {((reviewsStats?.reviews?.length ?? 0) > 3) && (
             <button
-              className={styles.readAllBtn}
               type="button"
-              onClick={() => setShowAllReviews(!showAllReviews)}
+              className={styles.writeReviewBtn}
+              onClick={handleOpenReviewModal}
             >
-              <span className={styles.readAllBtnText}>
-                {showAllReviews ? "Show Fewer Reviews" : "Read All Reviews"}
-              </span>
               <svg
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2.5"
+                strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className={styles.readAllBtnIcon}
-                style={{
-                  transform: showAllReviews ? "rotate(180deg)" : "none",
-                  transition: "transform 0.25s ease",
-                }}
               >
-                <polyline points="6 9 12 15 18 9"></polyline>
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
+              <span>Write a Review</span>
             </button>
+          </div>
+
+          <div className={styles.reviewsDivider} />
+
+          {(!reviewsStats?.reviews || reviewsStats.reviews.length === 0) ? (
+            <div className={styles.emptyReviewsState}>
+              <div className={styles.emptyReviewsIcon}>★</div>
+              <h3 className={styles.emptyReviewsTitle}>No Reviews Yet</h3>
+              <p className={styles.emptyReviewsText}>
+                Be the first to share your experience with {product.product_title}! Your feedback helps others discover handcrafted lighting.
+              </p>
+              <button
+                type="button"
+                className={styles.writeReviewBtn}
+                onClick={handleOpenReviewModal}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                <span>Write the First Review</span>
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className={styles.ratingSummary}>
+                <div className={styles.ratingScore}>
+                  <h3>{(reviewsStats?.average_rating ?? 0).toFixed(1)}</h3>
+                  <div className={styles.stars}>
+                    {"★".repeat(Math.round(reviewsStats?.average_rating ?? 0))}
+                    {"☆".repeat(5 - Math.round(reviewsStats?.average_rating ?? 0))}
+                  </div>
+                  <p>{reviewsStats?.total_reviews ? `${reviewsStats.total_reviews} Ratings` : "No ratings yet"}</p>
+                </div>
+                <div className={styles.ratingBars}>
+                  {[5, 4, 3, 2, 1].map((score) => ({
+                    score: String(score), count: `${reviewsStats?.breakdown?.[String(score)]?.count ?? 0} Reviews`,
+                    pct: reviewsStats?.breakdown?.[String(score)]?.pct ?? 0,
+                  })).map((bar, idx) => (
+                    <div key={idx} className={styles.ratingBarRow}>
+                      <div className={styles.barTrack}>
+                        <div className={styles.barFill} style={{ width: `${bar.pct}%` }}></div>
+                      </div>
+                      <div className={styles.barMeta}>
+                        <span className={styles.barScore}>{bar.score}</span>
+                        <span className={styles.barReviewsCount}>{bar.count}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className={styles.reviewList}>
+                {(reviewsStats?.reviews && reviewsStats.reviews.length > 0
+                  ? (showAllReviews ? reviewsStats.reviews : reviewsStats.reviews.slice(0, 3)).map((rev) => ({
+                      id: rev.id,
+                      author_name: rev.author_name,
+                      time_ago: rev.created_at
+                        ? new Date(rev.created_at).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })
+                        : "Recent",
+                      rating: rev.rating || 5,
+                      text: rev.text,
+                      photos: [],
+                    }))
+                  : []
+                ).map((rev: any, i: number) => {
+                  const starCount = Math.max(1, Math.min(5, rev.rating || 5));
+
+                  return (
+                    <div key={rev.id || i} className={styles.reviewItem}>
+                      <div className={styles.reviewHeader}>
+                        <div className={styles.reviewUser}>
+                          <div className={styles.avatarCircle}>
+                            <img
+                              src="/images/logos/de_luzex_white.svg"
+                              alt="De Luzex"
+                              className={styles.avatarImg}
+                            />
+                          </div>
+                          <div className={styles.reviewUserInfo}>
+                            <span className={styles.reviewName}>{rev.author_name}</span>
+                            <span className={styles.reviewSeparatorDot}>·</span>
+                            <span className={styles.reviewDate}>{rev.time_ago}</span>
+                          </div>
+                        </div>
+                        <div className={styles.reviewRatingRight}>
+                          <span className={styles.reviewScoreNumber}>{(rev.rating || 5).toFixed(1)}</span>
+                          <span className={styles.reviewStarsGold}>
+                            {"★".repeat(starCount)}
+                          </span>
+                        </div>
+                      </div>
+                      <p className={styles.reviewText}>{rev.text}</p>
+                      {Array.isArray(rev.photos) && rev.photos.length > 0 && (
+                        <div className={styles.reviewPhotosRow}>
+                          {rev.photos.map((photoSrc: string, pIdx: number) => (
+                            <div key={pIdx} className={styles.reviewPhotoThumb}>
+                              <Image
+                                src={photoSrc}
+                                alt={`Review photo ${pIdx + 1}`}
+                                fill
+                                sizes="72px"
+                                className={styles.reviewThumbImg}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {((reviewsStats?.reviews?.length ?? 0) > 3) && (
+                <button
+                  className={styles.readAllBtn}
+                  type="button"
+                  onClick={() => setShowAllReviews(!showAllReviews)}
+                >
+                  <span className={styles.readAllBtnText}>
+                    {showAllReviews ? "Show Fewer Reviews" : "Read All Reviews"}
+                  </span>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={styles.readAllBtnIcon}
+                    style={{
+                      transform: showAllReviews ? "rotate(180deg)" : "none",
+                      transition: "transform 0.25s ease",
+                    }}
+                  >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+              )}
+            </>
           )}
         </section>
 
@@ -1151,16 +1155,17 @@ export default function ProductDetail() {
           <div ref={ctlGridRef} className={styles.ctlGrid}>
             {relatedProducts.map((prod: any, i: number) => {
               const prodId = prod._id || prod.id || i;
-              const isSelected = activeCtlId === prodId;
+              const productUrl = `/product/${prod.slug || prod._id || prod.id}`;
               return (
                 <div
                   key={prodId}
                   className={styles.productCard}
-                  onClick={() => setActiveCtlId(isSelected ? null : prodId)}
+                  onClick={() => router.push(productUrl)}
+                  style={{ cursor: "pointer" }}
                 >
-                  <div className={`${styles.productImageWrapper} ${isSelected ? styles.productCardFeatured : ""}`}>
+                  <div className={styles.productImageWrapper}>
                     <Link
-                      href={`/product/${prod._id || prod.id}`}
+                      href={productUrl}
                       className={styles.productImageLink}
                       aria-label={`View ${prod.product_title}`}
                       onClick={(e) => e.stopPropagation()}
@@ -1173,10 +1178,12 @@ export default function ProductDetail() {
                         className={styles.productImg}
                       />
                     </Link>
+                    <WishlistButton product={prod} variant="floating" />
                     <button
                       type="button"
                       className={styles.productQuickAddBtn}
                       aria-label={`Add ${prod.product_title} to cart`}
+                      disabled={addingRelatedId === prodId}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1185,6 +1192,7 @@ export default function ProductDetail() {
                           alert("This item is currently out of stock.");
                           return;
                         }
+                        setAddingRelatedId(prodId);
                         dispatch(
                           addToCart({
                             id: String(prod.id || prod._id || Math.random()),
@@ -1196,27 +1204,35 @@ export default function ProductDetail() {
                           })
                         );
                         dispatch(openCart());
+                        setTimeout(() => setAddingRelatedId(null), 500);
                       }}
                     >
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
+                      {addingRelatedId === prodId ? (
+                        <svg className={styles.btnSpinner} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                          <path d="M12 2a10 10 0 0 1 10 10" />
+                        </svg>
+                      ) : (
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <line x1="12" y1="5" x2="12" y2="19"></line>
+                          <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                      )}
                     </button>
                   </div>
 
                   <div className={styles.productInfoRow}>
                     <Link
-                      href={`/product/${prod._id || prod.id}`}
+                      href={productUrl}
                       className={styles.productTitleLink}
                       onClick={(e) => {
                         e.stopPropagation();

@@ -166,6 +166,14 @@ export default function CollaboratePage() {
     designDescription: "",
   });
 
+  const [formErrors, setFormErrors] = useState<{
+    fullName?: string;
+    email?: string;
+    phone?: string;
+    file?: string;
+    terms?: string;
+  }>({});
+
   const toggleFaq = (id: number | string) => {
     setActiveFaq((prev) => (prev === id ? null : id));
   };
@@ -173,12 +181,19 @@ export default function CollaboratePage() {
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    setFormFields((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormFields((prev) => ({ ...prev, [name]: value }));
+    if (formErrors[name as keyof typeof formErrors]) {
+      setFormErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+    if (errorMessage) setErrorMessage("");
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
+      setFormErrors((prev) => ({ ...prev, file: undefined }));
+      if (errorMessage) setErrorMessage("");
     }
   };
 
@@ -186,15 +201,52 @@ export default function CollaboratePage() {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       setSelectedFile(e.dataTransfer.files[0]);
+      setFormErrors((prev) => ({ ...prev, file: undefined }));
+      if (errorMessage) setErrorMessage("");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errors: {
+      fullName?: string;
+      email?: string;
+      phone?: string;
+      file?: string;
+      terms?: string;
+    } = {};
+
+    if (!formFields.fullName.trim()) {
+      errors.fullName = "Please enter your full name";
+    }
+
+    const emailTrimmed = formFields.email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailTrimmed) {
+      errors.email = "Email address is compulsory";
+    } else if (!emailRegex.test(emailTrimmed)) {
+      errors.email = "Please enter a valid email address (e.g. name@example.com)";
+    }
+
+    if (!formFields.phone.trim()) {
+      errors.phone = "Please enter your phone number";
+    }
+
+    if (!selectedFile) {
+      errors.file = "Uploading your design (Image or PDF) is compulsory";
+    }
+
     if (!agreedTerms) {
-      alert("Please agree to the submission terms to proceed.");
+      errors.terms = "Please agree to the submission terms to proceed.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      setErrorMessage("Please complete all compulsory fields (* marked) to submit.");
       return;
     }
+
+    setFormErrors({});
     setIsSubmitting(true);
     setErrorMessage("");
 
@@ -236,6 +288,7 @@ export default function CollaboratePage() {
     setIsRoleOpen(false);
     setHasMadeBefore("no");
     setErrorMessage("");
+    setFormErrors({});
     setFormFields({
       fullName: "",
       email: "",
@@ -325,7 +378,7 @@ export default function CollaboratePage() {
       <section id="how-it-works" className={styles.howSection}>
         <div className={styles.howInner}>
           <div className={styles.howLeftCol}>
-            <span className={styles.sectionTag}>How it works</span>
+            {/* <span className={styles.sectionTag}>How it works</span> */}
             <h2 className={styles.sectionTitle}>
               From your drawing to our collection
             </h2>
@@ -446,7 +499,7 @@ export default function CollaboratePage() {
         <div className={styles.showcaseInner}>
           <div className={styles.showcaseHeader}>
             <div className={styles.showcaseHeaderText}>
-              <span className={styles.showcaseTag}>FEATURED DESIGNS</span>
+
               <h2 className={styles.showcaseTitle}>
                 Already out of the sketchbook
               </h2>
@@ -536,8 +589,9 @@ export default function CollaboratePage() {
       <section className={styles.faqSection}>
         <div className={styles.faqInner}>
           <div className={styles.faqHeader}>
-            <h2 className={styles.faqTitle}>Frequently asked<br />questions</h2>
-            <p className={styles.faqSubtitle}>Before you send your design</p>
+            <h2 className={styles.faqTitle}>Frequently asked questions</h2>
+            <div className={styles.faqDivider} />
+            <p className={styles.faqSubtitle}>Common questions before you send your design to the Deluzex atelier.</p>
           </div>
 
           <div className={styles.accordionList}>
@@ -572,329 +626,289 @@ export default function CollaboratePage() {
         </div>
       </section>
 
-      {/* ──────────────────────────────────────────────────────────────────
-          5. SUBMISSION FORM SECTION
-          ────────────────────────────────────────────────────────────────── */}
+            {/* 5. SUBMISSION FORM SECTION */}
       <section id="submission-form" className={styles.formSection}>
         <div className={styles.formInner}>
-          <div className={styles.formLeftCol}>
-            <span className={styles.formTag}>Submission Form</span>
-            <h2 className={styles.formTitle}>
-              What&apos;s waiting in your<br />sketchbook?
-            </h2>
-            <p className={styles.formDesc}>
-              Share it with us. Upload your design and tell us a little about the light you have in mind.
-            </p>
 
-            <div className={styles.formLeftImage}>
+          {/* Top Row */}
+          <div className={styles.formHeaderRow}>
+            <div className={styles.formHeaderLeft}>
+              <h2 className={styles.formTitle}>
+                What&apos;s waiting in your sketchbook?
+              </h2>
+              <p className={styles.formDesc}>
+                Share it with us. Upload your design and tell us a little about the light you have in mind.
+              </p>
+            </div>
+            <div className={styles.formHeaderImage}>
               <Image
                 src="/images/collaborate_origami_lamp.png"
                 alt="Folded ambient origami lamp in artisan studio"
                 fill
-                sizes="(max-width: 768px) 100vw, 420px"
+                sizes="(max-width: 768px) 100vw, 520px"
                 style={{ objectFit: "cover" }}
               />
             </div>
           </div>
 
-          <div className={styles.formCard}>
-            {submitted ? (
-              <div className={styles.successCard}>
-                <div className={styles.successIcon}>✓</div>
-                <h3 className={styles.successTitle}>Design Received</h3>
-                <p className={styles.successDesc}>
-                  Thank you for sharing your creative vision with De Luzex. Our curation and production team will review your concept and reach out within 10 to 14 business days.
-                </p>
-                <button type="button" className={styles.btnPrimary} onClick={resetForm}>
-                  Submit Another Design
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit}>
-                <h3 className={styles.formSectionHeader}>Your Details</h3>
-                <div className={styles.formGroup}>
-                  <div className={styles.inputField}>
-                    <label htmlFor="fullName">Full Name</label>
-                    <input
-                      type="text"
-                      id="fullName"
-                      name="fullName"
-                      required
-                      placeholder="Enter your name"
-                      value={formFields.fullName}
-                      onChange={handleInputChange}
-                    />
-                  </div>
+          {submitted ? (
+            <div className={styles.successCard}>
+              <div className={styles.successIcon}>&#10003;</div>
+              <h3 className={styles.successTitle}>Design Received</h3>
+              <p className={styles.successDesc}>
+                Thank you for sharing your creative vision with De Luzex. Our curation and production team will review your concept and reach out within 10 to 14 business days.
+              </p>
+              <button type="button" className={styles.btnPrimary} onClick={resetForm}>
+                Submit Another Design
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className={styles.formCard} noValidate>
+              <div className={styles.formFieldsGrid}>
 
-                  <div className={styles.inputField}>
-                    <label htmlFor="email">Email</label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      required
-                      placeholder="Enter your mail"
-                      value={formFields.email}
-                      onChange={handleInputChange}
-                    />
-                    <span className={styles.inputHelper}>
-                      we&apos;ll contact you here about your design
+                <div className={styles.inputField}>
+                  <label htmlFor="fullName">
+                    Full Name <span className={styles.requiredStar}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="fullName"
+                    name="fullName"
+                    required
+                    placeholder="Enter your name"
+                    value={formFields.fullName}
+                    onChange={handleInputChange}
+                    className={formErrors.fullName ? styles.inputError : ""}
+                  />
+                  {formErrors.fullName && (
+                    <span className={styles.fieldError}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      {formErrors.fullName}
                     </span>
-                  </div>
+                  )}
+                </div>
 
-                  <div className={styles.row2Col}>
-                    <div className={styles.inputField}>
-                      <label htmlFor="phone">Phone Number*</label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        required
-                        placeholder="Enter your Number"
-                        value={formFields.phone}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className={styles.inputField}>
-                      <label id="cityLabel">City</label>
-                      <div className={styles.customSelectWrapper} ref={cityDropdownRef}>
-                        <button
-                          type="button"
-                          id="city"
-                          className={`${styles.customSelectTrigger} ${isCityOpen ? styles.customSelectTriggerOpen : ""}`}
-                          onClick={() => {
-                            setIsCityOpen((prev) => !prev);
-                            setIsRoleOpen(false);
-                          }}
-                          aria-haspopup="listbox"
-                          aria-expanded={isCityOpen}
-                          aria-labelledby="cityLabel"
-                        >
-                          <span className={formFields.city ? styles.customSelectValue : styles.customSelectPlaceholder}>
-                            {formFields.city || "Select your city"}
-                          </span>
-                          <svg
-                            className={`${styles.customSelectChevron} ${isCityOpen ? styles.customSelectChevronOpen : ""}`}
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <polyline points="6 9 12 15 18 9" />
-                          </svg>
-                        </button>
-                        {isCityOpen && (
-                          <ul className={styles.customSelectMenu} role="listbox" aria-labelledby="cityLabel">
-                            {CITIES.map((c) => {
-                              const isSelected = formFields.city === c;
-                              return (
-                                <li
-                                  key={c}
-                                  role="option"
-                                  aria-selected={isSelected}
-                                  className={`${styles.customSelectOption} ${isSelected ? styles.customSelectOptionSelected : ""}`}
-                                  onClick={() => {
-                                    setFormFields((prev) => ({ ...prev, city: c }));
-                                    setIsCityOpen(false);
-                                  }}
-                                >
-                                  <span>{c}</span>
-                                  {isSelected && (
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                      <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                  )}
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                <div className={styles.inputField}>
+                  <label htmlFor="email">
+                    Email <span className={styles.requiredStar}>*</span>
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    placeholder="Enter your email"
+                    value={formFields.email}
+                    onChange={handleInputChange}
+                    className={formErrors.email ? styles.inputError : ""}
+                  />
+                  <span className={styles.inputHelper}>we&apos;ll contact you here about your design</span>
+                  {formErrors.email && (
+                    <span className={styles.fieldError}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      {formErrors.email}
+                    </span>
+                  )}
+                </div>
 
-                  <div className={styles.inputField}>
-                    <label id="roleLabel">I&apos;m a</label>
-                    <div className={styles.customSelectWrapper} ref={roleDropdownRef}>
-                      <button
-                        type="button"
-                        id="role"
-                        className={`${styles.customSelectTrigger} ${isRoleOpen ? styles.customSelectTriggerOpen : ""}`}
-                        onClick={() => {
-                          setIsRoleOpen((prev) => !prev);
-                          setIsCityOpen(false);
-                        }}
-                        aria-haspopup="listbox"
-                        aria-expanded={isRoleOpen}
-                        aria-labelledby="roleLabel"
-                      >
-                        <span className={formFields.role ? styles.customSelectValue : styles.customSelectPlaceholder}>
-                          {formFields.role || "Select your role"}
-                        </span>
-                        <svg
-                          className={`${styles.customSelectChevron} ${isRoleOpen ? styles.customSelectChevronOpen : ""}`}
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      </button>
-                      {isRoleOpen && (
-                        <ul className={styles.customSelectMenu} role="listbox" aria-labelledby="roleLabel">
-                          {ROLES.map((r) => {
-                            const isSelected = formFields.role === r;
-                            return (
-                              <li
-                                key={r}
-                                role="option"
-                                aria-selected={isSelected}
-                                className={`${styles.customSelectOption} ${isSelected ? styles.customSelectOptionSelected : ""}`}
-                                onClick={() => {
-                                  setFormFields((prev) => ({ ...prev, role: r }));
-                                  setIsRoleOpen(false);
-                                }}
-                              >
-                                <span>{r}</span>
-                                {isSelected && (
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="20 6 9 17 4 12" />
-                                  </svg>
-                                )}
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
+                <div className={styles.inputField}>
+                  <label htmlFor="phone">
+                    Phone Number <span className={styles.requiredStar}>*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    required
+                    placeholder="Enter your number"
+                    value={formFields.phone}
+                    onChange={handleInputChange}
+                    className={formErrors.phone ? styles.inputError : ""}
+                  />
+                  {formErrors.phone && (
+                    <span className={styles.fieldError}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      {formErrors.phone}
+                    </span>
+                  )}
+                </div>
 
-                  <div className={styles.inputField}>
-                    <label htmlFor="studioOrCollege">Studio or collage (optional)</label>
-                    <input
-                      type="text"
-                      id="studioOrCollege"
-                      name="studioOrCollege"
-                      placeholder="Enter your studio or collage name"
-                      value={formFields.studioOrCollege}
-                      onChange={handleInputChange}
-                    />
+                <div className={styles.inputField}>
+                  <label id="cityLabel">City</label>
+                  <div className={styles.customSelectWrapper} ref={cityDropdownRef}>
+                    <button type="button" id="city"
+                      className={`${styles.customSelectTrigger} ${isCityOpen ? styles.customSelectTriggerOpen : ""}`}
+                      onClick={() => { setIsCityOpen((prev) => !prev); setIsRoleOpen(false); }}
+                      aria-haspopup="listbox" aria-expanded={isCityOpen} aria-labelledby="cityLabel"
+                    >
+                      <span className={formFields.city ? styles.customSelectValue : styles.customSelectPlaceholder}>{formFields.city || "Select your city"}</span>
+                      <svg className={`${styles.customSelectChevron} ${isCityOpen ? styles.customSelectChevronOpen : ""}`} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                    </button>
+                    {isCityOpen && (
+                      <ul className={styles.customSelectMenu} role="listbox" aria-labelledby="cityLabel">
+                        {CITIES.map((c) => { const isSelected = formFields.city === c; return (
+                          <li key={c} role="option" aria-selected={isSelected}
+                            className={`${styles.customSelectOption} ${isSelected ? styles.customSelectOptionSelected : ""}`}
+                            onClick={() => { setFormFields((prev) => ({ ...prev, city: c })); setIsCityOpen(false); }}>
+                            <span>{c}</span>
+                            {isSelected && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                          </li>
+                        ); })}
+                      </ul>
+                    )}
                   </div>
                 </div>
 
-                <div className={styles.formGroup}>
-                  <div className={styles.inputField}>
-                    <label htmlFor="designDescription">About your design</label>
-                    <textarea
-                      id="designDescription"
-                      name="designDescription"
-                      rows={4}
-                      placeholder="Tell us what inspired it, the materials, its dimensions and where you imagine it being used."
-                      value={formFields.designDescription}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-
-                  <div className={styles.radioGroup}>
-                    <span className={styles.radioLabel}>Has this light been made before?</span>
-                    <div className={styles.radioChoices}>
-                      <label className={styles.radioOption}>
-                        <input
-                          type="radio"
-                          name="hasMadeBefore"
-                          value="yes"
-                          checked={hasMadeBefore === "yes"}
-                          onChange={() => setHasMadeBefore("yes")}
-                        />
-                        <span className={`${styles.customRadio} ${hasMadeBefore === "yes" ? styles.customRadioChecked : ""}`}>
-                          {hasMadeBefore === "yes" && <span className={styles.customRadioDot} />}
-                        </span>
-                        <span className={styles.radioText}>Yes</span>
-                      </label>
-                      <label className={styles.radioOption}>
-                        <input
-                          type="radio"
-                          name="hasMadeBefore"
-                          value="no"
-                          checked={hasMadeBefore === "no"}
-                          onChange={() => setHasMadeBefore("no")}
-                        />
-                        <span className={`${styles.customRadio} ${hasMadeBefore === "no" ? styles.customRadioChecked : ""}`}>
-                          {hasMadeBefore === "no" && <span className={styles.customRadioDot} />}
-                        </span>
-                        <span className={styles.radioText}>No</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className={styles.inputField}>
-                    <label>Upload your design</label>
-                    <div
-                      className={styles.uploadDropZone}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={handleFileDrop}
-                      onClick={() => fileInputRef.current?.click()}
+                <div className={styles.inputField}>
+                  <label id="roleLabel">I&apos;m a</label>
+                  <div className={styles.customSelectWrapper} ref={roleDropdownRef}>
+                    <button type="button" id="role"
+                      className={`${styles.customSelectTrigger} ${isRoleOpen ? styles.customSelectTriggerOpen : ""}`}
+                      onClick={() => { setIsRoleOpen((prev) => !prev); setIsCityOpen(false); }}
+                      aria-haspopup="listbox" aria-expanded={isRoleOpen} aria-labelledby="roleLabel"
                     >
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        style={{ display: "none" }}
-                        accept=".png,.jpg,.jpeg,.svg,.pdf"
-                        onChange={handleFileChange}
-                      />
-                      <div className={styles.uploadIcon}>
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7A808C" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
-                          <path d="M12 12v9" />
-                          <path d="m8 16 4-4 4 4" />
+                      <span className={formFields.role ? styles.customSelectValue : styles.customSelectPlaceholder}>{formFields.role || "Select your role"}</span>
+                      <svg className={`${styles.customSelectChevron} ${isRoleOpen ? styles.customSelectChevronOpen : ""}`} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                    </button>
+                    {isRoleOpen && (
+                      <ul className={styles.customSelectMenu} role="listbox" aria-labelledby="roleLabel">
+                        {ROLES.map((r) => { const isSelected = formFields.role === r; return (
+                          <li key={r} role="option" aria-selected={isSelected}
+                            className={`${styles.customSelectOption} ${isSelected ? styles.customSelectOptionSelected : ""}`}
+                            onClick={() => { setFormFields((prev) => ({ ...prev, role: r })); setIsRoleOpen(false); }}>
+                            <span>{r}</span>
+                            {isSelected && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                          </li>
+                        ); })}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.inputField}>
+                  <label htmlFor="studioOrCollege">Studio or College (optional)</label>
+                  <input type="text" id="studioOrCollege" name="studioOrCollege" placeholder="Enter your studio or college name" value={formFields.studioOrCollege} onChange={handleInputChange} />
+                </div>
+
+                <div className={`${styles.inputField} ${styles.colSpan2}`}>
+                  <label htmlFor="designDescription">About your design</label>
+                  <textarea id="designDescription" name="designDescription" rows={3}
+                    placeholder="Tell us what inspired it, the materials, its dimensions and where you imagine it being used."
+                    value={formFields.designDescription} onChange={handleInputChange} />
+                </div>
+
+                <div className={`${styles.radioGroup} ${styles.colSpan2}`}>
+                  <span className={styles.radioLabel}>Has this light been made before?</span>
+                  <div className={styles.radioChoices}>
+                    <label className={`${styles.radioOption} ${hasMadeBefore === "yes" ? styles.radioOptionActive : ""}`}>
+                      <input type="radio" name="hasMadeBefore" value="yes" checked={hasMadeBefore === "yes"} onChange={() => setHasMadeBefore("yes")} />
+                      <span className={`${styles.customRadio} ${hasMadeBefore === "yes" ? styles.customRadioChecked : ""}`}>{hasMadeBefore === "yes" && <span className={styles.customRadioDot} />}</span>
+                      <span className={styles.radioText}>Yes</span>
+                    </label>
+                    <label className={`${styles.radioOption} ${hasMadeBefore === "no" ? styles.radioOptionActive : ""}`}>
+                      <input type="radio" name="hasMadeBefore" value="no" checked={hasMadeBefore === "no"} onChange={() => setHasMadeBefore("no")} />
+                      <span className={`${styles.customRadio} ${hasMadeBefore === "no" ? styles.customRadioChecked : ""}`}>{hasMadeBefore === "no" && <span className={styles.customRadioDot} />}</span>
+                      <span className={styles.radioText}>No</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className={`${styles.inputField} ${styles.colSpan2}`}>
+                  <label>
+                    Upload your design <span className={styles.requiredStar}>*</span>
+                  </label>
+                  <div
+                    className={`${styles.uploadDropZone} ${formErrors.file ? styles.uploadDropZoneError : ""} ${selectedFile ? styles.uploadDropZoneSelected : ""}`}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handleFileDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      style={{ display: "none" }}
+                      accept=".png,.jpg,.jpeg,.svg,.pdf"
+                      onChange={handleFileChange}
+                    />
+                    <div className={styles.uploadIcon}>
+                      {selectedFile ? (
+                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#D79322" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                          <line x1="9" y1="15" x2="15" y2="15" />
                         </svg>
-                      </div>
-                      <p className={styles.uploadTitle}>
-                        {selectedFile ? selectedFile.name : "Upload images or PDF"}
-                      </p>
-                      <p className={styles.uploadSub}>PNG, JPG, SVG or PDF up to 10 MB</p>
+                      ) : (
+                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke={formErrors.file ? "#EF4444" : "#D8A56E"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+                          <path d="M12 12v9" /><path d="m8 16 4-4 4 4" />
+                        </svg>
+                      )}
+                    </div>
+                    <p className={styles.uploadTitle}>
+                      {selectedFile ? selectedFile.name : "Upload images or PDF"}
+                    </p>
+                    <p className={styles.uploadSub}>
+                      {selectedFile
+                        ? `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Click to replace`
+                        : "PNG, JPG, SVG or PDF up to 10 MB (Compulsory)"}
+                    </p>
+                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                       <button type="button" className={styles.uploadBtn}>
                         {selectedFile ? "Replace Document" : "Upload Document"}
                       </button>
+                      {selectedFile && (
+                        <button
+                          type="button"
+                          className={styles.uploadRemoveBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedFile(null);
+                          }}
+                        >
+                          Remove
+                        </button>
+                      )}
                     </div>
                   </div>
-
-                  <label className={styles.termsCheckbox}>
-                    <input
-                      type="checkbox"
-                      checked={agreedTerms}
-                      onChange={(e) => setAgreedTerms(e.target.checked)}
-                      required
-                    />
-                    <span>I have read and agree to the submission terms.</span>
-                  </label>
-
-                  {errorMessage && (
-                    <div style={{ color: "#ef4444", fontSize: "0.85rem", padding: "0.6rem 0.8rem", background: "rgba(239, 68, 68, 0.1)", borderRadius: "6px", marginBottom: "0.8rem" }}>
-                      {errorMessage}
-                    </div>
+                  {formErrors.file && (
+                    <span className={styles.fieldError}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      {formErrors.file}
+                    </span>
                   )}
-
-                  <button
-                    type="submit"
-                    className={styles.btnSubmitForm}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Submitting Design..." : "Submit Your Design"}
-                  </button>
                 </div>
-              </form>
-            )}
-          </div>
+
+              </div>
+
+              <div className={styles.formFooter}>
+                <label className={styles.termsCheckbox}>
+                  <input
+                    type="checkbox"
+                    checked={agreedTerms}
+                    onChange={(e) => {
+                      setAgreedTerms(e.target.checked);
+                      if (e.target.checked) setFormErrors((prev) => ({ ...prev, terms: undefined }));
+                    }}
+                  />
+                  <span>I have read and agree to the submission terms.</span>
+                </label>
+                {formErrors.terms && (
+                  <span className={styles.fieldError} style={{ marginTop: "-8px", marginBottom: "8px" }}>
+                    {formErrors.terms}
+                  </span>
+                )}
+                {errorMessage && (
+                  <div style={{ color: "#DC2626", fontSize: "0.88rem", padding: "0.65rem 1rem", background: "rgba(239,68,68,0.08)", borderRadius: "8px", border: "1px solid rgba(239,68,68,0.2)" }}>
+                    {errorMessage}
+                  </div>
+                )}
+                <button type="submit" className={styles.btnSubmitForm} disabled={isSubmitting}>
+                  {isSubmitting ? "Submitting Design..." : "Submit Your Design"}
+                </button>
+              </div>
+            </form>
+          )}
+
         </div>
       </section>
     </main>

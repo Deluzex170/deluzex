@@ -340,9 +340,9 @@
   padding: 1.25rem 1rem 1.5rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.75rem;
   scrollbar-width: thin;
-  scrollbar-color: var(--admin-border) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
 }
 
 .sidebarInner::-webkit-scrollbar {
@@ -350,7 +350,7 @@
 }
 
 .sidebarInner::-webkit-scrollbar-thumb {
-  background: var(--admin-border);
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 4px;
 }
 
@@ -496,23 +496,138 @@
 }
 
 .logoutBtn:hover svg {
-  color: #F87171;
+  color: #ef4444;
+}
+
+/* ─── Main Wrapper & TopBar (Independent Smooth Scroll) ─── */
+.mainWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(196, 154, 69, 0.25) transparent;
+}
+
+.mainWrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mainWrapper::-webkit-scrollbar-thumb {
+  background: rgba(196, 154, 69, 0.25);
+  border-radius: 4px;
+}
+
+.mainWrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--admin-primary);
+}
+
+.topBar {
+  height: 60px;
+  background: var(--admin-surface);
+  border-bottom: 1px solid var(--admin-border);
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.topBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mobileMenuBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+  color: var(--admin-text-main);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.mobileMenuBtn:hover {
+  background: #f1f5f9;
+}
+
+.topBarBrand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.topBarTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--admin-primary);
+  letter-spacing: -0.01em;
+}
+
+.topBarBadge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(196, 154, 69, 0.12);
+  color: #c49a45;
+  border: 1px solid rgba(196, 154, 69, 0.25);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.storefrontLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #475569;
+  text-decoration: none;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  background: #ffffff;
+  transition: all 0.2s;
+}
+
+.storefrontLink:hover {
+  background: #f8fafc;
+  color: var(--admin-primary);
+  border-color: #cbd5e1;
 }
 
 /* ─── Main Content Canvas (Independent Smooth Scroll) ─── */
 .mainContent {
   flex: 1;
-  height: 100vh;
-  max-height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 2rem 2.5rem 4rem;
+  padding: 1.75rem 2.25rem 3.5rem;
   background: var(--admin-bg);
   min-width: 0;
-  scroll-behavior: smooth;
-  transition: background-color 0.25s ease;
-  scrollbar-width: thin;
-  scrollbar-color: var(--admin-border) transparent;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
 }
 
 /* ─── Premium UI Elements ─── */
@@ -588,30 +703,44 @@
 .tableWrapper {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.tableWrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
 }
 
 .table {
   width: 100%;
+  min-width: 850px;
   border-collapse: collapse;
   text-align: left;
 }
 
 .table th {
-  background: var(--admin-bg, #0E0E12);
-  padding: 1.1rem 1.4rem;
-  font-size: 0.72rem;
+  background: #f8fafc;
+  padding: 1.15rem 1.5rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #C49A45;
+  letter-spacing: 0.08em;
+  color: var(--admin-text-muted);
   font-weight: 700;
   border-bottom: 1px solid var(--admin-border);
+  white-space: nowrap;
 }
 
 .table td {
-  padding: 1.15rem 1.4rem;
+  padding: 1.15rem 1.5rem;
   border-bottom: 1px solid var(--admin-border);
   color: var(--admin-text-main);
-  font-size: 0.9rem;
+  font-size: 0.925rem;
   font-weight: 500;
   transition: background 0.15s;
 }
@@ -691,32 +820,28 @@
 }
 
 /* ─── Mobile / Tablet Drawer Controls (hidden on desktop) ─── */
-.mobileTopBar,
 .drawerCloseBtn {
   display: none;
 }
 
 .overlay {
-  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 150;
+  animation: fadeIn 0.2s ease-out;
 }
 
-/* ─── Mobile Overrides ─── */
 @media (max-width: 1024px) {
-  .dashboardContainer {
-    width: 100%;
-    height: 100vh;
-    height: 100dvh;
-    max-height: 100dvh;
+  .topBar {
+    padding: 0 1.25rem;
+  }
+  .mobileMenuBtn {
+    display: flex;
   }
   .mainContent {
-    padding: 0 1.25rem 3rem;
-    height: 100vh;
-    height: 100dvh;
-    max-height: 100dvh;
-  }
-  /* Lock the content behind the open drawer */
-  .dashboardContainer[data-drawer-open] .mainContent {
-    overflow: hidden;
+    padding: 1.25rem 1.25rem 3rem;
   }
   .sidebar {
     position: fixed;
@@ -736,16 +861,7 @@
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.3s;
   }
   .sidebarOpen {
-    transform: translateX(0);
-    visibility: visible;
-  }
-  .overlay {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(4px);
-    z-index: 150;
+    transform: translateX(0) !important;
   }
   .drawerCloseBtn {
     display: flex;
@@ -768,57 +884,6 @@
     color: var(--admin-primary);
     border-color: var(--admin-primary);
   }
-  .mobileTopBar {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    position: sticky;
-    top: 0;
-    z-index: 120;
-    margin: 0 -1.25rem 1.25rem;
-    padding: 0.65rem 1.25rem;
-    background: var(--sidebar-bg);
-    border-bottom: 1px solid var(--admin-border);
-    min-height: 56px;
-  }
-  .mobileMenuBtn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    background: var(--admin-surface);
-    border: 1px solid var(--admin-border);
-    color: var(--admin-text-main);
-    cursor: pointer;
-    transition: color 0.2s ease, border-color 0.2s ease;
-  }
-  .mobileMenuBtn:hover,
-  .mobileMenuBtn:focus-visible {
-    color: var(--admin-primary);
-    border-color: var(--admin-primary);
-  }
-  .mobileTopBarTitle {
-    flex: 1;
-    min-width: 0;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--admin-text-main);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .mobileTopBarLogo {
-    height: 22px;
-    width: 80px;
-    object-fit: contain;
-    object-position: right center;
-    flex-shrink: 0;
-  }
-
-  /* Shared content safety: let form controls and media shrink with their container */
   .mainContent input,
   .mainContent select,
   .mainContent textarea {
@@ -836,7 +901,6 @@
     gap: 1rem;
   }
 }
-
 
 /* ─── Modals & Forms ─── */
 .modalOverlay {

@@ -11,6 +11,7 @@ import { RootState } from "../store/store";
 import Image from "next/image";
 import { useAuth } from "../context/AuthContext";
 import { useRouter } from "next/navigation";
+import { useWishlist } from "../context/WishlistContext";
 
 const NAV_ITEMS = [
   { name: "Home", href: "/" },
@@ -41,6 +42,7 @@ export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = 
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { cartItems } = useSelector((state: RootState) => state.cart);
+  const { wishlistCount } = useWishlist();
 
   useEffect(() => {
     setMounted(true);
@@ -264,46 +266,74 @@ export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = 
       </nav>
 
       <div className={styles.headerIcons}>
-        {searchOpen && (
-          <form onSubmit={handleSearchSubmit} style={{ display: "flex", alignItems: "center" }}>
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder="Search lamps, chandeliers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                background: "rgba(255,255,255,0.95)",
-                border: "1px solid #C49A45",
-                borderRadius: "20px",
-                padding: "0.2rem 0.85rem",
-                height: "32px",
-                fontSize: "0.82rem",
-                color: "#111",
-                outline: "none",
-                width: "185px",
-                boxSizing: "border-box",
-              }}
-            />
-          </form>
-        )}
-        <button
-          className={styles.iconBtn}
-          type="button"
-          onClick={() => {
-            if (searchOpen && searchQuery.trim()) {
-              handleSearchSubmit({ preventDefault: () => { } } as any);
-            } else {
-              setSearchOpen(!searchOpen);
-            }
-          }}
-          aria-label="Search"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M21 21L15 15" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+        <div className={styles.searchWrapper}>
+          {searchOpen && (
+            <form onSubmit={handleSearchSubmit} className={styles.searchForm}>
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search lamps, chandeliers..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={styles.searchInput}
+              />
+              <button
+                type="button"
+                className={styles.searchCloseBtn}
+                onClick={() => {
+                  setSearchOpen(false);
+                  setSearchQuery("");
+                }}
+                title="Close search"
+                aria-label="Close search"
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </form>
+          )}
+          <button
+            className={styles.iconBtn}
+            type="button"
+            onClick={() => {
+              if (searchOpen && searchQuery.trim()) {
+                handleSearchSubmit({ preventDefault: () => { } } as any);
+              } else {
+                setSearchOpen(!searchOpen);
+              }
+            }}
+            aria-label="Search"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M21 21L15 15" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+
+        <div className={styles.cartIconWrapper}>
+          <Link
+            href={isAuthenticated ? "/dashboard/wishlist" : "/wishlist"}
+            className={styles.iconBtn}
+            aria-label="Wishlist"
+            title="My Wishlist"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </Link>
+          {mounted && wishlistCount > 0 && (
+            <span className={styles.cartBadge}>{wishlistCount}</span>
+          )}
+        </div>
 
         <Link
           href="/dashboard/wishlist"

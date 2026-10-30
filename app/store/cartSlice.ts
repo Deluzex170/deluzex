@@ -93,10 +93,16 @@ const cartSlice = createSlice({
       state.cartTotal = calculateTotal(state.cartItems);
     },
     updateQuantity: (state, action: PayloadAction<{ id: string | number, change: number, max_quantity?: number }>) => {
-      const item = state.cartItems.find(i => String(i.id) === String(action.payload.id));
-      if (item) {
+      const itemIndex = state.cartItems.findIndex(i => String(i.id) === String(action.payload.id));
+      if (itemIndex !== -1) {
+        const item = state.cartItems[itemIndex];
         if (action.payload.max_quantity !== undefined) item.maxQuantity = action.payload.max_quantity;
-        item.quantity = Math.max(1, clampToStock(item.quantity + action.payload.change, item.maxQuantity));
+        const newQty = clampToStock(item.quantity + action.payload.change, item.maxQuantity);
+        if (newQty <= 0) {
+          state.cartItems.splice(itemIndex, 1);
+        } else {
+          item.quantity = newQty;
+        }
       }
       state.cartTotal = calculateTotal(state.cartItems);
     },

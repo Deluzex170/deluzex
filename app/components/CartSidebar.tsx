@@ -16,7 +16,16 @@ import {
 } from "../store/cartSlice";
 import { useAuth } from "../context/AuthContext";
 import { useRouter } from "next/navigation";
-import { fetchProductById, fetchAvailableCoupons, validateCoupon, AvailableCoupon, fetchPublicShippingSettings, ShippingSettings } from "../services/api";
+import {
+  fetchProductById,
+  fetchAvailableCoupons,
+  validateCoupon,
+  AvailableCoupon,
+  fetchPublicShippingSettings,
+  ShippingSettings,
+  clearBackendCart,
+  getCartSessionId,
+} from "../services/api";
 import styles from "./CartSidebar.module.css";
 
 export default function CartSidebar() {
@@ -56,13 +65,13 @@ export default function CartSidebar() {
         .then((res) => {
           if (Array.isArray(res)) setAvailableOffers(res);
         })
-        .catch(() => {});
+        .catch(() => { });
 
       fetchPublicShippingSettings()
         .then((rules) => {
           if (rules) setShippingRules(rules);
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [isCartOpen]);
 
@@ -128,7 +137,7 @@ export default function CartSidebar() {
             setPromoError(res.message || "Coupon no longer meets criteria.");
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     } else if (subtotal === 0 && appliedCoupon) {
       dispatch(removeAppliedCoupon());
     }
@@ -173,10 +182,45 @@ export default function CartSidebar() {
     setPromoError(null);
   };
 
+  const [isClearing, setIsClearing] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+  const handleClearCart = () => {
+    if (cartItems.length === 0 || isClearing) return;
+    setShowClearConfirm(true);
+  };
+
+  const executeClearCart = async () => {
+    if (cartItems.length === 0 || isClearing) return;
+    setIsClearing(true);
+    try {
+      const email = user && typeof user === "object" && "email" in user ? (user as { email: string }).email : undefined;
+      const guestSid = getCartSessionId();
+      const identifier = email || guestSid;
+
+      // 1. Optimistically clear local cart state & coupon
+      dispatch(clearCart());
+      dispatch(removeAppliedCoupon());
+
+      // 2. Call backend to remove cart items from MongoDB
+      await clearBackendCart(identifier, guestSid);
+      setShowClearConfirm(false);
+    } catch (err) {
+      console.error("Failed to clear cart:", err);
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
+  const [isNavigatingCheckout, setIsNavigatingCheckout] = useState(false);
+
   // Guests check out with just their contact details; no login required
   const handleCheckout = () => {
+    if (isNavigatingCheckout || cartItems.length === 0) return;
+    setIsNavigatingCheckout(true);
     router.push("/checkout");
     dispatch(closeCart());
+    setTimeout(() => setIsNavigatingCheckout(false), 1500);
   };
 
   if (!isCartOpen) return null;
@@ -185,6 +229,59 @@ export default function CartSidebar() {
     <>
       <div className={styles.overlay} onClick={() => dispatch(closeCart())}></div>
       <div className={styles.sidebar}>
+        {/* Clear Cart Warning Alert Modal */}
+        {showClearConfirm && (
+          <div
+            className={styles.confirmModalBackdrop}
+            onClick={() => !isClearing && setShowClearConfirm(false)}
+          >
+            <div
+              className={styles.confirmModalCard}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.confirmIconBox}>
+                <svg
+                  width="26"
+                  height="26"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#D97706"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              </div>
+              <h3 className={styles.confirmTitle}>Clear Entire Cart?</h3>
+              <p className={styles.confirmMessage}>
+                Are you sure you want to remove all {cartItems.length} item
+                {cartItems.length !== 1 ? "s" : ""} from your cart? This action cannot be undone.
+              </p>
+              <div className={styles.confirmActions}>
+                <button
+                  type="button"
+                  className={styles.btnCancelConfirm}
+                  onClick={() => setShowClearConfirm(false)}
+                  disabled={isClearing}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className={styles.btnProceedConfirm}
+                  onClick={executeClearCart}
+                  disabled={isClearing}
+                >
+                  {isClearing ? "Clearing..." : "Yes, Clear Cart"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className={styles.header}>
           <h2 className={styles.headerTitle}>
@@ -219,7 +316,7 @@ export default function CartSidebar() {
               {isFreeShipping ? (
                 "🎉 You unlocked FREE White-Glove Shipping!"
               ) : (
-                <>Add <strong style={{ color: "#ffffff" }}>₹{freeShippingDiff.toLocaleString("en-IN")}</strong> more to unlock <strong>FREE Delivery</strong></>
+                <>Add <strong style={{ color: "#000000" }}>₹{freeShippingDiff.toLocaleString("en-IN")}</strong> more to unlock <strong>FREE Delivery</strong></>
               )}
             </div>
           </div>
@@ -259,7 +356,7 @@ export default function CartSidebar() {
                     <div className={styles.quantity}>
                       <button
                         type="button"
-                        onClick={() => dispatch(updateQuantity({ id: item.id, change: -1 }))}
+                        onClick={() => { if (item.quantity <= 1) { dispatch(removeFromCart(item.id)); } else { dispatch(updateQuantity({ id: item.id, change: -1 })); } }}
                         aria-label="Decrease quantity"
                       >
                         −
@@ -314,6 +411,26 @@ export default function CartSidebar() {
                 </div>
               </div>
             ))
+          )}
+
+          {cartItems.length > 0 && (
+            <div className={styles.clearCartRow}>
+              <button
+                type="button"
+                className={styles.clearCartBtn}
+                onClick={handleClearCart}
+                disabled={isClearing}
+                aria-label="Clear all items in cart"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+                <span>{isClearing ? "Clearing Cart..." : "Clear Cart"}</span>
+              </button>
+            </div>
           )}
         </div>
 
@@ -489,11 +606,32 @@ export default function CartSidebar() {
 
           <button
             className={styles.btnCheckout}
-            disabled={cartItems.length === 0 || isBelowMinOrder}
+            disabled={cartItems.length === 0 || isBelowMinOrder || isNavigatingCheckout}
             onClick={handleCheckout}
             title={isBelowMinOrder ? "Cart amount is below minimum order value" : "Proceed to Checkout"}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
           >
-            {isBelowMinOrder ? `Min. Order ₹${shippingRules.min_order_value.toLocaleString("en-IN")} Required` : "Proceed to Checkout"}
+            {isNavigatingCheckout ? (
+              <>
+                <svg
+                  style={{ animation: "spin 0.8s linear infinite" }}
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                  <path d="M12 2a10 10 0 0 1 10 10" />
+                </svg>
+                <span>Proceeding to Checkout...</span>
+              </>
+            ) : isBelowMinOrder ? (
+              `Min. Order ₹${shippingRules.min_order_value.toLocaleString("en-IN")} Required`
+            ) : (
+              "Proceed to Checkout"
+            )}
           </button>
         </div>
       </div>

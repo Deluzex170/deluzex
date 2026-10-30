@@ -403,33 +403,16 @@ export default function AdminProducts() {
                           <span style={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600 }}>
                             SKU: {prod.sku || "ME-DP-105"}
                           </span>
-                          {(() => {
-                            const isZeroStock = prod.stock_count !== undefined && prod.stock_count !== null && Number(prod.stock_count) <= 0;
-                            const isExplicitOut = Boolean(prod.stock_status?.toLowerCase().includes("out") || prod.in_stock === false);
-                            const isOut = isZeroStock || isExplicitOut;
-                            const isOrder = Boolean(prod.stock_status?.toLowerCase().includes("order"));
-
-                            const badgeBg = isOut ? "#FEE2E2" : isOrder ? "#FFEDD5" : "#DCFCE7";
-                            const badgeColor = isOut ? "#991B1B" : isOrder ? "#9A3412" : "#166534";
-                            const label = isOut
-                              ? `OUT OF STOCK (${prod.stock_count ?? 0})`
-                              : isOrder
-                              ? `MADE TO ORDER`
-                              : `IN STOCK (${prod.stock_count ?? 0})`;
-
-                            return (
-                              <span style={{
-                                fontSize: "0.7rem",
-                                padding: "2px 8px",
-                                borderRadius: "4px",
-                                fontWeight: 700,
-                                background: badgeBg,
-                                color: badgeColor,
-                              }}>
-                                {label}
-                              </span>
-                            );
-                          })()}
+                          <span style={{
+                            fontSize: "0.7rem",
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                            fontWeight: 700,
+                            background: prod.stock_status?.toLowerCase().includes("out") ? "#FEE2E2" : prod.stock_status?.toLowerCase().includes("order") ? "#FFEDD5" : "#DCFCE7",
+                            color: prod.stock_status?.toLowerCase().includes("out") ? "#991B1B" : prod.stock_status?.toLowerCase().includes("order") ? "#9A3412" : "#166534",
+                          }}>
+                            {prod.stock_status || "IN STOCK"}
+                          </span>
                         </div>
                         {prod.product_description && (
                           <div

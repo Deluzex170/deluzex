@@ -360,6 +360,57 @@
   transform: translateY(0);
 }
 
+.btnAmazon {
+  width: 100%;
+  background: #131921;
+  color: #FFFFFF;
+  border: 1.5px solid #232F3E;
+  border-radius: 9999px;
+  padding: 0.62rem 1.25rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  box-shadow: 0 4px 14px rgba(19, 25, 33, 0.18);
+}
+
+.btnAmazon:hover {
+  background: #232F3E;
+  border-color: #FF9900;
+  color: #FF9900;
+  box-shadow: 0 6px 20px rgba(255, 153, 0, 0.22);
+  transform: translateY(-1px);
+}
+
+.btnAmazon:active {
+  transform: translateY(0);
+}
+
+.btnAmazonIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #FF9900;
+}
+
+.btnSpinner {
+  animation: spinBtn 0.75s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes spinBtn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Subtle Divider */
 .divider {
   width: 100%;
@@ -390,6 +441,28 @@
   text-transform: uppercase;
   color: #374151;
   margin: 0;
+}
+
+.specsDownloadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(215, 147, 34, 0.08);
+  border: 1px solid rgba(215, 147, 34, 0.3);
+  border-radius: 6px;
+  color: #B8860B;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.specsDownloadBtn:hover {
+  background: #D79322;
+  color: #ffffff;
+  border-color: #D79322;
 }
 
 .specsList {
@@ -444,6 +517,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -518,6 +592,7 @@
     opacity: 0;
     transform: translateY(16px) scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1548,4 +1623,315 @@
     padding-right: 0;
     padding-bottom: 1.5rem;
   }
+}
+
+/* ================= REVIEW BUTTON & MODAL STYLES ================= */
+.ratingBadgeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.writeReviewLinkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: none;
+  color: #B8860B;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.writeReviewLinkBtn:hover {
+  color: #8c6504;
+  background-color: rgba(184, 134, 11, 0.08);
+}
+
+.writeReviewBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem 1.4rem;
+  border-radius: 8px;
+  background: #1F2937;
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border: 1px solid #1F2937;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.writeReviewBtn:hover {
+  background: #D79322;
+  border-color: #D79322;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(215, 147, 34, 0.25);
+}
+
+.writeReviewBtn svg {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.writeReviewBtn:hover svg {
+  transform: rotate(-10deg) scale(1.1);
+}
+
+.emptyReviewsState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3.5rem 1.5rem;
+  border: 1px dashed #E5E0D8;
+  border-radius: 12px;
+  background: #FAF9F6;
+  margin: 1.5rem 0 2.5rem 0;
+}
+
+.emptyReviewsIcon {
+  font-size: 2.2rem;
+  color: #D79322;
+  margin-bottom: 0.75rem;
+}
+
+.emptyReviewsTitle {
+  font-family: var(--font-libre), "Libre Caslon Display", Georgia, serif;
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: #1F2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.emptyReviewsText {
+  color: #6B7280;
+  font-size: 0.92rem;
+  max-width: 420px;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+}
+
+/* Modal Overlay & Card */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  animation: modalFadeIn 0.25s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.modalContent {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.22);
+  padding: 2rem;
+  position: relative;
+  animation: modalSlideUp 0.25s ease-out;
+}
+
+@keyframes modalSlideUp {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #EAE3D6;
+  margin-bottom: 1.5rem;
+}
+
+.modalTitle {
+  font-family: var(--font-libre), "Libre Caslon Display", Georgia, serif;
+  font-size: 1.65rem;
+  font-weight: 400;
+  color: #1F2937;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.modalCloseBtn {
+  background: #F3F4F6;
+  border: none;
+  font-size: 1.15rem;
+  color: #6B7280;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.modalCloseBtn:hover {
+  background: #E5E7EB;
+  color: #111827;
+}
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.modalFormGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.modalFormLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  letter-spacing: 0.2px;
+}
+
+.starPickerRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #F9FAFB;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+}
+
+.starBtn {
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  color: #D1D5DB;
+  cursor: pointer;
+  padding: 0 0.15rem;
+  transition: transform 0.15s ease, color 0.15s ease;
+  line-height: 1;
+}
+
+.starBtn:hover,
+.starBtnActive {
+  color: #D79322;
+  transform: scale(1.15);
+}
+
+.starLabel {
+  margin-left: 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4B5563;
+}
+
+.modalFormInput {
+  width: 100%;
+  padding: 0.75rem 0.95rem;
+  border-radius: 8px;
+  border: 1px solid #D1D5DB;
+  font-size: 0.9rem;
+  color: #1F2937;
+  background: #FFFFFF;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.modalFormInput:focus {
+  outline: none;
+  border-color: #D79322;
+  box-shadow: 0 0 0 3px rgba(215, 147, 34, 0.18);
+}
+
+.modalFormInput::placeholder {
+  color: #9CA3AF;
+  font-size: 0.86rem;
+}
+
+.modalSubmitBtn {
+  width: 100%;
+  padding: 0.95rem;
+  border-radius: 8px;
+  background: #1F2937;
+  color: #FFFFFF;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 0.5rem;
+}
+
+.modalSubmitBtn:hover:not(:disabled) {
+  background: #D79322;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(215, 147, 34, 0.3);
+}
+
+.modalSubmitBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.modalSuccessBox {
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+
+.modalSuccessIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #10B981;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin: 0 auto 1.25rem auto;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
 }

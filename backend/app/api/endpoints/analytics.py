@@ -318,7 +318,7 @@ def get_dashboard_summary(admin: models.User = Depends(deps.get_current_active_a
             "created_at": created_at_str
         })
 
-    # 2. Inventory Alerts
+    # 2. Inventory Alerts (support stock_count and legacy stock)
     total_products = db.products.count_documents({})
     low_stock_filter = {
         "$or": [

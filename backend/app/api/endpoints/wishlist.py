@@ -14,7 +14,7 @@ def serialize_wishlist_item(doc: dict) -> dict:
     if not doc:
         return {}
     doc_copy = dict(doc)
-    doc_copy["id"] = str(doc_copy.get("_id", ""))
+    doc_copy["id"] = str(doc_copy.pop("_id", ""))
     return doc_copy
 
 @router.get("", response_model=List[WishlistItemResponse])
@@ -81,6 +81,84 @@ def add_to_wishlist(
     res = db.wishlist_items.insert_one(doc_data)
     created_doc = db.wishlist_items.find_one({"_id": res.inserted_id})
     return WishlistItemResponse(**serialize_wishlist_item(created_doc))
+
+
+@router.post("/toggle")
+def toggle_wishlist_item(
+    item_in: WishlistItemCreate,
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+):
+    """
+    Toggle a product in user's wishlist in MongoDB.
+    If already wishlisted -> deletes it and returns {"is_wishlisted": False, "item_id": None}.
+    If not wishlisted -> inserts it and returns {"is_wishlisted": True, "item_id": str(id), "item": ...}.
+    """
+    email_clean = item_in.user_email.strip().lower()
+
+    if current_user and not getattr(current_user, "is_admin", False):
+        user_clean = (current_user.email or "").strip().lower()
+        if email_clean != user_clean:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Cannot modify wishlist of another user",
+            )
+
+    duplicate_query = {"user_email": email_clean}
+    if item_in.product_id:
+        duplicate_query["product_id"] = str(item_in.product_id).strip()
+    else:
+        duplicate_query["product_title"] = item_in.product_title
+
+    existing = db.wishlist_items.find_one(duplicate_query)
+    if existing:
+        db.wishlist_items.delete_one({"_id": existing["_id"]})
+        return {
+            "success": True,
+            "is_wishlisted": False,
+            "item_id": None,
+            "message": "Item removed from wishlist",
+        }
+    else:
+        doc_data = item_in.model_dump()
+        doc_data["user_email"] = email_clean
+        doc_data["created_at"] = datetime.utcnow()
+        res = db.wishlist_items.insert_one(doc_data)
+        created_doc = db.wishlist_items.find_one({"_id": res.inserted_id})
+        return {
+            "success": True,
+            "is_wishlisted": True,
+            "item_id": str(res.inserted_id),
+            "message": "Item added to wishlist",
+            "item": serialize_wishlist_item(created_doc),
+        }
+
+
+@router.delete("/product/{product_id}")
+def delete_wishlist_item_by_product_id(
+    product_id: str,
+    email: str = Query(...),
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+):
+    """
+    Remove an item from MongoDB wishlist by product_id and user_email.
+    """
+    email_clean = email.strip().lower()
+    if current_user and not getattr(current_user, "is_admin", False):
+        user_clean = (current_user.email or "").strip().lower()
+        if email_clean != user_clean:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to delete wishlist item of another user",
+            )
+
+    result = db.wishlist_items.delete_many({
+        "user_email": email_clean,
+        "$or": [
+            {"product_id": product_id},
+            {"product_id": str(product_id)},
+        ]
+    })
+    return {"success": True, "deleted_count": result.deleted_count, "message": "Item removed from wishlist"}
 
 
 @router.get("/check")

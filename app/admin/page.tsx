@@ -68,8 +68,8 @@ export default function AdminOverview() {
             <span className={styles.kpiIcon}>📦</span>
           </div>
           <div className={styles.kpiValue}>
-            <span style={{ color: "#4ade80" }}>{summary?.revenue.pending_orders || 0}</span>
-            <span style={{ fontSize: "1.1rem", color: "#888", fontWeight: 400 }}> active</span>
+            <span style={{ color: "#16a34a" }}>{summary?.revenue.pending_orders || 0}</span>
+            <span style={{ fontSize: "1rem", color: "#64748b", fontWeight: 500 }}> active</span>
           </div>
           <div className={styles.kpiFootnote}>
             {summary?.revenue.delivered_orders || 0} orders delivered successfully
@@ -83,10 +83,10 @@ export default function AdminOverview() {
             <span className={styles.kpiIcon}>⚠️</span>
           </div>
           <div className={styles.kpiValue}>
-            <span style={{ color: (summary?.inventory.low_stock_count || 0) > 0 ? "#f87171" : "#4ade80" }}>
+            <span style={{ color: (summary?.inventory.low_stock_count || 0) > 0 ? "#dc2626" : "#16a34a" }}>
               {summary?.inventory.low_stock_count || 0}
             </span>
-            <span style={{ fontSize: "1.1rem", color: "#888", fontWeight: 400 }}> low stock</span>
+            <span style={{ fontSize: "1rem", color: "#64748b", fontWeight: 500 }}> low stock</span>
           </div>
           <div className={styles.kpiFootnote}>
             {summary?.inventory.out_of_stock_count || 0} items completely out of stock
@@ -101,7 +101,7 @@ export default function AdminOverview() {
           </div>
           <div className={styles.kpiValue}>
             {summary?.operations.total_customers || 0}
-            <span style={{ fontSize: "1.1rem", color: "#888", fontWeight: 400 }}> clients</span>
+            <span style={{ fontSize: "1rem", color: "#64748b", fontWeight: 500 }}> clients</span>
           </div>
           <div className={styles.kpiFootnote}>
             {summary?.operations.newsletter_subscribers || 0} newsletter subscribers
@@ -147,7 +147,7 @@ export default function AdminOverview() {
         {/* Left: Recent Orders */}
         <div className={styles.feedCard}>
           <div className={styles.feedCardHeader}>
-            <h3 style={{ margin: 0, fontSize: "1.05rem", color: "#fff" }}>Recent Orders</h3>
+            <h3 style={{ margin: 0, fontSize: "1.05rem" }}>Recent Orders</h3>
             <Link href="/admin/orders" className={styles.viewAllLink}>
               View All Orders →
             </Link>
@@ -155,11 +155,11 @@ export default function AdminOverview() {
 
           <div>
             {loading ? (
-              <div style={{ padding: "2rem", textAlign: "center", color: "#777" }}>
+              <div style={{ padding: "2rem", textAlign: "center", color: "#64748b" }}>
                 Loading recent orders...
               </div>
             ) : (summary?.revenue.recent_orders.length || 0) === 0 ? (
-              <div style={{ padding: "2rem", textAlign: "center", color: "#777" }}>
+              <div style={{ padding: "2rem", textAlign: "center", color: "#64748b" }}>
                 No orders recorded yet.
               </div>
             ) : (
@@ -194,7 +194,7 @@ export default function AdminOverview() {
         {/* Right: Operational Attention & Low Stock */}
         <div className={styles.feedCard}>
           <div className={styles.feedCardHeader}>
-            <h3 style={{ margin: 0, fontSize: "1.05rem", color: "#fff" }}>
+            <h3 style={{ margin: 0, fontSize: "1.05rem" }}>
               Action Required
             </h3>
           </div>
@@ -221,9 +221,9 @@ export default function AdminOverview() {
           </Link>
 
           {/* Low Stock Watchlist */}
-          <div style={{ marginTop: "1.25rem", paddingTop: "1rem", borderTop: "1px solid #222" }}>
+          <div style={{ marginTop: "1.25rem", paddingTop: "1rem", borderTop: "1px solid #f1f5f9" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.75rem" }}>
-              <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#aaa", textTransform: "uppercase" }}>
+              <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                 Low Stock Watchlist
               </span>
               <Link href="/admin/products" className={styles.viewAllLink}>
@@ -232,8 +232,8 @@ export default function AdminOverview() {
             </div>
 
             {(summary?.inventory.low_stock_items.length || 0) === 0 ? (
-              <div style={{ color: "#4ade80", fontSize: "0.85rem", padding: "0.5rem 0" }}>
-                ✓ All products currently have healthy inventory.
+              <div style={{ color: "#16a34a", fontSize: "0.85rem", padding: "0.5rem 0", fontWeight: 500 }}>
+                ✓ All catalog products currently have healthy inventory.
               </div>
             ) : (
               summary?.inventory.low_stock_items.map((it) => (

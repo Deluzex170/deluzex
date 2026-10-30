@@ -2,13 +2,19 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
 import {
   fetchUserProfile,
   updateUserPassword,
   updateUserProfile,
-  sendProfilePhoneOtp,
+  fetchUserAddresses,
+  saveUserAddress,
+  deleteUserAddress,
+  setDefaultUserAddress,
+  removeUserAvatar,
+  deleteUserProfile,
+  SavedAddress,
+   sendProfilePhoneOtp,
   verifyProfilePhoneOtp,
 } from "../../services/api";
 import styles from "./profile.module.css";
@@ -30,11 +36,13 @@ function getInitialUserValue(key: string, defaultValue: string, userObj?: Record
 }
 
 export default function ProfilePage() {
-  const { user, login } = useAuth();
+  const { user, login, logout } = useAuth();
   const userRecord = user as Record<string, any> | null;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -62,7 +70,7 @@ export default function ProfilePage() {
     }
 
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       const result = reader.result as string;
       setAvatarPreview(result);
       setAvatarError(false);
@@ -79,11 +87,62 @@ export default function ProfilePage() {
           // ignore
         }
       }
+      try {
+        await updateUserProfile({ avatar_url: result });
+      } catch {
+        // ignore
+      }
       showToast("Profile photo updated successfully!");
     };
     reader.readAsDataURL(file);
   };
 
+  const handleRemoveAvatar = async () => {
+    const hasPhoto = Boolean(avatarPreview || (typeof window !== "undefined" && localStorage.getItem("user_avatar")));
+    if (!hasPhoto) {
+      showToast("No custom profile photo to remove.");
+      return;
+    }
+    setAvatarPreview(null);
+    setAvatarError(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("user_avatar");
+      try {
+        const stored = JSON.parse(localStorage.getItem("user") || "{}");
+        const updated = { ...stored, avatar_url: null, avatar: null, image: null, image_url: null };
+        localStorage.setItem("user", JSON.stringify(updated));
+        const token = localStorage.getItem("authToken") || "";
+        login(token, updated);
+      } catch {
+        // ignore
+      }
+    }
+    try {
+      await removeUserAvatar();
+      showToast("Profile photo removed.");
+    } catch {
+      showToast("Profile photo removed.");
+    }
+  };
+
+  const handleConfirmDeleteAccount = async () => {
+    setDeleteLoading(true);
+    try {
+      await deleteUserProfile();
+      showToast("Account deleted successfully.");
+      logout();
+      window.location.href = "/";
+    } catch (err: any) {
+      console.error("Account deletion failed:", err);
+      showToast(err?.message || "Failed to delete account. Please try again.");
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteModal(false);
+    }
+  };
+
+  // Form input states (editable in input fields)
   const [firstName, setFirstName] = useState(() =>
     getInitialUserValue("first_name", userRecord?.first_name || userRecord?.name?.split(" ")[0] || "Hasanabbas", userRecord)
   );
@@ -102,9 +161,20 @@ export default function ProfilePage() {
   const [city, setCity] = useState(() =>
     getInitialUserValue("city", "Ahmedabad", userRecord)
   );
+  const [state, setState] = useState(() =>
+    getInitialUserValue("state", "Gujarat", userRecord)
+  );
   const [country, setCountry] = useState(() =>
     getInitialUserValue("country", "India", userRecord)
   );
+
+  // Saved profile display state (only updates when user presses "Save Changes" or when profile loads from DB)
+  const [savedProfile, setSavedProfile] = useState(() => ({
+    firstName: getInitialUserValue("first_name", userRecord?.first_name || userRecord?.name?.split(" ")[0] || "Hasanabbas", userRecord),
+    lastName: getInitialUserValue("last_name", userRecord?.last_name || userRecord?.name?.split(" ").slice(1).join(" ") || "Chaudhary", userRecord),
+    email: getInitialUserValue("email", "Hasanabbas@gmail.com", userRecord),
+    phone: getInitialUserValue("phone", "+91 9982791722", userRecord),
+  }));
 
   // Password fields and visibility toggles
   const [currentPassword, setCurrentPassword] = useState("");
@@ -154,7 +224,14 @@ export default function ProfilePage() {
           setOriginalPhone(profile.phone);
         }
         if (profile.city) setCity(profile.city);
+        if (profile.state) setState(profile.state);
         if (profile.country) setCountry(profile.country);
+        setSavedProfile({
+          firstName: profile.first_name || profile.name?.split(" ")[0] || "Hasanabbas",
+          lastName: profile.last_name || profile.name?.split(" ").slice(1).join(" ") || "Chaudhary",
+          email: profile.email || "Hasanabbas@gmail.com",
+          phone: profile.phone || "+91 9982791722",
+        });
         localStorage.setItem("user", JSON.stringify(profile));
       })
       .catch((error: Error) => {
@@ -214,10 +291,17 @@ export default function ProfilePage() {
         email: email.trim(),
         phone: phone.trim(),
         city: city.trim(),
+        state: state.trim(),
         country: country.trim(),
       });
       const token = localStorage.getItem("authToken") || "";
       login(token, updatedUser);
+      setSavedProfile({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+      });
       showToast("Personal information saved successfully!");
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Failed to update profile.");
@@ -319,111 +403,251 @@ export default function ProfilePage() {
     }
   };
 
+  // Addresses State
+  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
+  const [selectedAddrId, setSelectedAddrId] = useState<string | null>(null);
+
+  // Add Address Modal State
+  const [showAddAddressModal, setShowAddAddressModal] = useState(false);
+  const [addrType, setAddrType] = useState<"Home" | "Work" | "Other">("Home");
+  const [addrFirstName, setAddrFirstName] = useState("");
+  const [addrLastName, setAddrLastName] = useState("");
+  const [addrStreet, setAddrStreet] = useState("");
+  const [addrCity, setAddrCity] = useState("");
+  const [addrState, setAddrState] = useState("");
+  const [addrPinCode, setAddrPinCode] = useState("");
+  const [addrPhone, setAddrPhone] = useState("");
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+
+  const userEmail = (user as Record<string, string>)?.email || email || "";
+
+  const loadAddresses = React.useCallback(async () => {
+    setIsLoadingAddresses(true);
+    try {
+      const data = await fetchUserAddresses(userEmail);
+      setAddresses(data || []);
+    } catch (err) {
+      console.error("Failed to load addresses:", err);
+      setAddresses([]);
+    } finally {
+      setIsLoadingAddresses(false);
+    }
+  }, [userEmail]);
+
+  useEffect(() => {
+    if (userEmail) {
+      loadAddresses();
+    }
+  }, [userEmail, loadAddresses]);
+
+  const handleSaveAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addrFirstName.trim() || !addrStreet.trim() || !addrCity.trim() || !addrState.trim() || !addrPinCode.trim() || !addrPhone.trim()) {
+      showToast("Please fill all required address fields.");
+      return;
+    }
+
+    const newAddr: SavedAddress = {
+      user_email: userEmail,
+      type: addrType,
+      first_name: addrFirstName.trim(),
+      last_name: addrLastName.trim(),
+      street: addrStreet.trim(),
+      city: addrCity.trim(),
+      state: addrState.trim(),
+      pin_code: addrPinCode.trim(),
+      phone: addrPhone.trim(),
+      is_default: addresses.length === 0,
+    };
+
+    setIsSavingAddress(true);
+    try {
+      await saveUserAddress(newAddr);
+      setShowAddAddressModal(false);
+      setAddrFirstName("");
+      setAddrLastName("");
+      setAddrStreet("");
+      setAddrCity("");
+      setAddrState("");
+      setAddrPinCode("");
+      setAddrPhone("");
+      showToast("Address saved successfully!");
+      await loadAddresses();
+    } catch (err) {
+      console.error("Failed to save address:", err);
+      showToast("Failed to save address to database.");
+    } finally {
+      setIsSavingAddress(false);
+    }
+  };
+
+  const handleSetDefaultAddress = async (addr: SavedAddress, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const addrId = addr.id || addr._id;
+    if (!addrId) return;
+
+    try {
+      await setDefaultUserAddress(addrId);
+      setAddresses((prev) =>
+        prev.map((a) => ({
+          ...a,
+          is_default: (a.id || a._id) === addrId,
+        }))
+      );
+      showToast("Default delivery address updated.");
+    } catch (err) {
+      console.error("Failed to set default address:", err);
+      showToast("Failed to update default address.");
+    }
+  };
+
+  const handleDeleteAddress = async (addr: SavedAddress, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const addrId = addr.id || addr._id;
+    if (!addrId) return;
+    if (!window.confirm("Are you sure you want to delete this address?")) return;
+
+    try {
+      await deleteUserAddress(addrId, userEmail);
+      setAddresses((prev) => prev.filter((a) => (a.id || a._id) !== addrId));
+      showToast("Address deleted successfully.");
+      loadAddresses();
+    } catch (err) {
+      console.error("Failed to delete address:", err);
+      showToast("Failed to delete address.");
+    }
+  };
+
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>My Profile</h1>
-        <p className={styles.subtitle}>
-          Manage your personal details, credentials, and quick account settings.
-        </p>
-      </div>
+      <div className={styles.grid}>
 
-      {/* Hero Profile Card */}
-      <div className={styles.profileHero}>
-        <div className={styles.heroLeft}>
-          <div style={{ position: "relative" }}>
-            <div className={styles.avatarWrapper}>
-              {avatarPreview && !avatarError ? (
-                <Image
-                  src={avatarPreview}
-                  alt="Profile"
-                  fill
-                  unoptimized
-                  className={styles.avatarImg}
-                  onError={() => setAvatarError(true)}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "linear-gradient(135deg, #C89B60, #856117)",
-                    color: "#ffffff",
-                    fontSize: "2rem",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {(firstName?.[0] || email?.[0] || "U").toUpperCase()}
-                </div>
-              )}
-            </div>
-            <button
-              type="button"
-              className={styles.avatarEditBtn}
-              onClick={() => fileInputRef.current?.click()}
-              title="Change profile picture"
-              aria-label="Change profile picture"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={handleAvatarChange}
-            />
+        {/* Row 1: Title (left) | Profile Card (right) */}
+        <div className={styles.topRow}>
+          {/* Left: Title block */}
+          <div className={styles.titleBlock}>
+            <h1 className={styles.title}>My Profile</h1>
+            <p className={styles.subtitle}>
+              Manage your personal details, credentials, and quick account settings.
+            </p>
           </div>
-          <div className={styles.heroInfo}>
-            <h2>{firstName} {lastName}</h2>
-            <div className={styles.heroEmail}>
-              <span>{email}</span>
-              <span>•</span>
-              <span>{phone}</span>
+
+          {/* Right: Profile overview card */}
+          <div className={styles.card}>
+            <div className={styles.profileCardContent}>
+              <div className={styles.avatarWrapperContainer}>
+                <div className={styles.avatarWrapper}>
+                  {avatarPreview && !avatarError ? (
+                    <Image
+                      src={avatarPreview}
+                      alt="Profile"
+                      fill
+                      unoptimized
+                      className={styles.avatarImg}
+                      onError={() => setAvatarError(true)}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: "linear-gradient(135deg, #C89B60, #856117)",
+                        color: "#ffffff",
+                        fontSize: "1.6rem",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {(savedProfile.firstName?.[0] || savedProfile.email?.[0] || "U").toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className={styles.avatarEditBtn}
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Change profile picture"
+                  aria-label="Change profile picture"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                </button>
+                {avatarPreview && !avatarError && (
+                  <button
+                    type="button"
+                    className={styles.avatarRemoveBtn}
+                    onClick={handleRemoveAvatar}
+                    title="Remove profile picture"
+                    aria-label="Remove profile picture"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={handleAvatarChange}
+                />
+              </div>
+
+              <div className={styles.profileDetailsColumn}>
+                <h2 className={styles.profileCardName}>{savedProfile.firstName} {savedProfile.lastName}</h2>
+                <div className={styles.profileCardEmail}>{savedProfile.email}</div>
+                <div className={styles.profileCardPhone}>{savedProfile.phone}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.45rem", flexWrap: "wrap" }}>
+                  <span className={styles.memberBadge}>&#9733; Deluzex Premium Client</span>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className={styles.changePhotoBtn}
+                    title="Upload or change profile picture"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    Change Photo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRemoveAvatar}
+                    className={styles.removePhotoBtn}
+                    title="Remove profile photo and restore default initials"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6l-1 14H6L5 6" />
+                      <path d="M10 11v6M14 11v6" />
+                    </svg>
+                    Remove Photo
+                  </button>
+                </div>
+              </div>
             </div>
-            <span className={styles.memberBadge}>★ Deluzex Premium Client</span>
           </div>
         </div>
 
-        {/* <Link
-          href="/dashboard/overview"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            padding: "0.75rem 1.25rem",
-            background: "#FAFAF8",
-            border: "1px solid rgba(0,0,0,0.1)",
-            borderRadius: "6px",
-            fontSize: "0.85rem",
-            fontWeight: 600,
-            color: "#2B2B2B",
-          }}
-        >
-          <span>View Account Overview</span>
-          <span>→</span>
-        </Link> */}
-      </div>
-
-      {/* Main Grid */}
-      <div className={styles.grid}>
-        {/* Left Column: Personal Info & Security */}
-        <div>
-          {/* Personal Information */}
+        {/* Row 2: Personal Information (left) | Security & Password (right) */}
+        <div className={styles.twoColRow}>
+          {/* Left: Personal Information */}
           <div className={styles.card}>
             <div className={styles.cardTitle}>
               <span>Personal Information</span>
             </div>
 
-            <form onSubmit={handleSaveProfile}>
+            <form onSubmit={handleSaveProfile} className={styles.compactForm}>
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>First Name</label>
@@ -481,29 +705,52 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Country</label>
+                  <label className={styles.label}>State</label>
                   <input
                     type="text"
                     className={styles.input}
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
                   />
                 </div>
               </div>
 
-              <button type="submit" className={styles.btnSave} disabled={isLoadingProfile || isSavingProfile}>
-                {isSavingProfile ? "Saving..." : "Save Changes"}
+              <button
+                type="submit"
+                className={styles.btnSave}
+                disabled={isLoadingProfile || isSavingProfile}
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
+              >
+                {isSavingProfile ? (
+                  <>
+                    <svg
+                      style={{ animation: "spin 0.75s linear infinite" }}
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    <span>Saving Changes...</span>
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
               </button>
             </form>
           </div>
 
-          {/* Security & Password */}
+          {/* Right: Security & Password */}
           <div className={styles.card}>
             <div className={styles.cardTitle}>
-              <span>Security & Password</span>
+              <span>Security &amp; Password</span>
             </div>
 
-            <form onSubmit={handleUpdatePassword}>
+            <form onSubmit={handleUpdatePassword} className={styles.compactForm}>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Current Password</label>
                 <div className={styles.passwordWrapper}>
@@ -522,13 +769,13 @@ export default function ProfilePage() {
                     aria-label={showCurrentPassword ? "Hide password" : "Show password"}
                   >
                     {showCurrentPassword ? (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                         <line x1="1" y1="1" x2="23" y2="23" />
                       </svg>
                     ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z" />
                         <circle cx="12" cy="12" r="3" />
                       </svg>
                     )}
@@ -542,7 +789,7 @@ export default function ProfilePage() {
                   <div className={styles.passwordWrapper}>
                     <input
                       type={showNewPassword ? "text" : "password"}
-                      placeholder="At least 6 characters"
+                      placeholder="Min 6 chars"
                       className={styles.input}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
@@ -555,13 +802,13 @@ export default function ProfilePage() {
                       aria-label={showNewPassword ? "Hide password" : "Show password"}
                     >
                       {showNewPassword ? (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                           <line x1="1" y1="1" x2="23" y2="23" />
                         </svg>
                       ) : (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z" />
                           <circle cx="12" cy="12" r="3" />
                         </svg>
                       )}
@@ -569,11 +816,11 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Confirm New Password</label>
+                  <label className={styles.label}>Confirm Password</label>
                   <div className={styles.passwordWrapper}>
                     <input
                       type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Confirm new password"
+                      placeholder="Confirm password"
                       className={styles.input}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
@@ -586,13 +833,13 @@ export default function ProfilePage() {
                       aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                     >
                       {showConfirmPassword ? (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                           <line x1="1" y1="1" x2="23" y2="23" />
                         </svg>
                       ) : (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z" />
                           <circle cx="12" cy="12" r="3" />
                         </svg>
                       )}
@@ -601,171 +848,454 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <button type="submit" className={styles.btnSave} disabled={isUpdatingPassword}>
-                {isUpdatingPassword ? "Updating..." : "Update Password"}
+              <button
+                type="submit"
+                className={styles.btnSave}
+                disabled={isUpdatingPassword}
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
+              >
+                {isUpdatingPassword ? (
+                  <>
+                    <svg
+                      style={{ animation: "spin 0.75s linear infinite" }}
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    <span>Updating Password...</span>
+                  </>
+                ) : (
+                  "Update Password"
+                )}
               </button>
-
             </form>
           </div>
         </div>
 
-        {/* Right Column: Quick Navigation to other Dashboard pages */}
-        <div>
-          <div className={styles.card}>
-            <div className={styles.cardTitle}>
-              <span>Quick Navigation</span>
-            </div>
-
-            <div className={styles.quickNavList}>
-              <Link href="/dashboard/orders" className={styles.quickNavItem}>
-                <div className={styles.quickNavLeft}>
-                  <div className={styles.quickNavIcon}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2 M15 2H9c-1.1 0-2 .9-2 2v2h10V4c0-1.1-.9-2-2-2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className={styles.quickNavTitle}>My Orders</div>
-                    <div className={styles.quickNavSubtitle}>Track orders & view receipts</div>
-                  </div>
-                </div>
-                <span>→</span>
-              </Link>
-
-              <Link href="/dashboard/address" className={styles.quickNavItem}>
-                <div className={styles.quickNavLeft}>
-                  <div className={styles.quickNavIcon}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className={styles.quickNavTitle}>Delivery Addresses</div>
-                    <div className={styles.quickNavSubtitle}>Manage shipping destinations</div>
-                  </div>
-                </div>
-                <span>→</span>
-              </Link>
-
-              <Link href="/dashboard/payments" className={styles.quickNavItem}>
-                <div className={styles.quickNavLeft}>
-                  <div className={styles.quickNavIcon}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                      <line x1="1" y1="10" x2="23" y2="10" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className={styles.quickNavTitle}>Payment Methods</div>
-                    <div className={styles.quickNavSubtitle}>Saved cards & UPI details</div>
-                  </div>
-                </div>
-                <span>→</span>
-              </Link>
-
-              <Link href="/dashboard/wishlist" className={styles.quickNavItem}>
-                <div className={styles.quickNavLeft}>
-                  <div className={styles.quickNavIcon}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className={styles.quickNavTitle}>Wishlist</div>
-                    <div className={styles.quickNavSubtitle}>Saved lighting designs</div>
-                  </div>
-                </div>
-                <span>→</span>
-              </Link>
-
-              <Link href="/dashboard/overview" className={styles.quickNavItem}>
-                <div className={styles.quickNavLeft}>
-                  <div className={styles.quickNavIcon}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className={styles.quickNavTitle}>Account Overview</div>
-                    <div className={styles.quickNavSubtitle}>Analytics & activity summary</div>
-                  </div>
-                </div>
-                <span>→</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Phone Change WhatsApp OTP Modal */}
-      {showPhoneOtpModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
+        {/* Row 3: Saved Addresses â€” full width */}
+        <div className={styles.card}>
+          <div className={styles.cardTitle}>
+            <span>Saved Addresses</span>
             <button
               type="button"
-              className={styles.modalCloseBtn}
-              onClick={handleCancelPhoneOtp}
-              aria-label="Close modal"
+              className={styles.btnAddAddress}
+              onClick={() => {
+                setAddrFirstName(firstName || "");
+                setAddrLastName(lastName || "");
+                setAddrPhone(phone || "");
+                setAddrCity(city || "");
+                setShowAddAddressModal(true);
+              }}
             >
-              ×
+              + Add New Address
             </button>
-            <h3 className={styles.modalTitle}>Verify New Number</h3>
-            <p className={styles.modalSubtitle}>
-              For security, enter the 6-digit OTP sent to your WhatsApp on{" "}
-              <span className={styles.phoneHighlight}>+91 {phone.replace(/\D/g, "").slice(-10)}</span>
+          </div>
+
+          {isLoadingAddresses ? (
+            <p style={{ color: "#777", padding: "0.5rem 0", margin: 0, fontSize: "0.85rem" }}>Loading saved addresses...</p>
+          ) : addresses.length === 0 ? (
+            <div className={styles.emptyAddressState}>
+              <div className={styles.emptyAddressIcon}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+              </div>
+              <h3 className={styles.emptyAddressTitle}>No Addresses Saved Yet</h3>
+              <p className={styles.emptyAddressSubtitle}>
+                Add your shipping and delivery address for faster checkout.
+              </p>
+              <button
+                type="button"
+                className={styles.btnAddAddressFirst}
+                onClick={() => {
+                  setAddrFirstName(firstName || "");
+                  setAddrLastName(lastName || "");
+                  setAddrPhone(phone || "");
+                  setAddrCity(city || "");
+                  setShowAddAddressModal(true);
+                }}
+              >
+                + Add Address
+              </button>
+            </div>
+          ) : (
+            <div className={styles.addressListRow}>
+              {addresses.map((addr, i) => {
+                const addrId = addr.id || addr._id || String(i);
+                const isSelected = selectedAddrId ? selectedAddrId === addrId : !!addr.is_default;
+                return (
+                  <div
+                    key={addrId}
+                    className={`${styles.addressCard} ${isSelected ? styles.addressCardActive : ""}`}
+                    onClick={() => {
+                      setSelectedAddrId(addrId);
+                      if (!addr.is_default) {
+                        handleSetDefaultAddress(addr);
+                      }
+                    }}
+                  >
+                    <div className={styles.addressTopRow}>
+                      {addr.is_default ? (
+                        <span className={styles.defaultBadge}>Default</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className={styles.btnSetDefault}
+                          onClick={(e) => {
+                            setSelectedAddrId(addrId);
+                            handleSetDefaultAddress(addr, e);
+                          }}
+                        >
+                          Set as Default
+                        </button>
+                      )}
+                      <div
+                        className={`${styles.radioBtn} ${isSelected ? styles.radioBtnActive : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedAddrId(addrId);
+                          if (!addr.is_default) {
+                            handleSetDefaultAddress(addr);
+                          }
+                        }}
+                      >
+                        {isSelected && <div className={styles.radioDot} />}
+                      </div>
+                    </div>
+
+                    <div className={styles.addressTypeRow}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                      <span className={styles.addressType}>{addr.type || "Home"}</span>
+                    </div>
+
+                    <div className={styles.addressPersonName}>
+                      {addr.first_name} {addr.last_name}
+                    </div>
+                    <div className={styles.addressText}>
+                      {addr.street}, {addr.city}, {addr.state} - {addr.pin_code}
+                    </div>
+                    <div className={styles.addressPhone}>{addr.phone}</div>
+
+                    <div className={styles.addressCardActions}>
+                      <button
+                        type="button"
+                        className={styles.btnDeleteAddress}
+                        onClick={(e) => handleDeleteAddress(addr, e)}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6l-1 14H6L5 6" />
+                          <path d="M10 11v6M14 11v6" />
+                          <path d="M9 6V4h6v2" />
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Row 4: Account Deletion (Danger Zone) */}
+        <div className={styles.card} style={{ borderColor: "#FEE2E2", marginTop: "1rem" }}>
+          <div className={styles.cardHeader}>
+            <div>
+              <div className={styles.cardTitle} style={{ color: "#DC2626" }}>Delete Account</div>
+              <div className={styles.cardSubtitle}>
+                Permanently delete your Deluzex customer account and remove all personal profile data.
+              </div>
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+            <p style={{ margin: 0, fontSize: "0.85rem", color: "#6B7280", maxWidth: "600px", lineHeight: 1.5 }}>
+              Once deleted, your profile details, avatar, saved delivery addresses, and active session will be permanently erased. This action is irreversible.
             </p>
+            <button
+              type="button"
+              className={styles.btnDeleteAccount}
+              onClick={() => setShowDeleteModal(true)}
+            >
+              Delete Account
+            </button>
+          </div>
+        </div>
 
-            <form onSubmit={handleVerifyPhoneOtp}>
-              <input
-                type="text"
-                maxLength={6}
-                autoFocus
-                placeholder="• • • • • •"
-                className={styles.otpInputBox}
-                value={phoneOtp}
-                onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, ""))}
-              />
+      </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                <span style={{ fontSize: "0.85rem", color: "#6b7280" }}>
-                  {phoneOtpTimer > 0 ? `Resend OTP in ${phoneOtpTimer}s` : "Didn't receive code?"}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleResendPhoneOtp}
-                  disabled={phoneOtpTimer > 0}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: phoneOtpTimer > 0 ? "#9ca3af" : "#c89b60",
-                    fontWeight: 600,
-                    fontSize: "0.85rem",
-                    cursor: phoneOtpTimer > 0 ? "not-allowed" : "pointer",
-                    textDecoration: "underline",
-                  }}
-                >
-                  Resend on WhatsApp
-                </button>
+      {/* Add Address Modal */}
+      {showAddAddressModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalBox}>
+            <div className={styles.modalHeader}>
+              <h2>Add Delivery Address</h2>
+              <button
+                type="button"
+                className={styles.modalCloseBtn}
+                onClick={() => setShowAddAddressModal(false)}
+              >
+                Ã—
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAddress} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div className={styles.typeSelector}>
+                {(["Home", "Work", "Other"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setAddrType(t)}
+                    className={`${styles.typeBtn} ${addrType === t ? styles.typeBtnActive : ""}`}
+                  >
+                    {t}
+                  </button>
+                ))}
               </div>
 
-              <div className={styles.modalBtnRow}>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>First Name *</label>
+                  <input
+                    type="text"
+                    required
+                    className={styles.input}
+                    placeholder="First Name"
+                    value={addrFirstName}
+                    onChange={(e) => setAddrFirstName(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Last Name</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    placeholder="Last Name"
+                    value={addrLastName}
+                    onChange={(e) => setAddrLastName(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Street Address *</label>
+                <input
+                  type="text"
+                  required
+                  className={styles.input}
+                  placeholder="Street Address, Building / Apt"
+                  value={addrStreet}
+                  onChange={(e) => setAddrStreet(e.target.value)}
+                />
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>City *</label>
+                  <input
+                    type="text"
+                    required
+                    className={styles.input}
+                    placeholder="City"
+                    value={addrCity}
+                    onChange={(e) => setAddrCity(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>State *</label>
+                  <input
+                    type="text"
+                    required
+                    className={styles.input}
+                    placeholder="State"
+                    value={addrState}
+                    onChange={(e) => setAddrState(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>PIN Code *</label>
+                  <input
+                    type="text"
+                    required
+                    className={styles.input}
+                    placeholder="PIN Code"
+                    value={addrPinCode}
+                    onChange={(e) => setAddrPinCode(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Phone Number *</label>
+                  <input
+                    type="tel"
+                    required
+                    className={styles.input}
+                    placeholder="Phone Number"
+                    value={addrPhone}
+                    onChange={(e) => setAddrPhone(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.modalActions}>
                 <button
                   type="button"
-                  className={styles.modalCancelBtn}
-                  onClick={handleCancelPhoneOtp}
+                  className={styles.btnCancelModal}
+                  onClick={() => setShowAddAddressModal(false)}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className={styles.modalConfirmBtn}
-                  disabled={isVerifyingPhoneOtp || phoneOtp.length !== 6}
+                  className={styles.btnSubmitModal}
+                  disabled={isSavingAddress}
+                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
                 >
-                  {isVerifyingPhoneOtp ? "Verifying..." : "Verify & Save"}
+                  {isSavingAddress ? (
+                    <>
+                      <svg
+                        style={{ animation: "spin 0.75s linear infinite" }}
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                        <path d="M12 2a10 10 0 0 1 10 10" />
+                      </svg>
+                      <span>Saving Address...</span>
+                    </>
+                  ) : (
+                    "Save Address"
+                  )}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteModal && (
+        <div
+          className={styles.modalOverlay}
+          style={{ zIndex: 10000 }}
+          onClick={() => !deleteLoading && setShowDeleteModal(false)}
+        >
+          <div
+            className={styles.modalBox}
+            style={{ maxWidth: "460px", textAlign: "center", padding: "2rem 1.75rem" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              width: "56px",
+              height: "56px",
+              borderRadius: "50%",
+              backgroundColor: "rgba(220, 38, 38, 0.12)",
+              color: "#DC2626",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 1.25rem",
+              fontSize: "1.6rem",
+              fontWeight: "bold",
+            }}>
+              ⚠️
+            </div>
+            <h3 style={{
+              fontSize: "1.35rem",
+              fontWeight: 600,
+              color: "#1F2937",
+              margin: "0 0 0.5rem",
+              fontFamily: "var(--font-libre), Georgia, serif"
+            }}>
+              Delete Your Deluzex Account?
+            </h3>
+            <p style={{
+              fontSize: "0.88rem",
+              color: "#6B7280",
+              lineHeight: 1.55,
+              margin: "0 0 1.75rem"
+            }}>
+              Are you sure you want to permanently delete your account? This action cannot be undone. All personal information and saved settings will be erased immediately.
+            </p>
+            <div style={{ display: "flex", gap: "0.85rem", justifyContent: "center" }}>
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={() => setShowDeleteModal(false)}
+                style={{
+                  flex: 1,
+                  padding: "0.75rem 1rem",
+                  borderRadius: "8px",
+                  border: "1px solid #D1D5DB",
+                  background: "#FFFFFF",
+                  color: "#374151",
+                  fontSize: "0.88rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                Keep Account
+              </button>
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={handleConfirmDeleteAccount}
+                style={{
+                  flex: 1,
+                  padding: "0.75rem 1rem",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "#DC2626",
+                  color: "#FFFFFF",
+                  fontSize: "0.88rem",
+                  fontWeight: 600,
+                  cursor: deleteLoading ? "not-allowed" : "pointer",
+                  opacity: deleteLoading ? 0.75 : 1,
+                  transition: "all 0.2s ease",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                }}
+              >
+                {deleteLoading ? (
+                  <>
+                    <svg
+                      style={{ animation: "spin 0.75s linear infinite" }}
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    <span>Deleting Account...</span>
+                  </>
+                ) : (
+                  "Yes, Delete Account"
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

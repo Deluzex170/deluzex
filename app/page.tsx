@@ -15,6 +15,7 @@ import StoreHome from "./page.store.backup";
 const SHOW_COMING_SOON = false;
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata = {
   title: "Deluzex Lighting — Where Lights Become Art",

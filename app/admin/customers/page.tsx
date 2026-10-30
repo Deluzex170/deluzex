@@ -375,32 +375,32 @@ export default function AdminCustomersPage() {
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
-              <div style={{ background: "var(--admin-bg)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
-                <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase" }}>Email Address</div>
-                <div style={{ fontWeight: 500, color: "var(--admin-text-main)", marginTop: "0.25rem" }}>
+              <div style={{ background: "#f8fafc", padding: "1rem", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>Email Address</div>
+                <div style={{ fontWeight: 600, color: "#0f172a", marginTop: "0.25rem" }}>
                   <a href={`mailto:${selectedCustomer.email}`} style={{ color: "#c49a45", textDecoration: "none" }}>
                     {selectedCustomer.email || "—"}
                   </a>
                 </div>
               </div>
 
-              <div style={{ background: "var(--admin-bg)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
-                <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase" }}>Phone Number</div>
-                <div style={{ fontWeight: 500, color: "var(--admin-text-main)", marginTop: "0.25rem" }}>
+              <div style={{ background: "#f8fafc", padding: "1rem", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>Phone Number</div>
+                <div style={{ fontWeight: 600, color: "#0f172a", marginTop: "0.25rem" }}>
                   {selectedCustomer.phone || "—"}
                 </div>
               </div>
 
-              <div style={{ background: "var(--admin-bg)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
-                <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase" }}>Lifetime Orders</div>
-                <div style={{ fontWeight: 600, color: "var(--admin-text-main)", marginTop: "0.25rem", fontSize: "1.1rem" }}>
+              <div style={{ background: "#f8fafc", padding: "1rem", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>Lifetime Orders</div>
+                <div style={{ fontWeight: 700, color: "#0f172a", marginTop: "0.25rem", fontSize: "1.1rem" }}>
                   {selectedCustomer.orders_count} orders
                 </div>
               </div>
 
-              <div style={{ background: "var(--admin-bg)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
-                <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase" }}>Total Spend</div>
-                <div style={{ fontWeight: 600, color: "#c49a45", marginTop: "0.25rem", fontSize: "1.1rem" }}>
+              <div style={{ background: "#f8fafc", padding: "1rem", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>Total Spend</div>
+                <div style={{ fontWeight: 700, color: "#c49a45", marginTop: "0.25rem", fontSize: "1.1rem" }}>
                   ₹{selectedCustomer.total_spent.toLocaleString("en-IN")}
                 </div>
               </div>
@@ -410,11 +410,11 @@ export default function AdminCustomersPage() {
             <div>
               <div className={styles.modalSectionLabel}>Order History ({customerOrders.length})</div>
               {loadingOrders ? (
-                <div style={{ padding: "2rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
+                <div style={{ padding: "2rem", textAlign: "center", color: "#64748b" }}>
                   Loading order history...
                 </div>
               ) : customerOrders.length === 0 ? (
-                <div style={{ padding: "2rem", textAlign: "center", color: "var(--admin-text-muted)", background: "var(--admin-bg)", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
+                <div style={{ padding: "2rem", textAlign: "center", color: "#64748b", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
                   No orders placed yet by this customer.
                 </div>
               ) : (
@@ -427,12 +427,12 @@ export default function AdminCustomersPage() {
                       <div className={styles.orderDate}>
                         {ord.created_at ? new Date(ord.created_at).toLocaleDateString() : "—"} · Status: {ord.status || "confirmed"}
                       </div>
-                      <div style={{ fontSize: "0.8rem", color: "#aaa", marginTop: "0.25rem" }}>
+                      <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "0.25rem" }}>
                         {ord.items?.length || 0} items ({ord.items?.map((it: any) => it.product_name || it.title).join(", ") || "Custom pieces"})
                       </div>
                     </div>
                     <div className={styles.orderAmount}>
-                      ₹{(ord.total_amount || ord.totalAmount || 0).toLocaleString("en-IN")}
+                      ₹{(ord.total || ord.total_amount || ord.totalAmount || 0).toLocaleString("en-IN")}
                     </div>
                   </div>
                 ))
@@ -440,7 +440,7 @@ export default function AdminCustomersPage() {
             </div>
 
             {/* Modal Actions */}
-            <div style={{ marginTop: "2rem", paddingTop: "1.25rem", borderTop: "1px solid #242424", display: "flex", justifyContent: "space-between" }}>
+            <div style={{ marginTop: "2rem", paddingTop: "1.25rem", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between" }}>
               <button
                 className={styles.btnSecondary}
                 onClick={() => handleRoleToggle(selectedCustomer.id, selectedCustomer.is_admin)}

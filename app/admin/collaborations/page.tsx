@@ -124,7 +124,7 @@ export default function AdminCollaborationsPage() {
   };
 
   return (
-    <div style={{ padding: "1.5rem min(2rem, 4vw)", maxWidth: "1400px", margin: "0 auto" }}>
+    <div style={{ width: "100%", maxWidth: "100%", margin: 0, padding: 0 }}>
       {/* Toast Notification */}
       {toastMsg && (
         <div
@@ -283,8 +283,8 @@ export default function AdminCollaborationsPage() {
             </p>
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.88rem" }}>
+          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+            <table style={{ width: "100%", minWidth: "950px", borderCollapse: "collapse", textAlign: "left", fontSize: "0.88rem" }}>
               <thead>
                 <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontWeight: 600 }}>
                   <th style={{ padding: "0.85rem 1.25rem" }}>Designer</th>
