@@ -132,34 +132,7 @@
   line-height: 28px;
 }
 
-/* Luxury AG-Grid select popup list without empty gaps */
-:global(.ag-theme-quartz .ag-select-list),
-:global(.ag-theme-quartz-dark .ag-select-list),
-:global(.ag-select-list) {
-  padding: 4px !important;
-  border-radius: 8px !important;
-  border: 1px solid var(--admin-border, rgba(196, 154, 69, 0.3)) !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25) !important;
-  background: var(--admin-surface, #131317) !important;
-}
 
-:global(.ag-select-list-item) {
-  padding: 5px 10px !important;
-  font-size: 12.5px !important;
-  border-radius: 5px !important;
-  cursor: pointer !important;
-  transition: background 0.15s ease !important;
-  color: var(--admin-text-main, #F4F4F6) !important;
-  min-height: 28px !important;
-  display: flex !important;
-  align-items: center !important;
-}
-
-:global(.ag-select-list-item:hover),
-:global(.ag-select-list-item.ag-active-item) {
-  background: var(--admin-primary-glow, rgba(196, 154, 69, 0.18)) !important;
-  color: var(--admin-primary, #C49A45) !important;
-}
 
 /* Overlays (loading / empty) — let the optional empty-state action be clicked */
 .gridFrame :global(.ag-overlay) {
