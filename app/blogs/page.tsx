@@ -5,7 +5,7 @@ import styles from "./blogs.module.css";
 import Image from "next/image";
 import Link from "next/link";
 import { fetchBlogs, Blog } from "../services/api";
-
+//hello
 const CATEGORIES = [
   "All Blogs",
   "Design & Inspiration",

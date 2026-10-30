@@ -536,6 +536,15 @@ export async function deleteProduct(id: string | number) {
   return res.json();
 }
 
+export async function toggleProductFeatured(id: string | number, isFeatured?: boolean): Promise<Product> {
+  const formData = new FormData();
+  if (isFeatured !== undefined) {
+    formData.append("is_featured", String(isFeatured));
+  }
+  const data = await updateProduct(id, formData);
+  return data.data || data;
+}
+
 export async function toggleProductNewArrival(id: string | number, isNewArrival?: boolean): Promise<Product> {
   const url = `${API_BASE_URL}/products/${id}/new-arrival`;
   const res = await fetch(url, {

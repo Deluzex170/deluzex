@@ -3,12 +3,16 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import styles from "../page.module.css";
-import { fetchHeroProducts } from "../services/api";
+// PREVIOUS API IMPORT - COMMENTED OUT AS PER REQUIREMENT:
+// import { fetchHeroProducts } from "../services/api";
+import { fetchProducts } from "../services/api";
 
 export type HeroLamp = {
   _id?: string;
   id?: string;
+  slug?: string;
   image: string;
   name: string;
   price?: number;
@@ -17,6 +21,7 @@ export type HeroLamp = {
 };
 
 export default function HeroProductWidget() {
+  const router = useRouter();
   const [lamps, setLamps] = useState<HeroLamp[]>([]);
   const [carouselPosition, setCarouselPosition] = useState(0);
   const [isResetting, setIsResetting] = useState(false);
@@ -26,6 +31,7 @@ export default function HeroProductWidget() {
 
   useEffect(() => {
     let isMounted = true;
+    /* PREVIOUS CODE - COMMENTED OUT AS PER REQUIREMENT:
     fetchHeroProducts()
       .then((data) => {
         if (isMounted && data) {
@@ -44,6 +50,37 @@ export default function HeroProductWidget() {
       })
       .catch((err) => {
         console.error("Failed to load hero products from API:", err);
+      });
+    */
+
+    // NEW IMPLEMENTATION: Load products selected via Admin Products (is_featured = true)
+    fetchProducts()
+      .then((allProducts) => {
+        if (!isMounted || !allProducts) return;
+
+        // Filter products selected in Admin for the Hero section
+        const heroSelected = allProducts.filter((p) => p.is_featured);
+
+        // If admin has selected hero products, display those; otherwise fallback to first available products
+        const sourceList = heroSelected.length > 0 ? heroSelected : allProducts.slice(0, 5);
+
+        if (sourceList.length > 0) {
+          const formatted: HeroLamp[] = sourceList.map((item) => ({
+            _id: String(item._id || item.id || ""),
+            id: String(item.id || item._id || ""),
+            slug: item.slug,
+            image: item.product_main_image || item.image || item.image_url || "/placeholder.jpg",
+            name: item.product_title || item.title || item.name || "Luxury Fixture",
+            price: Number(item.product_price ?? item.price ?? 0),
+            count: Number(item.product_price ?? item.price ?? 0),
+            alt: item.product_title || item.title || "Luxury Architectural Lighting",
+          }));
+          setLamps(formatted);
+          setCarouselPosition(formatted.length * 2 + 1);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load products for hero section:", err);
       });
 
     return () => {
@@ -258,7 +295,16 @@ export default function HeroProductWidget() {
         }
       }}
     >
+      {/* PREVIOUS STATIC SHOP LINK - COMMENTED OUT AS PER REQUIREMENT:
       <Link href="/shop" className={styles.heroInfoCard} aria-live="polite" style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }} title="View product in shop">
+      */}
+      <Link
+        href={activeLamp?._id || activeLamp?.id ? `/product/${activeLamp._id || activeLamp.id}` : "/shop"}
+        className={styles.heroInfoCard}
+        aria-live="polite"
+        style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+        title={`View ${activeLamp?.name || "product"} details`}
+      >
         <div className={styles.heroInfoCardImg}>
           <Image
             src={activeLamp.image}
@@ -305,6 +351,11 @@ export default function HeroProductWidget() {
                 if (hasDraggedRef.current) {
                   e.preventDefault();
                   e.stopPropagation();
+                  return;
+                }
+                // If clicking on active center card, navigate to its product detail page
+                if (position === carouselPosition && (lamp._id || lamp.id)) {
+                  router.push(`/product/${lamp._id || lamp.id}`);
                   return;
                 }
                 setCarouselPosition(position);

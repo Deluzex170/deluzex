@@ -16,6 +16,7 @@ import {
   fetchProducts,
   deleteProduct,
   toggleProductNewArrival,
+  toggleProductFeatured,
   fetchCategories,
   Category,
   Product,
@@ -33,9 +34,42 @@ export default function AdminProducts() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [loading, setLoading] = useState(true);
-  const [filterTab, setFilterTab] = useState<"all" | "new_arrivals">("all");
+  const [filterTab, setFilterTab] = useState<"all" | "new_arrivals" | "hero">("all");
   const [itemToDelete, setItemToDelete] = useState<Product | null>(null);
   const [togglingId, setTogglingId] = useState<string | number | null>(null);
+  const [togglingHeroId, setTogglingHeroId] = useState<string | number | null>(null);
+
+  async function handleToggleHero(product: Product) {
+    const prodId = product._id || product.id;
+    if (!prodId) return;
+
+    setTogglingHeroId(prodId);
+    const nextStatus = !product.is_featured;
+
+    try {
+      await toggleProductFeatured(prodId, nextStatus);
+      setProducts((prev) =>
+        prev.map((p) =>
+          (p._id || p.id) === prodId ? { ...p, is_featured: nextStatus } : p
+        )
+      );
+
+      setSuccessMsg(
+        nextStatus
+          ? `"${product.product_title}" is now selected for the Hero section and live on homepage!`
+          : `"${product.product_title}" removed from Hero section.`
+      );
+
+      setTimeout(() => {
+        setSuccessMsg((curr) => (curr ? "" : curr));
+      }, 4000);
+    } catch (error) {
+      console.error("Failed to toggle Hero status:", error);
+      alert("Failed to update Hero selection. Please try again.");
+    } finally {
+      setTogglingHeroId(null);
+    }
+  }
   const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
@@ -108,9 +142,15 @@ export default function AdminProducts() {
     [products]
   );
 
+  const heroProductsCount = useMemo(
+    () => products.filter((p) => p.is_featured).length,
+    [products]
+  );
+
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       if (filterTab === "new_arrivals" && !p.is_new_arrival) return false;
+      if (filterTab === "hero" && !p.is_featured) return false;
       if (selectedCategory !== "all" && p.product_category !== selectedCategory) return false;
       return true;
     });
@@ -118,6 +158,55 @@ export default function AdminProducts() {
 
   // Column definitions for the products grid (actions call the same handlers as before)
   const columnDefs = useMemo<ColDef<Product>[]>(() => [
+    {
+      headerName: "Hero",
+      colId: "hero_check",
+      width: 76,
+      minWidth: 76,
+      maxWidth: 76,
+      flex: 0,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      pinned: "left",
+      headerTooltip: "Check to feature this product in homepage Hero Slider",
+      cellRenderer: (p: CustomCellRendererProps<Product>) => {
+        const prod = p.data;
+        if (!prod) return null;
+        const prodId = prod._id || prod.id || "";
+        const isHero = Boolean(prod.is_featured);
+        const isToggling = togglingHeroId === prodId;
+
+        return (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={isHero}
+              disabled={isToggling}
+              onChange={() => handleToggleHero(prod)}
+              title={
+                isHero
+                  ? "Click to remove from homepage Hero Slider"
+                  : "Click to show in homepage Hero Slider"
+              }
+              style={{
+                width: "18px",
+                height: "18px",
+                cursor: isToggling ? "wait" : "pointer",
+                accentColor: "var(--admin-primary, #C49A45)",
+              }}
+            />
+          </div>
+        );
+      },
+    },
     {
       headerName: "Image",
       field: "product_main_image",
@@ -221,7 +310,7 @@ export default function AdminProducts() {
       } satisfies ActionButtonsParams<Product>,
     },
   // handleToggleNewArrival only reads stable setters; togglingId drives the "Updating…" state
-  ], [togglingId]);
+  ], [togglingId, togglingHeroId]);
 
   return (
     <div className={styles.sectionContainer} style={{ width: "100%", maxWidth: "100%" }}>
@@ -339,10 +428,18 @@ export default function AdminProducts() {
         loading={loading}
         getRowId={(p) => String(p._id || p.id || p.sku || p.product_title)}
         searchPlaceholder="Search title, SKU, category…"
-        emptyTitle={filterTab === "new_arrivals" ? "No New Arrivals yet" : "No products found"}
+        emptyTitle={
+          filterTab === "new_arrivals"
+            ? "No New Arrivals yet"
+            : filterTab === "hero"
+            ? "No Hero products selected yet"
+            : "No products found"
+        }
         emptyDescription={
           filterTab === "new_arrivals"
             ? "Switch to All Products and use “Add to New Arrivals” on any product."
+            : filterTab === "hero"
+            ? "Switch to All Products and check the Hero box on any product to feature it in the homepage slider."
             : "Add your first product to start building the catalog."
         }
         emptyAction={
@@ -373,6 +470,15 @@ export default function AdminProducts() {
               >
                 <Sparkles size={13} aria-hidden="true" />
                 New Arrivals <span className={styles.segmentedCount}>{newArrivalsCount}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={filterTab === "hero"}
+                onClick={() => setFilterTab("hero")}
+                className={`${styles.segmentedBtn} ${filterTab === "hero" ? styles.segmentedBtnActive : ""}`}
+              >
+                Hero Slider <span className={styles.segmentedCount}>{heroProductsCount}</span>
               </button>
             </div>
             <select
