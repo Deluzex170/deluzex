@@ -189,7 +189,7 @@ export default function AdminContentPage() {
           onClick={() => handleSave(activeTab)}
           disabled={saving}
           className={styles.primaryButton}
-          style={{ padding: "0.75rem 1.75rem", display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
+          style={{ height: "var(--a-control-h)", padding: "0 var(--a-space-4)", display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
         >
           <Save size={18} />
           {saving ? "Saving Changes..." : `Save ${activeTab === "homepage" ? "Homepage" : activeTab === "about" ? "About Page" : "Settings"}`}
@@ -344,7 +344,7 @@ export default function AdminContentPage() {
       {activeTab === "homepage" && homepageData && (
         <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
           {/* 1. HERO SECTION */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 1. Hero Showcase Section
@@ -496,7 +496,7 @@ export default function AdminContentPage() {
           </div>
 
           {/* 2. STATEMENT SECTION */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 2. Brand Statement Section
@@ -540,7 +540,7 @@ export default function AdminContentPage() {
           </div>
 
           {/* 3. STORY & STATS SECTION */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 3. Craftsmanship Story &amp; Numerical Stats
@@ -670,7 +670,7 @@ export default function AdminContentPage() {
           </div>
 
           {/* 4. CTA BANNER */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 4. Call To Action Footer Banner
@@ -718,7 +718,7 @@ export default function AdminContentPage() {
       {activeTab === "about" && aboutData && (
         <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
           {/* 1. HERO SECTION */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 1. About Hero Section
@@ -825,7 +825,7 @@ export default function AdminContentPage() {
           </div>
 
           {/* 2. OUR STORY & 3 FEATURE ICONS */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 2. Our Story &amp; Feature Highlights
@@ -924,7 +924,7 @@ export default function AdminContentPage() {
           </div>
 
           {/* 3. WHY CHOOSE US ACCORDIONS */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 3. &quot;Why Choose Us&quot; Section &amp; 4 Value Pillars
@@ -1046,7 +1046,7 @@ export default function AdminContentPage() {
       {activeTab === "site_settings" && settingsData && (
         <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
           {/* Brand Identity & Contact */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 Company Brand &amp; Concierge Contact Information
@@ -1118,7 +1118,7 @@ export default function AdminContentPage() {
 
           
           {/* Tax Invoice & Registered Entity Details */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
                 <FileText size={20} color="var(--admin-primary)" />
@@ -1234,7 +1234,7 @@ export default function AdminContentPage() {
           </div>
 
           {/* Available On Platforms & Marketplaces (Footer Logos) */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
                 <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
@@ -1295,7 +1295,7 @@ export default function AdminContentPage() {
             </div>
           </div>
 
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 Social Media Links &amp; Footer Copyright

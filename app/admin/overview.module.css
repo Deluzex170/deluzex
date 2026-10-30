@@ -426,3 +426,110 @@
     font-size: 1.5rem;
   }
 }
+
+/* ─── Admin density layer (compact, professional sizing on design tokens) ─── */
+@media all {
+  .container {
+    gap: var(--a-space-4);
+  }
+  .header {
+    margin-bottom: var(--a-space-4);
+    gap: var(--a-space-3);
+  }
+  .subtitle {
+    font-size: var(--a-fs-sm);
+  }
+  .kpiGrid {
+    gap: var(--a-space-3);
+    margin-bottom: var(--a-space-4);
+  }
+  .kpiCard {
+    padding: var(--a-space-3) var(--a-space-4);
+    border-radius: var(--a-radius-lg);
+    min-height: 0;
+    box-shadow: var(--a-shadow-card);
+  }
+  .kpiTopRow {
+    margin-bottom: var(--a-space-1);
+    gap: var(--a-space-2);
+  }
+  .kpiLabel {
+    font-size: var(--a-fs-2xs);
+    letter-spacing: var(--a-tracking-label);
+    line-height: var(--a-label-h);
+  }
+  .kpiValue {
+    font-size: 20px;
+    line-height: 1.2;
+    margin: 2px 0;
+  }
+  .kpiFootnote {
+    font-size: var(--a-fs-xs);
+    line-height: 1.4;
+    margin: 0;
+  }
+  .kpiIcon {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    border-radius: var(--a-radius-md);
+  }
+  .sectionHeader,
+  .feedCardHeader {
+    margin-bottom: var(--a-space-3);
+    padding-bottom: var(--a-space-2);
+  }
+  .sectionTitle {
+    font-size: var(--a-fs-md);
+    line-height: var(--a-lh-tight);
+  }
+  .quickNavGrid {
+    grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
+    gap: var(--a-space-3);
+  }
+  .quickNavSection {
+    margin-bottom: var(--a-space-5);
+  }
+  .navCard {
+    padding: var(--a-space-3) var(--a-space-4);
+    border-radius: var(--a-radius-lg);
+    gap: 2px;
+  }
+  .navCardTitle {
+    font-size: var(--a-fs-sm);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .navCardDesc {
+    font-size: var(--a-fs-xs);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .dualFeedGrid {
+    gap: var(--a-space-4);
+  }
+  .feedCard {
+    padding: var(--a-space-4);
+    border-radius: var(--a-radius-lg);
+  }
+  .opAlertCard {
+    padding: var(--a-space-2) var(--a-space-3);
+    margin-bottom: var(--a-space-2);
+    border-radius: var(--a-radius-md);
+  }
+  .orderRow,
+  .stockRow {
+    padding: var(--a-space-2) 0;
+  }
+}
+
+/* The admin layout already provides the page gutter */
+.container {
+  padding: 0;
+}

@@ -176,7 +176,7 @@ export default function CreateProduct() {
         </p>
       </div>
 
-      <div style={{ background: 'var(--color-white)', borderRadius: '12px', padding: 'clamp(1rem, 4vw, 2rem)', width: '100%', maxWidth: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
+      <div style={{ background: 'var(--color-white)', borderRadius: '12px', padding: 'var(--a-space-5)', width: '100%', maxWidth: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
         <form onSubmit={handleSubmit} className={styles.formGrid2} style={{ display: 'grid', gap: '1.5rem' }}>
           
           {/* GENERAL INFO */}

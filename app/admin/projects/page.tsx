@@ -541,7 +541,7 @@ export default function AdminProjectsPage() {
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(min(360px, 100%), 1fr))",
                 gap: "2.5rem",
-                padding: "2rem",
+                padding: "var(--a-space-5)",
               }}
             >
               {/* LEFT COLUMN: Project Details */}
@@ -1464,7 +1464,7 @@ export default function AdminProjectsPage() {
             background: "#FEF2F2",
             border: "2px solid #EF4444",
             borderRadius: "10px",
-            padding: "1.25rem 1.75rem",
+            padding: "var(--a-space-4) var(--a-space-5)",
             marginBottom: "1.5rem",
             display: "flex",
             justifyContent: "space-between",
@@ -1589,7 +1589,7 @@ export default function AdminProjectsPage() {
       <div className={styles.card} style={{ width: "100%", maxWidth: "100%" }}>
         <div
           style={{
-            padding: "1.25rem 1.75rem",
+            padding: "var(--a-space-4) var(--a-space-5)",
             borderBottom: "1px solid var(--admin-border)",
             background: "var(--admin-surface-muted)",
             display: "flex",

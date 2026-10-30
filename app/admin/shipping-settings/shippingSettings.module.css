@@ -572,3 +572,38 @@
     font-size: 1.5rem;
   }
 }
+
+/* ─── Admin density layer (compact, professional sizing on design tokens) ─── */
+@media all {
+  .container {
+    gap: var(--a-space-4);
+  }
+  .header {
+    margin-bottom: var(--a-space-4);
+    gap: var(--a-space-3);
+  }
+  .cardHeader {
+    margin-bottom: var(--a-space-3);
+    padding-bottom: var(--a-space-2);
+  }
+  .cardTitle {
+    font-size: var(--a-fs-md);
+    line-height: var(--a-lh-tight);
+  }
+  .cardDesc {
+    font-size: var(--a-fs-xs);
+  }
+  .layoutGrid {
+    gap: var(--a-space-4);
+  }
+  .card,
+  .simulatorCard {
+    padding: var(--a-space-4);
+    border-radius: var(--a-radius-lg);
+  }
+}
+
+/* The admin layout already provides the page gutter */
+.container {
+  padding: 0;
+}

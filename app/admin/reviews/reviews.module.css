@@ -660,3 +660,51 @@
     font-size: 1.5rem;
   }
 }
+
+/* ─── Admin density layer (compact, professional sizing on design tokens) ─── */
+@media all {
+  .container {
+    gap: var(--a-space-4);
+  }
+  .header {
+    margin-bottom: var(--a-space-4);
+    gap: var(--a-space-3);
+  }
+  .subtitle {
+    font-size: var(--a-fs-sm);
+  }
+  .kpiGrid {
+    gap: var(--a-space-3);
+    margin-bottom: var(--a-space-4);
+  }
+  .kpiCard {
+    padding: var(--a-space-3) var(--a-space-4);
+    border-radius: var(--a-radius-lg);
+    min-height: 0;
+    box-shadow: var(--a-shadow-card);
+  }
+  .kpiLabel {
+    font-size: var(--a-fs-2xs);
+    letter-spacing: var(--a-tracking-label);
+    line-height: var(--a-label-h);
+  }
+  .kpiValue,
+  .kpiRatingVal {
+    font-size: 20px;
+    line-height: 1.2;
+    margin: 2px 0;
+  }
+  .kpiDesc {
+    font-size: var(--a-fs-xs);
+    line-height: 1.4;
+    margin: 0;
+  }
+  .emptyState {
+    padding: var(--a-space-8) var(--a-space-4);
+  }
+}
+
+/* The admin layout already provides the page gutter */
+.container {
+  padding: 0;
+}

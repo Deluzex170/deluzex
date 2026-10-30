@@ -187,19 +187,19 @@ export default function AdminCollaborationsPage() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(210px, 100%), 1fr))", gap: "1rem", marginBottom: "1.75rem" }}>
         <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
           <span style={{ fontSize: "0.8rem", color: "var(--admin-text-muted)", fontWeight: 600, textTransform: "uppercase" }}>Total Submissions</span>
-          <div style={{ fontSize: "1.85rem", fontWeight: 700, color: "var(--admin-text-main)", marginTop: "0.35rem" }}>{totalCount}</div>
+          <div style={{ fontSize: "var(--a-fs-kpi)", fontWeight: 700, color: "var(--admin-text-main)", marginTop: "0.35rem" }}>{totalCount}</div>
         </div>
         <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
           <span style={{ fontSize: "0.8rem", color: "#f59e0b", fontWeight: 600, textTransform: "uppercase" }}>Pending Review</span>
-          <div style={{ fontSize: "1.85rem", fontWeight: 700, color: "#f59e0b", marginTop: "0.35rem" }}>{pendingCount}</div>
+          <div style={{ fontSize: "var(--a-fs-kpi)", fontWeight: 700, color: "#f59e0b", marginTop: "0.35rem" }}>{pendingCount}</div>
         </div>
         <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
           <span style={{ fontSize: "0.8rem", color: "#10b981", fontWeight: 600, textTransform: "uppercase" }}>Shortlisted</span>
-          <div style={{ fontSize: "1.85rem", fontWeight: 700, color: "#10b981", marginTop: "0.35rem" }}>{shortlistedCount}</div>
+          <div style={{ fontSize: "var(--a-fs-kpi)", fontWeight: 700, color: "#10b981", marginTop: "0.35rem" }}>{shortlistedCount}</div>
         </div>
         <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
           <span style={{ fontSize: "0.8rem", color: "#3b82f6", fontWeight: 600, textTransform: "uppercase" }}>Reviewed / Contacted</span>
-          <div style={{ fontSize: "1.85rem", fontWeight: 700, color: "#3b82f6", marginTop: "0.35rem" }}>{reviewedCount}</div>
+          <div style={{ fontSize: "var(--a-fs-kpi)", fontWeight: 700, color: "#3b82f6", marginTop: "0.35rem" }}>{reviewedCount}</div>
         </div>
       </div>
 
@@ -500,7 +500,7 @@ export default function AdminCollaborationsPage() {
               maxHeight: "90vh",
               overflowY: "auto",
               boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
-              padding: "2rem",
+              padding: "var(--a-space-5)",
               position: "relative",
             }}
             onClick={(e) => e.stopPropagation()}
@@ -719,7 +719,7 @@ export default function AdminCollaborationsPage() {
               borderRadius: "12px",
               maxWidth: "420px",
               width: "100%",
-              padding: "1.75rem",
+              padding: "var(--a-space-5)",
               textAlign: "center",
             }}
             onClick={(e) => e.stopPropagation()}

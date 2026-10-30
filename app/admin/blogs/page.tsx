@@ -407,7 +407,7 @@ export default function AdminBlogsPage() {
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(min(360px, 100%), 1fr))",
                 gap: "2.5rem",
-                padding: "2rem",
+                padding: "var(--a-space-5)",
               }}
             >
               {/* LEFT COLUMN: Editorial Content */}
@@ -678,7 +678,7 @@ export default function AdminBlogsPage() {
                 gap: "1rem",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "1.5rem clamp(1rem, 4vw, 2rem)",
+                padding: "var(--a-space-4) var(--a-space-5)",
                 background: "var(--admin-surface-muted)",
                 borderTop: "1px solid var(--admin-border)",
               }}
@@ -766,7 +766,7 @@ export default function AdminBlogsPage() {
         <div
           style={{
             marginBottom: "1.75rem",
-            padding: "1.25rem 1.75rem",
+            padding: "var(--a-space-4) var(--a-space-5)",
             background: "#FEF2F2",
             border: "1px solid #FECACA",
             borderRadius: "12px",
@@ -892,7 +892,7 @@ export default function AdminBlogsPage() {
       <div className={styles.card} style={{ width: "100%", maxWidth: "100%" }}>
         <div
           style={{
-            padding: "1.25rem 1.75rem",
+            padding: "var(--a-space-4) var(--a-space-5)",
             borderBottom: "1px solid var(--admin-border)",
             background: "var(--admin-surface-muted)",
             display: "flex",

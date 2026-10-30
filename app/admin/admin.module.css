@@ -13,7 +13,7 @@
   --a-fs-lg: 16px;
   --a-fs-xl: 18px;
   --a-fs-title: 22px;
-  --a-fs-kpi: 24px;
+  --a-fs-kpi: 20px;
   --a-fw-regular: 400;
   --a-fw-medium: 500;
   --a-fw-semibold: 600;
@@ -155,23 +155,51 @@
 }
 
 /* ─── Universal Light Theme Surface & Contrast Enforcement ─── */
-.adminRoot[data-theme="light"] [class*="container"] {
+.adminRoot[data-theme="light"] [class$="__container"],
+.adminRoot[data-theme="light"] [class*="__container "],
+.adminRoot[data-theme="light"] [class*="_container__"] {
   color: var(--admin-text-main);
 }
 
-.adminRoot[data-theme="light"] [class*="kpiCard"],
-.adminRoot[data-theme="light"] [class*="controlsBar"],
-.adminRoot[data-theme="light"] [class*="tableContainer"],
-.adminRoot[data-theme="light"] [class*="tableCard"],
-.adminRoot[data-theme="light"] [class*="tableWrapper"],
-.adminRoot[data-theme="light"] [class*="modalCard"],
-.adminRoot[data-theme="light"] [class*="modalContent"],
-.adminRoot[data-theme="light"] [class*="navCard"],
-.adminRoot[data-theme="light"] [class*="feedCard"],
-.adminRoot[data-theme="light"] [class*="panelCard"],
-.adminRoot[data-theme="light"] [class*="logsSection"],
-.adminRoot[data-theme="light"] [class*="membersCard"],
-.adminRoot[data-theme="light"] [class*="opAlertCard"] {
+.adminRoot[data-theme="light"] [class$="__kpiCard"],
+.adminRoot[data-theme="light"] [class*="__kpiCard "],
+.adminRoot[data-theme="light"] [class*="_kpiCard__"],
+.adminRoot[data-theme="light"] [class$="__controlsBar"],
+.adminRoot[data-theme="light"] [class*="__controlsBar "],
+.adminRoot[data-theme="light"] [class*="_controlsBar__"],
+.adminRoot[data-theme="light"] [class$="__tableContainer"],
+.adminRoot[data-theme="light"] [class*="__tableContainer "],
+.adminRoot[data-theme="light"] [class*="_tableContainer__"],
+.adminRoot[data-theme="light"] [class$="__tableCard"],
+.adminRoot[data-theme="light"] [class*="__tableCard "],
+.adminRoot[data-theme="light"] [class*="_tableCard__"],
+.adminRoot[data-theme="light"] [class$="__tableWrapper"],
+.adminRoot[data-theme="light"] [class*="__tableWrapper "],
+.adminRoot[data-theme="light"] [class*="_tableWrapper__"],
+.adminRoot[data-theme="light"] [class$="__modalCard"],
+.adminRoot[data-theme="light"] [class*="__modalCard "],
+.adminRoot[data-theme="light"] [class*="_modalCard__"],
+.adminRoot[data-theme="light"] [class$="__modalContent"],
+.adminRoot[data-theme="light"] [class*="__modalContent "],
+.adminRoot[data-theme="light"] [class*="_modalContent__"],
+.adminRoot[data-theme="light"] [class$="__navCard"],
+.adminRoot[data-theme="light"] [class*="__navCard "],
+.adminRoot[data-theme="light"] [class*="_navCard__"],
+.adminRoot[data-theme="light"] [class$="__feedCard"],
+.adminRoot[data-theme="light"] [class*="__feedCard "],
+.adminRoot[data-theme="light"] [class*="_feedCard__"],
+.adminRoot[data-theme="light"] [class$="__panelCard"],
+.adminRoot[data-theme="light"] [class*="__panelCard "],
+.adminRoot[data-theme="light"] [class*="_panelCard__"],
+.adminRoot[data-theme="light"] [class$="__logsSection"],
+.adminRoot[data-theme="light"] [class*="__logsSection "],
+.adminRoot[data-theme="light"] [class*="_logsSection__"],
+.adminRoot[data-theme="light"] [class$="__membersCard"],
+.adminRoot[data-theme="light"] [class*="__membersCard "],
+.adminRoot[data-theme="light"] [class*="_membersCard__"],
+.adminRoot[data-theme="light"] [class$="__opAlertCard"],
+.adminRoot[data-theme="light"] [class*="__opAlertCard "],
+.adminRoot[data-theme="light"] [class*="_opAlertCard__"] {
   background-color: var(--admin-surface) !important;
   border-color: var(--admin-border) !important;
   color: var(--admin-text-main) !important;
@@ -193,65 +221,161 @@
   background-color: var(--admin-surface-hover) !important;
 }
 
-.adminRoot[data-theme="light"] [class*="kpiValue"],
-.adminRoot[data-theme="light"] [class*="senderName"],
-.adminRoot[data-theme="light"] [class*="customerName"],
-.adminRoot[data-theme="light"] [class*="drawerItemTitle"],
-.adminRoot[data-theme="light"] [class*="messageSnippet"],
-.adminRoot[data-theme="light"] [class*="actorName"],
-.adminRoot[data-theme="light"] [class*="targetPill"],
-.adminRoot[data-theme="light"] [class*="descText"],
-.adminRoot[data-theme="light"] [class*="modalTitle"],
-.adminRoot[data-theme="light"] [class*="detailVal"],
-.adminRoot[data-theme="light"] [class*="memberName"],
-.adminRoot[data-theme="light"] [class*="stockName"],
-.adminRoot[data-theme="light"] [class*="navCardTitle"],
-.adminRoot[data-theme="light"] [class*="opAlertTitle"] {
+.adminRoot[data-theme="light"] [class$="__kpiValue"],
+.adminRoot[data-theme="light"] [class*="__kpiValue "],
+.adminRoot[data-theme="light"] [class*="_kpiValue__"],
+.adminRoot[data-theme="light"] [class$="__senderName"],
+.adminRoot[data-theme="light"] [class*="__senderName "],
+.adminRoot[data-theme="light"] [class*="_senderName__"],
+.adminRoot[data-theme="light"] [class$="__customerName"],
+.adminRoot[data-theme="light"] [class*="__customerName "],
+.adminRoot[data-theme="light"] [class*="_customerName__"],
+.adminRoot[data-theme="light"] [class$="__drawerItemTitle"],
+.adminRoot[data-theme="light"] [class*="__drawerItemTitle "],
+.adminRoot[data-theme="light"] [class*="_drawerItemTitle__"],
+.adminRoot[data-theme="light"] [class$="__messageSnippet"],
+.adminRoot[data-theme="light"] [class*="__messageSnippet "],
+.adminRoot[data-theme="light"] [class*="_messageSnippet__"],
+.adminRoot[data-theme="light"] [class$="__actorName"],
+.adminRoot[data-theme="light"] [class*="__actorName "],
+.adminRoot[data-theme="light"] [class*="_actorName__"],
+.adminRoot[data-theme="light"] [class$="__targetPill"],
+.adminRoot[data-theme="light"] [class*="__targetPill "],
+.adminRoot[data-theme="light"] [class*="_targetPill__"],
+.adminRoot[data-theme="light"] [class$="__descText"],
+.adminRoot[data-theme="light"] [class*="__descText "],
+.adminRoot[data-theme="light"] [class*="_descText__"],
+.adminRoot[data-theme="light"] [class$="__modalTitle"],
+.adminRoot[data-theme="light"] [class*="__modalTitle "],
+.adminRoot[data-theme="light"] [class*="_modalTitle__"],
+.adminRoot[data-theme="light"] [class$="__detailVal"],
+.adminRoot[data-theme="light"] [class*="__detailVal "],
+.adminRoot[data-theme="light"] [class*="_detailVal__"],
+.adminRoot[data-theme="light"] [class$="__memberName"],
+.adminRoot[data-theme="light"] [class*="__memberName "],
+.adminRoot[data-theme="light"] [class*="_memberName__"],
+.adminRoot[data-theme="light"] [class$="__stockName"],
+.adminRoot[data-theme="light"] [class*="__stockName "],
+.adminRoot[data-theme="light"] [class*="_stockName__"],
+.adminRoot[data-theme="light"] [class$="__navCardTitle"],
+.adminRoot[data-theme="light"] [class*="__navCardTitle "],
+.adminRoot[data-theme="light"] [class*="_navCardTitle__"],
+.adminRoot[data-theme="light"] [class$="__opAlertTitle"],
+.adminRoot[data-theme="light"] [class*="__opAlertTitle "],
+.adminRoot[data-theme="light"] [class*="_opAlertTitle__"] {
   color: var(--admin-text-main) !important;
 }
 
-.adminRoot[data-theme="light"] [class*="kpiLabel"],
-.adminRoot[data-theme="light"] [class*="senderEmail"],
-.adminRoot[data-theme="light"] [class*="customerSub"],
-.adminRoot[data-theme="light"] [class*="drawerItemQtyPrice"],
-.adminRoot[data-theme="light"] [class*="actorEmail"],
-.adminRoot[data-theme="light"] [class*="targetType"],
-.adminRoot[data-theme="light"] [class*="detailLabel"],
-.adminRoot[data-theme="light"] [class*="formLabel"],
-.adminRoot[data-theme="light"] [class*="memberEmail"],
-.adminRoot[data-theme="light"] [class*="navCardDesc"],
-.adminRoot[data-theme="light"] [class*="opAlertSubtitle"],
-.adminRoot[data-theme="light"] [class*="orderCust"] {
+.adminRoot[data-theme="light"] [class$="__kpiLabel"],
+.adminRoot[data-theme="light"] [class*="__kpiLabel "],
+.adminRoot[data-theme="light"] [class*="_kpiLabel__"],
+.adminRoot[data-theme="light"] [class$="__senderEmail"],
+.adminRoot[data-theme="light"] [class*="__senderEmail "],
+.adminRoot[data-theme="light"] [class*="_senderEmail__"],
+.adminRoot[data-theme="light"] [class$="__customerSub"],
+.adminRoot[data-theme="light"] [class*="__customerSub "],
+.adminRoot[data-theme="light"] [class*="_customerSub__"],
+.adminRoot[data-theme="light"] [class$="__drawerItemQtyPrice"],
+.adminRoot[data-theme="light"] [class*="__drawerItemQtyPrice "],
+.adminRoot[data-theme="light"] [class*="_drawerItemQtyPrice__"],
+.adminRoot[data-theme="light"] [class$="__actorEmail"],
+.adminRoot[data-theme="light"] [class*="__actorEmail "],
+.adminRoot[data-theme="light"] [class*="_actorEmail__"],
+.adminRoot[data-theme="light"] [class$="__targetType"],
+.adminRoot[data-theme="light"] [class*="__targetType "],
+.adminRoot[data-theme="light"] [class*="_targetType__"],
+.adminRoot[data-theme="light"] [class$="__detailLabel"],
+.adminRoot[data-theme="light"] [class*="__detailLabel "],
+.adminRoot[data-theme="light"] [class*="_detailLabel__"],
+.adminRoot[data-theme="light"] [class$="__formLabel"],
+.adminRoot[data-theme="light"] [class*="__formLabel "],
+.adminRoot[data-theme="light"] [class*="_formLabel__"],
+.adminRoot[data-theme="light"] [class$="__memberEmail"],
+.adminRoot[data-theme="light"] [class*="__memberEmail "],
+.adminRoot[data-theme="light"] [class*="_memberEmail__"],
+.adminRoot[data-theme="light"] [class$="__navCardDesc"],
+.adminRoot[data-theme="light"] [class*="__navCardDesc "],
+.adminRoot[data-theme="light"] [class*="_navCardDesc__"],
+.adminRoot[data-theme="light"] [class$="__opAlertSubtitle"],
+.adminRoot[data-theme="light"] [class*="__opAlertSubtitle "],
+.adminRoot[data-theme="light"] [class*="_opAlertSubtitle__"],
+.adminRoot[data-theme="light"] [class$="__orderCust"],
+.adminRoot[data-theme="light"] [class*="__orderCust "],
+.adminRoot[data-theme="light"] [class*="_orderCust__"] {
   color: var(--admin-text-muted) !important;
 }
 
-.adminRoot[data-theme="light"] [class*="searchBox"],
-.adminRoot[data-theme="light"] [class*="searchInput"],
-.adminRoot[data-theme="light"] [class*="sectionBlock"],
-.adminRoot[data-theme="light"] [class*="metaGrid"],
-.adminRoot[data-theme="light"] [class*="messageBlock"],
-.adminRoot[data-theme="light"] [class*="modalHeader"],
-.adminRoot[data-theme="light"] [class*="modalFooter"],
-.adminRoot[data-theme="light"] [class*="drawerHeader"],
-.adminRoot[data-theme="light"] [class*="drawerFooter"],
-.adminRoot[data-theme="light"] [class*="logsToolbar"],
-.adminRoot[data-theme="light"] [class*="filterTabs"],
-.adminRoot[data-theme="light"] [class*="tabSwitch"],
-.adminRoot[data-theme="light"] [class*="dropzone"],
-.adminRoot[data-theme="light"] [class*="diffBox"],
-.adminRoot[data-theme="light"] [class*="previewCard"],
-.adminRoot[data-theme="light"] [class*="topPageRow"],
-.adminRoot[data-theme="light"] [class*="memberCard"],
-.adminRoot[data-theme="light"] [class*="pathTag"],
-.adminRoot[data-theme="light"] [class*="jsonViewer"] {
+.adminRoot[data-theme="light"] [class$="__searchBox"],
+.adminRoot[data-theme="light"] [class*="__searchBox "],
+.adminRoot[data-theme="light"] [class*="_searchBox__"],
+.adminRoot[data-theme="light"] [class$="__searchInput"],
+.adminRoot[data-theme="light"] [class*="__searchInput "],
+.adminRoot[data-theme="light"] [class*="_searchInput__"],
+.adminRoot[data-theme="light"] [class$="__sectionBlock"],
+.adminRoot[data-theme="light"] [class*="__sectionBlock "],
+.adminRoot[data-theme="light"] [class*="_sectionBlock__"],
+.adminRoot[data-theme="light"] [class$="__metaGrid"],
+.adminRoot[data-theme="light"] [class*="__metaGrid "],
+.adminRoot[data-theme="light"] [class*="_metaGrid__"],
+.adminRoot[data-theme="light"] [class$="__messageBlock"],
+.adminRoot[data-theme="light"] [class*="__messageBlock "],
+.adminRoot[data-theme="light"] [class*="_messageBlock__"],
+.adminRoot[data-theme="light"] [class$="__modalHeader"],
+.adminRoot[data-theme="light"] [class*="__modalHeader "],
+.adminRoot[data-theme="light"] [class*="_modalHeader__"],
+.adminRoot[data-theme="light"] [class$="__modalFooter"],
+.adminRoot[data-theme="light"] [class*="__modalFooter "],
+.adminRoot[data-theme="light"] [class*="_modalFooter__"],
+.adminRoot[data-theme="light"] [class$="__drawerHeader"],
+.adminRoot[data-theme="light"] [class*="__drawerHeader "],
+.adminRoot[data-theme="light"] [class*="_drawerHeader__"],
+.adminRoot[data-theme="light"] [class$="__drawerFooter"],
+.adminRoot[data-theme="light"] [class*="__drawerFooter "],
+.adminRoot[data-theme="light"] [class*="_drawerFooter__"],
+.adminRoot[data-theme="light"] [class$="__logsToolbar"],
+.adminRoot[data-theme="light"] [class*="__logsToolbar "],
+.adminRoot[data-theme="light"] [class*="_logsToolbar__"],
+.adminRoot[data-theme="light"] [class$="__filterTabs"],
+.adminRoot[data-theme="light"] [class*="__filterTabs "],
+.adminRoot[data-theme="light"] [class*="_filterTabs__"],
+.adminRoot[data-theme="light"] [class$="__tabSwitch"],
+.adminRoot[data-theme="light"] [class*="__tabSwitch "],
+.adminRoot[data-theme="light"] [class*="_tabSwitch__"],
+.adminRoot[data-theme="light"] [class$="__dropzone"],
+.adminRoot[data-theme="light"] [class*="__dropzone "],
+.adminRoot[data-theme="light"] [class*="_dropzone__"],
+.adminRoot[data-theme="light"] [class$="__diffBox"],
+.adminRoot[data-theme="light"] [class*="__diffBox "],
+.adminRoot[data-theme="light"] [class*="_diffBox__"],
+.adminRoot[data-theme="light"] [class$="__previewCard"],
+.adminRoot[data-theme="light"] [class*="__previewCard "],
+.adminRoot[data-theme="light"] [class*="_previewCard__"],
+.adminRoot[data-theme="light"] [class$="__topPageRow"],
+.adminRoot[data-theme="light"] [class*="__topPageRow "],
+.adminRoot[data-theme="light"] [class*="_topPageRow__"],
+.adminRoot[data-theme="light"] [class$="__memberCard"],
+.adminRoot[data-theme="light"] [class*="__memberCard "],
+.adminRoot[data-theme="light"] [class*="_memberCard__"],
+.adminRoot[data-theme="light"] [class$="__pathTag"],
+.adminRoot[data-theme="light"] [class*="__pathTag "],
+.adminRoot[data-theme="light"] [class*="_pathTag__"],
+.adminRoot[data-theme="light"] [class$="__jsonViewer"],
+.adminRoot[data-theme="light"] [class*="__jsonViewer "],
+.adminRoot[data-theme="light"] [class*="_jsonViewer__"] {
   background-color: var(--admin-bg) !important;
   border-color: var(--admin-border) !important;
   color: var(--admin-text-main) !important;
 }
 
-.adminRoot[data-theme="light"] [class*="badgeGuest"],
-.adminRoot[data-theme="light"] [class*="roleGuest"],
-.adminRoot[data-theme="light"] [class*="actionNeutral"] {
+.adminRoot[data-theme="light"] [class$="__badgeGuest"],
+.adminRoot[data-theme="light"] [class*="__badgeGuest "],
+.adminRoot[data-theme="light"] [class*="_badgeGuest__"],
+.adminRoot[data-theme="light"] [class$="__roleGuest"],
+.adminRoot[data-theme="light"] [class*="__roleGuest "],
+.adminRoot[data-theme="light"] [class*="_roleGuest__"],
+.adminRoot[data-theme="light"] [class$="__actionNeutral"],
+.adminRoot[data-theme="light"] [class*="__actionNeutral "],
+.adminRoot[data-theme="light"] [class*="_actionNeutral__"] {
   background-color: var(--admin-surface-muted) !important;
   border-color: var(--admin-border) !important;
   color: var(--admin-text-secondary) !important;
@@ -1393,13 +1517,27 @@
 }
 
 /* ─── Universal Light Mode Surface & Typography Adaptations ─── */
-.adminRoot[data-theme="light"] [class*="kpiCard"],
-.adminRoot[data-theme="light"] [class*="panelCard"],
-.adminRoot[data-theme="light"] [class*="logsSection"],
-.adminRoot[data-theme="light"] [class*="feedCard"],
-.adminRoot[data-theme="light"] [class*="membersCard"],
-.adminRoot[data-theme="light"] [class*="navCard"],
-.adminRoot[data-theme="light"] [class*="controlsBar"] {
+.adminRoot[data-theme="light"] [class$="__kpiCard"],
+.adminRoot[data-theme="light"] [class*="__kpiCard "],
+.adminRoot[data-theme="light"] [class*="_kpiCard__"],
+.adminRoot[data-theme="light"] [class$="__panelCard"],
+.adminRoot[data-theme="light"] [class*="__panelCard "],
+.adminRoot[data-theme="light"] [class*="_panelCard__"],
+.adminRoot[data-theme="light"] [class$="__logsSection"],
+.adminRoot[data-theme="light"] [class*="__logsSection "],
+.adminRoot[data-theme="light"] [class*="_logsSection__"],
+.adminRoot[data-theme="light"] [class$="__feedCard"],
+.adminRoot[data-theme="light"] [class*="__feedCard "],
+.adminRoot[data-theme="light"] [class*="_feedCard__"],
+.adminRoot[data-theme="light"] [class$="__membersCard"],
+.adminRoot[data-theme="light"] [class*="__membersCard "],
+.adminRoot[data-theme="light"] [class*="_membersCard__"],
+.adminRoot[data-theme="light"] [class$="__navCard"],
+.adminRoot[data-theme="light"] [class*="__navCard "],
+.adminRoot[data-theme="light"] [class*="_navCard__"],
+.adminRoot[data-theme="light"] [class$="__controlsBar"],
+.adminRoot[data-theme="light"] [class*="__controlsBar "],
+.adminRoot[data-theme="light"] [class*="_controlsBar__"] {
   background: var(--admin-surface) !important;
   border-color: var(--admin-border) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
@@ -1407,49 +1545,105 @@
 }
 
 .adminRoot[data-theme="light"] [class*="titleArea"] h1,
-.adminRoot[data-theme="light"] [class*="headerTitle"],
-.adminRoot[data-theme="light"] [class*="panelTitle"],
-.adminRoot[data-theme="light"] [class*="kpiValue"],
-.adminRoot[data-theme="light"] [class*="orderNum"],
-.adminRoot[data-theme="light"] [class*="navCardTitle"],
-.adminRoot[data-theme="light"] [class*="actorName"],
-.adminRoot[data-theme="light"] [class*="memberName"],
-.adminRoot[data-theme="light"] [class*="sectionTitle"],
-.adminRoot[data-theme="light"] [class*="modalTitle"] {
+.adminRoot[data-theme="light"] [class$="__headerTitle"],
+.adminRoot[data-theme="light"] [class*="__headerTitle "],
+.adminRoot[data-theme="light"] [class*="_headerTitle__"],
+.adminRoot[data-theme="light"] [class$="__panelTitle"],
+.adminRoot[data-theme="light"] [class*="__panelTitle "],
+.adminRoot[data-theme="light"] [class*="_panelTitle__"],
+.adminRoot[data-theme="light"] [class$="__kpiValue"],
+.adminRoot[data-theme="light"] [class*="__kpiValue "],
+.adminRoot[data-theme="light"] [class*="_kpiValue__"],
+.adminRoot[data-theme="light"] [class$="__orderNum"],
+.adminRoot[data-theme="light"] [class*="__orderNum "],
+.adminRoot[data-theme="light"] [class*="_orderNum__"],
+.adminRoot[data-theme="light"] [class$="__navCardTitle"],
+.adminRoot[data-theme="light"] [class*="__navCardTitle "],
+.adminRoot[data-theme="light"] [class*="_navCardTitle__"],
+.adminRoot[data-theme="light"] [class$="__actorName"],
+.adminRoot[data-theme="light"] [class*="__actorName "],
+.adminRoot[data-theme="light"] [class*="_actorName__"],
+.adminRoot[data-theme="light"] [class$="__memberName"],
+.adminRoot[data-theme="light"] [class*="__memberName "],
+.adminRoot[data-theme="light"] [class*="_memberName__"],
+.adminRoot[data-theme="light"] [class$="__sectionTitle"],
+.adminRoot[data-theme="light"] [class*="__sectionTitle "],
+.adminRoot[data-theme="light"] [class*="_sectionTitle__"],
+.adminRoot[data-theme="light"] [class$="__modalTitle"],
+.adminRoot[data-theme="light"] [class*="__modalTitle "],
+.adminRoot[data-theme="light"] [class*="_modalTitle__"] {
   color: var(--admin-text-main) !important;
 }
 
-.adminRoot[data-theme="light"] [class*="kpiLabel"],
-.adminRoot[data-theme="light"] [class*="headerSubtitle"],
-.adminRoot[data-theme="light"] [class*="subtitle"],
-.adminRoot[data-theme="light"] [class*="orderCust"],
-.adminRoot[data-theme="light"] [class*="navCardDesc"],
-.adminRoot[data-theme="light"] [class*="actorEmail"],
-.adminRoot[data-theme="light"] [class*="memberEmail"],
-.adminRoot[data-theme="light"] [class*="kpiMeta"],
-.adminRoot[data-theme="light"] [class*="sectionSubtitle"] {
+.adminRoot[data-theme="light"] [class$="__kpiLabel"],
+.adminRoot[data-theme="light"] [class*="__kpiLabel "],
+.adminRoot[data-theme="light"] [class*="_kpiLabel__"],
+.adminRoot[data-theme="light"] [class$="__headerSubtitle"],
+.adminRoot[data-theme="light"] [class*="__headerSubtitle "],
+.adminRoot[data-theme="light"] [class*="_headerSubtitle__"],
+.adminRoot[data-theme="light"] [class$="__subtitle"],
+.adminRoot[data-theme="light"] [class*="__subtitle "],
+.adminRoot[data-theme="light"] [class*="_subtitle__"],
+.adminRoot[data-theme="light"] [class$="__orderCust"],
+.adminRoot[data-theme="light"] [class*="__orderCust "],
+.adminRoot[data-theme="light"] [class*="_orderCust__"],
+.adminRoot[data-theme="light"] [class$="__navCardDesc"],
+.adminRoot[data-theme="light"] [class*="__navCardDesc "],
+.adminRoot[data-theme="light"] [class*="_navCardDesc__"],
+.adminRoot[data-theme="light"] [class$="__actorEmail"],
+.adminRoot[data-theme="light"] [class*="__actorEmail "],
+.adminRoot[data-theme="light"] [class*="_actorEmail__"],
+.adminRoot[data-theme="light"] [class$="__memberEmail"],
+.adminRoot[data-theme="light"] [class*="__memberEmail "],
+.adminRoot[data-theme="light"] [class*="_memberEmail__"],
+.adminRoot[data-theme="light"] [class$="__kpiMeta"],
+.adminRoot[data-theme="light"] [class*="__kpiMeta "],
+.adminRoot[data-theme="light"] [class*="_kpiMeta__"],
+.adminRoot[data-theme="light"] [class$="__sectionSubtitle"],
+.adminRoot[data-theme="light"] [class*="__sectionSubtitle "],
+.adminRoot[data-theme="light"] [class*="_sectionSubtitle__"] {
   color: var(--admin-text-muted) !important;
 }
 
-.adminRoot[data-theme="light"] [class*="logsToolbar"],
-.adminRoot[data-theme="light"] [class*="topPageRow"],
-.adminRoot[data-theme="light"] [class*="memberCard"],
-.adminRoot[data-theme="light"] [class*="modalHeader"],
-.adminRoot[data-theme="light"] [class*="modalFooter"],
-.adminRoot[data-theme="light"] [class*="diffBox"] {
+.adminRoot[data-theme="light"] [class$="__logsToolbar"],
+.adminRoot[data-theme="light"] [class*="__logsToolbar "],
+.adminRoot[data-theme="light"] [class*="_logsToolbar__"],
+.adminRoot[data-theme="light"] [class$="__topPageRow"],
+.adminRoot[data-theme="light"] [class*="__topPageRow "],
+.adminRoot[data-theme="light"] [class*="_topPageRow__"],
+.adminRoot[data-theme="light"] [class$="__memberCard"],
+.adminRoot[data-theme="light"] [class*="__memberCard "],
+.adminRoot[data-theme="light"] [class*="_memberCard__"],
+.adminRoot[data-theme="light"] [class$="__modalHeader"],
+.adminRoot[data-theme="light"] [class*="__modalHeader "],
+.adminRoot[data-theme="light"] [class*="_modalHeader__"],
+.adminRoot[data-theme="light"] [class$="__modalFooter"],
+.adminRoot[data-theme="light"] [class*="__modalFooter "],
+.adminRoot[data-theme="light"] [class*="_modalFooter__"],
+.adminRoot[data-theme="light"] [class$="__diffBox"],
+.adminRoot[data-theme="light"] [class*="__diffBox "],
+.adminRoot[data-theme="light"] [class*="_diffBox__"] {
   background: var(--admin-surface-muted) !important;
   border-color: var(--admin-border) !important;
   color: var(--admin-text-main) !important;
 }
 
-.adminRoot[data-theme="light"] [class*="filterTabs"] {
+.adminRoot[data-theme="light"] [class$="__filterTabs"],
+.adminRoot[data-theme="light"] [class*="__filterTabs "],
+.adminRoot[data-theme="light"] [class*="_filterTabs__"] {
   background: var(--admin-surface-muted) !important;
   border-color: var(--admin-border) !important;
 }
 
-.adminRoot[data-theme="light"] [class*="searchInput"],
-.adminRoot[data-theme="light"] [class*="statusSelect"],
-.adminRoot[data-theme="light"] [class*="formInput"] {
+.adminRoot[data-theme="light"] [class$="__searchInput"],
+.adminRoot[data-theme="light"] [class*="__searchInput "],
+.adminRoot[data-theme="light"] [class*="_searchInput__"],
+.adminRoot[data-theme="light"] [class$="__statusSelect"],
+.adminRoot[data-theme="light"] [class*="__statusSelect "],
+.adminRoot[data-theme="light"] [class*="_statusSelect__"],
+.adminRoot[data-theme="light"] [class$="__formInput"],
+.adminRoot[data-theme="light"] [class*="__formInput "],
+.adminRoot[data-theme="light"] [class*="_formInput__"] {
   background: var(--admin-surface) !important;
   color: var(--admin-text-main) !important;
   border-color: var(--admin-border) !important;
@@ -1470,7 +1664,9 @@
   background: var(--admin-surface-muted) !important;
 }
 
-.adminRoot[data-theme="light"] [class*="jsonViewer"] {
+.adminRoot[data-theme="light"] [class$="__jsonViewer"],
+.adminRoot[data-theme="light"] [class*="__jsonViewer "],
+.adminRoot[data-theme="light"] [class*="_jsonViewer__"] {
   background: #0F172A !important;
   color: #F8FAFC !important;
 }
@@ -1743,4 +1939,41 @@ textarea.control {
   .modalConfirmCard {
     padding: 1.5rem 1.25rem;
   }
+}
+
+/* ─── Shared component density (used by every inline-styled admin page) ─── */
+.adminRoot .mainContent .primaryButton {
+  min-height: var(--a-control-h);
+  padding: 0 var(--a-space-4);
+  font-size: var(--a-fs-sm);
+  border-radius: var(--a-radius-md);
+  box-shadow: none;
+}
+
+.adminRoot .mainContent .headerRow {
+  margin-bottom: var(--a-space-4);
+  gap: var(--a-space-3);
+}
+
+.adminRoot .mainContent .card {
+  border-radius: var(--a-radius-lg);
+  box-shadow: var(--a-shadow-card);
+}
+
+.adminRoot .mainContent .table th,
+.adminRoot .mainContent .table td {
+  padding-left: var(--a-space-4);
+  padding-right: var(--a-space-4);
+}
+
+.adminRoot .mainContent .tableImage {
+  width: 40px;
+  height: 40px;
+}
+
+.adminRoot .mainContent .actionLink,
+.adminRoot .mainContent .actionDelete {
+  height: var(--a-control-h-sm);
+  padding: 0 var(--a-space-3);
+  font-size: var(--a-fs-xs);
 }

@@ -130,7 +130,7 @@ export default function CreateCategory() {
           }}
         >
           {/* Left Column: Form Fields */}
-          <div className={styles.card} style={{ padding: "2rem" }}>
+          <div className={styles.card} style={{ padding: "var(--a-space-5)" }}>
             <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-primary)" }}>
               Category Information
             </h3>
@@ -248,7 +248,7 @@ export default function CreateCategory() {
           </div>
 
           {/* Right Column: Live Card Preview */}
-          <div className={styles.card} style={{ padding: "2rem" }}>
+          <div className={styles.card} style={{ padding: "var(--a-space-5)" }}>
             <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-primary)" }}>
               Live Storefront Preview
             </h3>
@@ -264,7 +264,7 @@ export default function CreateCategory() {
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "flex-end",
-                padding: "2rem",
+                padding: "var(--a-space-5)",
                 boxShadow: "0 10px 30px rgba(0, 0, 0, 0.15)",
               }}
             >
@@ -287,7 +287,7 @@ export default function CreateCategory() {
                     alignItems: "center",
                     justifyContent: "center",
                     gap: "0.6rem",
-                    padding: "2rem",
+                    padding: "var(--a-space-5)",
                     textAlign: "center",
                   }}
                 >

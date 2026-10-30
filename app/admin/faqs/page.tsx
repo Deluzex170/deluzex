@@ -595,7 +595,7 @@ export default function AdminFaqsPage() {
               borderRadius: "12px",
               maxWidth: "420px",
               width: "100%",
-              padding: "1.75rem",
+              padding: "var(--a-space-5)",
               textAlign: "center",
             }}
             onClick={(e) => e.stopPropagation()}
