@@ -2771,3 +2771,139 @@ pointer-events: auto;
     max-width: 160px;
   }
 }
+/* ═══ Homepage carousels: one consistent responsive model (kept last) ═══
+   The carousel scripts scroll the track horizontally (arrows, autoplay, drag,
+   progress bar), so on every screen size the track stays a single swipeable
+   row. Earlier blocks turned it into a 2-column grid on phones, which clipped
+   cards and left the arrows scrolling nothing. */
+@media (max-width: 1024px) {
+  .categoryGrid,
+  .projectGrid {
+    display: flex;
+    flex-wrap: nowrap;
+    grid-template-columns: none;
+    height: auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    gap: 16px;
+    padding: 8px 24px 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 24px;
+    overscroll-behavior-x: contain;
+  }
+
+  /* Tablet: ~2.5 category cards and ~1.4 project cards in view */
+  .catCard {
+    flex: 0 0 calc((100% - 32px) / 2.5);
+    width: auto;
+    min-width: 0;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    scroll-snap-align: start;
+  }
+
+  .projectCard {
+    flex: 0 0 calc((100% - 16px) / 1.4);
+    width: auto;
+    min-width: 0;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    scroll-snap-align: start;
+    display: block;
+  }
+}
+
+@media (max-width: 768px) {
+  .categoryGrid,
+  .projectGrid {
+    gap: 12px;
+    padding: 4px 16px 14px;
+    scroll-padding-inline: 16px;
+  }
+
+  /* Phone: one card plus a clear peek of the next, so it reads as swipeable */
+  .catCard {
+    flex: 0 0 68%;
+    max-width: 300px;
+    aspect-ratio: 4 / 5;
+    border-top-left-radius: 36px;
+    border-bottom-right-radius: 36px;
+  }
+
+  .projectCard {
+    flex: 0 0 84%;
+    max-width: 420px;
+    aspect-ratio: 4 / 5;
+    border-radius: 16px;
+  }
+
+  /* Swipe replaces arrows on touch screens; the progress bar stays */
+  .catNavBtn,
+  .projNavBtn {
+    display: none;
+  }
+
+  .categoriesScrollbarTrack,
+  .projectsScrollbarTrack {
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  .catCard {
+    flex-basis: 74%;
+  }
+
+  .projectCard {
+    flex-basis: 88%;
+  }
+}
+
+/* Phone/tablet legibility: Adobe Arabic reads ~25% smaller than its px size,
+   so captions never drop below 14px (labels) / 16px (descriptions). */
+@media (max-width: 1024px) {
+  .statLabel,
+  .projectCardLabelSub,
+  .btnStoryMobileText {
+    font-size: 0.7rem;
+    line-height: 1.35;
+  }
+
+  .aboutDesc {
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+}
+
+/* Hero dots: same 14px look, ~30px touch area */
+.heroDots {
+  gap: 16px;
+}
+
+.heroDot {
+  position: relative;
+}
+
+.heroDot::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+}
+
+/* Small tablets / landscape phones: wider screen, so landscape project cards
+   and more category cards in view */
+@media (min-width: 600px) and (max-width: 768px) {
+  .catCard {
+    flex-basis: 42%;
+  }
+
+  .projectCard {
+    flex-basis: 72%;
+    max-width: 520px;
+    aspect-ratio: 4 / 3;
+  }
+}

@@ -506,3 +506,17 @@
     font-size: 0.78rem;
   }
 }
+/* Larger invisible touch area (~38px) around the 22px header icons;
+   layout and visuals are unchanged. */
+.iconBtn::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+}
+
+.iconBtn:focus-visible,
+.userIcon:focus-visible {
+  outline: 2px solid #C89B60;
+  outline-offset: 3px;
+  border-radius: 6px;
+}

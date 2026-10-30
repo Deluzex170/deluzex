@@ -364,3 +364,12 @@
   font-size: var(--sf-fs-h1);
   line-height: var(--sf-lh-tight);
 }
+
+/* Tablet/phone drawer starts right under the 68px site header */
+@media (max-width: 1024px) {
+  .sidebar {
+    top: var(--sf-header-h);
+    height: calc(100vh - var(--sf-header-h));
+    height: calc(100dvh - var(--sf-header-h));
+  }
+}
