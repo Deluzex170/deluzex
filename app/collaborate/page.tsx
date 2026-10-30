@@ -830,31 +830,35 @@ export default function CollaboratePage() {
                       accept=".png,.jpg,.jpeg,.svg,.pdf"
                       onChange={handleFileChange}
                     />
-                    <div className={styles.uploadIcon}>
-                      {selectedFile ? (
-                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#D79322" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                          <polyline points="14 2 14 8 20 8" />
-                          <line x1="9" y1="15" x2="15" y2="15" />
-                        </svg>
-                      ) : (
-                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke={formErrors.file ? "#EF4444" : "#D8A56E"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
-                          <path d="M12 12v9" /><path d="m8 16 4-4 4 4" />
-                        </svg>
-                      )}
+                    <div className={styles.uploadLeft}>
+                      <div className={styles.uploadIcon}>
+                        {selectedFile ? (
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D79322" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="9" y1="15" x2="15" y2="15" />
+                          </svg>
+                        ) : (
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={formErrors.file ? "#EF4444" : "#D8A56E"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+                            <path d="M12 12v9" /><path d="m8 16 4-4 4 4" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className={styles.uploadTextGroup}>
+                        <p className={styles.uploadTitle}>
+                          {selectedFile ? selectedFile.name : "Upload images or PDF"}
+                        </p>
+                        <p className={styles.uploadSub}>
+                          {selectedFile
+                            ? `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Click to replace`
+                            : "PNG, JPG, SVG or PDF up to 10 MB (Compulsory)"}
+                        </p>
+                      </div>
                     </div>
-                    <p className={styles.uploadTitle}>
-                      {selectedFile ? selectedFile.name : "Upload images or PDF"}
-                    </p>
-                    <p className={styles.uploadSub}>
-                      {selectedFile
-                        ? `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Click to replace`
-                        : "PNG, JPG, SVG or PDF up to 10 MB (Compulsory)"}
-                    </p>
-                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                    <div className={styles.uploadActions}>
                       <button type="button" className={styles.uploadBtn}>
-                        {selectedFile ? "Replace Document" : "Upload Document"}
+                        {selectedFile ? "Replace" : "Browse File"}
                       </button>
                       {selectedFile && (
                         <button
@@ -881,29 +885,31 @@ export default function CollaboratePage() {
               </div>
 
               <div className={styles.formFooter}>
-                <label className={styles.termsCheckbox}>
-                  <input
-                    type="checkbox"
-                    checked={agreedTerms}
-                    onChange={(e) => {
-                      setAgreedTerms(e.target.checked);
-                      if (e.target.checked) setFormErrors((prev) => ({ ...prev, terms: undefined }));
-                    }}
-                  />
-                  <span>I have read and agree to the submission terms.</span>
-                </label>
-                {formErrors.terms && (
-                  <span className={styles.fieldError} style={{ marginTop: "-8px", marginBottom: "8px" }}>
-                    {formErrors.terms}
-                  </span>
-                )}
-                {errorMessage && (
-                  <div style={{ color: "#DC2626", fontSize: "0.88rem", padding: "0.65rem 1rem", background: "rgba(239,68,68,0.08)", borderRadius: "8px", border: "1px solid rgba(239,68,68,0.2)" }}>
-                    {errorMessage}
-                  </div>
-                )}
+                <div className={styles.formFooterLeft}>
+                  <label className={styles.termsCheckbox}>
+                    <input
+                      type="checkbox"
+                      checked={agreedTerms}
+                      onChange={(e) => {
+                        setAgreedTerms(e.target.checked);
+                        if (e.target.checked) setFormErrors((prev) => ({ ...prev, terms: undefined }));
+                      }}
+                    />
+                    <span>I have read and agree to the submission terms.</span>
+                  </label>
+                  {formErrors.terms && (
+                    <span className={styles.fieldError}>
+                      {formErrors.terms}
+                    </span>
+                  )}
+                  {errorMessage && (
+                    <div className={styles.formGlobalError}>
+                      {errorMessage}
+                    </div>
+                  )}
+                </div>
                 <button type="submit" className={styles.btnSubmitForm} disabled={isSubmitting}>
-                  {isSubmitting ? "Submitting Design..." : "Submit Your Design"}
+                  {isSubmitting ? "Submitting..." : "Submit Your Design"}
                 </button>
               </div>
             </form>

@@ -2,6 +2,10 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import styles from "./inquiries.module.css";
+import AdminDataGrid from "../../components/admin/AdminDataGrid";
+import type { ColDef } from "ag-grid-community";
+import type { CustomCellRendererProps } from "ag-grid-react";
+import { Eye, Trash2, Mail, MessageCircle, RefreshCw } from "lucide-react";
 import {
   fetchInquiries,
   fetchInquiryStats,
@@ -49,16 +53,10 @@ export default function AdminInquiries() {
     loadData();
   }, [activeTab]);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    loadData();
-  };
-
   const handleStatusChange = async (inquiryId: string, newStatus: string) => {
     setIsUpdating(inquiryId);
     try {
       await updateInquiryStatus(inquiryId, newStatus);
-      // Update local state smoothly
       setInquiries((prev) =>
         prev.map((item) =>
           item._id === inquiryId || item.id === inquiryId
@@ -69,7 +67,6 @@ export default function AdminInquiries() {
       if (selectedInquiry && (selectedInquiry._id === inquiryId || selectedInquiry.id === inquiryId)) {
         setSelectedInquiry((prev) => prev ? { ...prev, status: newStatus } : null);
       }
-      // Refresh stats
       const updatedStats = await fetchInquiryStats();
       setStats(updatedStats);
     } catch (err) {
@@ -119,6 +116,165 @@ export default function AdminInquiries() {
         });
   };
 
+  const columnDefs = useMemo<ColDef<Inquiry>[]>(() => [
+    {
+      headerName: "Client",
+      colId: "client",
+      width: 175,
+      minWidth: 160,
+      valueGetter: (p) => p.data?.name || "Valued Client",
+      cellRenderer: (p: CustomCellRendererProps<Inquiry>) => {
+        const item = p.data;
+        if (!item) return null;
+        const inquiryId = item._id || item.id || "";
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            <span style={{ fontWeight: 600, color: "var(--admin-text-main)" }}>
+              {item.name || "Valued Client"}
+            </span>
+            <span style={{ fontSize: "11px", color: "var(--admin-text-muted)" }}>
+              ID: #{inquiryId.slice(-6).toUpperCase()}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Contact Details",
+      colId: "contact",
+      width: 200,
+      minWidth: 180,
+      valueGetter: (p) => [p.data?.email, p.data?.phone].filter(Boolean).join(" "),
+      cellRenderer: (p: CustomCellRendererProps<Inquiry>) => {
+        const item = p.data;
+        if (!item) return null;
+        const digits = (item.phone || "").replace(/\D/g, "");
+        const waLink = digits.length >= 10 ? `https://wa.me/${digits.length === 10 ? '91' + digits : digits}` : null;
+
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            <a
+              href={`mailto:${item.email}`}
+              style={{ color: "#C49A45", textDecoration: "none", fontSize: "12.5px", fontWeight: 500 }}
+              title={item.email}
+            >
+              {item.email}
+            </a>
+            {item.phone && (
+              waLink ? (
+                <a
+                  href={waLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "#10b981", textDecoration: "none" }}
+                  title="WhatsApp chat"
+                >
+                  <MessageCircle size={10} />
+                  <span>{item.phone}</span>
+                </a>
+              ) : (
+                <span style={{ fontSize: "11px", color: "var(--admin-text-muted)" }}>{item.phone}</span>
+              )
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Scope & Message",
+      colId: "message",
+      flex: 1.5,
+      minWidth: 220,
+      valueGetter: (p) => p.data?.message || "",
+      cellRenderer: (p: CustomCellRendererProps<Inquiry>) => {
+        const item = p.data;
+        if (!item) return null;
+        const scope = extractScope(item.message || "");
+        const preview = cleanMessage(item.message || "");
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px", overflow: "hidden" }}>
+            {scope && <span className={styles.scopeBadge}>{scope}</span>}
+            <span style={{ fontSize: "12px", color: "var(--admin-text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={preview}>
+              {preview}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Status",
+      colId: "status",
+      width: 140,
+      minWidth: 130,
+      valueGetter: (p) => p.data?.status || "new",
+      cellRenderer: (p: CustomCellRendererProps<Inquiry>) => {
+        const item = p.data;
+        if (!item) return null;
+        const inquiryId = item._id || item.id || "";
+        const currentStatus = (item.status || "new").toLowerCase();
+        return (
+          <select
+            className={`${styles.statusSelect} ${styles[`status_${currentStatus}`] || styles.status_new}`}
+            value={currentStatus}
+            disabled={isUpdating === inquiryId}
+            onChange={(e) => handleStatusChange(inquiryId, e.target.value)}
+            style={{ height: "28px", padding: "0 8px", fontSize: "11px", borderRadius: "6px" }}
+          >
+            <option value="new">New</option>
+            <option value="contacted">Contacted</option>
+            <option value="resolved">Resolved</option>
+            <option value="archived">Archived</option>
+          </select>
+        );
+      },
+    },
+    {
+      headerName: "Date",
+      colId: "date",
+      width: 120,
+      minWidth: 110,
+      valueGetter: (p) => p.data?.created_at || p.data?.createdAt || "",
+      cellRenderer: (p: CustomCellRendererProps<Inquiry>) => formatDate(p.value),
+    },
+    {
+      headerName: "Actions",
+      colId: "actions",
+      width: 100,
+      minWidth: 90,
+      pinned: "right",
+      sortable: false,
+      filter: false,
+      resizable: false,
+      cellRenderer: (p: CustomCellRendererProps<Inquiry>) => {
+        const item = p.data;
+        if (!item) return null;
+        const inquiryId = item._id || item.id || "";
+        return (
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end", height: "100%" }}>
+            <button
+              type="button"
+              className={styles.viewBtn}
+              onClick={() => setSelectedInquiry(item)}
+              title="View Consultation Details"
+              style={{ width: "28px", height: "28px", borderRadius: "6px", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0 }}
+            >
+              <Eye size={12} />
+            </button>
+            <button
+              type="button"
+              className={styles.deleteBtn}
+              onClick={() => handleDelete(inquiryId)}
+              title="Delete Inquiry"
+              style={{ width: "28px", height: "28px", borderRadius: "6px", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0 }}
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
+        );
+      },
+    },
+  ], [isUpdating]);
+
   return (
     <div className={styles.container}>
       {/* HEADER */}
@@ -128,9 +284,7 @@ export default function AdminInquiries() {
           <p>Bespoke client requests, custom design inquiries &amp; project collaborations.</p>
         </div>
         <button onClick={loadData} className={styles.refreshBtn} title="Refresh Inquiries">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-          </svg>
+          <RefreshCw size={13} />
           Refresh Data
         </button>
       </div>
@@ -138,7 +292,7 @@ export default function AdminInquiries() {
       {/* KPI STAT CARDS */}
       <div className={styles.kpiGrid}>
         <div className={styles.kpiCard}>
-          <div className={styles.kpiLabel}>Total Inquiries</div>
+          <div className={styles.kpiLabel}>Total Leads</div>
           <div className={styles.kpiValue}>{stats.total}</div>
         </div>
         <div className={styles.kpiCard}>
@@ -159,144 +313,57 @@ export default function AdminInquiries() {
         </div>
       </div>
 
-      {/* CONTROLS (TABS + SEARCH) */}
-      <div className={styles.controlsBar}>
-        <div className={styles.filterTabs}>
-          {[
-            { id: "all", label: `All (${stats.total})` },
-            { id: "new", label: `New (${stats.new})` },
-            { id: "contacted", label: `Contacted (${stats.contacted})` },
-            { id: "resolved", label: `Resolved (${stats.resolved})` },
-            { id: "archived", label: `Archived (${stats.archived})` },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              className={`${styles.tabBtn} ${activeTab === tab.id ? styles.tabBtnActive : ""}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      {/* GRID */}
+      <AdminDataGrid<Inquiry>
+        ariaLabel="Inquiries table"
+        rowData={inquiries}
+        columnDefs={columnDefs}
+        loading={loading}
+        getRowId={(inq) => String(inq._id || inq.id || inq.email)}
+        quickFilterText={searchQuery}
+        emptyTitle="No Consultation Inquiries Found"
+        emptyDescription="No messages match the current status or filter criteria."
+        toolbar={
+          <>
+            <div className={styles.filterTabs}>
+              {[
+                { id: "all", label: `All (${stats.total})` },
+                { id: "new", label: `New (${stats.new})` },
+                { id: "contacted", label: `Contacted (${stats.contacted})` },
+                { id: "resolved", label: `Resolved (${stats.resolved})` },
+                { id: "archived", label: `Archived (${stats.archived})` },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  className={`${styles.tabBtn} ${activeTab === tab.id ? styles.tabBtnActive : ""}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-        <form onSubmit={handleSearchSubmit} className={styles.searchBox}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input
-            type="text"
-            placeholder="Search client, email, phone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </form>
-      </div>
-
-      {/* TABLE */}
-      <div className={styles.tableContainer}>
-        {loading ? (
-          <div className={styles.emptyState}>
-            <p>Loading luxury inquiries...</p>
-          </div>
-        ) : inquiries.length === 0 ? (
-          <div className={styles.emptyState}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#636366" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto 1rem" }}>
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-              <polyline points="22,6 12,13 2,6"></polyline>
-            </svg>
-            <h3>No Consultation Inquiries Found</h3>
-            <p>No messages match the current status or filter criteria.</p>
-          </div>
-        ) : (
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Client</th>
-                  <th>Contact Details</th>
-                  <th>Scope &amp; Message</th>
-                  <th>Status Workflow</th>
-                  <th>Date</th>
-                  <th style={{ textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {inquiries.map((inq) => {
-                  const inquiryId = inq._id || inq.id || "";
-                  const scope = extractScope(inq.message || "");
-                  const preview = cleanMessage(inq.message || "");
-                  const currentStatus = (inq.status || "new").toLowerCase();
-
-                  return (
-                    <tr key={inquiryId}>
-                      <td>
-                        <span className={styles.senderName}>{inq.name || "Valued Client"}</span>
-                        <span className={styles.senderEmail}>ID: #{inquiryId.slice(-6).toUpperCase()}</span>
-                      </td>
-                      <td>
-                        <div>
-                          <a href={`mailto:${inq.email}`} style={{ color: "#d4af37", textDecoration: "none" }}>
-                            {inq.email}
-                          </a>
-                        </div>
-                        {inq.phone && (
-                          <div style={{ fontSize: "0.8rem", color: "#8e8e93", marginTop: "2px" }}>
-                            {inq.phone}
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        {scope && <span className={styles.scopeBadge}>{scope}</span>}
-                        <div className={styles.messageSnippet} title={preview}>
-                          {preview || "No message body provided."}
-                        </div>
-                      </td>
-                      <td>
-                        <select
-                          className={`${styles.statusSelect} ${styles[`status_${currentStatus}`] || styles.status_new}`}
-                          value={currentStatus}
-                          disabled={isUpdating === inquiryId}
-                          onChange={(e) => handleStatusChange(inquiryId, e.target.value)}
-                        >
-                          <option value="new">New</option>
-                          <option value="contacted">Contacted</option>
-                          <option value="resolved">Resolved</option>
-                          <option value="archived">Archived</option>
-                        </select>
-                      </td>
-                      <td style={{ color: "#8e8e93", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
-                        {formatDate(inq.created_at || inq.createdAt)}
-                      </td>
-                      <td style={{ textAlign: "right" }}>
-                        <div className={styles.actionBtnGroup} style={{ justifyContent: "flex-end" }}>
-                          <button
-                            className={styles.viewBtn}
-                            onClick={() => setSelectedInquiry(inq)}
-                            title="View Full Inquiry Details"
-                          >
-                            View
-                          </button>
-                          <button
-                            className={styles.deleteBtn}
-                            onClick={() => handleDelete(inquiryId)}
-                            title="Delete Inquiry"
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="3 6 5 6 21 6"></polyline>
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+            <div style={{ marginLeft: "auto" }}>
+              <input
+                type="search"
+                placeholder="Search client, email, phone..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  height: "36px",
+                  padding: "0 12px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--admin-border)",
+                  background: "var(--admin-surface)",
+                  color: "var(--admin-text-main)",
+                  fontSize: "13px",
+                  outline: "none",
+                }}
+              />
+            </div>
+          </>
+        }
+      />
 
       {/* DETAIL MODAL */}
       {selectedInquiry && (
@@ -374,10 +441,6 @@ export default function AdminInquiries() {
                   href={`mailto:${selectedInquiry.email}?subject=Deluzex%20Lighting%20Consultation%20Follow-up`}
                   className={styles.replyBtn}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                  </svg>
                   Reply via Email
                 </a>
               </div>

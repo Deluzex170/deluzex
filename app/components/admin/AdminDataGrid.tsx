@@ -102,6 +102,9 @@ export interface AdminDataGridProps<T> {
   getRowId?: (data: T) => string;
   /** Built-in quick filter across every column. */
   showSearch?: boolean;
+  /** External controlled quick filter text. */
+  quickFilterText?: string;
+  onQuickFilterChange?: (text: string) => void;
   searchPlaceholder?: string;
   /** Extra controls (filter tabs, selects) shown in the toolbar beside the search. */
   toolbar?: React.ReactNode;
@@ -126,6 +129,8 @@ export default function AdminDataGrid<T>({
   loading = false,
   getRowId,
   showSearch = true,
+  quickFilterText: externalQuickFilter,
+  onQuickFilterChange,
   searchPlaceholder = "Search all columns…",
   toolbar,
   toolbarEnd,
@@ -141,7 +146,8 @@ export default function AdminDataGrid<T>({
   ariaLabel = "Data table",
 }: AdminDataGridProps<T>) {
   const gridRef = useRef<AgGridReact<T>>(null);
-  const [quickFilter, setQuickFilter] = useState("");
+  const [internalQuickFilter, setInternalQuickFilter] = useState("");
+  const effectiveQuickFilter = externalQuickFilter !== undefined ? externalQuickFilter : internalQuickFilter;
   const [visibleCount, setVisibleCount] = useState<number | null>(null);
 
   const defaultColDef = useMemo<ColDef<T>>(
@@ -204,8 +210,11 @@ export default function AdminDataGrid<T>({
               <Search size={15} aria-hidden="true" className={styles.searchIcon} />
               <input
                 type="search"
-                value={quickFilter}
-                onChange={(e) => setQuickFilter(e.target.value)}
+                value={effectiveQuickFilter}
+                onChange={(e) => {
+                  setInternalQuickFilter(e.target.value);
+                  onQuickFilterChange?.(e.target.value);
+                }}
                 placeholder={searchPlaceholder}
                 aria-label={searchPlaceholder}
               />
@@ -232,7 +241,7 @@ export default function AdminDataGrid<T>({
           defaultColDef={defaultColDef}
           loading={loading}
           getRowId={rowIdGetter}
-          quickFilterText={quickFilter}
+          quickFilterText={effectiveQuickFilter}
           pagination
           paginationPageSize={pageSize}
           paginationPageSizeSelector={pageSizeOptions}

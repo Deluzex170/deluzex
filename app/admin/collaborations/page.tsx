@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import type { ColDef } from "ag-grid-community";
+import { AdminDataGrid } from "../../components/admin/AdminDataGrid";
 import styles from "../admin.module.css";
 import {
   fetchCollaborations,
@@ -123,6 +125,298 @@ export default function AdminCollaborationsPage() {
     }
   };
 
+
+  const columnDefs = useMemo<ColDef<CollaborationSubmission>[]>(
+    () => [
+      {
+        field: "name",
+        headerName: "Designer",
+        minWidth: 180,
+        cellRenderer: (params: any) => {
+          const sub = params.data as CollaborationSubmission;
+          if (!sub) return null;
+          return (
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", height: "100%" }}>
+              <div
+                style={{
+                  width: "30px",
+                  height: "30px",
+                  borderRadius: "50%",
+                  background: "rgba(196, 154, 69, 0.15)",
+                  color: "#C49A45",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  flexShrink: 0,
+                }}
+              >
+                {sub.name ? sub.name.charAt(0).toUpperCase() : "D"}
+              </div>
+              <span style={{ fontWeight: 600, color: "var(--admin-text-main)" }}>{sub.name}</span>
+            </div>
+          );
+        },
+      },
+      {
+        headerName: "Contact Details",
+        minWidth: 200,
+        cellRenderer: (params: any) => {
+          const sub = params.data as CollaborationSubmission;
+          if (!sub) return null;
+          const cleanPhone = (sub.phone || "").replace(/[^0-9]/g, "");
+          const waNumber = cleanPhone.length === 10 ? "91" + cleanPhone : cleanPhone;
+          return (
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", fontSize: "0.82rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ color: "var(--admin-text-main)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub.email}</span>
+                {sub.email && (
+                  <a
+                    href={"mailto:" + sub.email}
+                    title={"Send email to " + sub.email}
+                    style={{ color: "#2563eb", display: "inline-flex", alignItems: "center" }}
+                  >
+                    <Mail size={13} />
+                  </a>
+                )}
+              </div>
+              {sub.phone && (
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--admin-text-muted)", fontSize: "0.76rem" }}>
+                  <span>{sub.phone}</span>
+                  {waNumber && (
+                    <a
+                      href={"https://wa.me/" + waNumber}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Chat on WhatsApp"
+                      style={{ color: "#16a34a", display: "inline-flex", alignItems: "center" }}
+                    >
+                      <Phone size={11} />
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        field: "concept_title",
+        headerName: "Concept Title",
+        flex: 1.5,
+        minWidth: 200,
+        cellRenderer: (params: any) => {
+          const sub = params.data as CollaborationSubmission;
+          if (!sub) return null;
+          return (
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", overflow: "hidden" }}>
+              <div style={{ fontWeight: 600, color: "var(--admin-text-main)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {sub.concept_title}
+              </div>
+              {sub.description && (
+                <div style={{ fontSize: "0.76rem", color: "var(--admin-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {sub.description}
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        headerName: "Background / Firm",
+        minWidth: 150,
+        cellRenderer: (params: any) => {
+          const sub = params.data as CollaborationSubmission;
+          if (!sub) return null;
+          return (
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", fontSize: "0.82rem" }}>
+              <div style={{ color: "var(--admin-text-secondary)" }}>{sub.role || "Designer"}</div>
+              {sub.studio_or_college && (
+                <div style={{ fontSize: "0.76rem", color: "var(--admin-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {sub.studio_or_college}
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        headerName: "Attachment",
+        width: 120,
+        cellRenderer: (params: any) => {
+          const sub = params.data as CollaborationSubmission;
+          if (!sub) return null;
+          if (sub.file_url) {
+            return (
+              <a
+                href={sub.file_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.3rem",
+                  background: "var(--admin-surface-muted)",
+                  color: "#2563eb",
+                  padding: "0.25rem 0.55rem",
+                  borderRadius: "6px",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                }}
+              >
+                <FileText size={13} />
+                File
+              </a>
+            );
+          }
+          if (sub.portfolio_link) {
+            return (
+              <a
+                href={sub.portfolio_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.3rem",
+                  color: "#2563eb",
+                  fontSize: "0.78rem",
+                  textDecoration: "none",
+                }}
+              >
+                <ExternalLink size={13} />
+                Portfolio
+              </a>
+            );
+          }
+          return <span style={{ color: "var(--admin-text-subtle)", fontSize: "0.8rem" }}>None</span>;
+        },
+      },
+      {
+        field: "source",
+        headerName: "Source",
+        width: 120,
+        cellRenderer: (params: any) => {
+          const sub = params.data as CollaborationSubmission;
+          if (!sub) return null;
+          return (
+            <span
+              style={{
+                fontSize: "0.72rem",
+                padding: "0.2rem 0.5rem",
+                borderRadius: "4px",
+                background: sub.source === "homepage_modal" ? "rgba(196, 154, 69, 0.1)" : "#f1f5f9",
+                color: sub.source === "homepage_modal" ? "#9a762e" : "#475569",
+                fontWeight: 600,
+              }}
+            >
+              {sub.source === "homepage_modal" ? "Home Modal" : "Collaborate"}
+            </span>
+          );
+        },
+      },
+      {
+        field: "created_at",
+        headerName: "Date",
+        width: 110,
+        valueFormatter: (params) => {
+          if (!params.value) return "N/A";
+          try {
+            return new Date(params.value).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            });
+          } catch {
+            return "N/A";
+          }
+        },
+      },
+      {
+        field: "status",
+        headerName: "Status",
+        width: 130,
+        cellRenderer: (params: any) => {
+          const sub = params.data as CollaborationSubmission;
+          if (!sub) return null;
+          const subId = sub._id || sub.id || "";
+          const badgeStyle = getStatusBadgeStyle(sub.status);
+          return (
+            <select
+              value={sub.status}
+              disabled={updatingId === subId}
+              onChange={(e) => handleStatusChange(subId, e.target.value)}
+              style={{
+                ...badgeStyle,
+                padding: "0.25rem 0.5rem",
+                borderRadius: "6px",
+                fontSize: "0.78rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                outline: "none",
+              }}
+            >
+              <option value="pending">Pending</option>
+              <option value="reviewed">Reviewed</option>
+              <option value="shortlisted">Shortlisted</option>
+              <option value="archived">Archived</option>
+            </select>
+          );
+        },
+      },
+      {
+        headerName: "Actions",
+        width: 100,
+        pinned: "right",
+        cellRenderer: (params: any) => {
+          const sub = params.data as CollaborationSubmission;
+          if (!sub) return null;
+          return (
+            <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", height: "100%" }}>
+              <button
+                title="View Full Details"
+                onClick={() => setSelectedSubmission(sub)}
+                style={{
+                  background: "var(--admin-surface-muted)",
+                  border: "1px solid var(--admin-border)",
+                  borderRadius: "6px",
+                  padding: "0.35rem",
+                  color: "var(--admin-text-secondary)",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Eye size={14} />
+              </button>
+              <button
+                title="Delete Submission"
+                onClick={() => setItemToDelete(sub)}
+                style={{
+                  background: "#fef2f2",
+                  border: "1px solid #fecaca",
+                  borderRadius: "6px",
+                  padding: "0.35rem",
+                  color: "#ef4444",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    [updatingId]
+  );
+
   return (
     <div style={{ width: "100%", maxWidth: "100%", margin: 0, padding: 0 }}>
       {/* Toast Notification */}
@@ -203,278 +497,66 @@ export default function AdminCollaborationsPage() {
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", padding: "1rem 1.25rem", marginBottom: "1.25rem", display: "flex", flexWrap: "wrap", gap: "1rem", justifyContent: "space-between", alignItems: "center" }}>
-        {/* Status Tabs */}
-        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-          {["all", "pending", "reviewed", "shortlisted", "archived"].map((st) => (
-            <button
-              key={st}
-              onClick={() => setStatusFilter(st)}
-              style={{
-                background: statusFilter === st ? "#0f172a" : "transparent",
-                color: statusFilter === st ? "#ffffff" : "#64748b",
-                border: "none",
-                borderRadius: "6px",
-                padding: "0.45rem 0.9rem",
-                fontSize: "0.82rem",
-                fontWeight: 600,
-                cursor: "pointer",
-                textTransform: "capitalize",
-                transition: "all 0.2s",
-              }}
-            >
-              {st}
-            </button>
-          ))}
-        </div>
-
-        {/* Search form */}
-        <form onSubmit={handleSearchSubmit} style={{ display: "flex", gap: "0.5rem", flex: 1, maxWidth: "380px" }}>
-          <div style={{ position: "relative", width: "100%" }}>
-            <Search size={16} color="#94a3b8" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
-            <input
-              type="text"
-              placeholder="Search designer, email, concept..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "0.5rem 0.75rem 0.5rem 2.25rem",
-                fontSize: "0.85rem",
-                borderRadius: "8px",
-                border: "1px solid var(--admin-border)",
-                outline: "none",
-              }}
-            />
-          </div>
-          <button
-            type="submit"
-            style={{
-              background: "#0f172a",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: "8px",
-              padding: "0.5rem 1rem",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Search
-          </button>
-        </form>
-      </div>
-
-      {/* Submissions Table */}
-      <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
-        {loading ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-            <p>Loading design submissions...</p>
-          </div>
-        ) : submissions.length === 0 ? (
-          <div style={{ padding: "3.5rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-            <Lightbulb size={40} color="#cbd5e1" style={{ margin: "0 auto 1rem auto" }} />
-            <h3 style={{ fontSize: "1.1rem", color: "var(--admin-text-secondary)", margin: "0 0 0.5rem 0" }}>No submissions found</h3>
-            <p style={{ fontSize: "0.88rem", maxWidth: "400px", margin: "0 auto" }}>
-              {statusFilter !== "all"
-                ? `There are no submissions currently in '${statusFilter}' status.`
-                : "No designers have submitted concepts yet. Submissions from the website will appear here in real time."}
-            </p>
-          </div>
-        ) : (
-          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-            <table style={{ width: "100%", minWidth: "950px", borderCollapse: "collapse", textAlign: "left", fontSize: "0.88rem" }}>
-              <thead>
-                <tr style={{ background: "var(--admin-surface-muted)", borderBottom: "1px solid var(--admin-border)", color: "var(--admin-text-secondary)", fontWeight: 600 }}>
-                  <th style={{ padding: "0.85rem 1.25rem" }}>Designer</th>
-                  <th style={{ padding: "0.85rem 1rem" }}>Contact Details</th>
-                  <th style={{ padding: "0.85rem 1rem" }}>Concept Title</th>
-                  <th style={{ padding: "0.85rem 1rem" }}>Background / Firm</th>
-                  <th style={{ padding: "0.85rem 1rem" }}>Attachment</th>
-                  <th style={{ padding: "0.85rem 1rem" }}>Source</th>
-                  <th style={{ padding: "0.85rem 1rem" }}>Date</th>
-                  <th style={{ padding: "0.85rem 1rem" }}>Status</th>
-                  <th style={{ padding: "0.85rem 1.25rem", textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {submissions.map((sub) => {
-                  const subId = sub._id || sub.id || "";
-                  const badgeStyle = getStatusBadgeStyle(sub.status);
-                  const dateStr = sub.created_at
-                    ? new Date(sub.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-                    : "N/A";
-
-                  return (
-                    <tr
-                      key={subId}
-                      style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.15s" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#fafafa")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                    >
-                      <td style={{ padding: "0.85rem 1.25rem", fontWeight: 600, color: "var(--admin-text-main)" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                          <div
-                            style={{
-                              width: "32px",
-                              height: "32px",
-                              borderRadius: "50%",
-                              background: "rgba(196, 154, 69, 0.15)",
-                              color: "#C49A45",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: "0.85rem",
-                              fontWeight: 700,
-                            }}
-                          >
-                            {sub.name.charAt(0).toUpperCase()}
-                          </div>
-                          <span>{sub.name}</span>
-                        </div>
-                      </td>
-                      <td style={{ padding: "0.85rem 1rem" }}>
-                        <div style={{ color: "var(--admin-text-main)" }}>{sub.email}</div>
-                        {sub.phone && <div style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)" }}>{sub.phone}</div>}
-                      </td>
-                      <td style={{ padding: "0.85rem 1rem", maxWidth: "220px" }}>
-                        <div style={{ fontWeight: 600, color: "var(--admin-text-main)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {sub.concept_title}
-                        </div>
-                        {sub.description && (
-                          <div style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                            {sub.description}
-                          </div>
-                        )}
-                      </td>
-                      <td style={{ padding: "0.85rem 1rem", color: "var(--admin-text-secondary)" }}>
-                        <div>{sub.role || "Designer"}</div>
-                        {sub.studio_or_college && (
-                          <div style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)" }}>{sub.studio_or_college}</div>
-                        )}
-                      </td>
-                      <td style={{ padding: "0.85rem 1rem" }}>
-                        {sub.file_url ? (
-                          <a
-                            href={sub.file_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "0.3rem",
-                              background: "var(--admin-surface-muted)",
-                              color: "#2563eb",
-                              padding: "0.3rem 0.6rem",
-                              borderRadius: "6px",
-                              fontSize: "0.78rem",
-                              fontWeight: 600,
-                              textDecoration: "none",
-                            }}
-                          >
-                            <FileText size={13} />
-                            View File
-                          </a>
-                        ) : sub.portfolio_link ? (
-                          <a
-                            href={sub.portfolio_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "0.3rem",
-                              color: "#2563eb",
-                              fontSize: "0.78rem",
-                              textDecoration: "none",
-                            }}
-                          >
-                            <ExternalLink size={13} />
-                            Portfolio
-                          </a>
-                        ) : (
-                          <span style={{ color: "var(--admin-text-subtle)", fontSize: "0.8rem" }}>None</span>
-                        )}
-                      </td>
-                      <td style={{ padding: "0.85rem 1rem" }}>
-                        <span
-                          style={{
-                            fontSize: "0.72rem",
-                            padding: "0.2rem 0.5rem",
-                            borderRadius: "4px",
-                            background: sub.source === "homepage_modal" ? "rgba(196, 154, 69, 0.1)" : "#f1f5f9",
-                            color: sub.source === "homepage_modal" ? "#9a762e" : "#475569",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {sub.source === "homepage_modal" ? "Home Modal" : "Collaborate Page"}
-                        </span>
-                      </td>
-                      <td style={{ padding: "0.85rem 1rem", color: "var(--admin-text-muted)", fontSize: "0.82rem" }}>
-                        {dateStr}
-                      </td>
-                      <td style={{ padding: "0.85rem 1rem" }}>
-                        <select
-                          value={sub.status}
-                          disabled={updatingId === subId}
-                          onChange={(e) => handleStatusChange(subId, e.target.value)}
-                          style={{
-                            ...badgeStyle,
-                            padding: "0.3rem 0.6rem",
-                            borderRadius: "6px",
-                            fontSize: "0.78rem",
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            outline: "none",
-                          }}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="reviewed">Reviewed</option>
-                          <option value="shortlisted">Shortlisted</option>
-                          <option value="archived">Archived</option>
-                        </select>
-                      </td>
-                      <td style={{ padding: "0.85rem 1.25rem", textAlign: "right" }}>
-                        <div style={{ display: "inline-flex", gap: "0.4rem" }}>
-                          <button
-                            title="View Full Details"
-                            onClick={() => setSelectedSubmission(sub)}
-                            style={{
-                              background: "var(--admin-surface-muted)",
-                              border: "1px solid var(--admin-border)",
-                              borderRadius: "6px",
-                              padding: "0.4rem",
-                              color: "var(--admin-text-secondary)",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <Eye size={15} />
-                          </button>
-                          <button
-                            title="Delete Submission"
-                            onClick={() => setItemToDelete(sub)}
-                            style={{
-                              background: "#fef2f2",
-                              border: "1px solid #fecaca",
-                              borderRadius: "6px",
-                              padding: "0.4rem",
-                              color: "#ef4444",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {/* AG-Grid Submissions */}
+      <AdminDataGrid<CollaborationSubmission>
+        ariaLabel="Design Submissions"
+        rowData={submissions}
+        columnDefs={columnDefs}
+        loading={loading}
+        getRowId={(s) => String(s._id || s.id || s.email)}
+        quickFilterText={searchQuery}
+        emptyTitle="No submissions found"
+        emptyDescription={
+          statusFilter !== "all"
+            ? "There are no submissions currently in '" + statusFilter + "' status."
+            : "No designers have submitted concepts yet. Submissions from the website will appear here in real time."
+        }
+        toolbar={
+          <>
+            <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>
+              {["all", "pending", "reviewed", "shortlisted", "archived"].map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setStatusFilter(st)}
+                  style={{
+                    background: statusFilter === st ? "#0f172a" : "var(--admin-surface-muted)",
+                    color: statusFilter === st ? "#ffffff" : "var(--admin-text-secondary)",
+                    border: "1px solid var(--admin-border)",
+                    borderRadius: "6px",
+                    padding: "0.4rem 0.85rem",
+                    fontSize: "0.82rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    textTransform: "capitalize",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
+            <div style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
+              <input
+                type="search"
+                placeholder="Search designer, email, concept..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  height: "36px",
+                  padding: "0 12px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--admin-border)",
+                  background: "var(--admin-surface)",
+                  color: "var(--admin-text-main)",
+                  fontSize: "13px",
+                  outline: "none",
+                  minWidth: "220px",
+                }}
+              />
+            </div>
+          </>
+        }
+      />
 
       {/* DETAIL MODAL DRAWER */}
       {selectedSubmission && (

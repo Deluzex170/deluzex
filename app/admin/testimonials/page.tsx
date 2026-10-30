@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
+import type { ColDef } from "ag-grid-community";
+import { AdminDataGrid } from "../../components/admin/AdminDataGrid";
 import Image from "next/image";
 import styles from "../admin.module.css";
 import {
@@ -29,6 +31,7 @@ type ViewMode = "list" | "create" | "edit";
 
 export default function AdminTestimonialsPage() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -265,7 +268,195 @@ export default function AdminTestimonialsPage() {
   if (viewMode === "create" || viewMode === "edit") {
     const isEdit = viewMode === "edit";
 
-    return (
+    
+  const columnDefs = useMemo<ColDef<Testimonial>[]>(
+    () => [
+      {
+        field: "avatar_url",
+        headerName: "Avatar",
+        width: 80,
+        cellRenderer: (params: any) => {
+          const item = params.data as Testimonial;
+          if (!item) return null;
+          return (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  minWidth: 36,
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  position: "relative",
+                  background: "var(--admin-surface-muted)",
+                  border: "1.5px solid #E8E0D8",
+                }}
+              >
+                {item.avatar_url ? (
+                  <Image
+                    src={item.avatar_url}
+                    alt={item.author_name || "Author"}
+                    fill
+                    sizes="36px"
+                    style={{ objectFit: "cover" }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "100%",
+                      height: "100%",
+                      background: "var(--admin-surface-muted)",
+                    }}
+                  >
+                    <ImageIcon size={16} color="#94a3b8" />
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        field: "author_name",
+        headerName: "Author",
+        width: 170,
+        cellRenderer: (params: any) => {
+          const item = params.data as Testimonial;
+          if (!item) return null;
+          return (
+            <span style={{ fontWeight: 600, color: "var(--admin-text-main)" }}>
+              {item.author_name}
+            </span>
+          );
+        },
+      },
+      {
+        field: "author_title",
+        headerName: "Role / Title",
+        width: 160,
+        cellRenderer: (params: any) => {
+          const item = params.data as Testimonial;
+          if (!item) return null;
+          return (
+            <span
+              style={{
+                display: "inline-block",
+                background: "var(--admin-surface-muted)",
+                color: "var(--admin-text-secondary)",
+                padding: "3px 8px",
+                borderRadius: "6px",
+                fontSize: "0.78rem",
+                fontWeight: 500,
+              }}
+            >
+              {item.author_title || "Client"}
+            </span>
+          );
+        },
+      },
+      {
+        field: "rating",
+        headerName: "Rating",
+        width: 100,
+        cellRenderer: (params: any) => {
+          const item = params.data as Testimonial;
+          if (!item) return null;
+          return (
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                background: "#FEF9C3",
+                color: "#854D0E",
+                border: "1px solid #FEF08A",
+                padding: "3px 8px",
+                borderRadius: "6px",
+                fontWeight: 700,
+                fontSize: "0.78rem",
+              }}
+            >
+              <Star size={12} fill="#854D0E" strokeWidth={0} />
+              {Number(item.rating || 5).toFixed(1)}
+            </span>
+          );
+        },
+      },
+      {
+        field: "text",
+        headerName: "Story / Review",
+        flex: 1.5,
+        minWidth: 220,
+        cellRenderer: (params: any) => {
+          const item = params.data as Testimonial;
+          if (!item) return null;
+          return (
+            <div
+              style={{
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                color: "var(--admin-text-secondary)",
+                fontSize: "0.85rem",
+              }}
+              title={item.text}
+            >
+              "{item.text}"
+            </div>
+          );
+        },
+      },
+      {
+        headerName: "Actions",
+        width: 150,
+        pinned: "right",
+        cellRenderer: (params: any) => {
+          const item = params.data as Testimonial;
+          if (!item) return null;
+          return (
+            <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", height: "100%", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => startEdit(item)}
+                className={styles.actionLink}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.3rem",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "0.35rem 0.65rem",
+                  fontSize: "0.78rem",
+                }}
+              >
+                <Pencil size={12} /> Edit
+              </button>
+              <button
+                onClick={() => setItemToDelete(item)}
+                className={styles.actionDelete}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.3rem",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "0.35rem 0.65rem",
+                  fontSize: "0.78rem",
+                }}
+              >
+                <Trash2 size={12} /> Delete
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    []
+  );
+
+  return (
       <div className={styles.sectionContainer} style={{ width: "100%", maxWidth: "100%", margin: 0 }}>
         {/* Navigation Breadcrumb */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
@@ -795,172 +986,37 @@ export default function AdminTestimonialsPage() {
           </span>
         </div>
 
-        {loading ? (
-          <div style={{ padding: "4rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-            Loading customer stories...
-          </div>
-        ) : testimonials.length === 0 ? (
-          <div style={{ padding: "4rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-            <MessageSquareQuote size={48} style={{ margin: "0 auto 1rem", opacity: 0.4 }} />
-            <p style={{ marginBottom: "1.25rem", fontSize: "1rem" }}>
-              No customer stories found. Click &quot;Add Testimonial&quot; to publish your first story.
-            </p>
-            <button onClick={startCreate} className={styles.primaryButton}>
-              <Plus size={18} /> Add First Testimonial
-            </button>
-          </div>
-        ) : (
-          <div className={styles.tableWrapper} style={{ width: "100%", overflowX: "auto" }}>
-            <table className={styles.table} style={{ width: "100%", tableLayout: "auto" }}>
-              <thead>
-                <tr>
-                  <th style={{ width: "70px" }}>Avatar</th>
-                  <th style={{ width: "16%" }}>Author</th>
-                  <th style={{ width: "18%" }}>Role / Title</th>
-                  <th style={{ width: "110px" }}>Rating</th>
-                  <th style={{ width: "auto" }}>Story / Review</th>
-                  <th style={{ width: "160px", textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {testimonials.map((item) => {
-                  const itemId = item._id || item.id || "";
-                  return (
-                    <tr key={itemId}>
-                      <td>
-                        <div
-                          style={{
-                            width: 48,
-                            height: 48,
-                            minWidth: 48,
-                            borderRadius: "50%",
-                            overflow: "hidden",
-                            position: "relative",
-                            background: "var(--admin-surface-muted)",
-                            border: "2px solid #E8E0D8",
-                            boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
-                          }}
-                        >
-                          {item.avatar_url ? (
-                            <Image
-                              src={item.avatar_url}
-                              alt={item.author_name || "Author"}
-                              fill
-                              sizes="48px"
-                              style={{ objectFit: "cover" }}
-                            />
-                          ) : (
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                width: "100%",
-                                height: "100%",
-                                background: "var(--admin-surface-muted)",
-                              }}
-                            >
-                              <ImageIcon size={20} color="#94a3b8" />
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: 600, color: "var(--admin-primary)", fontSize: "0.95rem" }}>
-                          {item.author_name}
-                        </div>
-                      </td>
-                      <td>
-                        <span
-                          style={{
-                            display: "inline-block",
-                            background: "var(--admin-surface-muted)",
-                            color: "var(--admin-text-secondary)",
-                            padding: "4px 10px",
-                            borderRadius: "6px",
-                            fontSize: "0.825rem",
-                            fontWeight: 500,
-                          }}
-                        >
-                          {item.author_title || "Client"}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
-                            background: "#FEF9C3",
-                            color: "#854D0E",
-                            border: "1px solid #FEF08A",
-                            padding: "4px 10px",
-                            borderRadius: "6px",
-                            fontWeight: 700,
-                            fontSize: "0.825rem",
-                          }}
-                        >
-                          <Star size={13} fill="#854D0E" strokeWidth={0} />
-                          {Number(item.rating || 5).toFixed(1)}
-                        </span>
-                      </td>
-                      <td>
-                        <p
-                          style={{
-                            margin: 0,
-                            color: "var(--admin-text-secondary)",
-                            fontSize: "0.9rem",
-                            lineHeight: 1.6,
-                            display: "-webkit-box",
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                          title={item.text}
-                        >
-                          &ldquo;{item.text}&rdquo;
-                        </p>
-                      </td>
-                      <td style={{ textAlign: "right" }}>
-                        <div style={{ display: "flex", gap: "0.6rem", justifyContent: "flex-end", alignItems: "center" }}>
-                          <button
-                            onClick={() => startEdit(item)}
-                            className={styles.actionLink}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "0.35rem",
-                              border: "none",
-                              cursor: "pointer",
-                              padding: "0.45rem 0.85rem",
-                            }}
-                          >
-                            <Pencil size={13} /> Edit
-                          </button>
-                          <button
-                            onClick={() => setItemToDelete(item)}
-                            className={styles.actionDelete}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "0.35rem",
-                              border: "none",
-                              cursor: "pointer",
-                              padding: "0.45rem 0.85rem",
-                            }}
-                          >
-                            <Trash2 size={13} /> Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <AdminDataGrid<Testimonial>
+          ariaLabel="Customer Stories"
+          rowData={testimonials}
+          columnDefs={columnDefs}
+          loading={loading}
+          getRowId={(s) => String(s._id || s.id || s.author_name)}
+          quickFilterText={searchQuery}
+          emptyTitle="No customer stories found"
+          emptyDescription="Click 'Add Testimonial' to publish your first story on the homepage."
+          toolbar={
+            <div style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
+              <input
+                type="search"
+                placeholder="Search author, story..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  height: "36px",
+                  padding: "0 12px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--admin-border)",
+                  background: "var(--admin-surface)",
+                  color: "var(--admin-text-main)",
+                  fontSize: "13px",
+                  outline: "none",
+                  minWidth: "220px",
+                }}
+              />
+            </div>
+          }
+        />
       </div>
     </div>
   );

@@ -299,6 +299,7 @@ export default function AdminCustomersPage() {
         loading={loading}
         getRowId={(c) => String(c.id)}
         showSearch={false}
+        quickFilterText={searchQuery}
         emptyTitle="No customers found"
         emptyDescription="There are no accounts matching the selected filter or query."
         toolbar={

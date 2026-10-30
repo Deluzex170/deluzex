@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import type { ColDef } from "ag-grid-community";
 import type { CustomCellRendererProps } from "ag-grid-react";
-import { FileText, Trash2 } from "lucide-react";
+import { FileText, Trash2, Mail, MessageCircle } from "lucide-react";
 import styles from "./orders.module.css";
 import AdminDataGrid from "../../components/admin/AdminDataGrid";
 import {
@@ -139,8 +139,12 @@ export default function AdminOrdersPage() {
     }
   }, [activeTab, searchQuery]);
 
+  // Debounced loadData so typing search is instant via AG Grid client filter and server is not spammed
   useEffect(() => {
-    loadData();
+    const timer = setTimeout(() => {
+      loadData();
+    }, 300);
+    return () => clearTimeout(timer);
   }, [loadData]);
 
   // When drawer opens, initialize form state
@@ -207,12 +211,18 @@ export default function AdminOrdersPage() {
     let badgeClass = styles.statusPending;
     let label = status || "Pending";
 
-    if (s === "paid" || s === "processing") {
+    if (s === "paid") {
       badgeClass = styles.statusProcessing;
-      label = s === "paid" ? "Paid" : "Processing";
-    } else if (s === "shipped" || s === "out_for_delivery") {
+      label = "Paid";
+    } else if (s === "processing") {
+      badgeClass = styles.statusProcessing;
+      label = "Processing";
+    } else if (s === "shipped") {
       badgeClass = styles.statusShipped;
-      label = s === "out_for_delivery" ? "Out for Delivery" : "Shipped";
+      label = "Shipped";
+    } else if (s === "out_for_delivery") {
+      badgeClass = styles.statusShipped;
+      label = "Out for Delivery";
     } else if (s === "delivered") {
       badgeClass = styles.statusDelivered;
       label = "Delivered";
@@ -223,44 +233,25 @@ export default function AdminOrdersPage() {
       badgeClass = styles.statusPending;
       label = "COD (Pending)";
     } else if (s === "return_requested") {
-      return (
-        <span
-          className={styles.statusBadge}
-          style={{ background: "rgba(245, 158, 11, 0.15)", color: "#f59e0b", borderColor: "rgba(245, 158, 11, 0.35)" }}
-        >
-          ● Return Requested
-        </span>
-      );
+      badgeClass = styles.statusReturnRequested;
+      label = "Return Requested";
     } else if (s === "return_in_transit" || s === "return_approved") {
-      return (
-        <span
-          className={styles.statusBadge}
-          style={{ background: "rgba(16, 185, 129, 0.15)", color: "#10b981", borderColor: "rgba(16, 185, 129, 0.35)" }}
-        >
-          ● Return In Transit
-        </span>
-      );
+      badgeClass = styles.statusReturnTransit;
+      label = s === "return_approved" ? "Return Approved" : "Return In Transit";
     } else if (s === "return_rejected") {
-      return (
-        <span
-          className={styles.statusBadge}
-          style={{ background: "rgba(239, 68, 68, 0.15)", color: "#ef4444", borderColor: "rgba(239, 68, 68, 0.35)" }}
-        >
-          ● Return Rejected
-        </span>
-      );
+      badgeClass = styles.statusReturnRejected;
+      label = "Return Rejected";
     } else if (s === "returned") {
-      return (
-        <span
-          className={styles.statusBadge}
-          style={{ background: "rgba(99, 102, 241, 0.15)", color: "#818cf8", borderColor: "rgba(99, 102, 241, 0.35)" }}
-        >
-          ● Returned & Restocked
-        </span>
-      );
+      badgeClass = styles.statusReturned;
+      label = "Returned";
     }
 
-    return <span className={`${styles.statusBadge} ${badgeClass}`}>● {label}</span>;
+    return (
+      <span className={`${styles.statusBadge} ${badgeClass}`}>
+        <span className={styles.statusDot} />
+        {label}
+      </span>
+    );
   };
 
   // Orders grid columns — every action calls the same handlers as the old table
@@ -268,8 +259,31 @@ export default function AdminOrdersPage() {
     {
       headerName: "Order ID",
       colId: "orderId",
-      minWidth: 170,
+      width: 125,
+      minWidth: 115,
+      maxWidth: 135,
       valueGetter: (p) => (p.data ? orderDisplayId(p.data) : ""),
+      getQuickFilterText: (p) => {
+        const d = p.data;
+        if (!d) return "";
+        const disp = orderDisplayId(d);
+        const rawDisp = disp.replace(/^#/, "");
+        const idStr = String(d.id || d._id || d.order_id || "");
+        const last4 = idStr.slice(-4);
+        return [
+          disp,
+          rawDisp,
+          last4,
+          d.order_number,
+          d.order_id,
+          d.id,
+          d._id,
+          d.tracking_number,
+          d.awb_code,
+        ]
+          .filter(Boolean)
+          .join(" ");
+      },
       cellRenderer: (p: CustomCellRendererProps<UserOrder>) => (
         <StackedCell
           title={<span className={styles.orderIdText}>{p.value}</span>}
@@ -280,7 +294,9 @@ export default function AdminOrdersPage() {
     {
       headerName: "Date",
       colId: "date",
-      minWidth: 180,
+      width: 135,
+      minWidth: 125,
+      maxWidth: 145,
       sort: "desc",
       valueGetter: (p) => p.data?.created_at || p.data?.createdAt || "",
       comparator: dateComparator,
@@ -294,23 +310,87 @@ export default function AdminOrdersPage() {
     {
       headerName: "Customer",
       colId: "customer",
-      minWidth: 230,
-      flex: 1.6,
+      minWidth: 210,
+      flex: 1.5,
       valueGetter: (p) => (p.data ? orderCustomerName(p.data) : ""),
-      getQuickFilterText: (p) => [orderCustomerName(p.data), p.data.user_email, p.data.user_phone].filter(Boolean).join(" "),
-      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => (
-        <StackedCell
-          title={p.value}
-          subtitle={[p.data?.user_email || "No email", p.data?.user_phone].filter(Boolean).join(" · ")}
-        />
-      ),
+      getQuickFilterText: (p) => {
+        const d = p.data;
+        if (!d) return "";
+        const name = orderCustomerName(d);
+        const anyD = d as Record<string, any>;
+        const phone = d.user_phone || anyD.phone || anyD.shipping_address?.phone || "";
+        const email = d.user_email || anyD.email || anyD.shipping_address?.email || "";
+        const city = d.shipping_address?.city || "";
+        const state = d.shipping_address?.state || "";
+        return [name, phone, email, city, state].filter(Boolean).join(" ");
+      },
+      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => {
+        const d = p.data;
+        if (!d) return null;
+        const name = orderCustomerName(d);
+        const anyD = d as Record<string, any>;
+        const phone = d.user_phone || anyD.phone || anyD.shipping_address?.phone || "";
+        const email = d.user_email || anyD.email || anyD.shipping_address?.email || "";
+
+        const digits = phone.replace(/\D/g, "");
+        const waNumber = digits.length === 10 ? `91${digits}` : digits;
+        const waLink = digits.length >= 10 ? `https://wa.me/${waNumber}` : null;
+
+        return (
+          <div className={styles.customerCell}>
+            <span className={styles.customerName} title={name}>
+              {name}
+            </span>
+            <div className={styles.customerContactRow}>
+              {phone ? (
+                waLink ? (
+                  <a
+                    href={waLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.customerPhoneLink}
+                    onClick={(e) => e.stopPropagation()}
+                    title={`Click to chat with ${name} on WhatsApp (${phone})`}
+                  >
+                    <MessageCircle size={12} className={styles.waIcon} aria-hidden="true" />
+                    <span>{phone}</span>
+                  </a>
+                ) : (
+                  <span className={styles.customerPhoneLink}>
+                    <span>{phone}</span>
+                  </span>
+                )
+              ) : (
+                <span className={styles.noPhoneText}>No phone</span>
+              )}
+              {email && (
+                <a
+                  href={`mailto:${email}`}
+                  className={styles.customerEmailBtn}
+                  onClick={(e) => e.stopPropagation()}
+                  title={`Email: ${email} (Click to open mail client)`}
+                  aria-label={`Send email to ${email}`}
+                >
+                  <Mail size={11} aria-hidden="true" />
+                </a>
+              )}
+            </div>
+          </div>
+        );
+      },
     },
     {
       headerName: "Items",
       colId: "items",
-      minWidth: 140,
+      width: 105,
+      minWidth: 95,
+      maxWidth: 115,
       filter: "agNumberColumnFilter",
       valueGetter: (p) => p.data?.items?.reduce((acc, it) => acc + (it.quantity || 1), 0) || 0,
+      getQuickFilterText: (p) => {
+        const items = p.data?.items || [];
+        return items.map((it) => `${it.title} ${it.variant || ""}`).filter(Boolean).join(" ");
+      },
       cellRenderer: (p: CustomCellRendererProps<UserOrder>) => {
         const items = p.data?.items || [];
         return (
@@ -329,32 +409,52 @@ export default function AdminOrdersPage() {
     {
       headerName: "Total",
       colId: "total",
-      minWidth: 130,
+      width: 95,
+      minWidth: 85,
+      maxWidth: 105,
       type: "rightAligned",
       filter: "agNumberColumnFilter",
       valueGetter: (p) => Number(p.data?.total || p.data?.amount || 0),
+      getQuickFilterText: (p) => {
+        const t = p.data?.total || p.data?.amount || 0;
+        return `₹${t} ${t}`;
+      },
       cellRenderer: CurrencyRenderer,
     },
     {
       headerName: "Payment",
       colId: "payment",
-      minWidth: 150,
-      valueGetter: (p) => (p.data?.payment_method?.toLowerCase() === "cod" ? "Cash on Delivery" : "Online (Razorpay)"),
-      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => <span className={styles.paymentMethodBadge}>{p.value}</span>,
+      width: 80,
+      minWidth: 75,
+      maxWidth: 90,
+      valueGetter: (p) => (p.data?.payment_method?.toLowerCase() === "cod" ? "COD" : "Online"),
+      getQuickFilterText: (p) =>
+        p.data?.payment_method?.toLowerCase() === "cod" ? "COD Cash on Delivery" : "Online Razorpay Prepaid",
+      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => {
+        const isCod = p.data?.payment_method?.toLowerCase() === "cod";
+        return (
+          <span className={isCod ? styles.paymentBadgeCod : styles.paymentBadgeOnline}>
+            {isCod ? "COD" : "Online"}
+          </span>
+        );
+      },
     },
     {
       headerName: "Status",
       colId: "status",
-      minWidth: 170,
+      width: 125,
+      minWidth: 115,
+      maxWidth: 135,
       valueGetter: (p) => p.data?.status || "pending",
+      getQuickFilterText: (p) => [p.data?.status, p.data?.payment_status].filter(Boolean).join(" "),
       cellRenderer: (p: CustomCellRendererProps<UserOrder>) => renderStatusBadge(p.data?.status),
     },
     {
       headerName: "Actions",
       colId: "actions",
-      width: 268,
-      minWidth: 268,
-      maxWidth: 268,
+      width: 175,
+      minWidth: 170,
+      maxWidth: 180,
       flex: 0,
       sortable: false,
       filter: false,
@@ -473,6 +573,7 @@ export default function AdminOrdersPage() {
         loading={loading}
         getRowId={(o) => String(o.id || o._id || o.order_id || o.order_number)}
         showSearch={false}
+        quickFilterText={searchQuery}
         emptyTitle="No orders found"
         emptyDescription="No orders match the current status filter or search."
         toolbar={

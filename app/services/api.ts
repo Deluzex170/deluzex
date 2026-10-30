@@ -2485,6 +2485,7 @@ export interface ProductReviewItem {
   product_id: string;
   author_name: string;
   author_email?: string;
+  author_phone?: string;
   rating: number;
   title?: string;
   text: string;
@@ -2519,6 +2520,7 @@ export interface ReviewSubmitPayload {
   product_id: string;
   author_name: string;
   author_email?: string;
+  author_phone?: string;
   rating: number;
   title?: string;
   text: string;

@@ -46,8 +46,6 @@ export default function ProductDetail() {
   const [reviewHoverRating, setReviewHoverRating] = useState(0);
   const [reviewForm, setReviewForm] = useState({
     name: "",
-    email: "",
-    title: "",
     text: "",
   });
 
@@ -345,19 +343,25 @@ export default function ProductDetail() {
   };
 
   const handleOpenReviewModal = () => {
+    if (!isAuthenticated) {
+      openLoginModal(undefined, "Please sign in or create an account to leave a customer review.");
+      return;
+    }
     const defaultName = (user as any)?.name || `${(user as any)?.first_name || ""} ${(user as any)?.last_name || ""}`.trim() || "";
-    const defaultEmail = userEmail || "";
-    setReviewForm((prev) => ({
-      ...prev,
-      name: prev.name || defaultName,
-      email: prev.email || defaultEmail,
-    }));
+    setReviewForm({
+      name: defaultName,
+      text: "",
+    });
     setShowReviewModal(true);
   };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product) return;
+    if (!isAuthenticated) {
+      openLoginModal(undefined, "Please sign in or create an account to leave a customer review.");
+      return;
+    }
     if (!reviewForm.name.trim()) {
       alert("Please enter your name.");
       return;
@@ -374,24 +378,27 @@ export default function ProductDetail() {
 
     setReviewSubmitting(true);
     try {
+      const authorEmail = (user as any)?.email || userEmail || undefined;
+      const authorPhone = (user as any)?.phone || (user as any)?.mobile || undefined;
+
       const res = await submitProductReview({
         product_id: targetProductId,
         author_name: reviewForm.name.trim(),
-        author_email: reviewForm.email.trim() || undefined,
+        author_email: authorEmail,
+        author_phone: authorPhone,
         rating: reviewRating,
-        title: reviewForm.title.trim() || undefined,
         text: reviewForm.text.trim(),
       });
       if (res && res.stats) {
         setReviewsStats(res.stats);
       }
-      setReviewSuccessMsg("Thank you! Your review has been submitted successfully.");
+      setReviewSuccessMsg("Thank you! Your review has been submitted for moderation and will appear once approved by our team.");
       setTimeout(() => {
         setShowReviewModal(false);
         setReviewSuccessMsg("");
-        setReviewForm({ name: "", email: "", title: "", text: "" });
+        setReviewForm({ name: "", text: "" });
         setReviewRating(5);
-      }, 1800);
+      }, 2200);
     } catch (err: any) {
       console.error("Failed to submit review:", err);
       alert(err?.message || "Failed to submit review. Please try again.");
@@ -1428,37 +1435,14 @@ export default function ProductDetail() {
                 </div>
 
                 <div className={styles.modalFormGroup}>
-                  <label className={styles.modalFormLabel}>Email Address (Optional)</label>
-                  <input
-                    type="email"
-                    value={reviewForm.email}
-                    onChange={(e) => setReviewForm({ ...reviewForm, email: e.target.value })}
-                    placeholder="e.g. sarah@example.com"
-                    className={styles.modalFormInput}
-                  />
-                </div>
-
-                <div className={styles.modalFormGroup}>
-                  <label className={styles.modalFormLabel}>Review Title / Headline</label>
-                  <input
-                    type="text"
-                    value={reviewForm.title}
-                    onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })}
-                    placeholder="e.g. Stunning quality and safe delivery"
-                    className={styles.modalFormInput}
-                  />
-                </div>
-
-                <div className={styles.modalFormGroup}>
                   <label className={styles.modalFormLabel}>Your Review *</label>
                   <textarea
                     required
-                    rows={4}
+                    rows={3}
                     value={reviewForm.text}
                     onChange={(e) => setReviewForm({ ...reviewForm, text: e.target.value })}
                     placeholder="Write your feedback here... What did you like or dislike about the finish, lighting, craftsmanship, or packaging?"
                     className={styles.modalFormInput}
-                    style={{ resize: "vertical" }}
                   />
                 </div>
 

@@ -154,9 +154,9 @@ export default function CreateProduct() {
   };
 
   const inputStyle = {
-    width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', 
-    border: '1px solid rgba(0,0,0,0.12)', marginTop: '0.4rem', 
-    fontSize: '0.9rem', fontFamily: 'inherit', boxSizing: 'border-box' as const,
+    width: '100%', padding: '0.45rem 0.75rem', height: '38px', borderRadius: '6px', 
+    border: '1px solid var(--admin-border, rgba(0,0,0,0.12))', marginTop: '0.25rem', 
+    fontSize: '0.875rem', fontFamily: 'inherit', boxSizing: 'border-box' as const,
   };
 
   const sectionHeaderStyle = {
@@ -177,7 +177,7 @@ export default function CreateProduct() {
       </div>
 
       <div style={{ background: 'var(--color-white)', borderRadius: '12px', padding: 'var(--a-space-5)', width: '100%', maxWidth: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
-        <form onSubmit={handleSubmit} className={styles.formGrid2} style={{ display: 'grid', gap: '1.5rem' }}>
+        <form onSubmit={handleSubmit} className={styles.formGrid2} style={{ display: 'grid', gap: '1rem' }}>
           
           {/* GENERAL INFO */}
           <div style={{ gridColumn: '1 / -1' }}>

@@ -156,35 +156,36 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Column 2: Explore Links */}
-        <div className={styles.linkGroup}>
-          <h5 className={styles.linkGroupTitle}>Explore</h5>
-          {categories.length > 0 ? (
-            categories.slice(0, 4).map((cat) => (
-              <Link key={cat._id || cat.id || cat.name} href={`/shop?category=${encodeURIComponent(cat.name)}`}>
-                {cat.name}
-              </Link>
-            ))
-          ) : (
-            <>
-              <Link href="/shop?category=Chandelier">Chandelier</Link>
-              <Link href="/shop?category=Pendant%20Lights">Pendant Lights</Link>
-              <Link href="/shop?category=Wall%20Lights">Wall Lights</Link>
-              <Link href="/shop?category=Table%20Lamps">Table Lamps</Link>
-            </>
-          )}
-          <Link href="/shop?sort=newest">New Arrivals</Link>
-          <Link href="/shop?sort=popular">Best Sellers</Link>
-        </div>
+        {/* Columns 2 & 3: Explore & Company Links */}
+        <div className={styles.footerLinksWrapper}>
+          <div className={styles.linkGroup}>
+            <h5 className={styles.linkGroupTitle}>Explore</h5>
+            {categories.length > 0 ? (
+              categories.slice(0, 4).map((cat) => (
+                <Link key={cat._id || cat.id || cat.name} href={`/shop?category=${encodeURIComponent(cat.name)}`}>
+                  {cat.name}
+                </Link>
+              ))
+            ) : (
+              <>
+                <Link href="/shop?category=Chandelier">Chandelier</Link>
+                <Link href="/shop?category=Pendant%20Lights">Pendant Lights</Link>
+                <Link href="/shop?category=Wall%20Lights">Wall Lights</Link>
+                <Link href="/shop?category=Table%20Lamps">Table Lamps</Link>
+              </>
+            )}
+            <Link href="/shop?sort=newest">New Arrivals</Link>
+            <Link href="/shop?sort=popular">Best Sellers</Link>
+          </div>
 
-        {/* Column 3: Company Links */}
-        <div className={styles.linkGroup}>
-          <h5 className={styles.linkGroupTitle}>Company</h5>
-          <Link href="/about">About Us</Link>
-          <Link href="/projects">Our Projects</Link>
-          <Link href="/contact">Contact</Link>
-          <Link href="/shipping">Shipping &amp; Delivery</Link>
-          <Link href="/privacy">Privacy Policy</Link>
+          <div className={styles.linkGroup}>
+            <h5 className={styles.linkGroupTitle}>Company</h5>
+            <Link href="/about">About Us</Link>
+            <Link href="/projects">Our Projects</Link>
+            <Link href="/contact">Contact</Link>
+            <Link href="/shipping">Shipping &amp; Delivery</Link>
+            <Link href="/privacy">Privacy Policy</Link>
+          </div>
         </div>
 
         {/* Column 4: Newsletter */}
