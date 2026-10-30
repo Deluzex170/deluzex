@@ -1977,3 +1977,147 @@ textarea.control {
   padding: 0 var(--a-space-3);
   font-size: var(--a-fs-xs);
 }
+
+/* ═══ Standard controls for the whole admin (inputs, buttons, tables) ═══
+   Inline page styles set their own vertical padding, so the standard uses
+   !important only for the properties that define control size. */
+
+/* Inputs & selects: one 36px height, 13px text. Inputs that sit inside a
+   styled search wrapper are excluded (the wrapper is sized instead). */
+.adminRoot .mainContent :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]),
+  select
+):not(:is([class*="searchBox"], [class*="searchForm"] [class*="Box"]) *) {
+  height: var(--a-control-h) !important;
+  min-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  font-size: var(--a-fs-sm) !important;
+  line-height: normal;
+  border-radius: var(--a-radius-md);
+  box-sizing: border-box;
+}
+
+.adminRoot .mainContent textarea {
+  min-height: var(--a-textarea-min);
+  padding: var(--a-space-2) var(--a-space-3) !important;
+  font-size: var(--a-fs-sm) !important;
+  line-height: var(--a-lh-base);
+  border-radius: var(--a-radius-md);
+  box-sizing: border-box;
+}
+
+.adminRoot .mainContent :is(input, select, textarea):focus-visible {
+  outline: none;
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px var(--admin-primary-glow);
+}
+
+/* Buttons: text buttons get one height; vertical padding never grows them.
+   Buttons that set their own height (icon / round buttons) are left alone. */
+.adminRoot .mainContent button:not([style*="height"]):not([class*="close"]):not([class*="Close"]):not([aria-label*="lose"]) {
+  min-height: var(--a-control-h-sm);
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  font-size: var(--a-fs-sm);
+  line-height: 1.2;
+  box-sizing: border-box;
+}
+
+/* Primary actions, form submits and page-level actions: 36px */
+.adminRoot .mainContent :is(
+  button[type="submit"],
+  .primaryButton,
+  .btn,
+  .btnAdd,
+  .btnSave,
+  .btnCancel,
+  .btnDeleteConfirm,
+  .btnConfirmLogout,
+  [class*="refreshBtn"],
+  [class*="saveBtn"],
+  [class*="resetBtn"],
+  [class*="btnPrimary"],
+  [class*="btnSecondary"],
+  [class*="searchBtn"],
+  [class*="submitFulfillBtn"]
+):not([style*="height"]) {
+  height: var(--a-control-h);
+  min-height: var(--a-control-h);
+  padding-left: var(--a-space-4);
+  padding-right: var(--a-space-4);
+  font-size: var(--a-fs-sm);
+  border-radius: var(--a-radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--a-space-2);
+}
+
+.adminRoot .mainContent :is(button, a) svg {
+  flex-shrink: 0;
+}
+
+/* Tables: single-line cells, compact padding, consistent 13px text.
+   Wide tables scroll inside their card instead of wrapping every cell. */
+.adminRoot .mainContent table th {
+  white-space: nowrap;
+  height: 40px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.adminRoot .mainContent table td {
+  white-space: nowrap;
+  padding-top: var(--a-space-2);
+  padding-bottom: var(--a-space-2);
+  font-size: var(--a-fs-sm);
+  line-height: 1.35;
+  vertical-align: middle;
+}
+
+/* Long-text cells stay one line and truncate */
+.adminRoot .mainContent table td > :is(div, p, span):not(:has(img)) {
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adminRoot .mainContent table td img {
+  max-height: 40px;
+}
+
+/* Tables scroll inside their card at every width */
+.tableWrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Row actions always sit on one line */
+.adminRoot .mainContent table td > div:has(> :is(button, a)):not(:has(> :not(button, a, form))) {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.adminRoot .mainContent table td[style*="right"] > div:has(> :is(button, a)) {
+  justify-content: flex-end;
+}
+
+.adminRoot .mainContent table td[style*="center"] > div:has(> :is(button, a)) {
+  justify-content: center;
+}
+
+/* Table thumbnails: one 40px size */
+.adminRoot .mainContent table td div:has(> img):not(:has(> :not(img, span))) {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px;
+}
+
+/* Inline cell padding on some pages must not change the row height */
+.adminRoot .mainContent table td {
+  padding-top: var(--a-space-2) !important;
+  padding-bottom: var(--a-space-2) !important;
+}

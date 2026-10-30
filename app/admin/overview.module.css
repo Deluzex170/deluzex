@@ -533,3 +533,32 @@
 .container {
   padding: 0;
 }
+
+/* ─── Standard filter toolbar + compact stat boxes ─── */
+@media all {
+  .kpiCard {
+    padding: 10px var(--a-space-4);
+    min-height: 0;
+  }
+  .kpiValue {
+    font-size: 18px;
+    line-height: 1.2;
+    margin: 2px 0 0;
+  }
+  .kpiLabel {
+    font-size: 10.5px;
+  }
+  .kpiIcon {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+  .kpiFootnote {
+    font-size: 11.5px;
+    margin-top: 2px;
+  }
+  .kpiGrid {
+    grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+    gap: 10px;
+  }
+}

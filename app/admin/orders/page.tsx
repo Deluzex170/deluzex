@@ -382,8 +382,10 @@ export default function AdminOrdersPage() {
                       </td>
                       <td>
                         <div className={styles.customerName}>{customerName}</div>
-                        <div className={styles.customerSub}>{ord.user_email || "No email"}</div>
-                        {ord.user_phone && <div className={styles.customerSub}>📞 {ord.user_phone}</div>}
+                        <div className={styles.customerSub}>
+                          {ord.user_email || "No email"}
+                          {ord.user_phone && <> · {ord.user_phone}</>}
+                        </div>
                       </td>
                       <td>
                         <div className={styles.itemThumbGroup}>

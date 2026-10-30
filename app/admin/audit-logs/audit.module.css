@@ -701,3 +701,99 @@
 .container {
   padding: 0;
 }
+
+/* ─── Standard filter toolbar + compact stat boxes ─── */
+@media all {
+  .kpiCard {
+    padding: 10px var(--a-space-4);
+    min-height: 0;
+  }
+  .kpiValue {
+    font-size: 18px;
+    line-height: 1.2;
+    margin: 2px 0 0;
+  }
+  .kpiLabel {
+    font-size: 10.5px;
+  }
+  .kpiIcon {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+  .kpiMeta {
+    font-size: 11.5px;
+    margin-top: 2px;
+  }
+  .logsToolbar {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--a-space-3);
+    padding: var(--a-space-2) var(--a-space-3);
+    margin-bottom: var(--a-space-4);
+    border-radius: var(--a-radius-lg);
+  }
+  .filterTabs {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 2px;
+    flex: 1 1 360px;
+    min-width: 0;
+    max-width: 100%;
+    padding: 3px;
+    border-radius: var(--a-radius-md);
+    border: 1px solid var(--admin-border);
+    background: var(--admin-surface-muted);
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-padding-inline: 24px;
+    mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 24px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 24px), transparent 100%);
+  }
+  .filterTab {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    min-height: 30px;
+    padding: 0 var(--a-space-3);
+    border: 0;
+    border-radius: var(--a-radius-sm);
+    background: transparent;
+    color: var(--admin-text-muted);
+    font-size: var(--a-fs-xs);
+    font-weight: var(--a-fw-semibold);
+    white-space: nowrap;
+    box-shadow: none;
+  }
+  .filterTabActive {
+    background: var(--admin-surface) !important;
+    color: var(--admin-text-main) !important;
+    border-color: transparent !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--admin-border) !important;
+  }
+  .searchInputWrapper {
+    flex: 0 1 320px;
+    min-width: 200px;
+    max-width: 100%;
+  }
+  .toolbarRight {
+    flex-wrap: wrap;
+    gap: var(--a-space-2);
+  }
+}
+
+@media (max-width: 720px) {
+  .searchInputWrapper {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .filterTabs {
+    flex: 1 1 100%;
+  }
+}
