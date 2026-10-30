@@ -1,8 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import type { ColDef } from "ag-grid-community";
+import type { CustomCellRendererProps } from "ag-grid-react";
 import styles from "./customers.module.css";
+import AdminDataGrid from "../../components/admin/AdminDataGrid";
+import {
+  CurrencyRenderer,
+  DateRenderer,
+  StatusBadge,
+  StatusBadgeRenderer,
+  dateComparator,
+} from "../../components/admin/gridRenderers";
+import gridStyles from "../../components/admin/gridRenderers.module.css";
 import {
   fetchAdminCustomers,
   fetchAdminCustomerStats,
@@ -119,6 +130,116 @@ export default function AdminCustomersPage() {
     }
   };
 
+  // Customers grid columns — actions call the same handlers as the old table
+  const columnDefs = useMemo<ColDef<AdminCustomerItem>[]>(() => [
+    {
+      headerName: "",
+      colId: "avatar",
+      width: 60,
+      minWidth: 60,
+      maxWidth: 60,
+      flex: 0,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      cellRenderer: (p: CustomCellRendererProps<AdminCustomerItem>) => {
+        const c = p.data;
+        if (!c) return null;
+        const initials = ((c.first_name ? c.first_name[0] : "") + (c.last_name ? c.last_name[0] : "")).toUpperCase() || "C";
+        return <span className={styles.avatarCircle} aria-hidden="true">{initials}</span>;
+      },
+    },
+    {
+      headerName: "Full Name",
+      field: "name",
+      minWidth: 180,
+      flex: 1.4,
+      cellRenderer: (p: CustomCellRendererProps<AdminCustomerItem>) => {
+        const c = p.data;
+        if (!c) return null;
+        const isVip = c.orders_count >= 2 || c.total_spent >= 50000;
+        return (
+          <span className={styles.custName}>
+            {c.name}
+            {isVip && <span className={styles.vipBadge}>VIP</span>}
+          </span>
+        );
+      },
+    },
+    { headerName: "Email", field: "email", minWidth: 220, flex: 1.5 },
+    { headerName: "Phone", colId: "phone", minWidth: 130, valueGetter: (p) => p.data?.phone || "—" },
+    { headerName: "Orders", field: "orders_count", minWidth: 100, type: "rightAligned", filter: "agNumberColumnFilter" },
+    {
+      headerName: "Total Spent",
+      field: "total_spent",
+      minWidth: 140,
+      type: "rightAligned",
+      filter: "agNumberColumnFilter",
+      cellRenderer: CurrencyRenderer,
+    },
+    {
+      headerName: "Joined",
+      field: "created_at",
+      minWidth: 180,
+      comparator: dateComparator,
+      cellRenderer: DateRenderer,
+    },
+    {
+      headerName: "Role",
+      colId: "role",
+      minWidth: 130,
+      valueGetter: (p) => (p.data?.is_admin ? "Administrator" : "Customer"),
+      cellRenderer: (p: CustomCellRendererProps<AdminCustomerItem>) => (
+        <StatusBadge label={String(p.value).toUpperCase()} tone={p.data?.is_admin ? "gold" : "neutral"} />
+      ),
+    },
+    {
+      headerName: "Status",
+      colId: "status",
+      minWidth: 110,
+      valueGetter: (p) => (p.data?.is_active ? "Active" : "Inactive"),
+      cellRenderer: StatusBadgeRenderer,
+    },
+    {
+      headerName: "Actions",
+      colId: "actions",
+      width: 180,
+      minWidth: 180,
+      maxWidth: 180,
+      flex: 0,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      pinned: "right",
+      cellRenderer: (p: CustomCellRendererProps<AdminCustomerItem>) => {
+        const c = p.data;
+        if (!c) return null;
+        return (
+          <div className={gridStyles.rowActions}>
+            <button
+              type="button"
+              className={gridStyles.rowActionBtn}
+              onClick={() => handleOpenDrawer(c)}
+              title="View customer orders and details"
+            >
+              Inspect
+            </button>
+            <button
+              type="button"
+              className={[gridStyles.rowActionBtn, c.is_active ? "" : gridStyles.rowActionGold].join(" ")}
+              onClick={() => handleStatusToggle(c.id, c.is_active)}
+              disabled={isUpdating === c.id}
+            >
+              {c.is_active ? "Suspend" : "Activate"}
+            </button>
+          </div>
+        );
+      },
+    },
+  // Handlers only use state setters; isUpdating drives the disabled state
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [isUpdating]);
+
   return (
     <div className={styles.container}>
       {/* Header */}
@@ -170,172 +291,64 @@ export default function AdminCustomersPage() {
         </div>
       </div>
 
-      {/* Controls Bar: Tabs & Search */}
-      <div className={styles.controlsBar}>
-        <div className={styles.tabs}>
-          <button
-            className={`${styles.tabBtn} ${activeTab === "customer" ? styles.activeTab : ""}`}
-            onClick={() => setActiveTab("customer")}
-          >
-            Customers <span className={styles.tabBadge}>{stats.total_customers}</span>
-          </button>
-          <button
-            className={`${styles.tabBtn} ${activeTab === "all" ? styles.activeTab : ""}`}
-            onClick={() => setActiveTab("all")}
-          >
-            All Accounts <span className={styles.tabBadge}>{stats.total_users}</span>
-          </button>
-          <button
-            className={`${styles.tabBtn} ${activeTab === "admin" ? styles.activeTab : ""}`}
-            onClick={() => setActiveTab("admin")}
-          >
-            Administrators <span className={styles.tabBadge}>{stats.total_admins}</span>
-          </button>
-        </div>
+      {/* CUSTOMERS GRID (AG Grid Community). Tabs + search stay server-side. */}
+      <AdminDataGrid<AdminCustomerItem>
+        ariaLabel="Customer accounts"
+        rowData={customers}
+        columnDefs={columnDefs}
+        loading={loading}
+        getRowId={(c) => String(c.id)}
+        showSearch={false}
+        emptyTitle="No customers found"
+        emptyDescription="There are no accounts matching the selected filter or query."
+        toolbar={
+          <>
+            <div className={styles.tabs} role="tablist" aria-label="Account type">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "customer"}
+                className={`${styles.tabBtn} ${activeTab === "customer" ? styles.activeTab : ""}`}
+                onClick={() => setActiveTab("customer")}
+              >
+                Customers <span className={styles.tabBadge}>{stats.total_customers}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "all"}
+                className={`${styles.tabBtn} ${activeTab === "all" ? styles.activeTab : ""}`}
+                onClick={() => setActiveTab("all")}
+              >
+                All Accounts <span className={styles.tabBadge}>{stats.total_users}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "admin"}
+                className={`${styles.tabBtn} ${activeTab === "admin" ? styles.activeTab : ""}`}
+                onClick={() => setActiveTab("admin")}
+              >
+                Administrators <span className={styles.tabBadge}>{stats.total_admins}</span>
+              </button>
+            </div>
 
-        <form className={styles.searchForm} onSubmit={handleSearchSubmit}>
-          <input
-            type="text"
-            className={styles.searchInput}
-            placeholder="Search name, email, or phone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <button type="submit" className={styles.searchBtn}>
-            Search
-          </button>
-        </form>
-      </div>
-
-      {/* Customers Table */}
-      <div className={styles.tableWrapper}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Customer</th>
-              <th>Phone</th>
-              <th>Orders</th>
-              <th>Total Spend</th>
-              <th>Joined Date</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th style={{ textAlign: "right" }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={8} style={{ textAlign: "center", padding: "3rem", color: "#888" }}>
-                  Loading customer accounts...
-                </td>
-              </tr>
-            ) : customers.length === 0 ? (
-              <tr>
-                <td colSpan={8}>
-                  <div className={styles.emptyState}>
-                    <div className={styles.emptyIcon}>👤</div>
-                    <h3>No customers found</h3>
-                    <p>There are no accounts matching the selected filter or query.</p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              customers.map((c) => {
-                const initials = (
-                  (c.first_name ? c.first_name[0] : "") +
-                  (c.last_name ? c.last_name[0] : "")
-                ).toUpperCase() || "C";
-                const isVip = c.orders_count >= 2 || c.total_spent >= 50000;
-
-                return (
-                  <tr key={c.id}>
-                    {/* Customer Cell */}
-                    <td>
-                      <div className={styles.custCell}>
-                        <div className={styles.avatarCircle}>{initials}</div>
-                        <div>
-                          <div className={styles.custName}>
-                            {c.name}
-                            {isVip && <span className={styles.vipBadge}>VIP</span>}
-                          </div>
-                          <div className={styles.custEmail}>{c.email}</div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Phone */}
-                    <td style={{ color: "#aaa", fontSize: "0.85rem" }}>
-                      {c.phone || "—"}
-                    </td>
-
-                    {/* Orders count */}
-                    <td>
-                      <span style={{ fontWeight: 600, color: "#fff" }}>
-                        {c.orders_count}
-                      </span>
-                    </td>
-
-                    {/* Total Spend */}
-                    <td>
-                      <span style={{ color: "#c49a45", fontWeight: 600 }}>
-                        ₹{c.total_spent.toLocaleString("en-IN")}
-                      </span>
-                    </td>
-
-                    {/* Joined Date */}
-                    <td style={{ color: "#777", fontSize: "0.8rem", whiteSpace: "nowrap" }}>
-                      {c.created_at ? new Date(c.created_at).toLocaleDateString() : "—"}
-                    </td>
-
-                    {/* Role */}
-                    <td>
-                      <span
-                        className={`${styles.roleBadge} ${c.is_admin ? styles.roleAdmin : ""}`}
-                      >
-                        {c.is_admin ? "Administrator" : "Customer"}
-                      </span>
-                    </td>
-
-                    {/* Status */}
-                    <td>
-                      <span
-                        className={`${styles.statusBadge} ${
-                          c.is_active ? styles.statusActive : styles.statusInactive
-                        }`}
-                      >
-                        {c.is_active ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-
-                    {/* Actions */}
-                    <td style={{ textAlign: "right" }}>
-                      <div className={styles.actionBtns}>
-                        <button
-                          className={styles.btnSecondary}
-                          onClick={() => handleOpenDrawer(c)}
-                          title="View customer orders and details"
-                        >
-                          👁 Inspect
-                        </button>
-
-                        <button
-                          className={`${styles.btnSecondary} ${
-                            c.is_active ? "" : styles.btnGold
-                          }`}
-                          onClick={() => handleStatusToggle(c.id, c.is_active)}
-                          disabled={isUpdating === c.id}
-                        >
-                          {c.is_active ? "Suspend" : "Activate"}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+            <form className={styles.searchForm} onSubmit={handleSearchSubmit} role="search">
+              <input
+                type="search"
+                className={styles.searchInput}
+                placeholder="Search name, email, or phone…"
+                aria-label="Search customers"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button type="submit" className={styles.searchBtn}>
+                Search
+              </button>
+            </form>
+          </>
+        }
+      />
 
       {/* Customer Detail & Orders Modal Drawer */}
       {selectedCustomer && (

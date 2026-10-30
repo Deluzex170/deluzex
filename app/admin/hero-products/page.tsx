@@ -2,20 +2,26 @@
 
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import Image from "next/image";
+import type { ColDef } from "ag-grid-community";
+import type { CustomCellRendererProps } from "ag-grid-react";
 import styles from "../admin.module.css";
+import AdminDataGrid from "../../components/admin/AdminDataGrid";
+import {
+  ActionButtonsRenderer,
+  CurrencyRenderer,
+  ImageThumbnailRenderer,
+  type ActionButtonsParams,
+} from "../../components/admin/gridRenderers";
 import { uploadFileToCloudinary } from "@/lib/upload";
 import {
   Plus,
-  Pencil,
   Trash2,
-  Sparkles,
   Upload,
   AlertCircle,
   ImageIcon,
   X,
   ArrowLeft,
   Save,
-  Search,
 } from "lucide-react";
 import {
   fetchHeroProducts,
@@ -31,7 +37,6 @@ export default function AdminHeroProducts() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
 
   // View mode: 'table' | 'create' | 'edit' (100% full-page UI, zero modal popups)
   const [viewMode, setViewMode] = useState<"table" | "create" | "edit">("table");
@@ -242,15 +247,58 @@ export default function AdminHeroProducts() {
     }
   }
 
-  const filteredProducts = useMemo(() => {
-    if (!searchQuery.trim()) return heroProducts;
-    const q = searchQuery.toLowerCase();
-    return heroProducts.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        (p.alt && p.alt.toLowerCase().includes(q))
-    );
-  }, [heroProducts, searchQuery]);
+  // Hero fixtures grid columns — Edit/Delete use the same handlers as before
+  const columnDefs = useMemo<ColDef<HeroProduct>[]>(() => [
+    {
+      headerName: "Image",
+      field: "image",
+      width: 76,
+      minWidth: 76,
+      maxWidth: 76,
+      flex: 0,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      cellRenderer: ImageThumbnailRenderer,
+    },
+    {
+      headerName: "Title",
+      field: "name",
+      minWidth: 200,
+      flex: 1.5,
+      cellRenderer: (p: CustomCellRendererProps<HeroProduct>) => (
+        <span style={{ fontWeight: 600, color: "var(--admin-text-main)" }}>{p.value}</span>
+      ),
+    },
+    {
+      headerName: "Price",
+      field: "price",
+      minWidth: 120,
+      type: "rightAligned",
+      filter: "agNumberColumnFilter",
+      valueGetter: (p) => Number(p.data?.price || 0),
+      cellRenderer: CurrencyRenderer,
+    },
+    { headerName: "Alt Caption", field: "alt", minWidth: 240, flex: 2, tooltipField: "alt" },
+    {
+      headerName: "Actions",
+      colId: "actions",
+      width: 96,
+      minWidth: 96,
+      maxWidth: 96,
+      flex: 0,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      pinned: "right",
+      cellRenderer: ActionButtonsRenderer<HeroProduct>,
+      cellRendererParams: {
+        onEdit: (p: HeroProduct) => startEdit(p),
+        onDelete: (p: HeroProduct) => setItemToDelete(p),
+        labelFor: (p: HeroProduct) => p.name,
+      } satisfies ActionButtonsParams<HeroProduct>,
+    },
+  ], []);
 
   return (
     <div className={styles.sectionContainer} style={{ width: "100%", maxWidth: "100%" }}>
@@ -677,142 +725,22 @@ export default function AdminHeroProducts() {
             </div>
           )}
 
-          {/* Main Table Card (Full Width) */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%" }}>
-            {/* Search Bar */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.25rem 1.5rem", borderBottom: "1px solid var(--admin-border)" }}>
-              <div style={{ position: "relative", width: "100%", maxWidth: "340px" }}>
-                <Search size={16} color="var(--admin-text-muted)" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }} />
-                <input
-                  type="text"
-                  placeholder="Search hero fixtures..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={styles.formInput}
-                  style={{ paddingLeft: "36px", height: "38px", fontSize: "0.875rem" }}
-                />
-              </div>
-
-              <span style={{ fontSize: "0.85rem", color: "var(--admin-text-muted)" }}>
-                Showing {filteredProducts.length} of {heroProducts.length} hero fixtures
-              </span>
-            </div>
-
-            {loading ? (
-              <div style={{ padding: "4rem 2rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-                Loading hero slider fixtures...
-              </div>
-            ) : filteredProducts.length === 0 ? (
-              <div style={{ padding: "4rem 2rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-                <Sparkles size={40} color="#cbd5e1" style={{ margin: "0 auto 1rem" }} />
-                <h4 style={{ margin: "0 0 0.5rem", color: "var(--admin-primary)", fontSize: "1.05rem" }}>
-                  {searchQuery ? "No matching fixtures" : "No hero fixtures created yet"}
-                </h4>
-                <p style={{ margin: "0 0 1.25rem", fontSize: "0.875rem" }}>
-                  {searchQuery ? "Try refining your search query." : "Add fixtures to appear in the rotating homepage hero card."}
-                </p>
-                {!searchQuery && (
-                  <button onClick={startCreate} className={styles.primaryButton} style={{ margin: "0 auto" }}>
-                    <Plus size={16} /> Add First Hero Fixture
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className={styles.tableWrapper}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th style={{ width: "80px" }}>Image</th>
-                      <th>Fixture Name</th>
-                      <th>Price</th>
-                      <th>Accessibility Alt Text</th>
-                      <th style={{ textAlign: "right", width: "160px" }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProducts.map((prod, idx) => {
-                      const prodId = prod._id || prod.id || idx;
-                      return (
-                        <tr key={prodId}>
-                          <td>
-                            <div
-                              style={{
-                                width: 48,
-                                height: 48,
-                                borderRadius: "8px",
-                                overflow: "hidden",
-                                position: "relative",
-                                background: "var(--admin-surface-muted)",
-                                border: "1px solid var(--admin-border)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                            >
-                              {prod.image ? (
-                                <Image
-                                  src={prod.image}
-                                  alt={prod.alt || prod.name}
-                                  fill
-                                  sizes="48px"
-                                  style={{ objectFit: "cover" }}
-                                />
-                              ) : (
-                                <ImageIcon size={20} color="#94a3b8" />
-                              )}
-                            </div>
-                          </td>
-
-                          <td style={{ fontWeight: 600, color: "var(--admin-primary)", fontSize: "0.95rem" }}>
-                            {prod.name}
-                          </td>
-
-                          <td style={{ fontWeight: 600, color: "var(--admin-primary)" }}>
-                            ₹{Number(prod.price).toFixed(2)}
-                          </td>
-
-                          <td style={{ color: "var(--admin-text-muted)", maxWidth: "320px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "0.85rem" }}>
-                            {prod.alt}
-                          </td>
-
-                          <td style={{ textAlign: "right" }}>
-                            <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", alignItems: "center" }}>
-                              <button
-                                type="button"
-                                onClick={() => startEdit(prod)}
-                                className={styles.actionButton}
-                                style={{ background: "var(--admin-surface-muted)", padding: "0.4rem 0.75rem", fontSize: "0.8rem", borderRadius: "6px" }}
-                              >
-                                <Pencil size={13} color="#475569" />
-                                <span>Edit</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => setItemToDelete(prod)}
-                                className={styles.actionButton}
-                                style={{
-                                  background: "#fef2f2",
-                                  color: "#b91c1c",
-                                  border: "1px solid #fee2e2",
-                                  padding: "0.4rem 0.75rem",
-                                  fontSize: "0.8rem",
-                                  borderRadius: "6px",
-                                }}
-                              >
-                                <Trash2 size={13} />
-                                <span>Delete</span>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+          {/* HERO FIXTURES GRID (AG Grid Community) */}
+          <AdminDataGrid<HeroProduct>
+            ariaLabel="Hero slider fixtures"
+            rowData={heroProducts}
+            columnDefs={columnDefs}
+            loading={loading}
+            getRowId={(p) => String(p._id || p.id || p.name)}
+            searchPlaceholder="Search hero fixtures…"
+            emptyTitle="No hero fixtures created yet"
+            emptyDescription="Add fixtures to appear in the rotating homepage hero card."
+            emptyAction={
+              <button type="button" onClick={startCreate} className={`${styles.btn} ${styles.btnPrimary}`}>
+                <Plus size={15} aria-hidden="true" /> Add First Hero Fixture
+              </button>
+            }
+          />
         </div>
       )}
     </div>

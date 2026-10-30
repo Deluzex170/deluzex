@@ -1,7 +1,18 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
+import type { ColDef } from "ag-grid-community";
+import type { CustomCellRendererProps } from "ag-grid-react";
 import styles from "./coupons.module.css";
+import AdminDataGrid from "../../components/admin/AdminDataGrid";
+import {
+  ActionButtonsRenderer,
+  CurrencyRenderer,
+  StackedCell,
+  StatusBadge,
+  dateComparator,
+  type ActionButtonsParams,
+} from "../../components/admin/gridRenderers";
 import {
   fetchAdminCoupons,
   createAdminCoupon,
@@ -97,7 +108,6 @@ export default function AdminCouponsPage() {
   const [coupons, setCoupons] = useState<AdminCoupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -145,17 +155,9 @@ export default function AdminCouponsPage() {
       if (typeFilter !== "all" && c.discount_type !== typeFilter) return false;
       if (statusFilter === "active" && !c.is_active) return false;
       if (statusFilter === "inactive" && c.is_active) return false;
-
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        const matchesCode = c.code.toLowerCase().includes(q);
-        const matchesTitle = c.title.toLowerCase().includes(q);
-        const matchesDesc = (c.description || "").toLowerCase().includes(q);
-        return matchesCode || matchesTitle || matchesDesc;
-      }
       return true;
     });
-  }, [coupons, typeFilter, statusFilter, searchQuery]);
+  }, [coupons, typeFilter, statusFilter]);
 
   // KPI Metrics
   const stats = useMemo(() => {
@@ -288,6 +290,130 @@ export default function AdminCouponsPage() {
     }
   };
 
+  // Coupons grid columns — toggle, edit and delete use the same handlers as before
+  const columnDefs = useMemo<ColDef<AdminCoupon>[]>(() => [
+    {
+      headerName: "Code",
+      field: "code",
+      minWidth: 220,
+      flex: 1.5,
+      getQuickFilterText: (p) => [p.data.code, p.data.title, p.data.description].filter(Boolean).join(" "),
+      cellRenderer: (p: CustomCellRendererProps<AdminCoupon>) => {
+        const c = p.data;
+        if (!c) return null;
+        return (
+          <StackedCell
+            title={
+              <span className={styles.codeBadge}>
+                <span>{c.code}</span>
+                {c.is_first_order_only && <span className={styles.codeFlag}>1st Order</span>}
+                {!c.is_public && <span className={styles.codeFlag}>Private</span>}
+              </span>
+            }
+            subtitle={c.title}
+          />
+        );
+      },
+    },
+    {
+      headerName: "Discount",
+      colId: "discount",
+      minWidth: 180,
+      valueGetter: (p) => {
+        const c = p.data;
+        if (!c) return "";
+        if (c.discount_type === "percentage") return `${c.discount_value}% off`;
+        if (c.discount_type === "flat") return `₹${c.discount_value.toLocaleString("en-IN")} flat off`;
+        return "Free shipping";
+      },
+      cellRenderer: (p: CustomCellRendererProps<AdminCoupon>) => {
+        const c = p.data;
+        if (!c) return null;
+        const cap = c.discount_type === "percentage" ? (c.max_discount_cap ? `Max ₹${c.max_discount_cap.toLocaleString("en-IN")}` : "No cap") : undefined;
+        return <StackedCell title={<StatusBadge label={String(p.value).toUpperCase()} tone="gold" />} subtitle={cap} />;
+      },
+    },
+    {
+      headerName: "Min Spend",
+      field: "min_order_value",
+      minWidth: 120,
+      type: "rightAligned",
+      filter: "agNumberColumnFilter",
+      cellRenderer: (p: CustomCellRendererProps<AdminCoupon>) =>
+        p.value > 0 ? <CurrencyRenderer {...p} /> : <span style={{ color: "var(--admin-text-subtle)" }}>None</span>,
+    },
+    {
+      headerName: "Expiry Date",
+      field: "expiry_date",
+      minWidth: 150,
+      comparator: dateComparator,
+      valueFormatter: (p) => formatDate(p.value),
+    },
+    {
+      headerName: "Usage",
+      colId: "usage",
+      minWidth: 130,
+      type: "rightAligned",
+      filter: "agNumberColumnFilter",
+      valueGetter: (p) => p.data?.times_used || 0,
+      cellRenderer: (p: CustomCellRendererProps<AdminCoupon>) => {
+        const c = p.data;
+        if (!c) return null;
+        const full = Boolean(c.max_uses && c.times_used >= c.max_uses);
+        return (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontVariantNumeric: "tabular-nums" }}>
+            {c.times_used} / {c.max_uses ? c.max_uses : "∞"}
+            {full && <StatusBadge label="QUOTA FULL" tone="danger" />}
+          </span>
+        );
+      },
+    },
+    {
+      headerName: "Status",
+      colId: "status",
+      minWidth: 140,
+      valueGetter: (p) => (p.data?.is_active ? "Active" : "Inactive"),
+      cellRenderer: (p: CustomCellRendererProps<AdminCoupon>) => {
+        const c = p.data;
+        if (!c) return null;
+        return (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <label className={styles.toggleSwitch} title={c.is_active ? "Deactivate coupon" : "Activate coupon"}>
+              <input
+                type="checkbox"
+                checked={c.is_active}
+                onChange={() => handleToggleActive(c)}
+                aria-label={`${c.is_active ? "Deactivate" : "Activate"} coupon ${c.code}`}
+              />
+              <span className={styles.slider} />
+            </label>
+            <StatusBadge label={c.is_active ? "ACTIVE" : "INACTIVE"} />
+          </span>
+        );
+      },
+    },
+    {
+      headerName: "Actions",
+      colId: "actions",
+      width: 96,
+      minWidth: 96,
+      maxWidth: 96,
+      flex: 0,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      pinned: "right",
+      cellRenderer: ActionButtonsRenderer<AdminCoupon>,
+      cellRendererParams: {
+        onEdit: (c: AdminCoupon) => handleOpenEdit(c),
+        onDelete: (c: AdminCoupon) => setDeleteTarget(c),
+        labelFor: (c: AdminCoupon) => "coupon " + c.code,
+      } satisfies ActionButtonsParams<AdminCoupon>,
+    },
+  // Handlers only use state setters and the row they receive
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], []);
+
   return (
     <div className={styles.container}>
       {/* Toast Notification */}
@@ -361,186 +487,42 @@ export default function AdminCouponsPage() {
         </div>
       </div>
 
-      {/* Controls Bar */}
-      <div className={styles.controlsBar}>
-        <div className={styles.searchBox}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search coupon code or description..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        <div className={styles.filterGroup}>
-          <select
-            className={styles.selectInput}
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-          >
-            <option value="all">All Discount Types</option>
-            <option value="percentage">Percentage (%)</option>
-            <option value="flat">Flat Cash (₹)</option>
-            <option value="free_shipping">Free Shipping</option>
-          </select>
-
-          <select
-            className={styles.selectInput}
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="all">All Statuses</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Coupons Table */}
-      <div className={styles.tableCard}>
-        {loading ? (
-          <div className={styles.emptyState}>
-            <p>Loading luxury promotional codes...</p>
+      {/* COUPONS GRID (AG Grid Community) */}
+      <AdminDataGrid<AdminCoupon>
+        ariaLabel="Coupons and offers"
+        rowData={filteredCoupons}
+        columnDefs={columnDefs}
+        loading={loading}
+        getRowId={(c) => String(c._id)}
+        searchPlaceholder="Search code, title or description…"
+        emptyTitle="No coupons found"
+        emptyDescription="Adjust your filters or create a new coupon code above."
+        toolbar={
+          <div className={styles.filterGroup}>
+            <select
+              className={styles.selectInput}
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              aria-label="Filter by discount type"
+            >
+              <option value="all">All Discount Types</option>
+              <option value="percentage">Percentage (%)</option>
+              <option value="flat">Flat Cash (₹)</option>
+              <option value="free_shipping">Free Shipping</option>
+            </select>
+            <select
+              className={styles.selectInput}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              aria-label="Filter by status"
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active Only</option>
+              <option value="inactive">Inactive Only</option>
+            </select>
           </div>
-        ) : filteredCoupons.length === 0 ? (
-          <div className={styles.emptyState}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-              <line x1="7" y1="7" x2="7.01" y2="7" />
-            </svg>
-            <h3>No coupons found</h3>
-            <p>Adjust your search filters or create a new coupon code above.</p>
-          </div>
-        ) : (
-          <div className={styles.tableContainer}>
-            <table className={styles.couponTable}>
-              <thead>
-                <tr>
-                  <th>Code & Details</th>
-                  <th>Discount Type & Value</th>
-                  <th>Min Order</th>
-                  <th>Redemptions</th>
-                  <th>Validity</th>
-                  <th>Active</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCoupons.map((coupon) => (
-                  <tr key={coupon._id}>
-                    <td>
-                      <div className={styles.codeCell}>
-                        <div className={styles.codeBadge}>
-                          <span>{coupon.code}</span>
-                          {coupon.is_first_order_only && (
-                            <span style={{ fontSize: "0.65rem", padding: "0.15rem 0.35rem", background: "rgba(212, 175, 55, 0.2)", borderRadius: "4px" }}>
-                              1st Order
-                            </span>
-                          )}
-                          {!coupon.is_public && (
-                            <span style={{ fontSize: "0.65rem", padding: "0.15rem 0.35rem", background: "rgba(255, 255, 255, 0.1)", borderRadius: "4px", color: "#9ca3af" }}>
-                              Secret/Private
-                            </span>
-                          )}
-                        </div>
-                        <span className={styles.codeDesc}>{coupon.title}</span>
-                      </div>
-                    </td>
-                    <td>
-                      {coupon.discount_type === "percentage" && (
-                        <div>
-                          <span className={`${styles.typeBadge} ${styles.typePercentage}`}>
-                            {coupon.discount_value}% OFF
-                          </span>
-                          {coupon.max_discount_cap ? (
-                            <div className={styles.capText}>Max Cap: ₹{coupon.max_discount_cap.toLocaleString("en-IN")}</div>
-                          ) : (
-                            <div className={styles.capText}>No Cap</div>
-                          )}
-                        </div>
-                      )}
-                      {coupon.discount_type === "flat" && (
-                        <span className={`${styles.typeBadge} ${styles.typeFlat}`}>
-                          ₹{coupon.discount_value.toLocaleString("en-IN")} FLAT OFF
-                        </span>
-                      )}
-                      {coupon.discount_type === "free_shipping" && (
-                        <span className={`${styles.typeBadge} ${styles.typeFreeShipping}`}>
-                          Free Shipping
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      {coupon.min_order_value > 0 ? (
-                        <span>₹{coupon.min_order_value.toLocaleString("en-IN")}</span>
-                      ) : (
-                        <span style={{ color: "#8e8e93" }}>None</span>
-                      )}
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", alignItems: "flex-start" }}>
-                        <span>
-                          {coupon.times_used} / {coupon.max_uses ? coupon.max_uses : "∞"}
-                        </span>
-                        {Boolean(coupon.max_uses && coupon.times_used >= coupon.max_uses) && (
-                          <span style={{ fontSize: "0.65rem", padding: "0.15rem 0.35rem", background: "rgba(239, 68, 68, 0.2)", color: "#ef4444", borderRadius: "4px", fontWeight: 700, letterSpacing: "0.03em" }}>
-                            QUOTA FULL
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <span style={{ fontSize: "0.85rem", color: coupon.expiry_date ? "#d1d5db" : "#8e8e93" }}>
-                        {formatDate(coupon.expiry_date)}
-                      </span>
-                    </td>
-                    <td>
-                      <label className={styles.toggleSwitch}>
-                        <input
-                          type="checkbox"
-                          checked={coupon.is_active}
-                          onChange={() => handleToggleActive(coupon)}
-                        />
-                        <span className={styles.slider} />
-                      </label>
-                    </td>
-                    <td>
-                      <div className={styles.actionsCell}>
-                        <button
-                          type="button"
-                          className={styles.btnIcon}
-                          title="Edit coupon"
-                          onClick={() => handleOpenEdit(coupon)}
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          className={`${styles.btnIcon} ${styles.btnIconDelete}`}
-                          title="Delete coupon"
-                          onClick={() => setDeleteTarget(coupon)}
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+        }
+      />
 
       {/* Create / Edit Modal */}
       {isModalOpen && (

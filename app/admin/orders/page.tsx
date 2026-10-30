@@ -14,6 +14,7 @@ import {
   StackedCell,
   dateComparator,
 } from "../../components/admin/gridRenderers";
+import gridStyles from "../../components/admin/gridRenderers.module.css";
 import {
   fetchAdminOrders,
   fetchOrderStats,
@@ -365,13 +366,13 @@ export default function AdminOrdersPage() {
         const idStr = ord.id || ord._id || ord.order_id || "DLX";
         const needsReturnReview = ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested";
         return (
-          <div className={styles.rowActions}>
-            <button type="button" className={styles.rowActionBtn} onClick={() => handleOpenDrawer(ord)}>
+          <div className={gridStyles.rowActions}>
+            <button type="button" className={gridStyles.rowActionBtn} onClick={() => handleOpenDrawer(ord)}>
               Manage
             </button>
             <button
               type="button"
-              className={[styles.rowActionBtn, needsReturnReview ? styles.rowActionWarn : styles.rowActionGold].join(" ")}
+              className={[gridStyles.rowActionBtn, needsReturnReview ? gridStyles.rowActionWarn : gridStyles.rowActionGold].join(" ")}
               onClick={() => setShiprocketOrder(ord)}
               title="Ship with Shiprocket, generate AWB, print labels, live track & reverse returns"
             >
@@ -379,7 +380,7 @@ export default function AdminOrdersPage() {
             </button>
             <button
               type="button"
-              className={styles.rowIconBtn}
+              className={gridStyles.rowIconBtn}
               onClick={() => setInvoiceOrder(ord)}
               title="View and print GST Tax Invoice"
               aria-label={`Invoice for ${orderDisplayId(ord)}`}
@@ -388,7 +389,7 @@ export default function AdminOrdersPage() {
             </button>
             <button
               type="button"
-              className={[styles.rowIconBtn, styles.rowIconDanger].join(" ")}
+              className={[gridStyles.rowIconBtn, gridStyles.rowIconDanger].join(" ")}
               onClick={() => handleDeleteOrder(idStr)}
               title="Delete order record"
               aria-label={`Delete order ${orderDisplayId(ord)}`}

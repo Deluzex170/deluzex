@@ -221,7 +221,6 @@ export default function AdminProducts() {
       } satisfies ActionButtonsParams<Product>,
     },
   // handleToggleNewArrival only reads stable setters; togglingId drives the "Updating…" state
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [togglingId]);
 
   return (
