@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import type { ColDef } from "ag-grid-community";
+import { AdminDataGrid } from "../../components/admin/AdminDataGrid";
 import styles from "../admin.module.css";
 import {
   fetchFaqs,
@@ -26,6 +28,7 @@ import {
 
 export default function AdminFaqsPage() {
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -150,6 +153,143 @@ export default function AdminFaqsPage() {
     }
   };
 
+  
+  const columnDefs = useMemo<ColDef<FAQItem>[]>(
+    () => [
+      {
+        field: "sequence",
+        headerName: "Seq",
+        width: 80,
+        cellRenderer: (params: any) => {
+          const faq = params.data as FAQItem;
+          return <span style={{ fontWeight: 700, color: "var(--admin-text-muted)" }}>#{faq?.sequence || 1}</span>;
+        },
+      },
+      {
+        field: "question",
+        headerName: "Question & Answer",
+        flex: 2,
+        minWidth: 280,
+        cellRenderer: (params: any) => {
+          const faq = params.data as FAQItem;
+          if (!faq) return null;
+          return (
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", overflow: "hidden" }}>
+              <div style={{ fontWeight: 600, color: "var(--admin-text-main)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {faq.question}
+              </div>
+              <div style={{ color: "var(--admin-text-muted)", fontSize: "0.78rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {faq.answer}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        field: "category",
+        headerName: "Category",
+        width: 140,
+        cellRenderer: (params: any) => {
+          const faq = params.data as FAQItem;
+          if (!faq) return null;
+          return (
+            <span
+              style={{
+                fontSize: "0.74rem",
+                fontWeight: 600,
+                padding: "0.25rem 0.6rem",
+                borderRadius: "5px",
+                textTransform: "capitalize",
+                background: faq.category === "collaborate" ? "rgba(196, 154, 69, 0.12)" : "#f1f5f9",
+                color: faq.category === "collaborate" ? "#9a762e" : "#475569",
+              }}
+            >
+              {faq.category || "collaborate"}
+            </span>
+          );
+        },
+      },
+      {
+        field: "is_active",
+        headerName: "Status",
+        width: 120,
+        cellRenderer: (params: any) => {
+          const faq = params.data as FAQItem;
+          if (!faq) return null;
+          return (
+            <button
+              onClick={() => handleToggleActive(faq)}
+              style={{
+                background: faq.is_active ? "rgba(16, 185, 129, 0.1)" : "rgba(100, 116, 139, 0.1)",
+                color: faq.is_active ? "#10b981" : "#64748b",
+                border: "none",
+                borderRadius: "6px",
+                padding: "0.25rem 0.6rem",
+                fontSize: "0.76rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.35rem",
+              }}
+            >
+              {faq.is_active ? <Eye size={13} /> : <EyeOff size={13} />}
+              {faq.is_active ? "Active" : "Hidden"}
+            </button>
+          );
+        },
+      },
+      {
+        headerName: "Actions",
+        width: 110,
+        pinned: "right",
+        cellRenderer: (params: any) => {
+          const faq = params.data as FAQItem;
+          if (!faq) return null;
+          return (
+            <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", height: "100%" }}>
+              <button
+                title="Edit FAQ"
+                onClick={() => openEditModal(faq)}
+                style={{
+                  background: "var(--admin-surface-muted)",
+                  border: "1px solid var(--admin-border)",
+                  borderRadius: "6px",
+                  padding: "0.35rem",
+                  color: "var(--admin-text-secondary)",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Pencil size={13} />
+              </button>
+              <button
+                title="Delete FAQ"
+                onClick={() => setItemToDelete(faq)}
+                style={{
+                  background: "#fef2f2",
+                  border: "1px solid #fecaca",
+                  borderRadius: "6px",
+                  padding: "0.35rem",
+                  color: "#ef4444",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    []
+  );
+
   return (
     <div style={{ width: "100%", maxWidth: "100%", margin: 0, padding: 0 }}>
       {/* Toast Notification */}
@@ -259,129 +399,38 @@ export default function AdminFaqsPage() {
         ))}
       </div>
 
-      {/* FAQs Table */}
-      <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
-        {loading ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-            <p>Loading FAQs...</p>
+      {/* AG-Grid FAQs */}
+      <AdminDataGrid<FAQItem>
+        ariaLabel="Frequently Asked Questions"
+        rowData={faqs}
+        columnDefs={columnDefs}
+        loading={loading}
+        getRowId={(s) => String(s._id || s.id || s.question)}
+        quickFilterText={searchQuery}
+        emptyTitle="No FAQs found"
+        emptyDescription="Click 'Seed Default FAQs' or 'Add New Question' to add entries for your visitors."
+        toolbar={
+          <div style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
+            <input
+              type="search"
+              placeholder="Search questions or answers..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                height: "36px",
+                padding: "0 12px",
+                borderRadius: "8px",
+                border: "1px solid var(--admin-border)",
+                background: "var(--admin-surface)",
+                color: "var(--admin-text-main)",
+                fontSize: "13px",
+                outline: "none",
+                minWidth: "240px",
+              }}
+            />
           </div>
-        ) : faqs.length === 0 ? (
-          <div style={{ padding: "3.5rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-            <HelpCircle size={40} color="#cbd5e1" style={{ margin: "0 auto 1rem auto" }} />
-            <h3 style={{ fontSize: "1.1rem", color: "var(--admin-text-secondary)", margin: "0 0 0.5rem 0" }}>No FAQs found</h3>
-            <p style={{ fontSize: "0.88rem", maxWidth: "400px", margin: "0 auto 1.5rem auto" }}>
-              Click "Seed Default FAQs" or "Add New Question" to add entries for your visitors.
-            </p>
-          </div>
-        ) : (
-          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-            <table style={{ width: "100%", minWidth: "850px", borderCollapse: "collapse", textAlign: "left", fontSize: "0.88rem" }}>
-              <thead>
-                <tr style={{ background: "var(--admin-surface-muted)", borderBottom: "1px solid var(--admin-border)", color: "var(--admin-text-secondary)", fontWeight: 600 }}>
-                  <th style={{ padding: "0.85rem 1rem", width: "70px" }}>Seq</th>
-                  <th style={{ padding: "0.85rem 1.25rem" }}>Question &amp; Answer</th>
-                  <th style={{ padding: "0.85rem 1rem", width: "130px" }}>Category</th>
-                  <th style={{ padding: "0.85rem 1rem", width: "110px" }}>Status</th>
-                  <th style={{ padding: "0.85rem 1.25rem", width: "130px", textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {faqs.map((faq, index) => {
-                  const faqId = faq._id || String(faq.id || index);
-                  return (
-                    <tr
-                      key={faqId}
-                      style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.15s" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#fafafa")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                    >
-                      <td style={{ padding: "0.85rem 1rem", fontWeight: 700, color: "var(--admin-text-muted)" }}>
-                        #{faq.sequence || index + 1}
-                      </td>
-                      <td style={{ padding: "0.85rem 1.25rem" }}>
-                        <div style={{ fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "0.25rem" }}>
-                          {faq.question}
-                        </div>
-                        <div style={{ color: "var(--admin-text-muted)", fontSize: "0.82rem", lineHeight: "1.5", maxWidth: "680px" }}>
-                          {faq.answer}
-                        </div>
-                      </td>
-                      <td style={{ padding: "0.85rem 1rem" }}>
-                        <span
-                          style={{
-                            fontSize: "0.74rem",
-                            fontWeight: 600,
-                            padding: "0.25rem 0.6rem",
-                            borderRadius: "5px",
-                            textTransform: "capitalize",
-                            background: faq.category === "collaborate" ? "rgba(196, 154, 69, 0.12)" : "#f1f5f9",
-                            color: faq.category === "collaborate" ? "#9a762e" : "#475569",
-                          }}
-                        >
-                          {faq.category || "collaborate"}
-                        </span>
-                      </td>
-                      <td style={{ padding: "0.85rem 1rem" }}>
-                        <button
-                          onClick={() => handleToggleActive(faq)}
-                          style={{
-                            background: faq.is_active ? "rgba(16, 185, 129, 0.1)" : "rgba(100, 116, 139, 0.1)",
-                            color: faq.is_active ? "#10b981" : "#64748b",
-                            border: "none",
-                            borderRadius: "6px",
-                            padding: "0.3rem 0.65rem",
-                            fontSize: "0.76rem",
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "0.35rem",
-                          }}
-                        >
-                          {faq.is_active ? <Eye size={13} /> : <EyeOff size={13} />}
-                          {faq.is_active ? "Active" : "Hidden"}
-                        </button>
-                      </td>
-                      <td style={{ padding: "0.85rem 1.25rem", textAlign: "right" }}>
-                        <div style={{ display: "inline-flex", gap: "0.4rem" }}>
-                          <button
-                            title="Edit FAQ"
-                            onClick={() => openEditModal(faq)}
-                            style={{
-                              background: "var(--admin-surface-muted)",
-                              border: "1px solid var(--admin-border)",
-                              borderRadius: "6px",
-                              padding: "0.4rem",
-                              color: "var(--admin-text-secondary)",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <Pencil size={14} />
-                          </button>
-                          <button
-                            title="Delete FAQ"
-                            onClick={() => setItemToDelete(faq)}
-                            style={{
-                              background: "#fef2f2",
-                              border: "1px solid #fecaca",
-                              borderRadius: "6px",
-                              padding: "0.4rem",
-                              color: "#ef4444",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+        }
+      />
 
       {/* CREATE / EDIT MODAL */}
       {isModalOpen && (
