@@ -2,7 +2,19 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
+import type { ColDef } from "ag-grid-community";
+import type { CustomCellRendererProps } from "ag-grid-react";
+import { FileText, Trash2, Mail, MessageCircle } from "lucide-react";
 import styles from "./orders.module.css";
+import AdminDataGrid from "../../components/admin/AdminDataGrid";
+import {
+  CurrencyRenderer,
+  DateRenderer,
+  ImageThumbnailRenderer,
+  StackedCell,
+  dateComparator,
+} from "../../components/admin/gridRenderers";
+import gridStyles from "../../components/admin/gridRenderers.module.css";
 import {
   fetchAdminOrders,
   fetchOrderStats,
@@ -35,6 +47,25 @@ const COURIER_OPTIONS = [
   "Shadowfax",
   "Other Local Logistics",
 ];
+
+function orderDisplayId(ord: UserOrder): string {
+  const idStr = ord.id || ord._id || ord.order_id || "DLX";
+  if (ord.order_number) return `#${ord.order_number}`;
+  if (idStr.length >= 24) {
+    const d = new Date(ord.created_at || Date.now());
+    return `#DLX-${d.getFullYear().toString().slice(-2)}${String(d.getMonth() + 1).padStart(2, "0")}-${idStr.slice(-4).toUpperCase()}`;
+  }
+  return `#${idStr}`;
+}
+
+function orderCustomerName(ord: UserOrder): string {
+  const address = ord.shipping_address;
+  return (
+    ord.customer_name ||
+    (address ? `${address.first_name || ""} ${address.last_name || ""}`.trim() : "") ||
+    "Valued Client"
+  );
+}
 
 function formatCurrency(val: number | string | undefined): string {
   if (val === undefined || val === null) return "₹0";
@@ -108,8 +139,12 @@ export default function AdminOrdersPage() {
     }
   }, [activeTab, searchQuery]);
 
+  // Debounced loadData so typing search is instant via AG Grid client filter and server is not spammed
   useEffect(() => {
-    loadData();
+    const timer = setTimeout(() => {
+      loadData();
+    }, 300);
+    return () => clearTimeout(timer);
   }, [loadData]);
 
   // When drawer opens, initialize form state
@@ -176,12 +211,18 @@ export default function AdminOrdersPage() {
     let badgeClass = styles.statusPending;
     let label = status || "Pending";
 
-    if (s === "paid" || s === "processing") {
+    if (s === "paid") {
       badgeClass = styles.statusProcessing;
-      label = s === "paid" ? "Paid" : "Processing";
-    } else if (s === "shipped" || s === "out_for_delivery") {
+      label = "Paid";
+    } else if (s === "processing") {
+      badgeClass = styles.statusProcessing;
+      label = "Processing";
+    } else if (s === "shipped") {
       badgeClass = styles.statusShipped;
-      label = s === "out_for_delivery" ? "Out for Delivery" : "Shipped";
+      label = "Shipped";
+    } else if (s === "out_for_delivery") {
+      badgeClass = styles.statusShipped;
+      label = "Out for Delivery";
     } else if (s === "delivered") {
       badgeClass = styles.statusDelivered;
       label = "Delivered";
@@ -192,45 +233,276 @@ export default function AdminOrdersPage() {
       badgeClass = styles.statusPending;
       label = "COD (Pending)";
     } else if (s === "return_requested") {
-      return (
-        <span
-          className={styles.statusBadge}
-          style={{ background: "rgba(245, 158, 11, 0.15)", color: "#f59e0b", borderColor: "rgba(245, 158, 11, 0.35)" }}
-        >
-          ● Return Requested
-        </span>
-      );
+      badgeClass = styles.statusReturnRequested;
+      label = "Return Requested";
     } else if (s === "return_in_transit" || s === "return_approved") {
-      return (
-        <span
-          className={styles.statusBadge}
-          style={{ background: "rgba(16, 185, 129, 0.15)", color: "#10b981", borderColor: "rgba(16, 185, 129, 0.35)" }}
-        >
-          ● Return In Transit
-        </span>
-      );
+      badgeClass = styles.statusReturnTransit;
+      label = s === "return_approved" ? "Return Approved" : "Return In Transit";
     } else if (s === "return_rejected") {
-      return (
-        <span
-          className={styles.statusBadge}
-          style={{ background: "rgba(239, 68, 68, 0.15)", color: "#ef4444", borderColor: "rgba(239, 68, 68, 0.35)" }}
-        >
-          ● Return Rejected
-        </span>
-      );
+      badgeClass = styles.statusReturnRejected;
+      label = "Return Rejected";
     } else if (s === "returned") {
-      return (
-        <span
-          className={styles.statusBadge}
-          style={{ background: "rgba(99, 102, 241, 0.15)", color: "#818cf8", borderColor: "rgba(99, 102, 241, 0.35)" }}
-        >
-          ● Returned & Restocked
-        </span>
-      );
+      badgeClass = styles.statusReturned;
+      label = "Returned";
     }
 
-    return <span className={`${styles.statusBadge} ${badgeClass}`}>● {label}</span>;
+    return (
+      <span className={`${styles.statusBadge} ${badgeClass}`}>
+        <span className={styles.statusDot} />
+        {label}
+      </span>
+    );
   };
+
+  // Orders grid columns — every action calls the same handlers as the old table
+  const columnDefs = useMemo<ColDef<UserOrder>[]>(() => [
+    {
+      headerName: "Order ID",
+      colId: "orderId",
+      width: 125,
+      minWidth: 115,
+      maxWidth: 135,
+      valueGetter: (p) => (p.data ? orderDisplayId(p.data) : ""),
+      getQuickFilterText: (p) => {
+        const d = p.data;
+        if (!d) return "";
+        const disp = orderDisplayId(d);
+        const rawDisp = disp.replace(/^#/, "");
+        const idStr = String(d.id || d._id || d.order_id || "");
+        const last4 = idStr.slice(-4);
+        return [
+          disp,
+          rawDisp,
+          last4,
+          d.order_number,
+          d.order_id,
+          d.id,
+          d._id,
+          d.tracking_number,
+          d.awb_code,
+        ]
+          .filter(Boolean)
+          .join(" ");
+      },
+      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => (
+        <StackedCell
+          title={<span className={styles.orderIdText}>{p.value}</span>}
+          subtitle={p.data?.tracking_number ? `AWB ${p.data.tracking_number}` : undefined}
+        />
+      ),
+    },
+    {
+      headerName: "Date",
+      colId: "date",
+      width: 135,
+      minWidth: 125,
+      maxWidth: 145,
+      sort: "desc",
+      valueGetter: (p) => p.data?.created_at || p.data?.createdAt || "",
+      comparator: dateComparator,
+      filter: "agDateColumnFilter",
+      filterValueGetter: (p) => {
+        const v = p.data?.created_at || p.data?.createdAt;
+        return v ? new Date(v) : null;
+      },
+      cellRenderer: DateRenderer,
+    },
+    {
+      headerName: "Customer",
+      colId: "customer",
+      minWidth: 210,
+      flex: 1.5,
+      valueGetter: (p) => (p.data ? orderCustomerName(p.data) : ""),
+      getQuickFilterText: (p) => {
+        const d = p.data;
+        if (!d) return "";
+        const name = orderCustomerName(d);
+        const anyD = d as Record<string, any>;
+        const phone = d.user_phone || anyD.phone || anyD.shipping_address?.phone || "";
+        const email = d.user_email || anyD.email || anyD.shipping_address?.email || "";
+        const city = d.shipping_address?.city || "";
+        const state = d.shipping_address?.state || "";
+        return [name, phone, email, city, state].filter(Boolean).join(" ");
+      },
+      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => {
+        const d = p.data;
+        if (!d) return null;
+        const name = orderCustomerName(d);
+        const anyD = d as Record<string, any>;
+        const phone = d.user_phone || anyD.phone || anyD.shipping_address?.phone || "";
+        const email = d.user_email || anyD.email || anyD.shipping_address?.email || "";
+
+        const digits = phone.replace(/\D/g, "");
+        const waNumber = digits.length === 10 ? `91${digits}` : digits;
+        const waLink = digits.length >= 10 ? `https://wa.me/${waNumber}` : null;
+
+        return (
+          <div className={styles.customerCell}>
+            <span className={styles.customerName} title={name}>
+              {name}
+            </span>
+            <div className={styles.customerContactRow}>
+              {phone ? (
+                waLink ? (
+                  <a
+                    href={waLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.customerPhoneLink}
+                    onClick={(e) => e.stopPropagation()}
+                    title={`Click to chat with ${name} on WhatsApp (${phone})`}
+                  >
+                    <MessageCircle size={12} className={styles.waIcon} aria-hidden="true" />
+                    <span>{phone}</span>
+                  </a>
+                ) : (
+                  <span className={styles.customerPhoneLink}>
+                    <span>{phone}</span>
+                  </span>
+                )
+              ) : (
+                <span className={styles.noPhoneText}>No phone</span>
+              )}
+              {email && (
+                <a
+                  href={`mailto:${email}`}
+                  className={styles.customerEmailBtn}
+                  onClick={(e) => e.stopPropagation()}
+                  title={`Email: ${email} (Click to open mail client)`}
+                  aria-label={`Send email to ${email}`}
+                >
+                  <Mail size={11} aria-hidden="true" />
+                </a>
+              )}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Items",
+      colId: "items",
+      width: 105,
+      minWidth: 95,
+      maxWidth: 115,
+      filter: "agNumberColumnFilter",
+      valueGetter: (p) => p.data?.items?.reduce((acc, it) => acc + (it.quantity || 1), 0) || 0,
+      getQuickFilterText: (p) => {
+        const items = p.data?.items || [];
+        return items.map((it) => `${it.title} ${it.variant || ""}`).filter(Boolean).join(" ");
+      },
+      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => {
+        const items = p.data?.items || [];
+        return (
+          <div className={styles.itemThumbGroup}>
+            {items.slice(0, 2).map((item, idx) => (
+              <span key={idx} className={styles.itemThumb} title={`${item.title} (x${item.quantity})`}>
+                <ImageThumbnailRenderer {...p} value={item.image || "/images/card1.jpg"} size={28} />
+              </span>
+            ))}
+            {items.length > 2 && <span className={styles.itemMoreBadge}>+{items.length - 2}</span>}
+            <span className={styles.itemPcs}>{p.value} pcs</span>
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Total",
+      colId: "total",
+      width: 95,
+      minWidth: 85,
+      maxWidth: 105,
+      type: "rightAligned",
+      filter: "agNumberColumnFilter",
+      valueGetter: (p) => Number(p.data?.total || p.data?.amount || 0),
+      getQuickFilterText: (p) => {
+        const t = p.data?.total || p.data?.amount || 0;
+        return `₹${t} ${t}`;
+      },
+      cellRenderer: CurrencyRenderer,
+    },
+    {
+      headerName: "Payment",
+      colId: "payment",
+      width: 80,
+      minWidth: 75,
+      maxWidth: 90,
+      valueGetter: (p) => (p.data?.payment_method?.toLowerCase() === "cod" ? "COD" : "Online"),
+      getQuickFilterText: (p) =>
+        p.data?.payment_method?.toLowerCase() === "cod" ? "COD Cash on Delivery" : "Online Razorpay Prepaid",
+      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => {
+        const isCod = p.data?.payment_method?.toLowerCase() === "cod";
+        return (
+          <span className={isCod ? styles.paymentBadgeCod : styles.paymentBadgeOnline}>
+            {isCod ? "COD" : "Online"}
+          </span>
+        );
+      },
+    },
+    {
+      headerName: "Status",
+      colId: "status",
+      width: 125,
+      minWidth: 115,
+      maxWidth: 135,
+      valueGetter: (p) => p.data?.status || "pending",
+      getQuickFilterText: (p) => [p.data?.status, p.data?.payment_status].filter(Boolean).join(" "),
+      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => renderStatusBadge(p.data?.status),
+    },
+    {
+      headerName: "Actions",
+      colId: "actions",
+      width: 175,
+      minWidth: 170,
+      maxWidth: 180,
+      flex: 0,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      pinned: "right",
+      cellRenderer: (p: CustomCellRendererProps<UserOrder>) => {
+        const ord = p.data;
+        if (!ord) return null;
+        const idStr = ord.id || ord._id || ord.order_id || "DLX";
+        const needsReturnReview = ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested";
+        return (
+          <div className={gridStyles.rowActions}>
+            <button type="button" className={gridStyles.rowActionBtn} onClick={() => handleOpenDrawer(ord)}>
+              Manage
+            </button>
+            <button
+              type="button"
+              className={[gridStyles.rowActionBtn, needsReturnReview ? gridStyles.rowActionWarn : gridStyles.rowActionGold].join(" ")}
+              onClick={() => setShiprocketOrder(ord)}
+              title="Ship with Shiprocket, generate AWB, print labels, live track & reverse returns"
+            >
+              {needsReturnReview ? "Review Return" : ord.awb_code ? "Shiprocket" : "Ship"}
+            </button>
+            <button
+              type="button"
+              className={gridStyles.rowIconBtn}
+              onClick={() => setInvoiceOrder(ord)}
+              title="View and print GST Tax Invoice"
+              aria-label={`Invoice for ${orderDisplayId(ord)}`}
+            >
+              <FileText size={14} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className={[gridStyles.rowIconBtn, gridStyles.rowIconDanger].join(" ")}
+              onClick={() => handleDeleteOrder(idStr)}
+              title="Delete order record"
+              aria-label={`Delete order ${orderDisplayId(ord)}`}
+            >
+              <Trash2 size={14} aria-hidden="true" />
+            </button>
+          </div>
+        );
+      },
+    },
+  // Handlers only use state setters and the orders list via functional updates
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [selectedOrder]);
 
   return (
     <div className={styles.container}>
@@ -293,191 +565,50 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
-      {/* SEARCH AND FILTER TABS */}
-      <div className={styles.controlsBar}>
-        <div className={styles.searchWrapper}>
-          <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="text"
-            className={styles.searchInput}
-            placeholder="Search by Order ID, customer, phone, or tracking..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        <div className={styles.tabsRow}>
-          {STATUS_TABS.map((tab) => (
-            <button
-              key={tab.key}
-              className={`${styles.tabBtn} ${activeTab === tab.key ? styles.tabBtnActive : ""}`}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ORDERS TABLE */}
-      <div className={styles.tableCard}>
-        {loading ? (
-          <div className={styles.emptyState}>
-            <p>Retrieving orders from MongoDB Atlas...</p>
-          </div>
-        ) : orders.length === 0 ? (
-          <div className={styles.emptyState}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <path d="M16 10a4 4 0 0 1-8 0" />
-            </svg>
-            <h3>No Orders Found</h3>
-            <p>No orders match the current filter criteria or search query.</p>
-          </div>
-        ) : (
-          <div className={styles.tableWrapper}>
-            <table className={styles.ordersTable}>
-              <thead>
-                <tr>
-                  <th>Order Reference</th>
-                  <th>Date & Time</th>
-                  <th>Customer Information</th>
-                  <th>Articles</th>
-                  <th>Total Amount</th>
-                  <th>Payment Mode</th>
-                  <th>Fulfillment Status</th>
-                  <th style={{ textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((ord) => {
-                  const idStr = ord.id || ord._id || ord.order_id || "DLX";
-                  const displayId = idStr.length > 10 ? `#${idStr.slice(-8).toUpperCase()}` : `#${idStr}`;
-                  const address = ord.shipping_address;
-                  const customerName =
-                    ord.customer_name ||
-                    (address ? `${address.first_name || ""} ${address.last_name || ""}`.trim() : "") ||
-                    "Valued Client";
-
-                  return (
-                    <tr key={idStr}>
-                      <td>
-                        <span className={styles.orderIdText}>{displayId}</span>
-                        {ord.tracking_number && (
-                          <div style={{ fontSize: "0.75rem", color: "#7e22ce", marginTop: "2px", fontWeight: 600 }}>
-                            🚚 {ord.tracking_number}
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        <div style={{ color: "#475569", fontSize: "0.85rem", fontWeight: 500 }}>{formatDate(ord.created_at || ord.createdAt)}</div>
-                      </td>
-                      <td>
-                        <div className={styles.customerName}>{customerName}</div>
-                        <div className={styles.customerSub}>{ord.user_email || "No email"}</div>
-                        {ord.user_phone && <div className={styles.customerSub}>📞 {ord.user_phone}</div>}
-                      </td>
-                      <td>
-                        <div className={styles.itemThumbGroup}>
-                          {ord.items && ord.items.slice(0, 2).map((item, idx) => (
-                            <div key={idx} className={styles.itemThumb} title={`${item.title} (x${item.quantity})`}>
-                              <Image
-                                src={item.image || "/images/card1.jpg"}
-                                alt={item.title || "Luminaire"}
-                                fill
-                                style={{ objectFit: "cover" }}
-                              />
-                            </div>
-                          ))}
-                          {ord.items && ord.items.length > 2 && (
-                            <span className={styles.itemMoreBadge}>+{ord.items.length - 2}</span>
-                          )}
-                          <span style={{ fontSize: "0.82rem", color: "#64748b", marginLeft: "4px" }}>
-                            ({ord.items?.reduce((acc, it) => acc + (it.quantity || 1), 0) || 0} pcs)
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={styles.amountText}>{formatCurrency(ord.total || ord.amount)}</span>
-                      </td>
-                      <td>
-                        <span className={styles.paymentMethodBadge}>
-                          {ord.payment_method?.toLowerCase() === "cod" ? "Cash on Delivery" : "Razorpay Online"}
-                        </span>
-                      </td>
-                      <td>{renderStatusBadge(ord.status)}</td>
-                      <td style={{ textAlign: "right" }}>
-                        <div className={styles.actionBtnGroup} style={{ justifyContent: "flex-end" }}>
-                          <button
-                            className={styles.viewBtn}
-                            onClick={() => handleOpenDrawer(ord)}
-                          >
-                            Manage
-                          </button>
-                          <button
-                            className={styles.viewBtn}
-                            onClick={() => setShiprocketOrder(ord)}
-                            title="Ship with Shiprocket, generate AWB, print labels, live track & reverse returns"
-                            style={{
-                              background:
-                                ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
-                                  ? "rgba(245, 158, 11, 0.22)"
-                                  : ord.awb_code
-                                  ? "rgba(124, 58, 237, 0.15)"
-                                  : "rgba(212, 175, 55, 0.15)",
-                              color:
-                                ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
-                                  ? "#f59e0b"
-                                  : ord.awb_code
-                                  ? "#c084fc"
-                                  : "#d4af37",
-                              borderColor:
-                                ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
-                                  ? "rgba(245, 158, 11, 0.6)"
-                                  : ord.awb_code
-                                  ? "rgba(124, 58, 237, 0.35)"
-                                  : "rgba(212, 175, 55, 0.35)",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {ord.return_details?.status === "PENDING_APPROVAL" || ord.status === "return_requested"
-                              ? "⚠️ Review Return"
-                              : ord.awb_code
-                              ? "🚚 Shiprocket"
-                              : "🚀 Ship"}
-                          </button>
-                          <button
-                            className={styles.viewBtn}
-                            onClick={() => setInvoiceOrder(ord)}
-                            title="View and print GST Tax Invoice"
-                            style={{ background: "#fef3c7", color: "#b45309", borderColor: "#fde68a" }}
-                          >
-                            📄 Invoice
-                          </button>
-                          <button
-                            className={styles.deleteBtn}
-                            onClick={() => handleDeleteOrder(idStr)}
-                            title="Delete order record"
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {/* ORDERS GRID (AG Grid Community). Search + status tabs stay server-side. */}
+      <AdminDataGrid<UserOrder>
+        ariaLabel="Customer orders"
+        rowData={orders}
+        columnDefs={columnDefs}
+        loading={loading}
+        getRowId={(o) => String(o.id || o._id || o.order_id || o.order_number)}
+        showSearch={false}
+        quickFilterText={searchQuery}
+        emptyTitle="No orders found"
+        emptyDescription="No orders match the current status filter or search."
+        toolbar={
+          <>
+            <div className={styles.searchWrapper}>
+              <svg className={styles.searchIcon} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                type="search"
+                className={styles.searchInput}
+                placeholder="Search order ID, customer, phone, tracking…"
+                aria-label="Search orders"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className={styles.tabsRow} role="tablist" aria-label="Filter orders by status">
+              {STATUS_TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === tab.key}
+                  className={`${styles.tabBtn} ${activeTab === tab.key ? styles.tabBtnActive : ""}`}
+                  onClick={() => setActiveTab(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </>
+        }
+      />
 
       {/* DETAIL & FULFILLMENT DRAWER */}
       {selectedOrder && (
@@ -488,7 +619,7 @@ export default function AdminOrdersPage() {
                 <h2 className={styles.drawerTitle}>
                   Order #{((selectedOrder.id || selectedOrder._id || selectedOrder.order_id) || "").slice(-8).toUpperCase()}
                 </h2>
-                <span style={{ fontSize: "0.8rem", color: "#8e8e93" }}>
+                <span className={styles.drawerSubtitle}>
                   Placed on {formatDate(selectedOrder.created_at || selectedOrder.createdAt)}
                 </span>
               </div>
@@ -515,49 +646,47 @@ export default function AdminOrdersPage() {
               )}
 
               {/* SHIPROCKET 1-CLICK INTEGRATION BANNER */}
-              <div
-                style={{
-                  background: "linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(212, 175, 55, 0.08) 100%)",
-                  border: "1px solid rgba(124, 58, 237, 0.35)",
-                  borderRadius: "10px",
-                  padding: "1rem 1.15rem",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "1rem",
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "#ffffff", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <span>🚀 Shiprocket Automated Logistics</span>
-                    {selectedOrder.awb_code && (
-                      <span style={{ fontSize: "0.7rem", background: "#7c3aed", color: "#fff", padding: "0.15rem 0.45rem", borderRadius: "4px" }}>
-                        ACTIVE
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: "0.8rem", color: "#9ca3af", marginTop: "0.25rem" }}>
-                    {selectedOrder.awb_code
-                      ? `AWB: ${selectedOrder.awb_code} • ${selectedOrder.courier_name || "Assigned Courier"}`
-                      : "Create shipment, generate AWB, print barcode labels, track live & initiate returns."}
+              <div className={styles.drawerColumns}>
+              <div className={styles.drawerColumn}>
+              <div className={styles.logisticsCard}>
+                <div className={styles.logisticsInfo}>
+                  <span className={styles.logisticsIcon} aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="1" y="3" width="15" height="13" />
+                      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                      <circle cx="5.5" cy="18.5" r="2.5" />
+                      <circle cx="18.5" cy="18.5" r="2.5" />
+                    </svg>
+                  </span>
+                  <div style={{ minWidth: 0 }}>
+                    <div className={styles.logisticsTitle}>
+                      <span>Shiprocket Automated Logistics</span>
+                      {selectedOrder.awb_code && <span className={styles.logisticsBadge}>Active</span>}
+                    </div>
+                    <div className={styles.logisticsText}>
+                      {selectedOrder.awb_code
+                        ? `AWB: ${selectedOrder.awb_code} • ${selectedOrder.courier_name || "Assigned Courier"}`
+                        : "Create shipment, generate AWB, print barcode labels, track live & initiate returns."}
+                    </div>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShiprocketOrder(selectedOrder)}
-                  style={{
-                    background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)",
-                    color: "#ffffff",
-                    border: "none",
-                    padding: "0.55rem 1.15rem",
-                    borderRadius: "8px",
-                    fontSize: "0.85rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                  }}
+                  className={styles.logisticsBtn}
                 >
-                  {selectedOrder.awb_code ? "🚚 Track & Manage" : "📦 Ship with Shiprocket"}
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    {selectedOrder.awb_code ? (
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    ) : (
+                      <>
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                        <line x1="12" y1="22.08" x2="12" y2="12" />
+                      </>
+                    )}
+                  </svg>
+                  {selectedOrder.awb_code ? "Track & Manage" : "Ship with Shiprocket"}
                 </button>
               </div>
 
@@ -574,8 +703,8 @@ export default function AdminOrdersPage() {
                     Order Status & Courier Dispatch
                   </div>
                   {selectedOrder.awb_code && (
-                    <span style={{ fontSize: "0.72rem", background: "rgba(124, 58, 237, 0.15)", color: "#a78bfa", border: "1px solid rgba(124, 58, 237, 0.3)", padding: "0.15rem 0.5rem", borderRadius: "4px", fontWeight: 500 }}>
-                      ⚡ Auto-Synced with Shiprocket
+                    <span className={styles.logisticsBadge}>
+                      Auto-synced with Shiprocket
                     </span>
                   )}
                 </div>
@@ -626,7 +755,7 @@ export default function AdminOrdersPage() {
                     />
                   </div>
 
-                  <div className={styles.formGroup}>
+                  <div className={`${styles.formGroup} ${styles.fulfillFormWide}`}>
                     <label>Internal Dispatch Notes (Optional)</label>
                     <input
                       type="text"
@@ -647,6 +776,9 @@ export default function AdminOrdersPage() {
                 </form>
               </div>
 
+              </div>
+
+              <div className={styles.drawerColumn}>
               {/* CLIENT & SHIPPING ADDRESS */}
               <div className={styles.sectionBlock}>
                 <div className={styles.sectionBlockTitle}>
@@ -682,14 +814,14 @@ export default function AdminOrdersPage() {
                 </div>
 
                 {selectedOrder.shipping_address && (
-                  <div style={{ marginTop: "1rem", paddingTop: "0.8rem", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                    <label style={{ fontSize: "0.75rem", color: "#8e8e93", display: "block", marginBottom: "4px" }}>
+                  <div className={styles.addressBlock}>
+                    <span className={styles.addressLabel}>
                       Delivery Destination
-                    </label>
-                    <p style={{ margin: 0, color: "#fff", lineHeight: 1.5, fontSize: "0.9rem" }}>
+                    </span>
+                    <p className={styles.addressText}>
                       {selectedOrder.shipping_address.street}, {selectedOrder.shipping_address.city},{" "}
                       {selectedOrder.shipping_address.state} —{" "}
-                      <strong style={{ color: "#d4af37" }}>{selectedOrder.shipping_address.pin_code}</strong>
+                      <strong className={styles.addressPin}>{selectedOrder.shipping_address.pin_code}</strong>
                     </p>
                   </div>
                 )}
@@ -731,7 +863,7 @@ export default function AdminOrdersPage() {
                 </div>
 
                 {/* FINANCIAL BREAKDOWN */}
-                <div className={styles.totalsList} style={{ marginTop: "1.2rem", paddingTop: "1rem", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className={styles.totalsList}>
                   <div className={styles.totalRow}>
                     <span>Subtotal</span>
                     <span>{formatCurrency(selectedOrder.subtotal)}</span>
@@ -750,15 +882,23 @@ export default function AdminOrdersPage() {
                   </div>
                 </div>
               </div>
+              </div>
+              </div>
             </div>
 
             <div className={styles.drawerFooter}>
               <button
                 className={styles.viewBtn}
                 onClick={() => setInvoiceOrder(selectedOrder)}
-                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(196, 154, 69, 0.15)", color: "#c49a45", borderColor: "rgba(196, 154, 69, 0.4)" }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "var(--admin-primary-glow)", color: "var(--admin-primary)", borderColor: "var(--admin-border-gold)" }}
               >
-                📄 View GST Tax Invoice
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
+                View GST Tax Invoice
               </button>
               <button
                 className={styles.viewBtn}

@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useMemo } from "react";
+import type { ColDef } from "ag-grid-community";
+import { AdminDataGrid } from "../../components/admin/AdminDataGrid";
 import Image from "next/image";
 import styles from "../admin.module.css";
 import {
@@ -293,6 +295,7 @@ export default function AdminBlogsPage() {
       if (selectedCategory !== "All" && b.category !== selectedCategory) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
+        
         return (
           b.title?.toLowerCase().includes(q) ||
           b.author?.toLowerCase().includes(q) ||
@@ -303,6 +306,244 @@ export default function AdminBlogsPage() {
     });
   }, [blogs, selectedCategory, searchQuery]);
 
+  const columnDefs = useMemo<ColDef<Blog>[]>(
+    () => [
+      {
+        field: "sequence",
+        headerName: "Seq Order",
+        width: 130,
+        cellRenderer: (params: any) => {
+          const blog = params.data as Blog;
+          if (!blog) return null;
+          const idx = params.node?.rowIndex ?? 0;
+          const isFirst = idx === 0;
+          const isLast = idx === (filteredBlogs.length - 1);
+          const blogId = blog._id || blog.id || "";
+          const isMoving = movingId === blogId;
+          return (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", height: "100%" }}>
+              <button
+                type="button"
+                disabled={isFirst || isMoving}
+                onClick={() => handleSwap(blog, "up")}
+                title="Move Up in sequence"
+                style={{
+                  width: "26px",
+                  height: "26px",
+                  borderRadius: "6px",
+                  border: "1px solid var(--admin-border)",
+                  background: isFirst ? "#f8fafc" : "#ffffff",
+                  color: isFirst ? "#cbd5e1" : "var(--admin-primary)",
+                  cursor: isFirst || isMoving ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <ArrowUp size={13} />
+              </button>
+              <span
+                style={{
+                  minWidth: "32px",
+                  padding: "2px 6px",
+                  borderRadius: "10px",
+                  background: "#FEF9C3",
+                  color: "#854D0E",
+                  border: "1px solid #FEF08A",
+                  fontWeight: 700,
+                  fontSize: "0.78rem",
+                  textAlign: "center",
+                }}
+              >
+                #{blog.sequence}
+              </span>
+              <button
+                type="button"
+                disabled={isLast || isMoving}
+                onClick={() => handleSwap(blog, "down")}
+                title="Move Down in sequence"
+                style={{
+                  width: "26px",
+                  height: "26px",
+                  borderRadius: "6px",
+                  border: "1px solid var(--admin-border)",
+                  background: isLast ? "#f8fafc" : "#ffffff",
+                  color: isLast ? "#cbd5e1" : "var(--admin-primary)",
+                  cursor: isLast || isMoving ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <ArrowDown size={13} />
+              </button>
+            </div>
+          );
+        },
+      },
+      {
+        field: "image",
+        headerName: "Cover",
+        width: 70,
+        cellRenderer: (params: any) => {
+          const blog = params.data as Blog;
+          if (!blog) return null;
+          return (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "6px",
+                  overflow: "hidden",
+                  position: "relative",
+                  background: "var(--admin-surface-muted)",
+                  border: "1px solid var(--admin-border)",
+                }}
+              >
+                {blog.image ? (
+                  <Image src={blog.image} alt={blog.title || "Blog"} fill sizes="36px" style={{ objectFit: "cover" }} />
+                ) : (
+                  <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--admin-text-subtle)" }}>
+                    <BookOpen size={16} />
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        field: "title",
+        headerName: "Article Title",
+        flex: 1.5,
+        minWidth: 240,
+        cellRenderer: (params: any) => {
+          const blog = params.data as Blog;
+          if (!blog) return null;
+          return (
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", overflow: "hidden" }}>
+              <div style={{ fontWeight: 600, color: "var(--admin-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {blog.title}
+              </div>
+              {blog.excerpt && (
+                <div style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {blog.excerpt}
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        field: "category",
+        headerName: "Category",
+        width: 160,
+        cellRenderer: (params: any) => {
+          const blog = params.data as Blog;
+          if (!blog) return null;
+          return (
+            <span
+              style={{
+                display: "inline-block",
+                background: "var(--admin-surface-muted)",
+                color: "var(--admin-text-secondary)",
+                padding: "3px 8px",
+                borderRadius: "6px",
+                fontSize: "0.78rem",
+                fontWeight: 500,
+              }}
+            >
+              {blog.category}
+            </span>
+          );
+        },
+      },
+      {
+        field: "author",
+        headerName: "Author",
+        width: 130,
+        cellRenderer: (params: any) => {
+          const blog = params.data as Blog;
+          return <span style={{ fontSize: "0.82rem", color: "var(--admin-text-main)", fontWeight: 500 }}>{blog?.author}</span>;
+        },
+      },
+      {
+        field: "status",
+        headerName: "Status",
+        width: 110,
+        cellRenderer: (params: any) => {
+          const blog = params.data as Blog;
+          if (!blog) return null;
+          const isPublished = blog.status === "Published";
+          return (
+            <span
+              style={{
+                display: "inline-block",
+                padding: "3px 8px",
+                borderRadius: "10px",
+                fontSize: "0.74rem",
+                fontWeight: 700,
+                background: isPublished ? "#DCFCE7" : "#FEF3C7",
+                color: isPublished ? "#15803D" : "#B45309",
+                border: `1px solid ${isPublished ? "#BBF7D0" : "#FDE68A"}`,
+              }}
+            >
+              {blog.status}
+            </span>
+          );
+        },
+      },
+      {
+        headerName: "Actions",
+        width: 140,
+        pinned: "right",
+        cellRenderer: (params: any) => {
+          const blog = params.data as Blog;
+          if (!blog) return null;
+          return (
+            <div style={{ display: "flex", gap: "0.4rem", justifyContent: "flex-end", alignItems: "center", height: "100%" }}>
+              <button
+                onClick={() => startEdit(blog)}
+                className={styles.actionLink}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.3rem",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "0.35rem 0.65rem",
+                  fontSize: "0.78rem",
+                }}
+              >
+                <Pencil size={12} /> Edit
+              </button>
+              <button
+                onClick={() => setBlogToDelete(blog)}
+                className={styles.actionDelete}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.3rem",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "0.35rem 0.65rem",
+                  fontSize: "0.78rem",
+                }}
+              >
+                <Trash2 size={12} /> Delete
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    [filteredBlogs, movingId]
+  );
+
+
+
+
   // =========================================================================
   // VIEW 1: FULL-PAGE CREATE OR EDIT FORM
   // =========================================================================
@@ -312,7 +553,7 @@ export default function AdminBlogsPage() {
     return (
       <div className={styles.sectionContainer} style={{ width: "100%", maxWidth: "100%", margin: 0 }}>
         {/* Navigation Breadcrumb */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
           <button
             onClick={backToList}
             type="button"
@@ -320,7 +561,7 @@ export default function AdminBlogsPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: "0.5rem",
-              background: "#ffffff",
+              background: "var(--admin-surface)",
               border: "1px solid var(--admin-border)",
               borderRadius: "8px",
               color: "var(--admin-text-main)",
@@ -379,7 +620,7 @@ export default function AdminBlogsPage() {
         </div>
 
         {/* Full-Page Form Card - 100% Width */}
-        <div className={styles.card} style={{ width: "100%", maxWidth: "100%", background: "#ffffff", padding: 0, overflow: "hidden" }}>
+        <div className={styles.card} style={{ width: "100%", maxWidth: "100%", background: "var(--admin-surface)", padding: 0, overflow: "hidden" }}>
           <form onSubmit={isEdit ? handleEditSubmit : handleCreateSubmit}>
             {errorMsg && (
               <div
@@ -405,9 +646,9 @@ export default function AdminBlogsPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(360px, 100%), 1fr))",
                 gap: "2.5rem",
-                padding: "2rem",
+                padding: "var(--a-space-5)",
               }}
             >
               {/* LEFT COLUMN: Editorial Content */}
@@ -434,7 +675,7 @@ export default function AdminBlogsPage() {
                   />
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+                <div className={styles.formGrid2} style={{ display: "grid", gap: "1.25rem" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                     <label className={styles.formLabel}>Category *</label>
                     <select
@@ -464,7 +705,7 @@ export default function AdminBlogsPage() {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.25rem" }}>
+                <div className={styles.formGrid3} style={{ display: "grid", gap: "1.25rem" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                     <label className={styles.formLabel}>Read Time</label>
                     <input
@@ -549,7 +790,7 @@ export default function AdminBlogsPage() {
 
                 {/* Cover Image Upload */}
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
                     <label className={styles.formLabel} style={{ margin: 0 }}>
                       Cover Image
                     </label>
@@ -615,7 +856,7 @@ export default function AdminBlogsPage() {
 
                   <div
                     style={{
-                      background: "#ffffff",
+                      background: "var(--admin-surface)",
                       borderRadius: "16px",
                       overflow: "hidden",
                       border: "1px solid var(--admin-border)",
@@ -623,11 +864,11 @@ export default function AdminBlogsPage() {
                       maxWidth: "420px",
                     }}
                   >
-                    <div style={{ position: "relative", width: "100%", height: "200px", background: "#f1f5f9", overflow: "hidden" }}>
+                    <div style={{ position: "relative", width: "100%", height: "200px", background: "var(--admin-surface-muted)", overflow: "hidden" }}>
                       {previewUrl ? (
                         <Image src={previewUrl} alt="Preview" fill sizes="420px" style={{ objectFit: "cover" }} />
                       ) : (
-                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8" }}>
+                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--admin-text-subtle)" }}>
                           <ImageIcon size={32} />
                         </div>
                       )}
@@ -674,10 +915,12 @@ export default function AdminBlogsPage() {
             <div
               style={{
                 display: "flex",
+                flexWrap: "wrap",
+                gap: "1rem",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "1.5rem 2rem",
-                background: "#f8fafc",
+                padding: "var(--a-space-4) var(--a-space-5)",
+                background: "var(--admin-surface-muted)",
                 borderTop: "1px solid var(--admin-border)",
               }}
             >
@@ -689,7 +932,7 @@ export default function AdminBlogsPage() {
               >
                 Cancel
               </button>
-              <div style={{ display: "flex", gap: "1rem" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
                 <button
                   type="submit"
                   disabled={submitting}
@@ -764,7 +1007,7 @@ export default function AdminBlogsPage() {
         <div
           style={{
             marginBottom: "1.75rem",
-            padding: "1.25rem 1.75rem",
+            padding: "var(--a-space-4) var(--a-space-5)",
             background: "#FEF2F2",
             border: "1px solid #FECACA",
             borderRadius: "12px",
@@ -805,7 +1048,7 @@ export default function AdminBlogsPage() {
             <button
               onClick={() => setBlogToDelete(null)}
               className={styles.btnCancel}
-              style={{ background: "#ffffff", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
+              style={{ background: "var(--admin-surface)", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
             >
               Cancel
             </button>
@@ -870,10 +1113,10 @@ export default function AdminBlogsPage() {
         </div>
 
         {/* Search Input */}
-        <div style={{ position: "relative", minWidth: "260px" }}>
+        <div style={{ position: "relative", minWidth: "min(260px, 100%)" }}>
           <Search
             size={16}
-            style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}
+            style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--admin-text-subtle)" }}
           />
           <input
             type="text"
@@ -890,9 +1133,9 @@ export default function AdminBlogsPage() {
       <div className={styles.card} style={{ width: "100%", maxWidth: "100%" }}>
         <div
           style={{
-            padding: "1.25rem 1.75rem",
+            padding: "var(--a-space-4) var(--a-space-5)",
             borderBottom: "1px solid var(--admin-border)",
-            background: "#f8fafc",
+            background: "var(--admin-surface-muted)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -921,227 +1164,16 @@ export default function AdminBlogsPage() {
           </span>
         </div>
 
-        {loading ? (
-          <div style={{ padding: "4rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-            Loading blog articles...
-          </div>
-        ) : filteredBlogs.length === 0 ? (
-          <div style={{ padding: "4rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-            <p style={{ fontSize: "1rem", marginBottom: "1rem" }}>
-              No blogs found. Click &quot;Add New Blog&quot; to publish your first article.
-            </p>
-            <button onClick={startCreate} className={styles.primaryButton}>
-              <Plus size={18} /> Add First Blog
-            </button>
-          </div>
-        ) : (
-          <div className={styles.tableWrapper} style={{ width: "100%", overflowX: "auto" }}>
-            <table className={styles.table} style={{ width: "100%", tableLayout: "auto" }}>
-              <thead>
-                <tr>
-                  <th style={{ width: "130px", textAlign: "center" }}>Sequence Order</th>
-                  <th style={{ width: "70px" }}>Cover</th>
-                  <th style={{ width: "32%" }}>Article Title</th>
-                  <th style={{ width: "18%" }}>Category</th>
-                  <th style={{ width: "12%" }}>Author</th>
-                  <th style={{ width: "100px", textAlign: "center" }}>Status</th>
-                  <th style={{ width: "150px", textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredBlogs.map((blog, idx) => {
-                  const blogId = blog._id || blog.id || "";
-                  const isFirst = idx === 0;
-                  const isLast = idx === filteredBlogs.length - 1;
-                  const isMoving = movingId === blogId;
-
-                  return (
-                    <tr key={String(blogId)}>
-                      {/* SEQUENCE ARRANGEMENT CONTROLS */}
-                      <td style={{ textAlign: "center" }}>
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                          <button
-                            type="button"
-                            disabled={isFirst || isMoving}
-                            onClick={() => handleSwap(blog, "up")}
-                            title="Move Up in sequence"
-                            style={{
-                              width: "28px",
-                              height: "28px",
-                              borderRadius: "6px",
-                              border: "1px solid var(--admin-border)",
-                              background: isFirst ? "#f8fafc" : "#ffffff",
-                              color: isFirst ? "#cbd5e1" : "var(--admin-primary)",
-                              cursor: isFirst || isMoving ? "not-allowed" : "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              transition: "all 0.15s",
-                            }}
-                          >
-                            <ArrowUp size={14} />
-                          </button>
-
-                          <span
-                            style={{
-                              minWidth: "34px",
-                              padding: "3px 8px",
-                              borderRadius: "12px",
-                              background: "#FEF9C3",
-                              color: "#854D0E",
-                              border: "1px solid #FEF08A",
-                              fontWeight: 700,
-                              fontSize: "0.8rem",
-                            }}
-                          >
-                            #{blog.sequence}
-                          </span>
-
-                          <button
-                            type="button"
-                            disabled={isLast || isMoving}
-                            onClick={() => handleSwap(blog, "down")}
-                            title="Move Down in sequence"
-                            style={{
-                              width: "28px",
-                              height: "28px",
-                              borderRadius: "6px",
-                              border: "1px solid var(--admin-border)",
-                              background: isLast ? "#f8fafc" : "#ffffff",
-                              color: isLast ? "#cbd5e1" : "var(--admin-primary)",
-                              cursor: isLast || isMoving ? "not-allowed" : "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              transition: "all 0.15s",
-                            }}
-                          >
-                            <ArrowDown size={14} />
-                          </button>
-                        </div>
-                      </td>
-
-                      <td>
-                        <div
-                          style={{
-                            width: 48,
-                            height: 48,
-                            borderRadius: "8px",
-                            overflow: "hidden",
-                            position: "relative",
-                            background: "#f1f5f9",
-                            border: "1px solid var(--admin-border)",
-                          }}
-                        >
-                          {blog.image ? (
-                            <Image src={blog.image} alt={blog.title || "Blog"} fill sizes="48px" style={{ objectFit: "cover" }} />
-                          ) : (
-                            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8" }}>
-                              <BookOpen size={20} />
-                            </div>
-                          )}
-                        </div>
-                      </td>
-
-                      <td>
-                        <div style={{ fontWeight: 600, color: "var(--admin-primary)", fontSize: "0.95rem" }}>
-                          {blog.title}
-                        </div>
-                        {blog.excerpt && (
-                          <div
-                            style={{
-                              fontSize: "0.8rem",
-                              color: "var(--admin-text-muted)",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              maxWidth: "420px",
-                              marginTop: "2px",
-                            }}
-                          >
-                            {blog.excerpt}
-                          </div>
-                        )}
-                      </td>
-
-                      <td>
-                        <span
-                          style={{
-                            display: "inline-block",
-                            background: "#f1f5f9",
-                            color: "#475569",
-                            padding: "4px 10px",
-                            borderRadius: "6px",
-                            fontSize: "0.825rem",
-                            fontWeight: 500,
-                          }}
-                        >
-                          {blog.category}
-                        </span>
-                      </td>
-
-                      <td>
-                        <span style={{ fontSize: "0.875rem", color: "var(--admin-text-main)", fontWeight: 500 }}>
-                          {blog.author}
-                        </span>
-                      </td>
-
-                      <td style={{ textAlign: "center" }}>
-                        <span
-                          style={{
-                            display: "inline-block",
-                            padding: "3px 10px",
-                            borderRadius: "12px",
-                            fontSize: "0.75rem",
-                            fontWeight: 700,
-                            background: blog.status === "Published" ? "#DCFCE7" : "#FEF3C7",
-                            color: blog.status === "Published" ? "#15803D" : "#B45309",
-                            border: `1px solid ${blog.status === "Published" ? "#BBF7D0" : "#FDE68A"}`,
-                          }}
-                        >
-                          {blog.status}
-                        </span>
-                      </td>
-
-                      <td style={{ textAlign: "right" }}>
-                        <div style={{ display: "flex", gap: "0.6rem", justifyContent: "flex-end", alignItems: "center" }}>
-                          <button
-                            onClick={() => startEdit(blog)}
-                            className={styles.actionLink}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "0.35rem",
-                              border: "none",
-                              cursor: "pointer",
-                              padding: "0.45rem 0.85rem",
-                            }}
-                          >
-                            <Pencil size={13} /> Edit
-                          </button>
-                          <button
-                            onClick={() => setBlogToDelete(blog)}
-                            className={styles.actionDelete}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "0.35rem",
-                              border: "none",
-                              cursor: "pointer",
-                              padding: "0.45rem 0.85rem",
-                            }}
-                          >
-                            <Trash2 size={13} /> Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <AdminDataGrid<Blog>
+          ariaLabel="Articles & Blogs"
+          rowData={filteredBlogs}
+          columnDefs={columnDefs}
+          loading={loading}
+          getRowId={(s: Blog) => String(s._id || s.id || s.slug)}
+          quickFilterText={searchQuery}
+          emptyTitle="No blogs found"
+          emptyDescription="Click 'Add New Blog' to publish your first article."
+        />
       </div>
     </div>
   );

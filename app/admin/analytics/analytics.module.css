@@ -575,3 +575,205 @@
   color: #9CA3AF;
   margin-bottom: 0.5rem;
 }
+
+/* ─── Responsive: tablet & mobile (desktop unchanged) ─── */
+@media (max-width: 1024px) {
+  .container {
+    padding: 0.5rem 0 3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filterTabs {
+    max-width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  .filterTab {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .searchInputWrapper {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+  .table {
+    min-width: 640px;
+  }
+}
+
+/* ─── Admin density layer (compact, professional sizing on design tokens) ─── */
+@media all {
+  .container {
+    gap: var(--a-space-4);
+  }
+  .header {
+    margin-bottom: var(--a-space-4);
+    gap: var(--a-space-3);
+  }
+  .headerTitle {
+    font-size: var(--a-fs-title);
+    line-height: var(--a-lh-tight);
+  }
+  .headerSubtitle {
+    font-size: var(--a-fs-sm);
+  }
+  .kpiGrid {
+    gap: var(--a-space-3);
+    margin-bottom: var(--a-space-4);
+  }
+  .kpiCard {
+    padding: var(--a-space-3) var(--a-space-4);
+    border-radius: var(--a-radius-lg);
+    min-height: 0;
+    box-shadow: var(--a-shadow-card);
+  }
+  .kpiTop {
+    margin-bottom: var(--a-space-1);
+    gap: var(--a-space-2);
+  }
+  .kpiLabel {
+    font-size: var(--a-fs-2xs);
+    letter-spacing: var(--a-tracking-label);
+    line-height: var(--a-label-h);
+  }
+  .kpiValue {
+    font-size: 20px;
+    line-height: 1.2;
+    margin: 2px 0;
+  }
+  .kpiMeta {
+    font-size: var(--a-fs-xs);
+    line-height: 1.4;
+    margin: 0;
+  }
+  .kpiIcon {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    border-radius: var(--a-radius-md);
+  }
+  .panelHeader {
+    margin-bottom: var(--a-space-3);
+    padding-bottom: var(--a-space-2);
+  }
+  .panelTitle {
+    font-size: var(--a-fs-md);
+    line-height: var(--a-lh-tight);
+  }
+  .statsRow,
+  .memberGrid {
+    gap: var(--a-space-4);
+  }
+  .panelCard,
+  .membersCard {
+    padding: var(--a-space-4);
+    border-radius: var(--a-radius-lg);
+  }
+  .emptyState {
+    padding: var(--a-space-8) var(--a-space-4);
+  }
+}
+
+/* The admin layout already provides the page gutter */
+.container {
+  padding: 0;
+}
+
+/* ─── Standard filter toolbar + compact stat boxes ─── */
+@media all {
+  .kpiCard {
+    padding: 10px var(--a-space-4);
+    min-height: 0;
+  }
+  .kpiValue {
+    font-size: 18px;
+    line-height: 1.2;
+    margin: 2px 0 0;
+  }
+  .kpiLabel {
+    font-size: 10.5px;
+  }
+  .kpiIcon {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+  .kpiMeta {
+    font-size: 11.5px;
+    margin-top: 2px;
+  }
+  .logsToolbar {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--a-space-3);
+    padding: var(--a-space-2) var(--a-space-3);
+    margin-bottom: var(--a-space-4);
+    border-radius: var(--a-radius-lg);
+  }
+  .filterTabs {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 2px;
+    flex: 1 1 360px;
+    min-width: 0;
+    max-width: 100%;
+    padding: 3px;
+    border-radius: var(--a-radius-md);
+    border: 1px solid var(--admin-border);
+    background: var(--admin-surface-muted);
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-padding-inline: 24px;
+    mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 24px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 24px), transparent 100%);
+  }
+  .filterTab {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    min-height: 30px;
+    padding: 0 var(--a-space-3);
+    border: 0;
+    border-radius: var(--a-radius-sm);
+    background: transparent;
+    color: var(--admin-text-muted);
+    font-size: var(--a-fs-xs);
+    font-weight: var(--a-fw-semibold);
+    white-space: nowrap;
+    box-shadow: none;
+  }
+  .filterTabActive {
+    background: var(--admin-surface) !important;
+    color: var(--admin-text-main) !important;
+    border-color: transparent !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--admin-border) !important;
+  }
+  .searchInputWrapper {
+    flex: 0 1 320px;
+    min-width: 200px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .searchInputWrapper {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .filterTabs {
+    flex: 1 1 100%;
+  }
+}

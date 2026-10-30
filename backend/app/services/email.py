@@ -231,7 +231,7 @@ def send_password_reset_email(to_email: str, otp: str, user_name: str = "") -> D
 
 def build_order_confirmation_email_html(order: Dict[str, Any]) -> str:
     order_id = str(order.get("_id") or order.get("id") or "")
-    short_id = order_id[:8].upper() if order_id else "DELUXE"
+    short_id = order.get("order_number") or (order_id[:8].upper() if order_id else "DELUXE")
     
     addr = order.get("shipping_address") or {}
     first_name = addr.get("first_name", "")
@@ -404,7 +404,7 @@ def build_order_confirmation_email_html(order: Dict[str, Any]) -> str:
 
 def build_order_confirmation_email_text(order: Dict[str, Any]) -> str:
     order_id = str(order.get("_id") or order.get("id") or "")
-    short_id = order_id[:8].upper() if order_id else "DELUXE"
+    short_id = order.get("order_number") or (order_id[:8].upper() if order_id else "DELUXE")
     
     addr = order.get("shipping_address") or {}
     first_name = addr.get("first_name", "")
@@ -458,7 +458,7 @@ def send_order_confirmation_email(order: Any) -> Dict[str, Any]:
             return {"success": False, "error": "No recipient email address in order."}
 
         order_id = str(order_data.get("_id") or order_data.get("id") or "")
-        short_id = order_id[:8].upper() if order_id else "DELUXE"
+        short_id = order.get("order_number") or (order_id[:8].upper() if order_id else "DELUXE")
 
         subject = f"Order Confirmation #{short_id} - Deluzex Luxury Lighting"
         html_body = build_order_confirmation_email_html(order_data)
@@ -504,7 +504,7 @@ def build_shipping_notification_email_html(order: Dict[str, Any], tracking_numbe
     Build rich luxury responsive HTML email for order shipment dispatch.
     """
     order_id = str(order.get("_id") or order.get("id") or "")
-    short_id = order_id[:8].upper() if order_id else "DELUXE"
+    short_id = order.get("order_number") or (order_id[:8].upper() if order_id else "DELUXE")
     
     addr = order.get("shipping_address") or {}
     first_name = addr.get("first_name", "")
@@ -658,7 +658,7 @@ def build_shipping_notification_email_text(order: Dict[str, Any], tracking_numbe
     Fallback plaintext version of shipping dispatch notification.
     """
     order_id = str(order.get("_id") or order.get("id") or "")
-    short_id = order_id[:8].upper() if order_id else "DELUXE"
+    short_id = order.get("order_number") or (order_id[:8].upper() if order_id else "DELUXE")
     
     addr = order.get("shipping_address") or {}
     first_name = addr.get("first_name", "")
@@ -714,7 +714,7 @@ def send_shipping_notification_email(order: Any, tracking_number: str = "", cour
             return {"success": False, "error": "No recipient email address in order."}
 
         order_id = str(order_data.get("_id") or order_data.get("id") or "")
-        short_id = order_id[:8].upper() if order_id else "DELUXE"
+        short_id = order.get("order_number") or (order_id[:8].upper() if order_id else "DELUXE")
 
         tracking = (tracking_number or order_data.get("tracking_number") or "").strip()
         courier = (courier_partner or order_data.get("courier_partner") or "Courier Partner").strip()
@@ -735,4 +735,140 @@ def send_shipping_notification_email(order: Any, tracking_number: str = "", cour
         logger.error(f"Failed to send shipping notification email: {exc}")
         return {"success": False, "error": str(exc)}
 
+def send_admin_new_review_notification(review_data: Dict[str, Any], product_title: str) -> Dict[str, Any]:
+    """
+    Send an email notification to admin whenever a customer submits a new review,
+    prompting admin to review and approve it.
+    """
+    try:
+        from app.core.database import db
+        from datetime import datetime
+        admin_emails = []
+        try:
+            admins = list(db.users.find({"role": "admin", "email": {"$ne": None}}, {"email": 1}))
+            for a in admins:
+                em = (a.get("email") or "").strip().lower()
+                if em and em not in admin_emails:
+                    admin_emails.append(em)
+        except Exception:
+            pass
+
+        if not admin_emails:
+            admin_emails = ["admin@deluzex.com"]
+
+        author_name = review_data.get("author_name") or "Customer"
+        author_email = review_data.get("author_email") or "Not provided"
+        author_phone = review_data.get("author_phone") or "Not provided"
+        rating = int(review_data.get("rating") or 5)
+        stars_str = "★" * rating + "☆" * (5 - rating)
+        text = review_data.get("text") or ""
+        moderation_url = "http://localhost:3000/admin/reviews"
+
+        subject = f"[DeLuzex Review Moderation] New {rating}★ Review for {product_title}"
+
+        html_body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f7f5f0; margin: 0; padding: 24px; color: #1f2937; }}
+            .container {{ max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e7dfd1; overflow: hidden; box-shadow: 0 4px 18px rgba(0,0,0,0.06); }}
+            .header {{ background: #121214; padding: 24px 30px; text-align: center; border-bottom: 2px solid #C49A45; }}
+            .logo {{ font-family: Georgia, serif; font-size: 24px; letter-spacing: 2px; color: #C49A45; margin: 0; font-weight: 400; }}
+            .tagline {{ font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #a1a1aa; margin-top: 4px; }}
+            .content {{ padding: 30px; }}
+            .badge {{ display: inline-block; padding: 4px 10px; background: rgba(196,154,69,0.15); color: #C49A45; border-radius: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }}
+            h2 {{ font-size: 19px; color: #111827; margin: 0 0 16px; font-weight: 600; }}
+            .details-box {{ background: #faf8f5; border: 1px solid #eae2d5; border-radius: 8px; padding: 18px; margin: 18px 0; }}
+            .detail-row {{ display: flex; justify-content: space-between; padding: 6px 0; font-size: 13.5px; border-bottom: 1px dashed #e8e0d3; }}
+            .detail-row:last-child {{ border-bottom: none; }}
+            .label {{ color: #71717a; font-weight: 500; }}
+            .value {{ color: #18181b; font-weight: 600; text-align: right; }}
+            .stars {{ color: #C49A45; font-size: 16px; letter-spacing: 1px; }}
+            .review-text {{ background: #ffffff; border-left: 3px solid #C49A45; padding: 12px 16px; font-style: italic; color: #374151; font-size: 14px; line-height: 1.5; margin: 12px 0 0; }}
+            .btn {{ display: inline-block; background: #C49A45; color: #0b0b0d !important; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-weight: 600; font-size: 13.5px; letter-spacing: 0.4px; text-align: center; margin-top: 10px; }}
+            .footer {{ text-align: center; padding: 18px 30px; font-size: 11px; color: #9ca3af; background: #fafaf9; border-top: 1px solid #f0ece1; }}
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1 class="logo">de luzex</h1>
+              <div class="tagline">Luxury Lighting Atelier</div>
+            </div>
+            <div class="content">
+              <span class="badge">Moderation Required</span>
+              <h2>New Customer Review Submitted</h2>
+              <p style="font-size: 14px; color: #4b5563; line-height: 1.5; margin-bottom: 16px;">
+                A customer has submitted a review for <strong>{product_title}</strong>. This review is currently <strong>Hidden / Pending Approval</strong> and will not be visible on the public storefront until approved.
+              </p>
+              
+              <div class="details-box">
+                <div class="detail-row">
+                  <span class="label">Product</span>
+                  <span class="value">{product_title}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Customer Name</span>
+                  <span class="value">{author_name}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Customer Email</span>
+                  <span class="value">{author_email}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Customer Phone</span>
+                  <span class="value">{author_phone}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Rating</span>
+                  <span class="value"><span class="stars">{stars_str}</span> ({rating} / 5)</span>
+                </div>
+                <div class="review-text">
+                  "{text}"
+                </div>
+              </div>
+
+              <div style="text-align: center; margin-top: 24px;">
+                <a href="{moderation_url}" class="btn">Review & Approve in Admin Panel &rarr;</a>
+              </div>
+            </div>
+            <div class="footer">
+              &copy; {datetime.utcnow().year} De Luzex Lighting. Automated Admin Notification.
+            </div>
+          </div>
+        </body>
+        </html>
+        """
+
+        text_body = f"""
+        [DeLuzex Review Moderation]
+        New Customer Review for: {product_title}
+
+        Customer: {author_name}
+        Email: {author_email}
+        Phone: {author_phone}
+        Rating: {rating} / 5 ({stars_str})
+        Comment: "{text}"
+
+        Status: PENDING MODERATION (Not visible on storefront until approved)
+
+        Approve or hide this review in the admin panel:
+        {moderation_url}
+        """
+
+        for admin_email in admin_emails:
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = settings.SMTP_FROM_EMAIL
+            msg["To"] = admin_email
+            msg.attach(MIMEText(text_body, "plain", "utf-8"))
+            msg.attach(MIMEText(html_body, "html", "utf-8"))
+            _send_smtp_message(msg, admin_email)
+
+        return {"success": True}
+    except Exception as exc:
+        logger.error(f"Failed to send admin review notification email: {exc}")
+        return {"success": False, "error": str(exc)}
 

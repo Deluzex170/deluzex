@@ -1084,6 +1084,7 @@ export async function createPaymentOrder(
   return data as {
     success: boolean;
     order_id: string;
+    order_number?: string;
     razorpay_order_id: string;
     amount: number;
     currency: string;
@@ -1106,7 +1107,7 @@ export async function verifyPayment(payload: {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || "Payment verification failed");
-  return data as { success: boolean; order_id: string; message: string };
+  return data as { success: boolean; order_id: string; order_number?: string; message: string };
 }
 
 export async function createCodOrder(
@@ -1122,7 +1123,7 @@ export async function createCodOrder(
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || "Failed to place order");
-  return data as { success: boolean; order_id: string; message: string };
+  return data as { success: boolean; order_id: string; order_number?: string; message: string };
 }
 
 export interface InitiateUpiPayload {
@@ -1327,9 +1328,45 @@ export async function saveUserAddress(address: SavedAddress): Promise<SavedAddre
   return data.data || data;
 }
 
+export async function updateUserAddress(
+  addressId: string,
+  address: Partial<SavedAddress>,
+  email?: string
+): Promise<SavedAddress> {
+  const query = email ? `?email=${encodeURIComponent(email)}` : "";
+  const payload: Record<string, any> = {};
+  if (address.type !== undefined) payload.type = address.type;
+  if (address.first_name !== undefined) payload.first_name = address.first_name;
+  if (address.last_name !== undefined) payload.last_name = address.last_name;
+  if (address.street !== undefined) payload.street = address.street;
+  if (address.city !== undefined) payload.city = address.city;
+  if (address.state !== undefined) payload.state = address.state;
+  if (address.pin_code !== undefined) payload.pin_code = address.pin_code;
+  if (address.phone !== undefined) payload.phone = address.phone;
+  if (address.is_default !== undefined) payload.is_default = Boolean(address.is_default);
+
+  const res = await fetch(`${API_BASE_URL}/user/addresses/${addressId}${query}`, {
+    method: "PUT",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to update address");
+  }
+
+  const data = await res.json();
+  return data.data || data;
+}
+
 export async function deleteUserAddress(addressId: string, email?: string): Promise<boolean> {
   try {
-    const res = await fetch(`${API_BASE_URL}/user/addresses/${addressId}`, {
+    const query = email ? `?email=${encodeURIComponent(email)}` : "";
+    const res = await fetch(`${API_BASE_URL}/user/addresses/${addressId}${query}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
     });
@@ -1340,9 +1377,10 @@ export async function deleteUserAddress(addressId: string, email?: string): Prom
   }
 }
 
-export async function setDefaultUserAddress(addressId: string): Promise<SavedAddress | null> {
+export async function setDefaultUserAddress(addressId: string, email?: string): Promise<SavedAddress | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/user/addresses/${addressId}/default`, {
+    const query = email ? `?email=${encodeURIComponent(email)}` : "";
+    const res = await fetch(`${API_BASE_URL}/user/addresses/${addressId}/default${query}`, {
       method: "PUT",
       headers: getAuthHeaders(),
     });
@@ -1544,6 +1582,8 @@ export interface UserOrder {
   _id?: string;
   id?: string;
   order_id: string;
+  order_number?: string;
+  invoice_number?: string;
   razorpay_order_id?: string;
   razorpay_payment_id?: string;
   user_email?: string;
@@ -2445,6 +2485,7 @@ export interface ProductReviewItem {
   product_id: string;
   author_name: string;
   author_email?: string;
+  author_phone?: string;
   rating: number;
   title?: string;
   text: string;
@@ -2479,6 +2520,7 @@ export interface ReviewSubmitPayload {
   product_id: string;
   author_name: string;
   author_email?: string;
+  author_phone?: string;
   rating: number;
   title?: string;
   text: string;
@@ -3644,6 +3686,45 @@ export async function fetchOrderLiveTracking(orderId: string): Promise<LiveTrack
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || "Failed to fetch live tracking");
+  return data;
+}
+
+
+export interface ShiprocketWalletInfo {
+  balance: number;
+  is_low: boolean;
+  minimum_required: number;
+  currency: string;
+  recharge_url: string;
+  error?: string;
+}
+
+export interface ShiprocketPickupLocation {
+  id?: number;
+  pickup_location: string;
+  city: string;
+  state?: string;
+  pin_code: string;
+  phone?: string;
+  name?: string;
+  is_primary?: boolean;
+}
+
+export async function fetchShiprocketWallet(): Promise<ShiprocketWalletInfo> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/wallet-balance`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to fetch wallet balance");
+  return data;
+}
+
+export async function fetchShiprocketPickupLocations(): Promise<{ success: boolean; locations: ShiprocketPickupLocation[] }> {
+  const res = await fetch(`${API_BASE_URL}/shiprocket/pickup-locations`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to fetch pickup locations");
   return data;
 }
 

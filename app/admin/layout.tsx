@@ -28,6 +28,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { sidebarOpen, setSidebarOpen } = useSidebar();
   const [confirmLogout, setConfirmLogout] = React.useState(false);
   const [theme, setTheme] = React.useState<"dark" | "light">("dark");
+  // Desktop-only icon rail; remembered per browser like the theme
+  const [railCollapsed, setRailCollapsed] = React.useState(false);
 
   const isLoginPage = pathname === "/admin/login";
 
@@ -37,6 +39,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       setTheme(savedTheme);
     }
   }, []);
+
+  React.useEffect(() => {
+    try {
+      if (localStorage.getItem("admin_sidebar_rail") === "1") setRailCollapsed(true);
+    } catch {
+      // storage unavailable: keep the expanded default
+    }
+  }, []);
+
+  const toggleRail = () => {
+    setRailCollapsed((prev) => {
+      try {
+        localStorage.setItem("admin_sidebar_rail", prev ? "0" : "1");
+      } catch {
+        // storage unavailable: the toggle still works for this visit
+      }
+      return !prev;
+    });
+  };
 
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
@@ -50,6 +71,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       document.body.style.paddingTop = "";
     };
   }, []);
+
+  // The sidebar state is shared with the storefront, so always enter the admin with the drawer closed
+  React.useEffect(() => {
+    setSidebarOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Let Escape close the mobile/tablet drawer
+  React.useEffect(() => {
+    if (!sidebarOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSidebarOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [sidebarOpen, setSidebarOpen]);
 
   React.useEffect(() => {
     if (!loading && !isLoginPage) {
@@ -147,57 +184,57 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   ];
 
+  const isItemActive = (path: string) => pathname === path || (path !== "/admin" && pathname.startsWith(path));
+  const activeItemName =
+    menuItems.flatMap((group) => group.items).find((item) => isItemActive(item.path))?.name || "Admin";
+
+  const logoSrc = theme === "light" ? "/images/logos/de_luzex_black.svg" : "/images/logos/de_luzex_white.svg";
+
   return (
     <div className={`${styles.adminRoot} ${plusJakarta.variable} ${jetbrainsMono.variable} ${plusJakarta.className}`} data-admin-root data-theme={theme}>
-      <div className={styles.dashboardContainer}>
-        {/* Sidebar */}
-        <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarCollapsed}`}>
-          <div className={styles.sidebarInner}>
-            <div style={{
-              padding: "0.85rem 0.75rem 1.15rem 0.75rem",
-              borderBottom: "1px solid var(--admin-border)",
-              marginBottom: "0.5rem"
-            }}>
-              <Link href="/" title="Back to Storefront" style={{ display: "flex", flexDirection: "column", gap: "0.45rem", textDecoration: "none" }}>
-                <img
-                  src={theme === "light" ? "/images/logos/de_luzex_black.svg" : "/images/logos/de_luzex_white.svg"}
-                  alt="De Luzex"
-                  height="28"
-                  style={{ height: "28px", width: "auto", maxWidth: "160px" }}
-                />
-                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                  <span style={{
-                    fontSize: "0.62rem",
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
-                    fontWeight: 700,
-                    color: "#C49A45",
-                    background: "rgba(196, 154, 69, 0.12)",
-                    border: "1px solid rgba(196, 154, 69, 0.28)",
-                    padding: "2px 7px",
-                    borderRadius: "4px"
-                  }}>
-                    Atelier Console
-                  </span>
-                  <span style={{ fontSize: "0.62rem", color: "#6B7280" }}>v2.4</span>
-                </div>
-              </Link>
-            </div>
+      <div className={styles.dashboardContainer} data-drawer-open={sidebarOpen ? "true" : undefined}>
+        {/* Sidebar: full width on desktop (or a 64px rail), off-canvas drawer below 1025px */}
+        <aside
+          id="admin-sidebar"
+          className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarCollapsed} ${railCollapsed ? styles.sidebarRail : ""}`}
+          aria-label="Admin navigation"
+        >
+          <div className={styles.sidebarBrand}>
+            <Link href="/admin" title="De Luzex Admin">
+              <img src={logoSrc} alt="De Luzex" />
+            </Link>
+            {/* Drawer close button (hidden on desktop via CSS) */}
+            <button
+              type="button"
+              className={styles.drawerCloseBtn}
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close navigation menu"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
 
+          <nav className={styles.sidebarInner}>
             {menuItems.map((group, idx) => (
               <div key={idx} className={styles.menuGroup}>
                 <h4 className={styles.groupTitle}>{group.group}</h4>
                 <ul className={styles.menuList}>
                   {group.items.map((item, i) => {
-                    const isActive = pathname === item.path || (item.path !== '/admin' && pathname.startsWith(item.path));
+                    const isActive = isItemActive(item.path);
                     return (
                       <li key={i}>
                         <Link
                           href={item.path}
+                          prefetch={false}
+                          title={item.name}
+                          aria-current={isActive ? "page" : undefined}
                           className={`${styles.menuLink} ${isActive ? styles.activeLink : ""}`}
                           onClick={() => setSidebarOpen(false)}
                         >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                             <path d={item.icon} />
                           </svg>
                           <span className={styles.menuLinkText}>{item.name}</span>
@@ -209,85 +246,51 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
             ))}
 
-            <div className={styles.menuGroup} style={{ marginTop: "auto", paddingTop: "0.75rem", borderTop: "1px solid var(--admin-border)", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <div className={styles.sidebarFooter}>
               <button
                 type="button"
                 className={styles.themeToggleBtn}
                 onClick={toggleTheme}
                 title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
-                  {theme === "dark" ? (
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="5" />
-                      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-                    </svg>
-                  ) : (
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                    </svg>
-                  )}
-                  <span className={styles.menuLinkText}>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-                </div>
+                {theme === "dark" ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <circle cx="12" cy="12" r="5" />
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                )}
+                <span className={styles.menuLinkText}>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
                 <span className={styles.themePill}>{theme === "dark" ? "DARK" : "LIGHT"}</span>
               </button>
               {confirmLogout ? (
-                <div style={{
-                  padding: "0.85rem",
-                  background: "rgba(220, 38, 38, 0.12)",
-                  border: "1px solid rgba(220, 38, 38, 0.3)",
-                  borderRadius: "10px"
-                }}>
-                  <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#F87171", marginBottom: "0.5rem" }}>
-                    Confirm Sign Out?
-                  </div>
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
-                    <button
-                      onClick={handleLogout}
-                      style={{
-                        flex: 1,
-                        background: "#DC2626",
-                        color: "#FFFFFF",
-                        padding: "0.45rem 0.6rem",
-                        borderRadius: "6px",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        border: "none",
-                        cursor: "pointer",
-                      }}
-                    >
+                <div className={styles.logoutConfirm}>
+                  <div className={styles.logoutConfirmTitle}>Confirm sign out?</div>
+                  <div className={styles.logoutConfirmActions}>
+                    <button type="button" className={styles.logoutConfirmPrimary} onClick={handleLogout}>
                       Logout
                     </button>
-                    <button
-                      onClick={() => setConfirmLogout(false)}
-                      style={{
-                        background: "var(--admin-surface)",
-                        color: "var(--admin-text-muted)",
-                        border: "1px solid var(--admin-border)",
-                        padding: "0.45rem 0.6rem",
-                        borderRadius: "6px",
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
-                    >
+                    <button type="button" onClick={() => setConfirmLogout(false)}>
                       Cancel
                     </button>
                   </div>
                 </div>
               ) : (
-                <button className={styles.logoutBtn} onClick={() => setConfirmLogout(true)}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <button type="button" className={styles.logoutBtn} onClick={() => setConfirmLogout(true)} title="Sign Out">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9" />
                   </svg>
                   <span className={styles.menuLinkText}>Sign Out</span>
                 </button>
               )}
             </div>
-          </div>
+          </nav>
         </aside>
 
-        {/* Mobile Backdrop for sidebar drawer */}
+        {/* Mobile/tablet backdrop for the sidebar drawer (hidden on desktop via CSS) */}
         {sidebarOpen && (
           <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />
         )}
@@ -299,38 +302,43 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 type="button"
                 className={styles.mobileMenuBtn}
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                aria-label="Toggle navigation menu"
+                aria-label="Open navigation menu"
+                aria-controls="admin-sidebar"
+                aria-expanded={sidebarOpen}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <line x1="3" y1="12" x2="21" y2="12"></line>
                   <line x1="3" y1="6" x2="21" y2="6"></line>
                   <line x1="3" y1="18" x2="21" y2="18"></line>
                 </svg>
               </button>
-              <div className={styles.topBarBrand}>
-                <span className={styles.topBarTitle}>De Luzex</span>
-                <span className={styles.topBarBadge}>Executive Admin</span>
-              </div>
-            </div>
-
-            <div className={styles.topBarRight}>
-              <Link
-                href="/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.storefrontLink}
-                title="Open live customer storefront in a new tab"
+              <button
+                type="button"
+                className={styles.collapseBtn}
+                onClick={toggleRail}
+                aria-label={railCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                aria-controls="admin-sidebar"
+                aria-expanded={!railCollapsed}
+                title={railCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
-                <span>Live Storefront</span>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                  <polyline points="15 3 21 3 21 9"></polyline>
-                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <line x1="9" y1="4" x2="9" y2="20" />
                 </svg>
+              </button>
+              <span className={styles.topBarTitle}>{activeItemName}</span>
+            </div>
+            <div className={styles.topBarRight}>
+              <Link href="/" target="_blank" rel="noopener noreferrer" className={styles.storefrontLink} title="Open the live storefront in a new tab">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+                <span className={styles.storefrontLinkText}>View Storefront</span>
               </Link>
             </div>
           </header>
-
           <main className={styles.mainContent}>
             {children}
           </main>
@@ -339,4 +347,3 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </div>
   );
 }
-

@@ -3,8 +3,9 @@
 import styles from "./productDetail.module.css";
 import Image from "next/image";
 import Link from "next/link";
-import { useDispatch } from "react-redux";
-import { addToCart, openCart } from "../../store/cartSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart, openCart, getMaxQuantity } from "../../store/cartSlice";
+import { RootState } from "../../store/store";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useMemo } from "react";
 import {
@@ -25,6 +26,7 @@ import PincodeChecker from "../../components/PincodeChecker";
 export default function ProductDetail() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const cartItems = useSelector((state: RootState) => state.cart.cartItems);
   const { user, isAuthenticated, isAdmin, openLoginModal } = useAuth();
   const userEmail = (user as Record<string, string>)?.email || "";
   const params = useParams();
@@ -44,8 +46,6 @@ export default function ProductDetail() {
   const [reviewHoverRating, setReviewHoverRating] = useState(0);
   const [reviewForm, setReviewForm] = useState({
     name: "",
-    email: "",
-    title: "",
     text: "",
   });
 
@@ -256,6 +256,23 @@ export default function ProductDetail() {
     : product.stock_status || "IN STOCK";
 
   // Action Button Handlers
+  const cartProductId = String(product.id || params.slug || "");
+  const quantityInCart = cartItems.find((item) => String(item.id) === cartProductId)?.quantity || 0;
+  const maxQuantity = getMaxQuantity(product);
+  const isAtStockLimit = maxQuantity !== undefined && quantityInCart >= maxQuantity;
+
+  const dispatchAddToCart = () =>
+    dispatch(
+      addToCart({
+        id: cartProductId,
+        product_title: product.product_title,
+        product_price: product.product_price,
+        product_main_image: currentImage || product.product_main_image,
+        quantity: 1,
+        max_quantity: maxQuantity,
+      })
+    );
+
   const handleBuyNow = () => {
     if (!product || isBuyingNow) return;
     if (isOutOfStock) {
@@ -263,15 +280,8 @@ export default function ProductDetail() {
       return;
     }
     setIsBuyingNow(true);
-    dispatch(
-      addToCart({
-        id: String(product.id || params.slug || ""),
-        product_title: product.product_title,
-        product_price: product.product_price,
-        product_main_image: currentImage || product.product_main_image,
-        quantity: 1,
-      })
-    );
+    // Already holding all available units: go straight to checkout without adding more
+    if (!isAtStockLimit) dispatchAddToCart();
     router.push("/checkout");
   };
 
@@ -281,16 +291,12 @@ export default function ProductDetail() {
       alert("This item is currently out of stock.");
       return;
     }
+    if (isAtStockLimit) {
+      alert(`Only ${maxQuantity} units available — they're all in your cart already.`);
+      return;
+    }
     setIsAddingToCart(true);
-    dispatch(
-      addToCart({
-        id: String(product.id || params.slug || ""),
-        product_title: product.product_title,
-        product_price: product.product_price,
-        product_main_image: currentImage || product.product_main_image,
-        quantity: 1,
-      })
-    );
+    dispatchAddToCart();
     setAddedToCartToast(true);
     setTimeout(() => {
       setIsAddingToCart(false);
@@ -337,19 +343,25 @@ export default function ProductDetail() {
   };
 
   const handleOpenReviewModal = () => {
+    if (!isAuthenticated) {
+      openLoginModal(undefined, "Please sign in or create an account to leave a customer review.");
+      return;
+    }
     const defaultName = (user as any)?.name || `${(user as any)?.first_name || ""} ${(user as any)?.last_name || ""}`.trim() || "";
-    const defaultEmail = userEmail || "";
-    setReviewForm((prev) => ({
-      ...prev,
-      name: prev.name || defaultName,
-      email: prev.email || defaultEmail,
-    }));
+    setReviewForm({
+      name: defaultName,
+      text: "",
+    });
     setShowReviewModal(true);
   };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product) return;
+    if (!isAuthenticated) {
+      openLoginModal(undefined, "Please sign in or create an account to leave a customer review.");
+      return;
+    }
     if (!reviewForm.name.trim()) {
       alert("Please enter your name.");
       return;
@@ -366,24 +378,27 @@ export default function ProductDetail() {
 
     setReviewSubmitting(true);
     try {
+      const authorEmail = (user as any)?.email || userEmail || undefined;
+      const authorPhone = (user as any)?.phone || (user as any)?.mobile || undefined;
+
       const res = await submitProductReview({
         product_id: targetProductId,
         author_name: reviewForm.name.trim(),
-        author_email: reviewForm.email.trim() || undefined,
+        author_email: authorEmail,
+        author_phone: authorPhone,
         rating: reviewRating,
-        title: reviewForm.title.trim() || undefined,
         text: reviewForm.text.trim(),
       });
       if (res && res.stats) {
         setReviewsStats(res.stats);
       }
-      setReviewSuccessMsg("Thank you! Your review has been submitted successfully.");
+      setReviewSuccessMsg("Thank you! Your review has been submitted for moderation and will appear once approved by our team.");
       setTimeout(() => {
         setShowReviewModal(false);
         setReviewSuccessMsg("");
-        setReviewForm({ name: "", email: "", title: "", text: "" });
+        setReviewForm({ name: "", text: "" });
         setReviewRating(5);
-      }, 1800);
+      }, 2200);
     } catch (err: any) {
       console.error("Failed to submit review:", err);
       alert(err?.message || "Failed to submit review. Please try again.");
@@ -1159,6 +1174,8 @@ export default function ProductDetail() {
                     <Link
                       href={productUrl}
                       className={styles.productImageLink}
+                      aria-label={`View ${prod.product_title}`}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <Image
                         src={prod.product_main_image || "/images/logos/de_luzex_black.svg"}
@@ -1177,6 +1194,11 @@ export default function ProductDetail() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        const relatedMax = getMaxQuantity(prod);
+                        if (prod.in_stock === false || relatedMax === 0) {
+                          alert("This item is currently out of stock.");
+                          return;
+                        }
                         setAddingRelatedId(prodId);
                         dispatch(
                           addToCart({
@@ -1185,6 +1207,7 @@ export default function ProductDetail() {
                             price: Number(prod.product_price) || 0,
                             product_main_image: prod.product_main_image || "/images/logos/de_luzex_black.svg",
                             quantity: 1,
+                            max_quantity: relatedMax,
                           })
                         );
                         dispatch(openCart());
@@ -1412,37 +1435,14 @@ export default function ProductDetail() {
                 </div>
 
                 <div className={styles.modalFormGroup}>
-                  <label className={styles.modalFormLabel}>Email Address (Optional)</label>
-                  <input
-                    type="email"
-                    value={reviewForm.email}
-                    onChange={(e) => setReviewForm({ ...reviewForm, email: e.target.value })}
-                    placeholder="e.g. sarah@example.com"
-                    className={styles.modalFormInput}
-                  />
-                </div>
-
-                <div className={styles.modalFormGroup}>
-                  <label className={styles.modalFormLabel}>Review Title / Headline</label>
-                  <input
-                    type="text"
-                    value={reviewForm.title}
-                    onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })}
-                    placeholder="e.g. Stunning quality and safe delivery"
-                    className={styles.modalFormInput}
-                  />
-                </div>
-
-                <div className={styles.modalFormGroup}>
                   <label className={styles.modalFormLabel}>Your Review *</label>
                   <textarea
                     required
-                    rows={4}
+                    rows={3}
                     value={reviewForm.text}
                     onChange={(e) => setReviewForm({ ...reviewForm, text: e.target.value })}
                     placeholder="Write your feedback here... What did you like or dislike about the finish, lighting, craftsmanship, or packaging?"
                     className={styles.modalFormInput}
-                    style={{ resize: "vertical" }}
                   />
                 </div>
 

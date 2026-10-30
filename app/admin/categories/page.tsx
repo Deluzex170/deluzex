@@ -1,16 +1,18 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import type { ColDef } from "ag-grid-community";
+import type { CustomCellRendererProps } from "ag-grid-react";
 import styles from "../admin.module.css";
-import { fetchCategories, deleteCategory, Category } from "../../services/api";
-import { FolderTree, Plus, Search, Trash2, Edit3, Image as ImageIcon, AlertCircle } from "lucide-react";
+import { fetchCategories, fetchProducts, deleteCategory, Category } from "../../services/api";
+import { Plus, Trash2, AlertCircle } from "lucide-react";
+import AdminDataGrid from "../../components/admin/AdminDataGrid";
+import { ActionButtonsRenderer, ImageThumbnailRenderer, type ActionButtonsParams } from "../../components/admin/gridRenderers";
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
   const [itemToDelete, setItemToDelete] = useState<Category | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
@@ -53,15 +55,79 @@ export default function AdminCategories() {
     }
   }
 
-  const filteredCategories = useMemo(() => {
-    if (!searchQuery.trim()) return categories;
-    const q = searchQuery.toLowerCase();
-    return categories.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        (c.description && c.description.toLowerCase().includes(q))
-    );
-  }, [categories, searchQuery]);
+  // Product counts per category (read-only, from the catalog the Products page uses)
+  const [productCounts, setProductCounts] = useState<Record<string, number>>({});
+  useEffect(() => {
+    fetchProducts()
+      .then((list) => {
+        const counts: Record<string, number> = {};
+        for (const p of list) {
+          const key = (p.product_category || "").trim().toLowerCase();
+          if (key) counts[key] = (counts[key] || 0) + 1;
+        }
+        setProductCounts(counts);
+      })
+      .catch(() => setProductCounts({}));
+  }, []);
+
+  // Categories grid columns — Edit/Delete use the same routes and confirmation as before
+  const columnDefs = useMemo<ColDef<Category>[]>(() => [
+    {
+      headerName: "Image",
+      field: "image_url",
+      width: 76,
+      minWidth: 76,
+      maxWidth: 76,
+      flex: 0,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      cellRenderer: ImageThumbnailRenderer,
+    },
+    {
+      headerName: "Category Name",
+      field: "name",
+      minWidth: 180,
+      cellRenderer: (p: CustomCellRendererProps<Category>) => (
+        <span style={{ fontWeight: 600, color: "var(--admin-text-main)" }}>{p.value}</span>
+      ),
+    },
+    {
+      headerName: "Description",
+      colId: "description",
+      minWidth: 240,
+      flex: 2,
+      valueGetter: (p) => p.data?.description || "No description provided.",
+      tooltipValueGetter: (p) => p.data?.description || "",
+    },
+    {
+      headerName: "Total Products",
+      colId: "productCount",
+      minWidth: 140,
+      type: "rightAligned",
+      filter: "agNumberColumnFilter",
+      valueGetter: (p) => productCounts[(p.data?.name || "").trim().toLowerCase()] ?? 0,
+    },
+    {
+      headerName: "Actions",
+      colId: "actions",
+      width: 96,
+      minWidth: 96,
+      maxWidth: 96,
+      flex: 0,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      pinned: "right",
+      cellRenderer: ActionButtonsRenderer<Category>,
+      cellRendererParams: {
+        editHref: (c: Category) => "/admin/categories/edit/" + (c._id || c.id || c.category_id),
+        onDelete: (c: Category) => setItemToDelete(c),
+        labelFor: (c: Category) => c.name,
+      } satisfies ActionButtonsParams<Category>,
+    },
+  ], [productCounts]);
+
 
   return (
     <div className={styles.sectionContainer}>
@@ -184,7 +250,7 @@ export default function AdminCategories() {
               disabled={deleting}
               onClick={() => setItemToDelete(null)}
               className={styles.btnCancel}
-              style={{ background: "#ffffff", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
+              style={{ background: "var(--admin-surface)", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
             >
               Cancel
             </button>
@@ -202,143 +268,17 @@ export default function AdminCategories() {
       )}
 
       {/* Main Table Card (Full Width) */}
-      <div className={styles.card} style={{ width: "100%", maxWidth: "100%" }}>
-        {/* Search Bar */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.25rem 1.5rem", borderBottom: "1px solid var(--admin-border)" }}>
-          <div style={{ position: "relative", width: "100%", maxWidth: "340px" }}>
-            <Search size={16} color="var(--admin-text-muted)" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }} />
-            <input
-              type="text"
-              placeholder="Search categories..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={styles.formInput}
-              style={{ paddingLeft: "36px", height: "38px", fontSize: "0.875rem" }}
-            />
-          </div>
-
-          <span style={{ fontSize: "0.85rem", color: "var(--admin-text-muted)" }}>
-            Showing {filteredCategories.length} of {categories.length} categories
-          </span>
-        </div>
-
-        {loading ? (
-          <div style={{ padding: "4rem 2rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-            Loading catalog categories...
-          </div>
-        ) : filteredCategories.length === 0 ? (
-          <div style={{ padding: "4rem 2rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-            <FolderTree size={40} color="#cbd5e1" style={{ margin: "0 auto 1rem" }} />
-            <h4 style={{ margin: "0 0 0.5rem", color: "var(--admin-primary)", fontSize: "1.05rem" }}>
-              {searchQuery ? "No matching categories" : "No categories created yet"}
-            </h4>
-            <p style={{ margin: 0, fontSize: "0.875rem" }}>
-              {searchQuery ? "Try refining your search query." : "Click Add Category above to populate the catalog."}
-            </p>
-          </div>
-        ) : (
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th style={{ width: "80px" }}>Image</th>
-                  <th>Category Name</th>
-                  <th>Description</th>
-                  <th style={{ textAlign: "right", width: "160px" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCategories.map((cat, idx) => {
-                  const catId = cat._id || cat.id || cat.category_id || idx;
-                  return (
-                    <tr key={catId}>
-                      <td>
-                        <div
-                          style={{
-                            width: 48,
-                            height: 48,
-                            borderRadius: "8px",
-                            overflow: "hidden",
-                            position: "relative",
-                            background: "#f1f5f9",
-                            border: "1px solid var(--admin-border)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          {cat.image_url ? (
-                            <Image
-                              src={cat.image_url}
-                              alt={cat.name}
-                              fill
-                              sizes="48px"
-                              style={{ objectFit: "cover" }}
-                            />
-                          ) : (
-                            <ImageIcon size={20} color="#94a3b8" />
-                          )}
-                        </div>
-                      </td>
-
-                      <td>
-                        <div style={{ fontWeight: 600, color: "var(--admin-primary)", fontSize: "0.95rem" }}>
-                          {cat.name}
-                        </div>
-                      </td>
-
-                      <td style={{ color: "var(--admin-text-muted)", fontSize: "0.875rem", maxWidth: "420px" }}>
-                        <div
-                          style={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            display: "-webkit-box",
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          {cat.description || "No description provided."}
-                        </div>
-                      </td>
-
-                      <td style={{ textAlign: "right" }}>
-                        <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", alignItems: "center" }}>
-                          <Link
-                            href={`/admin/categories/edit/${catId}`}
-                            className={styles.actionButton}
-                            style={{ background: "#f1f5f9", padding: "0.4rem 0.75rem", fontSize: "0.8rem", borderRadius: "6px" }}
-                          >
-                            <Edit3 size={13} color="#475569" />
-                            <span>Edit</span>
-                          </Link>
-
-                          <button
-                            type="button"
-                            onClick={() => setItemToDelete(cat)}
-                            className={styles.actionButton}
-                            style={{
-                              background: "#fef2f2",
-                              color: "#b91c1c",
-                              border: "1px solid #fee2e2",
-                              padding: "0.4rem 0.75rem",
-                              fontSize: "0.8rem",
-                              borderRadius: "6px",
-                            }}
-                          >
-                            <Trash2 size={13} />
-                            <span>Delete</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {/* CATEGORIES GRID (AG Grid Community) */}
+      <AdminDataGrid<Category>
+        ariaLabel="Catalog categories"
+        rowData={categories}
+        columnDefs={columnDefs}
+        loading={loading}
+        getRowId={(c) => String(c._id || c.id || c.category_id || c.name)}
+        searchPlaceholder="Search categories…"
+        emptyTitle="No categories created yet"
+        emptyDescription="Click Add Category above to populate the catalog."
+      />
     </div>
   );
 }

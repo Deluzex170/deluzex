@@ -19,6 +19,10 @@ import {
   rejectReturnOrder,
   restockReturnedOrder,
   LiveTrackingResponse,
+  fetchShiprocketWallet,
+  fetchShiprocketPickupLocations,
+  ShiprocketWalletInfo,
+  ShiprocketPickupLocation,
 } from "../services/api";
 
 interface ShiprocketFulfillmentModalProps {
@@ -56,7 +60,12 @@ export default function ShiprocketFulfillmentModal({
   const [selectedCourierId, setSelectedCourierId] = useState<number | null>(null);
   const [isCheckingCouriers, setIsCheckingCouriers] = useState(false);
 
+  // Shiprocket Account & Wallet State
+  const [walletInfo, setWalletInfo] = useState<ShiprocketWalletInfo | null>(null);
+  const [pickupLocations, setPickupLocations] = useState<ShiprocketPickupLocation[]>([]);
+
   // Actions Loading State
+  const [isSyncingOrder, setIsSyncingOrder] = useState(false);
   const [isCreatingShipment, setIsCreatingShipment] = useState(false);
   const [isSchedulingPickup, setIsSchedulingPickup] = useState(false);
   const [pickupDate, setPickupDate] = useState<string>(
@@ -100,6 +109,19 @@ export default function ShiprocketFulfillmentModal({
       setActiveTab("ship");
     }
   }, [order]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchShiprocketWallet().then(setWalletInfo).catch(() => null);
+      fetchShiprocketPickupLocations().then((res) => {
+        if (res?.locations?.length) {
+          setPickupLocations(res.locations);
+          const primary = res.locations.find((l) => l.is_primary);
+          if (primary) setPickupLocation(primary.pickup_location);
+        }
+      }).catch(() => null);
+    }
+  }, [isOpen]);
 
   // Load tracking automatically when clicking tracking tab
   useEffect(() => {
@@ -148,11 +170,10 @@ export default function ShiprocketFulfillmentModal({
     }
   };
 
-  const handleCreateShipmentAndAWB = async () => {
+  const handlePushOrderOnly = async () => {
     if (!currentOrder._id) return;
-    setIsCreatingShipment(true);
+    setIsSyncingOrder(true);
     try {
-      // Step 1: Create Shipment in Shiprocket
       const shipRes = await createShiprocketShipment(currentOrder._id, {
         weight,
         length,
@@ -161,12 +182,63 @@ export default function ShiprocketFulfillmentModal({
         pickup_location: pickupLocation,
       });
 
-      const shipmentId = shipRes.shiprocket_shipment_id;
+      showToast(`Address & order items pushed to Shiprocket! (Shipment #${shipRes.shiprocket_shipment_id})`);
+
+      setCurrentOrder((prev) =>
+        prev
+          ? {
+              ...prev,
+              shiprocket_order_id: shipRes.shiprocket_order_id,
+              shiprocket_shipment_id: shipRes.shiprocket_shipment_id,
+            }
+          : null
+      );
+      onOrderUpdated();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to push order to Shiprocket";
+      showToast(msg, "error");
+    } finally {
+      setIsSyncingOrder(false);
+    }
+  };
+
+  const handleCreateShipmentAndAWB = async () => {
+    if (!currentOrder._id) return;
+    setIsCreatingShipment(true);
+    try {
+      let shipmentId = currentOrder.shiprocket_shipment_id;
+      let srOrderId = currentOrder.shiprocket_order_id;
+
+      // Step 1: Create Shipment in Shiprocket if not already registered
+      if (!shipmentId) {
+        const shipRes = await createShiprocketShipment(currentOrder._id, {
+          weight,
+          length,
+          breadth,
+          height,
+          pickup_location: pickupLocation,
+        });
+
+        shipmentId = shipRes.shiprocket_shipment_id;
+        srOrderId = shipRes.shiprocket_order_id;
+
+        // Persist shipmentId immediately to avoid duplicate shipment creation on retry
+        setCurrentOrder((prev) =>
+          prev
+            ? {
+                ...prev,
+                shiprocket_order_id: srOrderId,
+                shiprocket_shipment_id: shipmentId,
+              }
+            : null
+        );
+        onOrderUpdated();
+      }
 
       // Step 2: Assign courier & generate AWB
       const awbRes = await assignShiprocketCourier(
         currentOrder._id,
-        shipmentId,
+        Number(shipmentId),
         selectedCourierId || undefined
       );
 
@@ -176,11 +248,11 @@ export default function ShiprocketFulfillmentModal({
         prev
           ? {
               ...prev,
-              shiprocket_order_id: shipRes.shiprocket_order_id,
+              shiprocket_order_id: srOrderId,
               shiprocket_shipment_id: shipmentId,
               awb_code: awbRes.awb_code,
               courier_name: awbRes.courier_name,
-              status: "Processing",
+              status: "processing",
             }
           : null
       );
@@ -189,6 +261,7 @@ export default function ShiprocketFulfillmentModal({
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to generate shipment";
       showToast(msg, "error");
+      fetchShiprocketWallet().then(setWalletInfo).catch(() => null);
     } finally {
       setIsCreatingShipment(false);
     }
@@ -221,10 +294,10 @@ export default function ShiprocketFulfillmentModal({
     setIsGeneratingLabel(true);
     try {
       const res = await fetchShippingLabel(Number(shipmentId), currentOrder._id);
-      if (res.label_url) {
+      if (typeof res.label_url === "string" && res.label_url.startsWith("http")) {
         window.open(res.label_url, "_blank");
       } else {
-        showToast("Label URL not available yet", "error");
+        showToast("Label URL not ready yet. Please retry in a few moments.", "error");
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to get label";
@@ -238,10 +311,10 @@ export default function ShiprocketFulfillmentModal({
     if (!currentOrder._id) return;
     try {
       const res = await fetchShippingInvoice(currentOrder._id);
-      if (res.invoice_url) {
+      if (typeof res.invoice_url === "string" && res.invoice_url.startsWith("http")) {
         window.open(res.invoice_url, "_blank");
       } else {
-        showToast("Invoice URL not available yet", "error");
+        showToast("Invoice PDF not ready yet. Please retry in a few moments.", "error");
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to get invoice";
@@ -445,6 +518,40 @@ export default function ShiprocketFulfillmentModal({
           {/* TAB 1: FORWARD SHIPMENT */}
           {activeTab === "ship" && (
             <>
+              {/* Wallet Balance Alert */}
+              {walletInfo && (
+                <div
+                  className={`${styles.walletBanner} ${
+                    walletInfo.is_low ? styles.walletBannerLow : styles.walletBannerOk
+                  }`}
+                >
+                  <div className={styles.walletLeft}>
+                    <span className={styles.walletIcon}>{walletInfo.is_low ? "⚠️" : "💳"}</span>
+                    <div>
+                      <div className={styles.walletTitle}>
+                        {walletInfo.is_low
+                          ? `Low Shiprocket Wallet Balance: ₹${walletInfo.balance.toFixed(2)}`
+                          : `Shiprocket Prepaid Balance: ₹${walletInfo.balance.toFixed(2)}`}
+                      </div>
+                      <div className={styles.walletDesc}>
+                        {walletInfo.is_low
+                          ? `Shiprocket requires minimum ₹${walletInfo.minimum_required} balance to assign couriers & generate AWBs.`
+                          : `Prepaid wallet active and ready for courier label generation.`}
+                      </div>
+                    </div>
+                  </div>
+                  {walletInfo.is_low && (
+                    <a
+                      href={walletInfo.recharge_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.walletRechargeBtn}
+                    >
+                      ⚡ Recharge Shiprocket Wallet ↗
+                    </a>
+                  )}
+                </div>
+              )}
               {/* If AWB already generated */}
               {hasAwb ? (
                 <div className={styles.card}>
@@ -523,6 +630,18 @@ export default function ShiprocketFulfillmentModal({
               ) : (
                 /* Generate New Shipment */
                 <>
+                  {currentOrder.shiprocket_shipment_id && (
+                    <div className={styles.shipmentRegisteredNotice}>
+                      <div>
+                        <strong>✓ Shipment Registered with Shiprocket</strong> • Shipment ID: #{currentOrder.shiprocket_shipment_id}
+                        {currentOrder.shiprocket_order_id && ` • Order ID: #${currentOrder.shiprocket_order_id}`}
+                      </div>
+                      <span style={{ fontSize: "0.78rem", opacity: 0.85 }}>
+                        Check available couriers below and generate AWB tracking code.
+                      </span>
+                    </div>
+                  )}
+
                   <div className={styles.card}>
                     <h4 className={styles.cardTitle}>
                       <span>1. Package Dimensions & Pickup Warehouse</span>
@@ -568,16 +687,46 @@ export default function ShiprocketFulfillmentModal({
                     </div>
 
                     <div className={styles.pickupBar}>
-                      <div style={{ fontSize: "0.85rem", color: "var(--admin-text-muted, #9ca3af)" }}>
-                        Pickup Location: <strong style={{ color: "var(--admin-primary, #d4af37)" }}>work</strong> (Pincode: 385210)
+                      <div style={{ fontSize: "0.85rem", color: "var(--admin-text-muted, #9ca3af)", display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                        <span>Pickup Location:</span>
+                        {pickupLocations.length > 0 ? (
+                          <select
+                            value={pickupLocation}
+                            onChange={(e) => setPickupLocation(e.target.value)}
+                            className={styles.input}
+                            style={{ padding: "0.3rem 0.6rem", fontSize: "0.85rem", maxWidth: "240px" }}
+                          >
+                            {pickupLocations.map((loc, i) => (
+                              <option key={i} value={loc.pickup_location}>
+                                {loc.pickup_location} ({loc.city} - {loc.pin_code})
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <strong style={{ color: "var(--admin-primary, #d4af37)" }}>{pickupLocation}</strong>
+                        )}
                       </div>
-                      <button
-                        className={styles.btnSecondary}
-                        onClick={handleCheckCouriers}
-                        disabled={isCheckingCouriers}
-                      >
-                        {isCheckingCouriers ? "Checking..." : "🔍 Check Available Couriers & Rates"}
-                      </button>
+                      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+                        {!currentOrder.shiprocket_shipment_id && (
+                          <button
+                            type="button"
+                            className={styles.btnSecondary}
+                            onClick={handlePushOrderOnly}
+                            disabled={isSyncingOrder || isCreatingShipment}
+                            title="Push customer delivery address & parcel items to Shiprocket for free (No wallet balance needed)"
+                          >
+                            {isSyncingOrder ? "Syncing..." : "📥 Push Address to Shiprocket (Free)"}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className={styles.btnSecondary}
+                          onClick={handleCheckCouriers}
+                          disabled={isCheckingCouriers}
+                        >
+                          {isCheckingCouriers ? "Checking..." : "🔍 Check Available Couriers & Rates"}
+                        </button>
+                      </div>
                     </div>
                   </div>
 

@@ -5,7 +5,7 @@
   max-width: 100%;
   margin: 0;
   padding: 0;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-family: inherit;
   animation: fadeIn 0.3s ease-out forwards;
 }
@@ -29,7 +29,7 @@
   font-weight: 700;
   letter-spacing: -0.025em;
   margin: 0 0 0.35rem 0;
-  color: #0f172a;
+  color: var(--admin-text-main);
 }
 
 .goldAccent {
@@ -38,14 +38,14 @@
 
 .subtitle {
   font-size: 0.925rem;
-  color: #64748b;
+  color: var(--admin-text-muted);
   margin: 0;
 }
 
 .refreshBtn {
-  background: #ffffff;
-  color: #0f172a;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface);
+  color: var(--admin-text-main);
+  border: 1px solid var(--admin-border);
   padding: 0.65rem 1.25rem;
   border-radius: 8px;
   cursor: pointer;
@@ -59,8 +59,8 @@
 }
 
 .refreshBtn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
   transform: translateY(-1px);
 }
 
@@ -78,8 +78,8 @@
 }
 
 .kpiCard {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
   border-radius: 14px;
   padding: 1.4rem 1.5rem;
   position: relative;
@@ -89,7 +89,7 @@
 }
 
 .kpiCard:hover {
-  border-color: #cbd5e1;
+  border-color: var(--admin-border);
   box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
   transform: translateY(-2px);
 }
@@ -105,7 +105,7 @@
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #64748b;
+  color: var(--admin-text-muted);
   font-weight: 700;
 }
 
@@ -124,7 +124,7 @@
 .kpiValue {
   font-size: 2.1rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--admin-text-main);
   line-height: 1.15;
   margin-bottom: 0.5rem;
   letter-spacing: -0.02em;
@@ -136,7 +136,7 @@
 
 .kpiFootnote {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--admin-text-muted);
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -157,7 +157,7 @@
 .sectionTitle {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--admin-text-main);
   letter-spacing: -0.01em;
 }
 
@@ -168,12 +168,12 @@
 }
 
 .navCard {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
   border-radius: 12px;
   padding: 1.15rem 1.25rem;
   text-decoration: none;
-  color: #0f172a;
+  color: var(--admin-text-main);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   transition: all 0.2s ease;
   display: flex;
@@ -192,7 +192,7 @@
   font-weight: 700;
   font-size: 0.925rem;
   margin-bottom: 0.35rem;
-  color: #0f172a;
+  color: var(--admin-text-main);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -200,7 +200,7 @@
 
 .navCardTitle::after {
   content: "→";
-  color: #94a3b8;
+  color: var(--admin-text-subtle);
   font-size: 0.9rem;
   transition: transform 0.2s, color 0.2s;
 }
@@ -212,7 +212,7 @@
 
 .navCardDesc {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--admin-text-muted);
   line-height: 1.4;
 }
 
@@ -224,8 +224,8 @@
 }
 
 .feedCard {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
   border-radius: 14px;
   padding: 1.5rem;
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
@@ -244,7 +244,7 @@
   margin: 0;
   font-size: 1.05rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--admin-text-main);
 }
 
 .viewAllLink {
@@ -275,14 +275,14 @@
 
 .orderNum {
   font-weight: 700;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-size: 0.9rem;
   font-family: ui-monospace, monospace;
 }
 
 .orderCust {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--admin-text-muted);
   margin-top: 2px;
 }
 
@@ -292,7 +292,7 @@
 
 .orderAmount {
   font-weight: 700;
-  color: #0f172a;
+  color: var(--admin-text-main);
   font-size: 0.95rem;
 }
 
@@ -334,7 +334,7 @@
 
 .stockName {
   font-weight: 600;
-  color: #1e293b;
+  color: var(--admin-text-main);
   font-size: 0.875rem;
 }
 
@@ -359,8 +359,8 @@
 
 /* Operational Attention Pill */
 .opAlertCard {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--admin-surface-muted);
+  border: 1px solid var(--admin-border);
   border-radius: 10px;
   padding: 0.9rem 1.15rem;
   margin-bottom: 0.75rem;
@@ -373,7 +373,7 @@
 }
 
 .opAlertCard:hover {
-  background: #f1f5f9;
+  background: var(--admin-surface-muted);
   border-color: #c49a45;
   transform: translateY(-1px);
 }
@@ -381,12 +381,12 @@
 .opAlertTitle {
   font-weight: 600;
   font-size: 0.875rem;
-  color: #0f172a;
+  color: var(--admin-text-main);
 }
 
 .opAlertSubtitle {
   font-size: 0.775rem;
-  color: #64748b;
+  color: var(--admin-text-muted);
   margin-top: 2px;
 }
 
@@ -403,5 +403,162 @@
 @media (max-width: 960px) {
   .dualFeedGrid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Responsive: tablet & mobile (desktop unchanged) ─── */
+@media (max-width: 1024px) {
+  .container {
+    padding: 0.5rem 0 3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 768px) {
+  .titleArea h1 {
+    flex-wrap: wrap;
+    font-size: 1.5rem;
+  }
+}
+
+/* ─── Admin density layer (compact, professional sizing on design tokens) ─── */
+@media all {
+  .container {
+    gap: var(--a-space-4);
+  }
+  .header {
+    margin-bottom: var(--a-space-4);
+    gap: var(--a-space-3);
+  }
+  .subtitle {
+    font-size: var(--a-fs-sm);
+  }
+  .kpiGrid {
+    gap: var(--a-space-3);
+    margin-bottom: var(--a-space-4);
+  }
+  .kpiCard {
+    padding: var(--a-space-3) var(--a-space-4);
+    border-radius: var(--a-radius-lg);
+    min-height: 0;
+    box-shadow: var(--a-shadow-card);
+  }
+  .kpiTopRow {
+    margin-bottom: var(--a-space-1);
+    gap: var(--a-space-2);
+  }
+  .kpiLabel {
+    font-size: var(--a-fs-2xs);
+    letter-spacing: var(--a-tracking-label);
+    line-height: var(--a-label-h);
+  }
+  .kpiValue {
+    font-size: 20px;
+    line-height: 1.2;
+    margin: 2px 0;
+  }
+  .kpiFootnote {
+    font-size: var(--a-fs-xs);
+    line-height: 1.4;
+    margin: 0;
+  }
+  .kpiIcon {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    border-radius: var(--a-radius-md);
+  }
+  .sectionHeader,
+  .feedCardHeader {
+    margin-bottom: var(--a-space-3);
+    padding-bottom: var(--a-space-2);
+  }
+  .sectionTitle {
+    font-size: var(--a-fs-md);
+    line-height: var(--a-lh-tight);
+  }
+  .quickNavGrid {
+    grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
+    gap: var(--a-space-3);
+  }
+  .quickNavSection {
+    margin-bottom: var(--a-space-5);
+  }
+  .navCard {
+    padding: var(--a-space-3) var(--a-space-4);
+    border-radius: var(--a-radius-lg);
+    gap: 2px;
+  }
+  .navCardTitle {
+    font-size: var(--a-fs-sm);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .navCardDesc {
+    font-size: var(--a-fs-xs);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .dualFeedGrid {
+    gap: var(--a-space-4);
+  }
+  .feedCard {
+    padding: var(--a-space-4);
+    border-radius: var(--a-radius-lg);
+  }
+  .opAlertCard {
+    padding: var(--a-space-2) var(--a-space-3);
+    margin-bottom: var(--a-space-2);
+    border-radius: var(--a-radius-md);
+  }
+  .orderRow,
+  .stockRow {
+    padding: var(--a-space-2) 0;
+  }
+}
+
+/* The admin layout already provides the page gutter */
+.container {
+  padding: 0;
+}
+
+/* ─── Standard filter toolbar + compact stat boxes ─── */
+@media all {
+  .kpiCard {
+    padding: 10px var(--a-space-4);
+    min-height: 0;
+  }
+  .kpiValue {
+    font-size: 18px;
+    line-height: 1.2;
+    margin: 2px 0 0;
+  }
+  .kpiLabel {
+    font-size: 10.5px;
+  }
+  .kpiIcon {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+  .kpiFootnote {
+    font-size: 11.5px;
+    margin-top: 2px;
+  }
+  .kpiGrid {
+    grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+    gap: 10px;
   }
 }

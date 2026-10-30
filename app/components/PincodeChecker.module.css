@@ -1,71 +1,101 @@
+/* Delivery / PIN code checker — sits on the cream product page, so it uses the
+   storefront tokens and dark-on-light colours (AA contrast). */
 .container {
-  margin-top: 1.25rem;
-  padding: 1.15rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  margin-top: var(--sf-space-5);
+  padding: var(--sf-space-4);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--sf-radius-lg);
 }
 
 .title {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.88rem;
+  gap: var(--sf-space-2);
+  font-size: var(--sf-fs-sm);
   font-weight: 600;
-  color: #f3f4f6;
-  margin-bottom: 0.75rem;
+  color: #2b2b2b;
+  margin-bottom: var(--sf-space-3);
+  cursor: pointer;
+}
+
+.title svg {
+  color: #b07d3a;
+  flex-shrink: 0;
 }
 
 .inputGroup {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--sf-space-2);
 }
 
 .input {
   flex: 1;
-  background: #18181c;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  padding: 0.6rem 0.85rem;
-  color: #ffffff;
-  font-size: 0.88rem;
+  min-width: 0;
+  height: var(--sf-control-h);
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: var(--sf-radius);
+  padding: 0 var(--sf-space-4);
+  color: #1a1a1a;
+  font-family: var(--font-general-sans, sans-serif);
+  font-size: var(--sf-fs-base);
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
-  letter-spacing: 0.05em;
+}
+
+.input::placeholder {
+  color: #7a7a7a;
+  letter-spacing: 0;
 }
 
 .input:focus {
-  border-color: #d4af37;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+  border-color: #c89b60;
+  box-shadow: var(--sf-focus-ring);
 }
 
 .checkBtn {
-  background: linear-gradient(135deg, #d4af37 0%, #b89628 100%);
-  color: #0b0b0e;
-  border: none;
+  flex-shrink: 0;
+  height: var(--sf-control-h);
+  min-width: 96px;
+  padding: 0 var(--sf-space-5);
+  border-radius: var(--sf-radius);
+  border: 1px solid #b07d3a;
+  background: #c89b60;
+  color: #1a1a1a;
+  font-family: var(--font-general-sans, sans-serif);
+  font-size: var(--sf-fs-sm);
   font-weight: 600;
-  padding: 0 1.15rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  transition: opacity 0.2s;
   white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .checkBtn:hover:not(:disabled) {
-  opacity: 0.92;
+  background: #b07d3a;
 }
 
+.checkBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--sf-focus-ring);
+}
+
+/* Disabled until a full 6-digit PIN is entered: clearly inactive, not "broken" */
 .checkBtn:disabled {
-  opacity: 0.5;
+  background: transparent;
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #6b6b6b;
   cursor: not-allowed;
 }
 
 .resultBox {
-  margin-top: 0.85rem;
-  padding: 0.75rem 0.9rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
+  margin-top: var(--sf-space-3);
+  padding: var(--sf-space-3) var(--sf-space-4);
+  border-radius: var(--sf-radius);
+  font-size: var(--sf-fs-sm);
   line-height: 1.4;
   animation: fadeIn 0.2s ease-in;
 }
@@ -76,19 +106,25 @@
 }
 
 .successBox {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  color: #34d399;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
 }
 
 .errorBox {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  color: #f87171;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
 }
 
 .courierItem {
-  margin-top: 0.35rem;
-  font-size: 0.8rem;
-  color: #e5e7eb;
+  margin-top: var(--sf-space-1);
+  font-size: var(--sf-fs-xs);
+  color: #374151;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resultBox {
+    animation: none;
+  }
 }

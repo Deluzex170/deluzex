@@ -218,48 +218,54 @@ a.contactInfoItem:hover {
 }
 
 .formLabel {
-  font-size: 1.05rem;
-  font-weight: 500;
-  color: #333333;
-  letter-spacing: 0.01em;
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4B5563;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
 }
 
 .formInput,
 .formTextarea,
 .formSelect {
   width: 100%;
-  border: 1px solid #D5D5D5;
+  border: 1px solid #D6CEBE;
   border-radius: 7px;
-  padding: 0.5rem 0.9rem;
-  font-family: inherit;
-  font-size: 0.95rem;
-  color: #2B2B2B;
-  background: #FFFFFF;
+  padding: 0 12px;
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13.5px;
+  color: #1F2937;
+  background: #FAF8F5;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   box-sizing: border-box;
 }
 
 .formInput {
-  height: 40px;
+  height: 38px;
 }
 
 .formInput::placeholder,
 .formTextarea::placeholder {
-  color: #A09E9B;
-  font-size: 0.92rem;
+  color: #9CA3AF;
+  font-size: 13px;
 }
 
 .formInput:focus,
 .formTextarea:focus,
 .formSelect:focus {
-  border-color: #D4A373;
-  box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.18);
+  border-color: #D79322;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 2.5px rgba(215, 147, 34, 0.16);
 }
 
 .formTextarea {
   resize: vertical;
-  min-height: 85px;
+  min-height: 70px;
+  padding: 8px 12px;
+  line-height: 1.4;
 }
 
 /* SUBMIT BUTTON */

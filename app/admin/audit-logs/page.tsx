@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import type { ColDef } from "ag-grid-community";
+import { AdminDataGrid } from "../../components/admin/AdminDataGrid";
 import styles from "./audit.module.css";
 import {
   fetchAuditLogs,
@@ -45,9 +47,9 @@ export default function AuditLogsPage() {
     const interval = setInterval(() => {
       loadData(false);
     }, 30000);
+    
     return () => clearInterval(interval);
   }, []);
-
   // Filter or search update
   useEffect(() => {
     const handler = setTimeout(async () => {
@@ -100,7 +102,148 @@ export default function AuditLogsPage() {
     return styles.actionNeutral;
   };
 
-  return (
+  const columnDefs = useMemo<ColDef<AuditLogItem>[]>(
+    () => [
+      {
+        field: "actor_name",
+        headerName: "Operator / Who",
+        width: 220,
+        cellRenderer: (params: any) => {
+          const log = params.data as AuditLogItem;
+          if (!log) return null;
+          const initials = (log.actor_name || log.actor_email || "U")
+            .split(" ")
+            .map((n: string) => n[0])
+            .join("")
+            .substring(0, 2)
+            .toUpperCase();
+          const roleClass =
+            log.actor_role === "Admin"
+              ? styles.roleAdmin
+              : log.actor_role === "Customer"
+              ? styles.roleCustomer
+              : styles.roleGuest;
+          return (
+            <div className={styles.actorCell}>
+              <div
+                className={`${styles.actorAvatar} ${
+                  log.actor_role === "Admin"
+                    ? styles.avatarAdmin
+                    : styles.avatarCustomer
+                }`}
+              >
+                {initials}
+              </div>
+              <div className={styles.actorMeta}>
+                <div className={styles.actorName}>
+                  <span>{log.actor_name || "Unknown Operator"}</span>
+                  <span className={roleClass}>{log.actor_role}</span>
+                </div>
+                <div className={styles.actorEmail}>
+                  {log.actor_email || (log.user_id ? `ID: ${log.user_id.substring(0, 8)}` : "Guest / Public")}
+                </div>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        field: "action",
+        headerName: "Action",
+        width: 150,
+        cellRenderer: (params: any) => {
+          const log = params.data as AuditLogItem;
+          if (!log) return null;
+          return (
+            <span className={`${styles.actionBadge} ${getActionBadgeClass(log.action, log.status)}`}>
+              {log.action}
+            </span>
+          );
+        },
+      },
+      {
+        field: "target_name",
+        headerName: "Target Resource",
+        width: 170,
+        cellRenderer: (params: any) => {
+          const log = params.data as AuditLogItem;
+          if (!log) return null;
+          return (
+            <div>
+              {log.target_type && <div className={styles.targetType}>{log.target_type}</div>}
+              <div className={styles.targetPill}>{log.target_name || log.target_id || "System"}</div>
+            </div>
+          );
+        },
+      },
+      {
+        field: "description",
+        headerName: "What Was Done",
+        flex: 1.5,
+        minWidth: 200,
+        cellRenderer: (params: any) => {
+          const log = params.data as AuditLogItem;
+          if (!log) return null;
+          return (
+            <div className={styles.descText} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {log.description || log.details || "No description provided."}
+            </div>
+          );
+        },
+      },
+      {
+        field: "ip_address",
+        headerName: "IP & Client",
+        width: 130,
+        cellRenderer: (params: any) => {
+          const log = params.data as AuditLogItem;
+          if (!log) return null;
+          return (
+            <div>
+              <div style={{ fontFamily: "monospace", fontSize: "0.8rem", color: "var(--admin-text-muted)" }}>
+                {log.ip_address || "127.0.0.1"}
+              </div>
+              <div style={{ fontSize: "0.72rem", color: "var(--admin-text-subtle)" }}>
+                {log.user_agent ? log.user_agent.split(" ")[0] : "Direct API"}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        field: "created_at",
+        headerName: "Time",
+        width: 130,
+        valueFormatter: (params) => {
+          if (!params.value) return "N/A";
+          return formatTimeAgo(params.value);
+        },
+      },
+      {
+        headerName: "Details",
+        width: 100,
+        pinned: "right",
+        cellRenderer: (params: any) => {
+          const log = params.data as AuditLogItem;
+          if (!log) return null;
+          return (
+            <button className={styles.btnViewDetails} onClick={() => setSelectedLog(log)}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+              Inspect
+            </button>
+          );
+        },
+      },
+    ],
+    []
+  );
+
+
+    return (
     <div className={styles.container}>
       {/* HEADER */}
       <div className={styles.header}>
@@ -269,127 +412,16 @@ export default function AuditLogsPage() {
           </div>
         </div>
 
-        <div className={styles.tableResponsive}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Operator / Who</th>
-                <th>Action</th>
-                <th>Target Resource</th>
-                <th>What Was Done</th>
-                <th>IP & Client</th>
-                <th>Time</th>
-                <th>Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.length > 0 ? (
-                logs.map((log) => {
-                  const initials = (log.actor_name || log.actor_email || "U")
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .substring(0, 2)
-                    .toUpperCase();
-                  const roleClass =
-                    log.actor_role === "Admin"
-                      ? styles.roleAdmin
-                      : log.actor_role === "Customer"
-                      ? styles.roleCustomer
-                      : styles.roleGuest;
-
-                  return (
-                    <tr key={log.id}>
-                      <td>
-                        <div className={styles.actorCell}>
-                          <div
-                            className={`${styles.actorAvatar} ${
-                              log.actor_role === "Admin"
-                                ? styles.avatarAdmin
-                                : styles.avatarCustomer
-                            }`}
-                          >
-                            {initials}
-                          </div>
-                          <div className={styles.actorMeta}>
-                            <div className={styles.actorName}>
-                              <span>{log.actor_name || "Unknown Operator"}</span>
-                              <span className={roleClass}>{log.actor_role}</span>
-                            </div>
-                            <div className={styles.actorEmail}>
-                              {log.actor_email || (log.user_id ? `ID: ${log.user_id.substring(0, 8)}` : "Guest / Public")}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td>
-                        <span
-                          className={`${styles.actionBadge} ${getActionBadgeClass(
-                            log.action,
-                            log.status
-                          )}`}
-                        >
-                          {log.action}
-                        </span>
-                      </td>
-
-                      <td>
-                        <div>
-                          {log.target_type && (
-                            <div className={styles.targetType}>{log.target_type}</div>
-                          )}
-                          <div className={styles.targetPill}>
-                            {log.target_name || log.target_id || "System"}
-                          </div>
-                        </div>
-                      </td>
-
-                      <td>
-                        <div className={styles.descText}>
-                          {log.description || log.details || "No description provided."}
-                        </div>
-                      </td>
-
-                      <td>
-                        <div style={{ fontFamily: "monospace", fontSize: "0.8rem", color: "#64748b" }}>
-                          {log.ip_address || "127.0.0.1"}
-                        </div>
-                        <div style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
-                          {log.user_agent ? log.user_agent.split(" ")[0] : "Direct API"}
-                        </div>
-                      </td>
-
-                      <td style={{ whiteSpace: "nowrap", fontSize: "0.82rem", color: "#64748b" }}>
-                        {formatTimeAgo(log.created_at)}
-                      </td>
-
-                      <td>
-                        <button
-                          className={styles.btnViewDetails}
-                          onClick={() => setSelectedLog(log)}
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <line x1="12" y1="16" x2="12" y2="12" />
-                            <line x1="12" y1="8" x2="12.01" y2="8" />
-                          </svg>
-                          Inspect
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "3.5rem 1rem", color: "#94a3b8" }}>
-                    No audit records matching your current filter criteria.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <AdminDataGrid<AuditLogItem>
+          ariaLabel="Security & Audit Trail"
+          rowData={logs}
+          columnDefs={columnDefs}
+          loading={isLoading}
+          getRowId={(s: AuditLogItem) => String(s.id || s.created_at)}
+          quickFilterText={search}
+          emptyTitle="No audit records found"
+          emptyDescription="No events match your current filter criteria."
+        />
       </div>
 
       {/* INSPECTION MODAL */}
@@ -442,7 +474,7 @@ export default function AuditLogsPage() {
               {/* State Diff if changes exist */}
               {selectedLog.changes && (
                 <div>
-                  <h4 style={{ margin: "0.5rem 0", fontSize: "0.9rem", color: "#0f172a" }}>
+                  <h4 style={{ margin: "0.5rem 0", fontSize: "0.9rem", color: "var(--admin-text-main)" }}>
                     State Modification Diff
                   </h4>
                   <div className={styles.diffContainer}>
@@ -471,7 +503,7 @@ export default function AuditLogsPage() {
 
               {/* Raw JSON viewer */}
               <div>
-                <h4 style={{ margin: "0.5rem 0", fontSize: "0.9rem", color: "#0f172a" }}>
+                <h4 style={{ margin: "0.5rem 0", fontSize: "0.9rem", color: "var(--admin-text-main)" }}>
                   Full Telemetry Record
                 </h4>
                 <div className={styles.jsonViewer}>

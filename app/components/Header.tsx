@@ -341,8 +341,8 @@ export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = 
               <Image
                 src={avatarUrl}
                 alt={displayName}
-                width={28}
-                height={28}
+                width={32}
+                height={32}
                 unoptimized
                 className={styles.userAvatar}
                 onError={() => setAvatarError(true)}

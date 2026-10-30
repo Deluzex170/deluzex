@@ -100,7 +100,7 @@
 
 @media (max-width: 1080px) {
   .layoutGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -176,7 +176,7 @@
   width: 18px;
   left: 2px;
   bottom: 2px;
-  background-color: #ffffff;
+  background-color: var(--admin-surface);
   transition: 0.3s;
   border-radius: 50%;
 }
@@ -514,7 +514,7 @@
 /* Light Theme Overrides */
 :global([data-admin-root][data-theme="light"]) .card,
 :global([data-admin-root][data-theme="light"]) .simulatorCard {
-  background: #ffffff;
+  background: var(--admin-surface);
   border-color: #e5e7eb;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
@@ -550,4 +550,60 @@
 :global([data-admin-root][data-theme="light"]) .simTotalRow td {
   border-top-color: #e5e7eb;
   color: #111827;
+}
+
+/* ─── Responsive: tablet & mobile (desktop unchanged) ─── */
+@media (max-width: 1024px) {
+  .container {
+    padding: 0.5rem 0 3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 768px) {
+  .titleArea h1 {
+    flex-wrap: wrap;
+    font-size: 1.5rem;
+  }
+}
+
+/* ─── Admin density layer (compact, professional sizing on design tokens) ─── */
+@media all {
+  .container {
+    gap: var(--a-space-4);
+  }
+  .header {
+    margin-bottom: var(--a-space-4);
+    gap: var(--a-space-3);
+  }
+  .cardHeader {
+    margin-bottom: var(--a-space-3);
+    padding-bottom: var(--a-space-2);
+  }
+  .cardTitle {
+    font-size: var(--a-fs-md);
+    line-height: var(--a-lh-tight);
+  }
+  .cardDesc {
+    font-size: var(--a-fs-xs);
+  }
+  .layoutGrid {
+    gap: var(--a-space-4);
+  }
+  .card,
+  .simulatorCard {
+    padding: var(--a-space-4);
+    border-radius: var(--a-radius-lg);
+  }
+}
+
+/* The admin layout already provides the page gutter */
+.container {
+  padding: 0;
 }

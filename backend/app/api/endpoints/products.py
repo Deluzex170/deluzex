@@ -65,6 +65,7 @@ async def create_product(
     is_featured: bool = Form(False),
     is_new_arrival: bool = Form(False),
     product_main_image: Optional[UploadFile] = File(None),
+    product_main_image_url: Optional[str] = Form(None),
     product_images: Optional[List[UploadFile]] = File(None),
     sku: Optional[str] = Form(None),
     stock_status: Optional[str] = Form("IN STOCK"),
@@ -106,6 +107,8 @@ async def create_product(
                 image_url = await upload_image_to_imagekit(product_main_image)
             except Exception as e:
                 raise HTTPException(status_code=400, detail=f"Main image upload failed: {str(e)}")
+        elif product_main_image_url and product_main_image_url.strip():
+            image_url = product_main_image_url.strip()
         
         if product_images:
             try:
@@ -205,6 +208,7 @@ async def update_product(
     is_featured: Optional[bool] = Form(None),
     is_new_arrival: Optional[bool] = Form(None),
     product_main_image: Optional[UploadFile] = File(None),
+    product_main_image_url: Optional[str] = Form(None),
     product_images: Optional[List[UploadFile]] = File(None),
     existing_images: Optional[str] = Form(None),
     sku: Optional[str] = Form(None),
@@ -305,6 +309,8 @@ async def update_product(
             product.product_main_image = image_url
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Image upload failed: {str(e)}")
+    elif product_main_image_url and product_main_image_url.strip():
+        product.product_main_image = product_main_image_url.strip()
 
     updated_images = list(product.product_images or [])
     if existing_images is not None:

@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { fetchSiteContent } from "../services/api";
 import styles from "./OrderInvoiceModal.module.css";
 
 export interface OrderInvoiceModalProps {
@@ -52,9 +53,34 @@ function numberToIndianWords(num: number): string {
 }
 
 export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalProps) {
+  const [siteSettings, setSiteSettings] = useState<any>(null);
+
+  useEffect(() => {
+    fetchSiteContent("site_settings").then(setSiteSettings).catch(() => {});
+  }, []);
+
   if (!order) return null;
 
-  const orderNum = order.order_number || order.orderNumber || order.order_id || order.id || order._id || "ORD-0001";
+  const legalName = siteSettings?.legal_company_name || "De Luzex Living Pvt. Ltd.";
+  const brandTitle = siteSettings?.brand_name || "De Luzex";
+  const atelierSub = siteSettings?.atelier_subtitle || "Luxury Luminaire Atelier";
+  const companyAddressLine1 = siteSettings?.address_line1 || "Level 14, Crest Tower, Bandra Kurla Complex";
+  const companyAddressLine2 = siteSettings?.address_line2 || "Mumbai, Maharashtra, 400051 India";
+  const gstin = siteSettings?.gstin || "27AABCD1234E1Z5";
+  const cin = siteSettings?.cin || "U74999MH2024PTC123456";
+  const invoiceEmail = siteSettings?.invoice_email || siteSettings?.email || "concierge@deluzex.com";
+  const invoicePhone = siteSettings?.invoice_phone || siteSettings?.phone || "+91 98765 43210";
+  const signatoryCompany = siteSettings?.signatory_company || (siteSettings?.legal_company_name ? `For ${siteSettings.legal_company_name}` : "For De Luzex Living Pvt. Ltd.");
+
+  // Standardized Option 2 Identifiers: Order Ref #DLX-YYMM-XXXX | Invoice INV-YY-XXXX
+  const rawId = String(order.id || order._id || order.order_id || "");
+  const orderDateObj = order.created_at || order.createdAt || order.date ? new Date(order.created_at || order.createdAt || order.date) : new Date();
+  const yymm = `${orderDateObj.getFullYear().toString().slice(-2)}${String(orderDateObj.getMonth() + 1).padStart(2, '0')}`;
+  const yy = orderDateObj.getFullYear().toString().slice(-2);
+  const suffix = rawId.length >= 4 ? rawId.slice(-4).toUpperCase() : "0001";
+
+  const orderNum = order.order_number || order.orderNumber || `DLX-${yymm}-${suffix}`;
+  const invoiceNum = order.invoice_number || `INV-${yy}-${suffix}`;
   const orderDate = order.created_at || order.createdAt || order.date
     ? new Date(order.created_at || order.createdAt || order.date).toLocaleDateString("en-IN", {
         day: "2-digit",
@@ -180,21 +206,21 @@ export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalP
           {/* Header */}
           <div className={styles.invHeader}>
             <div className={styles.atelierBrand}>
-              <h1>De Luzex</h1>
-              <div className={styles.atelierSub}>Luxury Luminaire Atelier</div>
+              <h1>{brandTitle}</h1>
+              <div className={styles.atelierSub}>{atelierSub}</div>
               <div className={styles.atelierAddress}>
-                <strong>De Luzex Living Pvt. Ltd.</strong><br />
-                Level 14, Crest Tower, Bandra Kurla Complex<br />
-                Mumbai, Maharashtra, 400051 India<br />
-                GSTIN: <strong>27AABCD1234E1Z5</strong> · CIN: U74999MH2024PTC123456<br />
-                Email: concierge@deluzex.com | Phone: +91 98765 43210
+                <strong>{legalName}</strong><br />
+                {companyAddressLine1}<br />
+                {companyAddressLine2}<br />
+                GSTIN: <strong>{gstin}</strong> · CIN: {cin}<br />
+                Email: {invoiceEmail} | Phone: {invoicePhone}
               </div>
             </div>
 
             <div className={styles.invBadgeBlock}>
               <div className={styles.invBadgeTitle}>Tax Invoice</div>
               <div className={styles.invMetaRow}>
-                Invoice No: <strong>INV-2026-{orderNum}</strong>
+                Invoice No: <strong>{invoiceNum}</strong>
               </div>
               <div className={styles.invMetaRow}>
                 Invoice Date: <strong>{orderDate}</strong>
@@ -350,7 +376,7 @@ export default function OrderInvoiceModal({ order, onClose }: OrderInvoiceModalP
             </div>
 
             <div className={styles.signArea}>
-              <div className={styles.signCompany}>For De Luzex Living Pvt. Ltd.</div>
+              <div className={styles.signCompany}>{signatoryCompany}</div>
               <div className={styles.signLine}>Authorized Signatory</div>
             </div>
           </div>

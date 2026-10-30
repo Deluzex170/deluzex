@@ -1751,20 +1751,21 @@
 
 .modalContent {
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: 14px;
   width: 100%;
-  max-width: 540px;
+  max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.22);
-  padding: 2rem;
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.22);
+  padding: 20px 24px;
   position: relative;
-  animation: modalSlideUp 0.25s ease-out;
+  animation: modalSlideUp 0.22s ease-out;
+  box-sizing: border-box;
 }
 
 @keyframes modalSlideUp {
   from {
-    transform: translateY(16px);
+    transform: translateY(12px);
     opacity: 0;
   }
 
@@ -1778,15 +1779,15 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid #EAE3D6;
-  margin-bottom: 1.5rem;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #EFEAE0;
+  margin-bottom: 12px;
 }
 
 .modalTitle {
   font-family: var(--font-libre), "Libre Caslon Display", Georgia, serif;
-  font-size: 1.65rem;
-  font-weight: 400;
+  font-size: 1.25rem;
+  font-weight: 500;
   color: #1F2937;
   margin: 0;
   line-height: 1.2;
@@ -1795,17 +1796,18 @@
 .modalCloseBtn {
   background: #F3F4F6;
   border: none;
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   color: #6B7280;
   cursor: pointer;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .modalCloseBtn:hover {
@@ -1816,39 +1818,56 @@
 .modalBody {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 10px;
+}
+
+.modalFormRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+@media (max-width: 520px) {
+  .modalFormRow {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
 }
 
 .modalFormGroup {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 4px;
+  width: 100%;
 }
 
 .modalFormLabel {
-  font-size: 0.85rem;
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 12px;
   font-weight: 600;
-  color: #374151;
-  letter-spacing: 0.2px;
+  color: #4B5563;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .starPickerRow {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  background: #F9FAFB;
-  padding: 0.65rem 0.85rem;
-  border-radius: 8px;
-  border: 1px solid #E5E7EB;
+  gap: 3px;
+  background: #FAF8F5;
+  padding: 6px 12px;
+  border-radius: 7px;
+  border: 1px solid #EAE4D8;
 }
 
 .starBtn {
   background: none;
   border: none;
-  font-size: 1.75rem;
+  font-size: 1.3rem;
   color: #D1D5DB;
   cursor: pointer;
-  padding: 0 0.15rem;
+  padding: 0 1px;
   transition: transform 0.15s ease, color 0.15s ease;
   line-height: 1;
 }
@@ -1860,55 +1879,72 @@
 }
 
 .starLabel {
-  margin-left: 0.6rem;
-  font-size: 0.85rem;
+  margin-left: 8px;
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 12.5px;
   font-weight: 600;
-  color: #4B5563;
+  color: #555555;
 }
 
 .modalFormInput {
   width: 100%;
-  padding: 0.75rem 0.95rem;
-  border-radius: 8px;
-  border: 1px solid #D1D5DB;
-  font-size: 0.9rem;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 7px;
+  border: 1px solid #D6CEBE;
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13.5px;
   color: #1F2937;
-  background: #FFFFFF;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  font-family: inherit;
+  background: #FAF8F5;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   box-sizing: border-box;
 }
 
 .modalFormInput:focus {
   outline: none;
   border-color: #D79322;
-  box-shadow: 0 0 0 3px rgba(215, 147, 34, 0.18);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 2.5px rgba(215, 147, 34, 0.16);
 }
 
 .modalFormInput::placeholder {
   color: #9CA3AF;
-  font-size: 0.86rem;
+  font-size: 13px;
+}
+
+textarea.modalFormInput {
+  height: 60px;
+  min-height: 52px;
+  max-height: 110px;
+  padding: 8px 12px;
+  line-height: 1.4;
+  resize: vertical;
 }
 
 .modalSubmitBtn {
   width: 100%;
-  padding: 0.95rem;
-  border-radius: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 7px;
   background: #1F2937;
   color: #FFFFFF;
-  font-size: 0.92rem;
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13.5px;
   font-weight: 600;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.02em;
   border: none;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  margin-top: 0.5rem;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .modalSubmitBtn:hover:not(:disabled) {
   background: #D79322;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(215, 147, 34, 0.3);
+  box-shadow: 0 4px 14px rgba(215, 147, 34, 0.25);
 }
 
 .modalSubmitBtn:disabled {
@@ -1934,4 +1970,84 @@
   font-weight: bold;
   margin: 0 auto 1.25rem auto;
   box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+/* ─── Design-token layer: one rhythm for the purchase column ─── */
+.actionsWrapper {
+  gap: var(--sf-space-2);
+  margin-bottom: 0;
+}
+
+/* All purchase CTAs share one 48px height regardless of border width */
+.btnBuyNow,
+.btnAddToCart,
+.btnEmailInquiry,
+.btnAmazon {
+  height: var(--sf-control-h);
+  padding: 0 var(--sf-space-5);
+  box-sizing: border-box;
+  font-size: var(--sf-fs-sm);
+  line-height: 1;
+}
+
+.btnBuyNow:focus-visible,
+.btnAddToCart:focus-visible,
+.btnEmailInquiry:focus-visible,
+.btnAmazon:focus-visible {
+  outline: none;
+  box-shadow: var(--sf-focus-ring);
+}
+
+.divider {
+  margin: var(--sf-space-5) 0;
+}
+
+.specsSection {
+  margin-bottom: var(--sf-space-5);
+}
+
+.specsHeaderRow {
+  margin-bottom: var(--sf-space-2);
+}
+
+.specRow {
+  grid-template-columns: minmax(96px, 34%) minmax(0, 1fr);
+  column-gap: var(--sf-space-4);
+  padding: var(--sf-space-2) 0;
+}
+
+.specVal {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .specRow {
+    grid-template-columns: minmax(84px, 40%) minmax(0, 1fr);
+    column-gap: var(--sf-space-3);
+  }
+}
+
+/* Grid tracks must be allowed to shrink below their content's min width */
+.heroGrid {
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+}
+
+.galleryColumn,
+.infoColumn {
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .heroGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Review header wraps its rating under the reviewer on narrow phones */
+.reviewHeader {
+  flex-wrap: wrap;
+  row-gap: var(--sf-space-1);
+}
+
+.reviewUserInfo {
+  min-width: 0;
 }

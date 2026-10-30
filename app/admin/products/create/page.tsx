@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { uploadFileToCloudinary } from "@/lib/upload";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "../../../admin/admin.module.css";
@@ -116,7 +117,23 @@ export default function CreateProduct() {
         payload.append("specifications", JSON.stringify(validSpecs));
       }
       
-      payload.append("product_main_image", mainImage);
+      let mainImageUrl = "";
+      if (mainImage) {
+        try {
+          const uploadRes = await uploadFileToCloudinary(mainImage, "products");
+          if (uploadRes?.url) {
+            mainImageUrl = uploadRes.url;
+          }
+        } catch (uploadErr) {
+          console.warn("Direct upload fallback:", uploadErr);
+        }
+      }
+
+      if (mainImageUrl) {
+        payload.append("product_main_image_url", mainImageUrl);
+      } else if (mainImage) {
+        payload.append("product_main_image", mainImage);
+      }
       galleryFiles.forEach((file) => {
         payload.append("product_images", file);
       });
@@ -137,9 +154,9 @@ export default function CreateProduct() {
   };
 
   const inputStyle = {
-    width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', 
-    border: '1px solid rgba(0,0,0,0.12)', marginTop: '0.4rem', 
-    fontSize: '0.9rem', fontFamily: 'inherit', boxSizing: 'border-box' as const,
+    width: '100%', padding: '0.45rem 0.75rem', height: '38px', borderRadius: '6px', 
+    border: '1px solid var(--admin-border, rgba(0,0,0,0.12))', marginTop: '0.25rem', 
+    fontSize: '0.875rem', fontFamily: 'inherit', boxSizing: 'border-box' as const,
   };
 
   const sectionHeaderStyle = {
@@ -159,8 +176,8 @@ export default function CreateProduct() {
         </p>
       </div>
 
-      <div style={{ background: 'var(--color-white)', borderRadius: '12px', padding: '2rem', width: '100%', maxWidth: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+      <div style={{ background: 'var(--color-white)', borderRadius: '12px', padding: 'var(--a-space-5)', width: '100%', maxWidth: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
+        <form onSubmit={handleSubmit} className={styles.formGrid2} style={{ display: 'grid', gap: '1rem' }}>
           
           {/* GENERAL INFO */}
           <div style={{ gridColumn: '1 / -1' }}>
@@ -212,10 +229,15 @@ export default function CreateProduct() {
           </div>
 
           <div>
-            <label style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--color-text)' }}>Category *</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+              <label style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--color-text)', margin: 0 }}>Category *</label>
+              <Link href="/admin/categories" target="_blank" style={{ fontSize: '0.75rem', color: '#C49A45', textDecoration: 'none' }}>
+                + Manage Categories
+              </Link>
+            </div>
             <select required name="product_category" value={formData.product_category} onChange={handleChange} style={inputStyle}>
               <option value="" disabled>Select a category</option>
-              {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+              {categories.map((c, idx) => <option key={c.id || c._id || c.name || idx} value={c.name}>{c.name}</option>)}
             </select>
           </div>
 
@@ -278,11 +300,11 @@ export default function CreateProduct() {
           </div>
 
           {/* CUSTOM SPECIFICATIONS BUILDER */}
-          <div style={{ gridColumn: '1 / -1', background: '#F8FAFC', padding: '1.25rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+          <div style={{ gridColumn: '1 / -1', background: 'var(--admin-surface-muted)', padding: '1.25rem', borderRadius: '10px', border: '1px solid var(--admin-border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <div>
-                <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1E293B' }}>+ Additional Custom Specifications</span>
-                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748B' }}>Add any other custom key-value rows to the Technical Specifications table.</p>
+                <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--admin-text-main)' }}>+ Additional Custom Specifications</span>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>Add any other custom key-value rows to the Technical Specifications table.</p>
               </div>
               <button
                 type="button"
@@ -335,16 +357,16 @@ export default function CreateProduct() {
             <p style={{ fontSize: '0.825rem', color: 'var(--admin-text-muted)', marginBottom: '0.75rem' }}>
               Upload an official product datasheet or brochure PDF. Customers can read and download this document directly from the product page.
             </p>
-            <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+            <div style={{ background: 'var(--admin-surface-muted)', padding: '1.25rem', borderRadius: '10px', border: '1px solid var(--admin-border)' }}>
               {specPdf ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FFFFFF', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--admin-surface)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid var(--admin-border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: '#FEE2E2', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem' }}>
                       PDF
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B' }}>{specPdf.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748B' }}>{(specPdf.size / 1024).toFixed(1)} KB</div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--admin-text-main)' }}>{specPdf.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>{(specPdf.size / 1024).toFixed(1)} KB</div>
                     </div>
                   </div>
                   <button
@@ -368,7 +390,7 @@ export default function CreateProduct() {
                     style={inputStyle}
                   />
                   <div style={{ margin: '0.85rem 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase' }}>OR Enter ImageKit / PDF URL</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-subtle)', fontWeight: 600, textTransform: 'uppercase' }}>OR Enter ImageKit / PDF URL</span>
                     <div style={{ flex: 1, height: '1px', background: '#E2E8F0' }} />
                   </div>
                   <input
@@ -455,7 +477,7 @@ export default function CreateProduct() {
             </div>
             
             {/* Main Cover Image */}
-            <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '1.5rem' }}>
+            <div style={{ background: 'var(--admin-surface-muted)', padding: '1.25rem', borderRadius: '10px', border: '1px solid var(--admin-border)', marginBottom: '1.5rem' }}>
               <label style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text)', display: 'block', marginBottom: '0.5rem' }}>
                 Main Cover Image *
               </label>
@@ -468,7 +490,7 @@ export default function CreateProduct() {
                 )}
                 <div style={{ flex: 1, minWidth: '220px' }}>
                   <input required={!mainImage} type="file" accept="image/*" onChange={handleMainImageChange} style={inputStyle} />
-                  <span style={{ fontSize: '0.78rem', color: '#64748B', display: 'block', marginTop: '0.35rem' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--admin-text-muted)', display: 'block', marginTop: '0.35rem' }}>
                     Primary display image across store catalog and product hero showcase.
                   </span>
                 </div>
@@ -476,13 +498,13 @@ export default function CreateProduct() {
             </div>
             
             {/* Additional Gallery Images */}
-            <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+            <div style={{ background: 'var(--admin-surface-muted)', padding: '1.25rem', borderRadius: '10px', border: '1px solid var(--admin-border)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div>
                   <label style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text)' }}>
                     Additional Gallery Images
                   </label>
-                  <span style={{ fontSize: '0.8rem', color: '#64748B', marginLeft: '0.5rem' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)', marginLeft: '0.5rem' }}>
                     ({galleryFiles.length} selected — add one or multiple)
                   </span>
                 </div>
@@ -497,9 +519,9 @@ export default function CreateProduct() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     padding: '1.25rem',
-                    border: '2px dashed #CBD5E1',
+                    border: '2px dashed var(--admin-border)',
                     borderRadius: '8px',
-                    background: '#FFFFFF',
+                    background: 'var(--admin-surface)',
                     cursor: 'pointer',
                     textAlign: 'center',
                     transition: 'all 0.2s',
@@ -520,7 +542,7 @@ export default function CreateProduct() {
                   <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--admin-primary)' }}>
                     + Click to select gallery images (upload single or multiple)
                   </span>
-                  <span style={{ fontSize: '0.78rem', color: '#94A3B8', marginTop: '0.25rem' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--admin-text-subtle)', marginTop: '0.25rem' }}>
                     Select 1, 2, 3 or more images. You can add more at any time.
                   </span>
                 </label>
@@ -530,7 +552,7 @@ export default function CreateProduct() {
               {galleryFiles.length > 0 && (
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(min(130px, 100%), 1fr))',
                   gap: '0.85rem',
                   marginTop: '1rem',
                 }}>
@@ -541,16 +563,16 @@ export default function CreateProduct() {
                         key={`${file.name}-${idx}`}
                         style={{
                           position: 'relative',
-                          background: '#FFFFFF',
+                          background: 'var(--admin-surface)',
                           borderRadius: '8px',
-                          border: '1px solid #E2E8F0',
+                          border: '1px solid var(--admin-border)',
                           overflow: 'hidden',
                           boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                           display: 'flex',
                           flexDirection: 'column',
                         }}
                       >
-                        <div style={{ position: 'relative', width: '100%', height: '100px', background: '#F1F5F9' }}>
+                        <div style={{ position: 'relative', width: '100%', height: '100px', background: 'var(--admin-surface-muted)' }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={previewUrl}
@@ -596,7 +618,7 @@ export default function CreateProduct() {
                             ✕
                           </button>
                         </div>
-                        <div style={{ padding: '0.4rem 0.5rem', fontSize: '0.72rem', color: '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ padding: '0.4rem 0.5rem', fontSize: '0.72rem', color: 'var(--admin-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {file.name}
                         </div>
                       </div>

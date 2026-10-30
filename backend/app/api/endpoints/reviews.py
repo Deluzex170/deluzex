@@ -170,12 +170,16 @@ def get_all_reviews_admin(
         item = dict(r)
         item["id"] = str(item.pop("_id"))
         if "is_approved" not in item:
-            item["is_approved"] = True
+            item["is_approved"] = False
         pid = item.get("product_id")
-        item["product"] = product_map.get(str(pid), {
-            "name": f"Product #{pid[:8]}" if pid else "Unknown Product",
-            "image": None
-        })
+        p_meta = product_map.get(str(pid))
+        prod_name = p_meta.get("name") if p_meta else "Product"
+        if prod_name.startswith("Product #"):
+            prod_name = "Product"
+        item["product"] = {
+            "name": prod_name,
+            "image": p_meta.get("image") if p_meta else None
+        }
         formatted.append(item)
 
     return formatted
@@ -283,33 +287,42 @@ def submit_product_review(payload: ReviewCreate):
     clean_email = payload.author_email.strip().lower() if payload.author_email else None
     rating = max(1, min(5, int(payload.rating)))
     
+    clean_author_phone = sanitize_text(payload.author_phone, max_len=50) if payload.author_phone else None
+
     review_doc = {
         "product_id": str(payload.product_id),
         "author_name": clean_author_name,
         "author_email": clean_email,
+        "author_phone": clean_author_phone,
         "rating": rating,
         "title": clean_title,
         "text": clean_text,
-        "is_approved": True,
+        "is_approved": False,  # Moderation: Pending by default
         "created_at": datetime.utcnow()
     }
     
     result = db.reviews.insert_one(review_doc)
     
-    # Recalculate stats
+    # Recalculate stats for approved only
     stats = calculate_stats(payload.product_id, only_approved=True)
-    
-    # Update product document if exists
+
+    # Lookup product title for email
+    product_title = "Product"
     try:
-        obj_id = ObjectId(payload.product_id)
-        db.products.update_one(
-            {"_id": obj_id},
-            {"$set": {
-                "product_rating": stats["average_rating"],
-                "review_count": stats["total_reviews"]
-            }}
-        )
+        if ObjectId.is_valid(payload.product_id):
+            p = db.products.find_one({"_id": ObjectId(payload.product_id)})
+        else:
+            p = db.products.find_one({"slug": payload.product_id})
+        if p:
+            product_title = p.get("product_title") or p.get("product_name") or p.get("title") or "Product"
     except Exception:
+        pass
+
+    # Send admin review notification email
+    try:
+        from app.services.email import send_admin_new_review_notification
+        send_admin_new_review_notification(review_doc, product_title)
+    except Exception as err:
         pass
         
     created_review = dict(review_doc)
@@ -317,7 +330,7 @@ def submit_product_review(payload: ReviewCreate):
     created_review.pop("_id", None)
     
     return {
-        "message": "Review submitted successfully",
+        "message": "Review submitted successfully! It is pending moderation and will appear on the website once approved.",
         "review": created_review,
         "stats": stats
     }

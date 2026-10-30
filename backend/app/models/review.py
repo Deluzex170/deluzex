@@ -8,10 +8,11 @@ class Review(BaseModel):
     product_id: str
     author_name: str
     author_email: Optional[str] = None
+    author_phone: Optional[str] = None
     rating: int = Field(default=5, ge=1, le=5)
     title: Optional[str] = None
     text: str
-    is_approved: bool = Field(default=True)
+    is_approved: bool = Field(default=False)
     created_at: Optional[datetime] = None
 
     class Config:
@@ -22,6 +23,7 @@ class ReviewCreate(BaseModel):
     product_id: str = Field(..., min_length=1, max_length=100)
     author_name: str = Field(..., min_length=1, max_length=100)
     author_email: Optional[str] = Field(default=None, max_length=255)
+    author_phone: Optional[str] = Field(default=None, max_length=50)
     rating: int = Field(default=5, ge=1, le=5)
     title: Optional[str] = Field(default=None, max_length=200)
     text: str = Field(..., min_length=2, max_length=5000)

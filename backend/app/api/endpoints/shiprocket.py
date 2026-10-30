@@ -11,6 +11,7 @@ from app.core.database import db
 from app.core.audit import record_audit_event
 from app.services.inventory import restore_product_stock
 from app.services import shiprocket as sr_service
+from app.services.shiprocket import ShiprocketError, ShiprocketWalletError, ShiprocketAuthError
 from app.services.email import send_shipping_notification_email
 
 logger = logging.getLogger("uvicorn.error")
@@ -159,8 +160,55 @@ def public_track_order(
 
 
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # ADMIN ENDPOINTS (Require active admin authentication)
 # ---------------------------------------------------------------------------
+
+@router.get("/wallet-balance")
+def get_shiprocket_wallet(
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
+    """
+    Fetch live Shiprocket prepaid wallet balance and recharge warning.
+    """
+    try:
+        return sr_service.get_wallet_balance()
+    except Exception as exc:
+        logger.error(f"[Shiprocket] Wallet balance fetch error: {exc}")
+        return {
+            "balance": 0.0,
+            "is_low": True,
+            "minimum_required": 100.0,
+            "currency": "INR",
+            "error": str(exc),
+            "recharge_url": "https://app.shiprocket.in/billing/recharge",
+        }
+
+
+@router.get("/pickup-locations")
+def get_shiprocket_pickup_locations(
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
+    """
+    Fetch registered and active pickup locations from Shiprocket company settings.
+    """
+    try:
+        locations = sr_service.get_pickup_locations()
+        return {"success": True, "locations": locations}
+    except Exception as exc:
+        logger.error(f"[Shiprocket] Pickup locations fetch error: {exc}")
+        return {
+            "success": True,
+            "locations": [
+                {
+                    "pickup_location": "work",
+                    "city": "Banaskantha",
+                    "pin_code": "385210",
+                    "is_primary": True,
+                }
+            ],
+        }
+
 
 @router.get("/check-couriers/{order_id}")
 def check_order_couriers(
@@ -199,9 +247,12 @@ def check_order_couriers(
             "is_serviceable": service_data["is_serviceable"],
             "couriers": service_data["couriers"],
         }
+    except (ShiprocketError, ValueError) as exc:
+        logger.warning(f"[Shiprocket] Check couriers validation: {exc}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except Exception as exc:
         logger.error(f"[Shiprocket] Error checking couriers: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Couriers check failed: {str(exc)}")
 
 
 @router.post("/create-shipment/{order_id}")
@@ -277,9 +328,12 @@ def create_order_shipment(
             "shiprocket_order_id": shiprocket_order_id,
             "shiprocket_shipment_id": shiprocket_shipment_id,
         }
+    except (ShiprocketError, ValueError) as exc:
+        logger.warning(f"[Shiprocket] Create shipment validation: {exc}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except Exception as exc:
         logger.error(f"[Shiprocket] Create shipment error: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Create shipment failed: {str(exc)}")
 
 
 @router.post("/assign-courier")
@@ -299,9 +353,26 @@ def assign_courier_and_awb(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
+    # If AWB is already assigned, return it idempotently
+    if order.get("awb_code"):
+        return {
+            "success": True,
+            "order_id": payload.order_id,
+            "awb_code": order.get("awb_code"),
+            "courier_name": order.get("courier_name") or "Express Logistics",
+            "message": "AWB code is already assigned for this order.",
+        }
+
+    shipment_id = payload.shipment_id or order.get("shiprocket_shipment_id")
+    if not shipment_id:
+        raise HTTPException(
+            status_code=400,
+            detail="No shipment registered for this order yet. Please create shipment first.",
+        )
+
     try:
         awb_res = sr_service.generate_awb(
-            shipment_id=payload.shipment_id,
+            shipment_id=int(shipment_id),
             courier_id=payload.courier_id,
         )
 
@@ -338,9 +409,24 @@ def assign_courier_and_awb(
             "awb_code": awb_code,
             "courier_name": courier_name,
         }
+    except ShiprocketWalletError as exc:
+        logger.warning(f"[Shiprocket] AWB assignment wallet balance error: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
+    except (ShiprocketError, ValueError) as exc:
+        logger.warning(f"[Shiprocket] AWB assignment error: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
     except Exception as exc:
-        logger.error(f"[Shiprocket] AWB assignment error: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
+        logger.error(f"[Shiprocket] AWB assignment unexpected error: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"AWB generation failed: {str(exc)}",
+        )
 
 
 @router.post("/schedule-pickup")
@@ -383,9 +469,12 @@ def schedule_order_pickup(
         )
 
         return {"success": True, "details": pickup_res}
+    except (ShiprocketError, ValueError) as exc:
+        logger.warning(f"[Shiprocket] Pickup scheduling validation: {exc}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except Exception as exc:
         logger.error(f"[Shiprocket] Pickup scheduling error: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Pickup scheduling failed: {str(exc)}")
 
 
 @router.get("/label/{shipment_id}")
@@ -411,9 +500,12 @@ def get_shipping_label(
                 pass
 
         return {"success": True, "label_url": label_url}
+    except (ShiprocketError, ValueError) as exc:
+        logger.warning(f"[Shiprocket] Label generation validation: {exc}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except Exception as exc:
         logger.error(f"[Shiprocket] Label generation error: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Label generation failed: {str(exc)}")
 
 
 @router.get("/invoice/{order_id}")
@@ -445,9 +537,12 @@ def get_shipping_invoice(
         if invoice_url:
             db.orders.update_one({"_id": obj_id}, {"$set": {"invoice_url": invoice_url}})
         return {"success": True, "invoice_url": invoice_url}
+    except (ShiprocketError, ValueError) as exc:
+        logger.warning(f"[Shiprocket] Invoice generation validation: {exc}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except Exception as exc:
         logger.error(f"[Shiprocket] Invoice generation error: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invoice generation failed: {str(exc)}")
 
 
 @router.get("/track/{order_id}")
@@ -768,9 +863,15 @@ def approve_return_order(
             "message": "Return approved and Shiprocket reverse pickup scheduled!",
             "return_details": updated_return_details,
         }
+    except ShiprocketWalletError as exc:
+        logger.warning(f"[Shiprocket] Return approval wallet balance error: {exc}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except (ShiprocketError, ValueError) as exc:
+        logger.warning(f"[Shiprocket] Return approval validation: {exc}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except Exception as exc:
         logger.error(f"[Shiprocket] Return approval error: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Return approval failed: {str(exc)}")
 
 
 @router.post("/returns/reject")
@@ -903,9 +1004,15 @@ def initiate_return_order(
         )
 
         return {"success": True, "return_details": return_data}
+    except ShiprocketWalletError as exc:
+        logger.warning(f"[Shiprocket] Return creation wallet balance error: {exc}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except (ShiprocketError, ValueError) as exc:
+        logger.warning(f"[Shiprocket] Return creation validation: {exc}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except Exception as exc:
         logger.error(f"[Shiprocket] Return creation error: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Return creation failed: {str(exc)}")
 
 
 

@@ -443,3 +443,10 @@
     border-radius: 0;
   }
 }
+
+/* Phone/tablet legibility for project meta labels */
+@media (max-width: 1024px) {
+  .metaLabel {
+    font-size: 0.7rem;
+  }
+}

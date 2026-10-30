@@ -157,8 +157,15 @@ async def update_category(
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Image upload failed: {str(e)}")
 
+    old_name = doc.get("name")
     if updates:
         db.categories.update_one({"_id": doc["_id"]}, {"$set": updates})
+        # If the category name changed, cascade update all products tagged with old_name
+        if "name" in updates and old_name and updates["name"] != old_name:
+            db.products.update_many(
+                {"product_category": old_name},
+                {"$set": {"product_category": updates["name"]}}
+            )
         doc = db.categories.find_one({"_id": doc["_id"]})
 
     return models.Category(**doc)

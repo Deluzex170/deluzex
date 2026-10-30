@@ -654,8 +654,8 @@
   }
 
   .statsBanner {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
     width: 100%;
     gap: 16px;
     height: auto;
@@ -706,107 +706,158 @@
     margin-bottom: 0.5rem;
   }
 
-  /* OUR STORY / PASSION SECTION - Mobile View (Matching Home) */
+  /* OUR STORY / PASSION SECTION - Mobile View */
   .passionSection {
-    padding: 32px 16px 36px;
-    gap: 16px;
+    padding: 36px 18px 32px;
+    gap: 20px;
     width: 100%;
     height: auto;
+    box-sizing: border-box;
   }
 
   .passionContent {
-    display: flex;
-    flex-direction: row;
+    display: flex !important;
+    flex-direction: column !important;
     align-items: stretch;
     width: 100%;
     height: auto;
-    gap: 14px;
+    gap: 22px;
   }
 
   .passionText {
-    flex: 1 1 58%;
+    width: 100%;
+    flex: none;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: flex-start;
     gap: 0;
   }
 
   .sectionSub {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    color: #6E737E;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #C28928;
     text-transform: uppercase;
-    margin: 0 0 5px;
+    margin: 0 0 6px;
     line-height: 1.2;
   }
 
   .sectionTitle {
     font-family: var(--font-libre), serif;
-    font-size: 20px;
-    line-height: 1.15;
+    font-size: 26px;
+    line-height: 1.22;
     letter-spacing: -0.3px;
-    color: #2E3340;
-    font-weight: 400;
-    margin: 0 0 8px;
+    color: #141722;
+    font-weight: 500;
+    margin: 0 0 10px;
   }
 
   .sectionDivider {
-    display: none;
+    display: block;
+    width: 44px;
+    height: 2px;
+    background: #D79322;
+    border-radius: 2px;
+    margin: 0 0 14px 0;
   }
 
   .passionDesc {
     font-family: var(--font-hanken), sans-serif;
-    font-size: 11px;
-    line-height: 1.42;
-    color: #5E6472;
-    margin: 0 0 14px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #444855;
+    margin: 0 0 18px;
     max-width: 100%;
   }
 
   .passionIcons {
-    display: none !important;
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px 10px;
+    background: rgba(215, 147, 34, 0.05);
+    border: 1px solid rgba(215, 147, 34, 0.16);
+    border-radius: 10px;
+    margin-top: 14px;
+    box-sizing: border-box;
+    gap: 6px;
+  }
+
+  .iconItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .featureSvg {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .featureLabel {
+    font-size: 10px;
+    font-weight: 600;
+    color: #2D303B;
+    line-height: 1.2;
+    text-align: center;
+    letter-spacing: -0.01em;
+  }
+
+  .featureDivider {
+    display: block;
+    width: 1px;
+    height: 26px;
+    background: rgba(215, 147, 34, 0.2);
   }
 
   .passionImage {
-    flex: 0 0 40%;
-    width: 40%;
-    min-width: 110px;
-    max-width: 165px;
-    height: 205px;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    height: 240px;
     position: relative;
-    border-radius: 0 !important;
+    border-radius: 12px !important;
     overflow: hidden;
-    align-self: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   }
 
   .passionImg {
-    border-radius: 0 !important;
+    border-radius: 12px !important;
+    object-fit: cover;
   }
 
   .statsBanner {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
     width: 100%;
     height: auto;
-    margin-top: 14px;
-    flex-wrap: nowrap;
+    margin-top: 18px;
   }
 
   .statCard {
     flex: none;
     width: 100%;
-    height: 72px;
-    min-height: 72px;
-    border-radius: 6px;
+    height: 96px;
+    min-height: 96px;
+    border-radius: 10px;
     background: #181A1E;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
     position: relative;
     overflow: hidden;
+  }
+
+  .statCardImg {
+    filter: brightness(0.62) contrast(1.08);
   }
 
   .statCardOverlay {
@@ -814,36 +865,32 @@
     inset: 0;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-end;
     align-items: flex-start;
-    padding: 8px 6px 7px 7px;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.58) 100%);
+    padding: 12px 14px 10px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.72) 100%);
     z-index: 2;
   }
 
   .statNumber {
     font-family: var(--font-libre), serif;
-    font-size: 22px;
+    font-size: 26px;
     line-height: 1;
     color: #FFFFFF;
     font-weight: 700;
     letter-spacing: -0.2px;
-    margin-bottom: 4px;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+    margin-bottom: 3px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
   }
 
   .statLabel {
     font-family: var(--font-hanken), sans-serif;
-    font-size: 11px;
-    color: #ffffff;
-    font-weight: 400;
-    line-height: 1.15;
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: 500;
+    line-height: 1.25;
     text-align: left;
-    letter-spacing: -0.01em;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
   }
 
   .chooseTitle {

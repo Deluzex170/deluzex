@@ -3,9 +3,8 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
-import { addToCart, updateQuantity, removeFromCart } from "../store/cartSlice";
+import { addToCart, updateQuantity, removeFromCart, getMaxQuantity } from "../store/cartSlice";
 import { Product } from "../services/api";
-import { useAuth } from "../context/AuthContext";
 
 interface AddToCartButtonProps {
   product: Product;
@@ -15,7 +14,6 @@ interface AddToCartButtonProps {
 
 export default function AddToCartButton({ product, styleClass, variant = "default" }: AddToCartButtonProps) {
   const dispatch = useDispatch();
-  const { isAuthenticated, openLoginModal } = useAuth();
   const cartItems = useSelector((state: RootState) => state.cart.cartItems);
   const productId = product._id || product.id || "";
   const cartItem = cartItems.find(item => String(item.id) === String(productId));
@@ -29,6 +27,7 @@ export default function AddToCartButton({ product, styleClass, variant = "defaul
   const isOutOfStock = product.in_stock === false || 
     (product.stock_status && product.stock_status.toUpperCase() === "OUT OF STOCK") || 
     (!isMadeToOrder && product.stock_count !== undefined && product.stock_count !== null && Number(product.stock_count) <= 0);
+  const maxQuantity = getMaxQuantity(product);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -37,14 +36,7 @@ export default function AddToCartButton({ product, styleClass, variant = "defaul
       alert("This item is currently out of stock.");
       return;
     }
-    if (!isAuthenticated) {
-      openLoginModal(
-        product,
-        `Please log in to add ${product.product_title || product.name || "this lamp"} to your cart.`
-      );
-      return;
-    }
-    dispatch(addToCart(product));
+    dispatch(addToCart({ ...product, max_quantity: maxQuantity }));
   };
 
   const handleDecrease = (e: React.MouseEvent) => {
@@ -62,15 +54,11 @@ export default function AddToCartButton({ product, styleClass, variant = "defaul
     e.preventDefault();
     e.stopPropagation();
     if (!productId) return;
-    if (product.stock_count !== undefined && product.stock_count !== null && cartItem && cartItem.quantity >= Number(product.stock_count)) {
-      alert(`Only ${product.stock_count} units available in inventory.`);
+    if (maxQuantity !== undefined && cartItem && cartItem.quantity >= maxQuantity) {
+      alert(`Only ${maxQuantity} units available in inventory.`);
       return;
     }
-    if (!isAuthenticated) {
-      openLoginModal(product, "Please log in to update your cart items.");
-      return;
-    }
-    dispatch(updateQuantity({ id: productId, change: 1 }));
+    dispatch(updateQuantity({ id: productId, change: 1, max_quantity: maxQuantity }));
   };
 
   if (mounted && cartItem) {

@@ -45,6 +45,8 @@ class ShippingAddress(BaseModel):
 
 class Order(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
+    order_number: Optional[str] = None
+    invoice_number: Optional[str] = None
     user_id: Optional[str] = None
     email: str = Field(..., max_length=150)
     phone: str = Field(..., max_length=15)

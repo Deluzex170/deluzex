@@ -39,9 +39,10 @@ export default function CustomerStoriesCarousel({
     if (!containerRef.current) return;
     const container = containerRef.current;
     const firstCard = container.querySelector(`.${styles.storyCard}`) as HTMLElement | null;
-    const cardWidth = firstCard ? firstCard.offsetWidth : 400;
-    const gap = 28;
-    const scrollAmount = cardWidth + gap;
+    const group = container.querySelector(`.${styles.marqueeGroupStories}`) as HTMLElement | null;
+    const cardWidth = firstCard ? firstCard.offsetWidth : 360;
+    const computedGap = group ? parseFloat(window.getComputedStyle(group).gap) || 16 : 16;
+    const scrollAmount = cardWidth + computedGap;
 
     if (direction === "left") {
       if (container.scrollLeft <= 15) {

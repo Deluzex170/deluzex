@@ -32,6 +32,8 @@ class OrderStatusUpdateRequest(BaseModel):
 
 class OrderResponse(BaseModel):
     id: str = Field(alias="_id")
+    order_number: Optional[str] = None
+    invoice_number: Optional[str] = None
     user_id: Optional[str] = None
     email: str
     phone: str

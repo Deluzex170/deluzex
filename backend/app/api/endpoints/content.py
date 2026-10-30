@@ -112,7 +112,16 @@ DEFAULT_CONTENT: Dict[str, Dict[str, Any]] = {'homepage': {'hero': {'tagline': '
                                     'facebook': '',
                                     'linkedin': '',
                                     'twitter': ''},
-                   'footer_copyright': '© 2026 Deluzex Luxury Lighting. All rights reserved.'}}
+                   'footer_copyright': '© 2026 Deluzex Luxury Lighting. All rights reserved.',
+                    'legal_company_name': 'De Luzex Living Pvt. Ltd.',
+                    'atelier_subtitle': 'Luxury Luminaire Atelier',
+                    'address_line1': 'Level 14, Crest Tower, Bandra Kurla Complex',
+                    'address_line2': 'Mumbai, Maharashtra, 400051 India',
+                    'gstin': '27AABCD1234E1Z5',
+                    'cin': 'U74999MH2024PTC123456',
+                    'invoice_email': 'concierge@deluzex.com',
+                    'invoice_phone': '+91 98765 43210',
+                    'signatory_company': 'For De Luzex Living Pvt. Ltd.'}}
 
 @router.get("", response_model=List[models.SiteContent])
 def read_all_content():

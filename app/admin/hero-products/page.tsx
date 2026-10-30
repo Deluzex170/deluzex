@@ -2,19 +2,26 @@
 
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import Image from "next/image";
+import type { ColDef } from "ag-grid-community";
+import type { CustomCellRendererProps } from "ag-grid-react";
 import styles from "../admin.module.css";
+import AdminDataGrid from "../../components/admin/AdminDataGrid";
+import {
+  ActionButtonsRenderer,
+  CurrencyRenderer,
+  ImageThumbnailRenderer,
+  type ActionButtonsParams,
+} from "../../components/admin/gridRenderers";
+import { uploadFileToCloudinary } from "@/lib/upload";
 import {
   Plus,
-  Pencil,
   Trash2,
-  Sparkles,
   Upload,
   AlertCircle,
   ImageIcon,
   X,
   ArrowLeft,
   Save,
-  Search,
 } from "lucide-react";
 import {
   fetchHeroProducts,
@@ -30,7 +37,6 @@ export default function AdminHeroProducts() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
 
   // View mode: 'table' | 'create' | 'edit' (100% full-page UI, zero modal popups)
   const [viewMode, setViewMode] = useState<"table" | "create" | "edit">("table");
@@ -139,14 +145,26 @@ export default function AdminHeroProducts() {
     setErrorMsg("");
 
     try {
+      let finalImageUrl = formData.image.trim();
+      if (selectedFile) {
+        try {
+          const uploadRes = await uploadFileToCloudinary(selectedFile, "cms");
+          if (uploadRes?.url) {
+            finalImageUrl = uploadRes.url;
+          }
+        } catch (uploadErr) {
+          console.warn("Direct upload fallback:", uploadErr);
+        }
+      }
+
       const body = new FormData();
       body.append("name", formData.name.trim());
       body.append("price", String(Number(formData.price)));
       body.append("alt", formData.alt.trim());
-      if (selectedFile) {
+      if (finalImageUrl) {
+        body.append("image", finalImageUrl);
+      } else if (selectedFile) {
         body.append("image_file", selectedFile);
-      } else if (formData.image.trim()) {
-        body.append("image", formData.image.trim());
       }
 
       await createHeroProduct(body);
@@ -174,14 +192,26 @@ export default function AdminHeroProducts() {
     setErrorMsg("");
 
     try {
+      let finalImageUrl = formData.image.trim();
+      if (selectedFile) {
+        try {
+          const uploadRes = await uploadFileToCloudinary(selectedFile, "cms");
+          if (uploadRes?.url) {
+            finalImageUrl = uploadRes.url;
+          }
+        } catch (uploadErr) {
+          console.warn("Direct upload fallback:", uploadErr);
+        }
+      }
+
       const body = new FormData();
       body.append("name", formData.name.trim());
       body.append("price", String(Number(formData.price)));
       body.append("alt", formData.alt.trim());
-      if (selectedFile) {
+      if (finalImageUrl) {
+        body.append("image", finalImageUrl);
+      } else if (selectedFile) {
         body.append("image_file", selectedFile);
-      } else if (formData.image.trim()) {
-        body.append("image", formData.image.trim());
       }
 
       await updateHeroProduct(prodId, body);
@@ -217,15 +247,58 @@ export default function AdminHeroProducts() {
     }
   }
 
-  const filteredProducts = useMemo(() => {
-    if (!searchQuery.trim()) return heroProducts;
-    const q = searchQuery.toLowerCase();
-    return heroProducts.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        (p.alt && p.alt.toLowerCase().includes(q))
-    );
-  }, [heroProducts, searchQuery]);
+  // Hero fixtures grid columns — Edit/Delete use the same handlers as before
+  const columnDefs = useMemo<ColDef<HeroProduct>[]>(() => [
+    {
+      headerName: "Image",
+      field: "image",
+      width: 76,
+      minWidth: 76,
+      maxWidth: 76,
+      flex: 0,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      cellRenderer: ImageThumbnailRenderer,
+    },
+    {
+      headerName: "Title",
+      field: "name",
+      minWidth: 200,
+      flex: 1.5,
+      cellRenderer: (p: CustomCellRendererProps<HeroProduct>) => (
+        <span style={{ fontWeight: 600, color: "var(--admin-text-main)" }}>{p.value}</span>
+      ),
+    },
+    {
+      headerName: "Price",
+      field: "price",
+      minWidth: 120,
+      type: "rightAligned",
+      filter: "agNumberColumnFilter",
+      valueGetter: (p) => Number(p.data?.price || 0),
+      cellRenderer: CurrencyRenderer,
+    },
+    { headerName: "Alt Caption", field: "alt", minWidth: 240, flex: 2, tooltipField: "alt" },
+    {
+      headerName: "Actions",
+      colId: "actions",
+      width: 96,
+      minWidth: 96,
+      maxWidth: 96,
+      flex: 0,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      pinned: "right",
+      cellRenderer: ActionButtonsRenderer<HeroProduct>,
+      cellRendererParams: {
+        onEdit: (p: HeroProduct) => startEdit(p),
+        onDelete: (p: HeroProduct) => setItemToDelete(p),
+        labelFor: (p: HeroProduct) => p.name,
+      } satisfies ActionButtonsParams<HeroProduct>,
+    },
+  ], []);
 
   return (
     <div className={styles.sectionContainer} style={{ width: "100%", maxWidth: "100%" }}>
@@ -288,154 +361,162 @@ export default function AdminHeroProducts() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
-                gap: "2rem",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(360px, 100%), 1fr))",
+                gap: "var(--a-space-5)",
                 alignItems: "start",
               }}
             >
               {/* Left Column: Form Fields */}
-              <div className={styles.card} style={{ padding: "2rem" }}>
-                <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-primary)" }}>
-                  Fixture Specifications
-                </h3>
+              <div className={styles.panel}>
+                <h3 className={styles.panelTitle}>Fixture Specifications</h3>
 
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Lamp Name *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Cylindrical Floor Lamp"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className={styles.formInput}
-                  />
-                </div>
-
-                <div className={styles.gridCols2}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Price (₹) *</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: "var(--a-space-4)" }}>
+                  <div className={styles.field}>
+                    <label htmlFor="hero-name" className={styles.fieldLabel}>Lamp Name *</label>
                     <input
-                      type="number"
-                      step="0.01"
-                      required
-                      placeholder="231"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      className={styles.formInput}
-                    />
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Accessibility Alt Text *</label>
-                    <input
+                      id="hero-name"
                       type="text"
                       required
-                      placeholder="e.g. Modern gold floor lamp"
-                      value={formData.alt}
-                      onChange={(e) => setFormData({ ...formData, alt: e.target.value })}
-                      className={styles.formInput}
+                      placeholder="e.g. Cylindrical Floor Lamp"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className={styles.control}
                     />
                   </div>
-                </div>
 
-                <div className={styles.formGroup} style={{ marginBottom: "2rem" }}>
-                  <label className={styles.formLabel}>Product Photograph *</label>
-
-                  <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem" }}>
-                    <button
-                      type="button"
-                      onClick={() => setImageTab("file")}
-                      className={imageTab === "file" ? styles.tabBtnActive : styles.tabBtn}
-                      style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem", borderRadius: "6px" }}
-                    >
-                      Upload File
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setImageTab("url")}
-                      className={imageTab === "url" ? styles.tabBtnActive : styles.tabBtn}
-                      style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem", borderRadius: "6px" }}
-                    >
-                      Image URL
-                    </button>
-                  </div>
-
-                  {imageTab === "file" ? (
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      style={{
-                        border: "2px dashed #cbd5e1",
-                        borderRadius: "10px",
-                        padding: "1.5rem",
-                        textAlign: "center",
-                        cursor: "pointer",
-                        background: "#f8fafc",
-                        transition: "border-color 0.2s",
-                      }}
-                    >
+                  <div className={styles.gridCols2}>
+                    <div className={styles.field}>
+                      <label htmlFor="hero-price" className={styles.fieldLabel}>Price (₹) *</label>
                       <input
-                        type="file"
-                        ref={fileInputRef}
-                        accept="image/*"
-                        style={{ display: "none" }}
-                        onChange={handleFileChange}
+                        id="hero-price"
+                        type="number"
+                        step="0.01"
+                        required
+                        placeholder="231"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        className={styles.control}
                       />
-                      <Upload size={28} color="#94a3b8" style={{ margin: "0 auto 0.5rem" }} />
-                      <p style={{ margin: "0 0 0.25rem", fontSize: "0.875rem", fontWeight: 600, color: "var(--admin-primary)" }}>
-                        {selectedFile ? selectedFile.name : "Click to select a photo"}
-                      </p>
-                      <span style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)" }}>
-                        PNG, JPG, WEBP up to 5MB
-                      </span>
                     </div>
-                  ) : (
-                    <input
-                      type="text"
-                      placeholder="https://... or /images/..."
-                      value={formData.image}
-                      onChange={handleImageUrlChange}
-                      className={styles.formInput}
-                    />
-                  )}
-                </div>
 
-                <div style={{ display: "flex", gap: "0.75rem" }}>
-                  <button
-                    type="button"
-                    onClick={backToTable}
-                    className={styles.btnCancel}
-                    style={{ flex: 1, padding: "0.75rem" }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className={styles.primaryButton}
-                    style={{ flex: 2, justifyContent: "center", padding: "0.75rem" }}
-                  >
-                    <Save size={18} />
-                    <span>{submitting ? "Saving Fixture..." : viewMode === "create" ? "Add Hero Fixture" : "Save Changes"}</span>
-                  </button>
+                    <div className={styles.field}>
+                      <label htmlFor="hero-alt" className={styles.fieldLabel} title="Accessibility Alt Text">Alt Text *</label>
+                      <input
+                        id="hero-alt"
+                        type="text"
+                        required
+                        placeholder="e.g. Modern gold floor lamp"
+                        value={formData.alt}
+                        onChange={(e) => setFormData({ ...formData, alt: e.target.value })}
+                        className={styles.control}
+                        title={formData.alt}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.field}>
+                    <span className={styles.fieldLabel} id="hero-photo-label">Product Photograph *</span>
+
+                    <div className={styles.segmented} role="tablist" aria-labelledby="hero-photo-label" style={{ alignSelf: "flex-start" }}>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={imageTab === "file"}
+                        onClick={() => setImageTab("file")}
+                        className={`${styles.segmentedBtn} ${imageTab === "file" ? styles.segmentedBtnActive : ""}`}
+                      >
+                        <Upload size={14} aria-hidden="true" />
+                        Upload File
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={imageTab === "url"}
+                        onClick={() => setImageTab("url")}
+                        className={`${styles.segmentedBtn} ${imageTab === "url" ? styles.segmentedBtnActive : ""}`}
+                      >
+                        <ImageIcon size={14} aria-hidden="true" />
+                        Image URL
+                      </button>
+                    </div>
+
+                    {imageTab === "file" ? (
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => fileInputRef.current?.click()}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            fileInputRef.current?.click();
+                          }
+                        }}
+                        className={styles.dropzone}
+                        style={{ marginTop: 0 }}
+                      >
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={handleFileChange}
+                        />
+                        <Upload size={22} color="var(--admin-text-subtle)" style={{ margin: "0 auto var(--a-space-2)" }} />
+                        <p style={{ margin: "0 0 2px", fontSize: "var(--a-fs-sm)", fontWeight: 600, color: "var(--admin-primary)" }}>
+                          {selectedFile ? selectedFile.name : "Click to select a photo"}
+                        </p>
+                        <span style={{ fontSize: "var(--a-fs-xs)", color: "var(--admin-text-muted)" }}>
+                          PNG, JPG, WEBP up to 5MB
+                        </span>
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        aria-label="Image URL"
+                        placeholder="https://... or /images/..."
+                        value={formData.image}
+                        onChange={handleImageUrlChange}
+                        className={styles.control}
+                      />
+                    )}
+                  </div>
+
+                  <div style={{ display: "flex", gap: "var(--a-space-3)", marginTop: "var(--a-space-2)" }}>
+                    <button
+                      type="button"
+                      onClick={backToTable}
+                      className={`${styles.btn} ${styles.btnSecondary}`}
+                      style={{ flex: 1 }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className={`${styles.btn} ${styles.btnPrimary}`}
+                      style={{ flex: 2 }}
+                    >
+                      <Save size={16} aria-hidden="true" />
+                      <span>{submitting ? "Saving Fixture..." : viewMode === "create" ? "Add Hero Fixture" : "Save Changes"}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
               {/* Right Column: Live Hero Carousel Card Preview */}
-              <div className={styles.card} style={{ padding: "2rem" }}>
-                <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-primary)" }}>
-                  Homepage Hero Preview
-                </h3>
+              <div className={styles.panel}>
+                <h3 className={styles.panelTitle}>Homepage Hero Preview</h3>
 
                 <div
                   style={{
                     background: "#2A1F14",
                     borderRadius: "16px",
-                    padding: "2rem",
+                    padding: "var(--a-space-6)",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: "1.5rem",
+                    gap: "var(--a-space-4)",
                   }}
                 >
                   <div
@@ -444,7 +525,7 @@ export default function AdminHeroProducts() {
                       width: "200px",
                       height: "260px",
                       borderRadius: "18px",
-                      background: "#fff",
+                      background: "var(--admin-surface)",
                       overflow: "hidden",
                       boxShadow: "0 16px 36px rgba(0, 0, 0, 0.35)",
                       border: "1.5px solid rgba(255, 255, 255, 0.35)",
@@ -466,7 +547,7 @@ export default function AdminHeroProducts() {
                           flexDirection: "column",
                           alignItems: "center",
                           justifyContent: "center",
-                          color: "#94a3b8",
+                          color: "var(--admin-text-subtle)",
                           gap: "0.5rem",
                         }}
                       >
@@ -493,10 +574,10 @@ export default function AdminHeroProducts() {
                   </div>
 
                   <div style={{ textAlign: "center", color: "#fff" }}>
-                    <h4 style={{ margin: "0 0 0.25rem", fontSize: "1.1rem", fontFamily: "var(--font-libre), serif" }}>
+                    <h4 style={{ margin: "0 0 0.25rem", fontSize: "var(--a-fs-lg)", fontFamily: "var(--font-libre), serif", color: "#F5EFE6" }}>
                       {formData.name || "Lamp Title"}
                     </h4>
-                    <p style={{ margin: 0, fontSize: "0.8rem", color: "rgba(255,255,255,0.7)" }}>
+                    <p style={{ margin: 0, fontSize: "var(--a-fs-xs)", color: "rgba(245, 239, 230, 0.78)" }}>
                       {formData.alt || "Lamp accessibility caption"}
                     </p>
                   </div>
@@ -627,7 +708,7 @@ export default function AdminHeroProducts() {
                   disabled={deleting}
                   onClick={() => setItemToDelete(null)}
                   className={styles.btnCancel}
-                  style={{ background: "#ffffff", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
+                  style={{ background: "var(--admin-surface)", border: "1px solid #E5E7EB", padding: "0.65rem 1.25rem" }}
                 >
                   Cancel
                 </button>
@@ -644,142 +725,22 @@ export default function AdminHeroProducts() {
             </div>
           )}
 
-          {/* Main Table Card (Full Width) */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%" }}>
-            {/* Search Bar */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.25rem 1.5rem", borderBottom: "1px solid var(--admin-border)" }}>
-              <div style={{ position: "relative", width: "100%", maxWidth: "340px" }}>
-                <Search size={16} color="var(--admin-text-muted)" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }} />
-                <input
-                  type="text"
-                  placeholder="Search hero fixtures..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={styles.formInput}
-                  style={{ paddingLeft: "36px", height: "38px", fontSize: "0.875rem" }}
-                />
-              </div>
-
-              <span style={{ fontSize: "0.85rem", color: "var(--admin-text-muted)" }}>
-                Showing {filteredProducts.length} of {heroProducts.length} hero fixtures
-              </span>
-            </div>
-
-            {loading ? (
-              <div style={{ padding: "4rem 2rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-                Loading hero slider fixtures...
-              </div>
-            ) : filteredProducts.length === 0 ? (
-              <div style={{ padding: "4rem 2rem", textAlign: "center", color: "var(--admin-text-muted)" }}>
-                <Sparkles size={40} color="#cbd5e1" style={{ margin: "0 auto 1rem" }} />
-                <h4 style={{ margin: "0 0 0.5rem", color: "var(--admin-primary)", fontSize: "1.05rem" }}>
-                  {searchQuery ? "No matching fixtures" : "No hero fixtures created yet"}
-                </h4>
-                <p style={{ margin: "0 0 1.25rem", fontSize: "0.875rem" }}>
-                  {searchQuery ? "Try refining your search query." : "Add fixtures to appear in the rotating homepage hero card."}
-                </p>
-                {!searchQuery && (
-                  <button onClick={startCreate} className={styles.primaryButton} style={{ margin: "0 auto" }}>
-                    <Plus size={16} /> Add First Hero Fixture
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className={styles.tableWrapper}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th style={{ width: "80px" }}>Image</th>
-                      <th>Fixture Name</th>
-                      <th>Price</th>
-                      <th>Accessibility Alt Text</th>
-                      <th style={{ textAlign: "right", width: "160px" }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProducts.map((prod, idx) => {
-                      const prodId = prod._id || prod.id || idx;
-                      return (
-                        <tr key={prodId}>
-                          <td>
-                            <div
-                              style={{
-                                width: 48,
-                                height: 48,
-                                borderRadius: "8px",
-                                overflow: "hidden",
-                                position: "relative",
-                                background: "#f1f5f9",
-                                border: "1px solid var(--admin-border)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                            >
-                              {prod.image ? (
-                                <Image
-                                  src={prod.image}
-                                  alt={prod.alt || prod.name}
-                                  fill
-                                  sizes="48px"
-                                  style={{ objectFit: "cover" }}
-                                />
-                              ) : (
-                                <ImageIcon size={20} color="#94a3b8" />
-                              )}
-                            </div>
-                          </td>
-
-                          <td style={{ fontWeight: 600, color: "var(--admin-primary)", fontSize: "0.95rem" }}>
-                            {prod.name}
-                          </td>
-
-                          <td style={{ fontWeight: 600, color: "var(--admin-primary)" }}>
-                            ₹{Number(prod.price).toFixed(2)}
-                          </td>
-
-                          <td style={{ color: "var(--admin-text-muted)", maxWidth: "320px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "0.85rem" }}>
-                            {prod.alt}
-                          </td>
-
-                          <td style={{ textAlign: "right" }}>
-                            <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", alignItems: "center" }}>
-                              <button
-                                type="button"
-                                onClick={() => startEdit(prod)}
-                                className={styles.actionButton}
-                                style={{ background: "#f1f5f9", padding: "0.4rem 0.75rem", fontSize: "0.8rem", borderRadius: "6px" }}
-                              >
-                                <Pencil size={13} color="#475569" />
-                                <span>Edit</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => setItemToDelete(prod)}
-                                className={styles.actionButton}
-                                style={{
-                                  background: "#fef2f2",
-                                  color: "#b91c1c",
-                                  border: "1px solid #fee2e2",
-                                  padding: "0.4rem 0.75rem",
-                                  fontSize: "0.8rem",
-                                  borderRadius: "6px",
-                                }}
-                              >
-                                <Trash2 size={13} />
-                                <span>Delete</span>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+          {/* HERO FIXTURES GRID (AG Grid Community) */}
+          <AdminDataGrid<HeroProduct>
+            ariaLabel="Hero slider fixtures"
+            rowData={heroProducts}
+            columnDefs={columnDefs}
+            loading={loading}
+            getRowId={(p) => String(p._id || p.id || p.name)}
+            searchPlaceholder="Search hero fixtures…"
+            emptyTitle="No hero fixtures created yet"
+            emptyDescription="Add fixtures to appear in the rotating homepage hero card."
+            emptyAction={
+              <button type="button" onClick={startCreate} className={`${styles.btn} ${styles.btnPrimary}`}>
+                <Plus size={15} aria-hidden="true" /> Add First Hero Fixture
+              </button>
+            }
+          />
         </div>
       )}
     </div>

@@ -4,6 +4,7 @@ Provides complete end-to-end integration with Shiprocket API v2:
 - Token management with automatic caching & re-authentication
 - Forward Logistics: Serviceability check, Create Order/Shipment, Assign AWB, Schedule Pickup, Labels & Invoices, Live Tracking
 - Reverse Logistics (Returns): Create Return Order, Generate Return AWB, Track Return Shipment
+- Account Management: Wallet balance verification & Pickup location discovery
 """
 
 import logging
@@ -17,11 +18,26 @@ from app.core.config import settings
 
 logger = logging.getLogger("uvicorn.error")
 
-SHIPROCKET_API_BASE = getattr(settings, "SHIPROCKET_API_BASE")
+SHIPROCKET_API_BASE = getattr(settings, "SHIPROCKET_API_BASE", "https://apiv2.shiprocket.in/v1/external")
 
 # In-memory token cache
 _cached_token: Optional[str] = None
 _token_expires_at: Optional[datetime] = None
+
+
+class ShiprocketError(Exception):
+    """Base exception for Shiprocket integration errors."""
+    pass
+
+
+class ShiprocketWalletError(ShiprocketError):
+    """Raised when Shiprocket prepaid wallet has insufficient balance (< Rs 100)."""
+    pass
+
+
+class ShiprocketAuthError(ShiprocketError):
+    """Raised when authentication credentials fail."""
+    pass
 
 
 def _clean_phone(phone: str) -> str:
@@ -53,7 +69,7 @@ def get_auth_token(force_refresh: bool = False) -> str:
         logger.warning(
             "[Shiprocket] SHIPROCKET_EMAIL or SHIPROCKET_PASSWORD not configured in environment."
         )
-        raise ValueError(
+        raise ShiprocketAuthError(
             "Shiprocket credentials not configured. Please set SHIPROCKET_EMAIL and SHIPROCKET_PASSWORD in .env."
         )
 
@@ -76,7 +92,7 @@ def get_auth_token(force_refresh: bool = False) -> str:
                 data = resp.json()
                 token = data.get("token")
                 if not token:
-                    raise ValueError(f"No token in Shiprocket login response: {data}")
+                    raise ShiprocketAuthError(f"No token in Shiprocket login response: {data}")
                 _cached_token = token
                 # Cache token for 9 days (Shiprocket tokens expire in 10 days)
                 _token_expires_at = now + timedelta(days=9)
@@ -87,12 +103,12 @@ def get_auth_token(force_refresh: bool = False) -> str:
                 logger.error(
                     f"[Shiprocket] Auth failed [{resp.status_code}]: {err_body}"
                 )
-                raise ValueError(
+                raise ShiprocketAuthError(
                     f"Shiprocket authentication failed ({resp.status_code}): {err_body}"
                 )
         except httpx.RequestError as exc:
             logger.error(f"[Shiprocket] Network error during auth: {exc}")
-            raise ValueError(f"Unable to reach Shiprocket API: {exc}")
+            raise ShiprocketAuthError(f"Unable to reach Shiprocket API: {exc}")
 
 
 def _request(
@@ -135,7 +151,66 @@ def _request(
             return data
         except httpx.RequestError as exc:
             logger.error(f"[Shiprocket] Request error on {method} {path}: {exc}")
-            raise ValueError(f"Shiprocket API request error: {exc}")
+            raise ShiprocketError(f"Shiprocket API request error: {exc}")
+
+
+# ---------------------------------------------------------------------------
+# ACCOUNT & WALLET MANAGEMENT
+# ---------------------------------------------------------------------------
+
+def get_wallet_balance() -> Dict[str, Any]:
+    """
+    Fetch current Shiprocket prepaid wallet balance.
+    """
+    res = _request("GET", "/account/details/wallet-balance")
+    data_dict = res.get("data") if isinstance(res.get("data"), dict) else {}
+    raw_bal = data_dict.get("balance_amount", "0")
+    try:
+        balance = float(raw_bal)
+    except (ValueError, TypeError):
+        balance = 0.0
+
+    return {
+        "balance": balance,
+        "is_low": balance < 100.0,
+        "minimum_required": 100.0,
+        "currency": "INR",
+        "recharge_url": "https://app.shiprocket.in/billing/recharge",
+    }
+
+
+def get_pickup_locations() -> List[Dict[str, Any]]:
+    """
+    Fetch verified pickup locations from Shiprocket company settings.
+    """
+    res = _request("GET", "/settings/company/pickup")
+    data_dict = res.get("data") if isinstance(res.get("data"), dict) else {}
+    shipping_addresses = data_dict.get("shipping_address", []) if isinstance(data_dict.get("shipping_address"), list) else []
+
+    locations = []
+    for addr in shipping_addresses:
+        if isinstance(addr, dict):
+            locations.append({
+                "id": addr.get("id"),
+                "pickup_location": addr.get("pickup_location") or "work",
+                "city": addr.get("city") or "Banaskantha",
+                "state": addr.get("state") or "Gujarat",
+                "pin_code": addr.get("pin_code") or "385210",
+                "phone": addr.get("phone") or "",
+                "name": addr.get("name") or "",
+                "is_primary": bool(addr.get("is_primary_location")),
+            })
+
+    if not locations:
+        locations.append({
+            "pickup_location": "work",
+            "city": "Banaskantha",
+            "state": "Gujarat",
+            "pin_code": "385210",
+            "is_primary": True,
+        })
+
+    return locations
 
 
 # ---------------------------------------------------------------------------
@@ -166,22 +241,25 @@ def check_serviceability(
     )
     res = _request("GET", "/courier/serviceability/", params=params)
 
-    data = res.get("data", {})
+    data = res.get("data") if isinstance(res.get("data"), dict) else {}
     available_couriers = []
     recommended_courier_id = data.get("recommended_courier_company_id")
 
-    for courier in data.get("available_courier_companies", []):
-        available_couriers.append({
-            "courier_company_id": courier.get("courier_company_id"),
-            "courier_name": courier.get("courier_name"),
-            "rate": courier.get("rate"),
-            "estimated_delivery_days": courier.get("estimated_delivery_days"),
-            "etd": courier.get("etd"),
-            "call_before_delivery": courier.get("call_before_delivery"),
-            "cod": courier.get("cod") == 1,
-            "rating": courier.get("rating"),
-            "is_recommended": courier.get("courier_company_id") == recommended_courier_id,
-        })
+    courier_companies = data.get("available_courier_companies")
+    if isinstance(courier_companies, list):
+        for courier in courier_companies:
+            if isinstance(courier, dict):
+                available_couriers.append({
+                    "courier_company_id": courier.get("courier_company_id"),
+                    "courier_name": courier.get("courier_name"),
+                    "rate": courier.get("rate"),
+                    "estimated_delivery_days": courier.get("estimated_delivery_days"),
+                    "etd": courier.get("etd"),
+                    "call_before_delivery": courier.get("call_before_delivery"),
+                    "cod": courier.get("cod") == 1,
+                    "rating": courier.get("rating"),
+                    "is_recommended": courier.get("courier_company_id") == recommended_courier_id,
+                })
 
     available_couriers.sort(
         key=lambda c: (0 if c["is_recommended"] else 1, c["rate"] or 999999)
@@ -205,7 +283,7 @@ def create_order(
     Prepares billing, shipping, order items, and dimensions.
     Returns shiprocket_order_id and shiprocket_shipment_id.
     """
-    order_id = str(order.get("_id") or order.get("id"))
+    order_id = str(order.get("order_number") or order.get("_id") or order.get("id"))
     shipping_addr = order.get("shipping_address") or {}
 
     first_name = shipping_addr.get("first_name", "Valued")
@@ -228,10 +306,20 @@ def create_order(
     items_payload = []
     for item in order.get("items", []):
         items_payload.append({
-            "name": item.get("title", "Luxury Lighting Fixture"),
-            "sku": item.get("product_id", "DELUZEX-SKU")[:50],
+            "name": item.get("title") or item.get("name") or "Luxury Lighting Fixture",
+            "sku": str(item.get("product_id") or "DELUZEX-SKU")[:50],
             "units": int(item.get("quantity", 1)),
             "selling_price": float(item.get("price", 0)),
+            "discount": 0,
+            "tax": 0,
+        })
+
+    if not items_payload:
+        items_payload.append({
+            "name": "Luxury Luminaire Fixture",
+            "sku": "DELUZEX-DEFAULT",
+            "units": 1,
+            "selling_price": float(order.get("total", 1000)),
             "discount": 0,
             "tax": 0,
         })
@@ -245,7 +333,8 @@ def create_order(
     height = float(dims.get("height") or settings.SHIPROCKET_DEFAULT_HEIGHT)
     weight = float(dims.get("weight") or settings.SHIPROCKET_DEFAULT_WEIGHT)
 
-    loc = pickup_location or settings.SHIPROCKET_PICKUP_LOCATION
+    # Use exact pickup location string from parameters, env, or default
+    loc = (pickup_location or settings.SHIPROCKET_PICKUP_LOCATION or "work").strip()
 
     payload = {
         "order_id": order_id,
@@ -257,7 +346,7 @@ def create_order(
         "billing_address": shipping_addr.get("street", "N/A"),
         "billing_address_2": "",
         "billing_city": shipping_addr.get("city", "N/A"),
-        "billing_pincode": shipping_addr.get("pin_code", "380001"),
+        "billing_pincode": str(shipping_addr.get("pin_code", "380001")).strip(),
         "billing_state": shipping_addr.get("state", "Gujarat"),
         "billing_country": "India",
         "billing_email": email,
@@ -276,16 +365,29 @@ def create_order(
         "weight": weight,
     }
 
-    logger.info(f"[Shiprocket] Creating adhoc order for Deluzex Order #{order_id}")
+    logger.info(f"[Shiprocket] Creating adhoc order for Deluzex Order #{order_id} (pickup_location={loc})")
     res = _request("POST", "/orders/create/adhoc", json=payload)
 
     shiprocket_order_id = res.get("order_id")
     shiprocket_shipment_id = res.get("shipment_id")
 
     if not shiprocket_order_id or not shiprocket_shipment_id:
-        error_msg = res.get("message") or res.get("errors") or str(res)
+        err_details = []
+        if isinstance(res.get("errors"), dict):
+            for field, msgs in res["errors"].items():
+                if isinstance(msgs, list):
+                    err_details.append(f"{field}: {', '.join(str(m) for m in msgs)}")
+                else:
+                    err_details.append(f"{field}: {msgs}")
+
+        main_msg = res.get("message") or "Order creation failed"
+        if err_details:
+            error_msg = f"{main_msg} ({'; '.join(err_details)})"
+        else:
+            error_msg = str(main_msg)
+
         logger.error(f"[Shiprocket] Failed to create order: {error_msg}")
-        raise ValueError(f"Shiprocket order creation failed: {error_msg}")
+        raise ShiprocketError(error_msg)
 
     return {
         "shiprocket_order_id": shiprocket_order_id,
@@ -296,14 +398,79 @@ def create_order(
     }
 
 
+
+def sync_order_to_shiprocket(order_data: Any) -> Optional[Dict[str, Any]]:
+    """
+    Automatically pushes a new Deluzex order (COD or Prepaid Paid) to Shiprocket.
+    Creates the order in Shiprocket so customer name, shipping address, products,
+    and payment info appear in the Shiprocket dashboard under 'Orders -> New'.
+    
+    Zero balance is needed for this step (costs Rs 0.00).
+    AWB assignment and courier booking can be done later by admin once wallet is recharged.
+    """
+    from app.core.database import db
+    from bson import ObjectId
+
+    try:
+        if hasattr(order_data, "model_dump"):
+            order_dict = order_data.model_dump(by_alias=True)
+        elif isinstance(order_data, dict):
+            order_dict = dict(order_data)
+        else:
+            return None
+
+        # Check if already synced
+        if order_dict.get("shiprocket_order_id"):
+            logger.info(f"[Shiprocket Auto-Sync] Order #{order_dict.get('_id')} already synced to Shiprocket.")
+            return None
+
+        # Only sync active valid orders (skip cancelled / failed)
+        status = str(order_dict.get("status") or "").lower()
+        if status in ("cancelled", "failed"):
+            return None
+
+        res = create_order(order_dict)
+        sr_order_id = res.get("shiprocket_order_id")
+        sr_shipment_id = res.get("shiprocket_shipment_id")
+
+        if sr_order_id and sr_shipment_id:
+            oid_val = order_dict.get("_id") or order_dict.get("id")
+            try:
+                obj_id = ObjectId(str(oid_val))
+            except Exception:
+                obj_id = oid_val
+
+            db.orders.update_one(
+                {"_id": obj_id},
+                {
+                    "$set": {
+                        "shiprocket_order_id": sr_order_id,
+                        "shiprocket_shipment_id": sr_shipment_id,
+                        "shiprocket_status": "NEW",
+                        "updated_at": datetime.utcnow(),
+                    }
+                },
+            )
+            logger.info(
+                f"[Shiprocket Auto-Sync] Successfully pushed Order #{oid_val} to Shiprocket! "
+                f"SR Order ID: {sr_order_id}, Shipment ID: {sr_shipment_id}"
+            )
+            return res
+        return None
+    except Exception as exc:
+        logger.warning(f"[Shiprocket Auto-Sync] Automatic push skipped for order: {exc}")
+        return None
+
+
 def generate_awb(
     shipment_id: int,
     courier_id: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     Assign courier partner and generate Air Waybill (AWB) number.
+    Gracefully handles and parses responses without crashing on unexpected formats.
     """
-    payload = {"shipment_id": shipment_id}
+    payload: Dict[str, Any] = {"shipment_id": shipment_id}
     if courier_id:
         payload["courier_id"] = courier_id
 
@@ -312,25 +479,57 @@ def generate_awb(
     )
     res = _request("POST", "/courier/assign/awb", json=payload)
 
-    response_data = res.get("response", {}).get("data", {})
-    awb_code = response_data.get("awb_code") or res.get("awb_code")
-    courier_name = response_data.get("courier_name") or res.get("courier_name")
-    courier_company_id = response_data.get("courier_company_id") or courier_id
+    # Safe nested dictionary parsing
+    response_obj = res.get("response") if isinstance(res.get("response"), dict) else {}
+    data_obj = response_obj.get("data") if isinstance(response_obj.get("data"), dict) else {}
+
+    awb_code = None
+    courier_name = None
+    courier_company_id = None
+
+    if isinstance(data_obj, dict):
+        awb_code = data_obj.get("awb_code")
+        courier_name = data_obj.get("courier_name")
+        courier_company_id = data_obj.get("courier_company_id")
+
+    if not awb_code and isinstance(res.get("data"), dict):
+        awb_code = res["data"].get("awb_code")
+        courier_name = res["data"].get("courier_name") or courier_name
+        courier_company_id = res["data"].get("courier_company_id") or courier_company_id
 
     if not awb_code:
-        err_msg = (
-            res.get("message")
-            or response_data.get("error")
-            or res.get("errors")
-            or str(res)
-        )
+        awb_code = res.get("awb_code")
+
+    awb_status = res.get("awb_assign_status")
+
+    if not awb_code or awb_status == 0:
+        err_msg = ""
+        if isinstance(data_obj, dict) and data_obj.get("awb_assign_error"):
+            err_msg = str(data_obj.get("awb_assign_error"))
+        elif isinstance(response_obj.get("data"), str) and response_obj.get("data").strip():
+            err_msg = response_obj.get("data").strip()
+        elif res.get("message"):
+            err_msg = str(res.get("message"))
+        elif res.get("errors"):
+            err_msg = str(res.get("errors"))
+        else:
+            err_msg = "AWB could not be generated by courier partner"
+
         logger.error(f"[Shiprocket] AWB assignment failed: {err_msg}")
-        raise ValueError(f"AWB generation failed: {err_msg}")
+        if (
+            "recharge" in err_msg.lower()
+            or "wallet" in err_msg.lower()
+            or res.get("status_code") == 350
+        ):
+            raise ShiprocketWalletError(
+                f"Shiprocket Wallet Recharge Required: {err_msg} (Minimum ₹100 required in Shiprocket wallet to assign couriers)."
+            )
+        raise ShiprocketError(f"AWB generation failed: {err_msg}")
 
     return {
-        "awb_code": awb_code,
-        "courier_name": courier_name,
-        "courier_company_id": courier_company_id,
+        "awb_code": str(awb_code),
+        "courier_name": str(courier_name or "Express Logistics"),
+        "courier_company_id": courier_company_id or courier_id,
         "shipment_id": shipment_id,
         "raw_response": res,
     }
@@ -342,7 +541,7 @@ def schedule_pickup(
 ) -> Dict[str, Any]:
     """
     Schedule courier pickup for a shipment.
-    pickup_date format: 'YYYY-MM-DD' (defaults to today or tomorrow if after cut-off).
+    pickup_date format: 'YYYY-MM-DD'.
     """
     date_str = pickup_date or datetime.utcnow().strftime("%Y-%m-%d")
 
@@ -354,8 +553,18 @@ def schedule_pickup(
     logger.info(f"[Shiprocket] Requesting pickup for shipment_id={shipment_id} on {date_str}")
     res = _request("POST", "/courier/generate/pickup", json=payload)
 
+    response_obj = res.get("response") if isinstance(res.get("response"), dict) else {}
     pickup_status = res.get("pickup_status") or res.get("status")
-    pickup_token = res.get("response", {}).get("pickup_token_number") or res.get("pickup_token_number")
+    pickup_token = response_obj.get("pickup_token_number") or res.get("pickup_token_number")
+
+    if pickup_status == 0 or (res.get("status_code") and res.get("status_code") not in (200, 201)):
+        err_msg = (
+            response_obj.get("error")
+            or (response_obj.get("data") if isinstance(response_obj.get("data"), str) else None)
+            or res.get("message")
+            or "Failed to schedule pickup"
+        )
+        raise ShiprocketError(f"Pickup scheduling failed: {err_msg}")
 
     return {
         "pickup_status": pickup_status,
@@ -373,9 +582,20 @@ def generate_label(shipment_id: int) -> Dict[str, Any]:
     logger.info(f"[Shiprocket] Generating shipping label for shipment_id={shipment_id}")
     res = _request("POST", "/courier/generate/label", json=payload)
 
-    label_url = res.get("label_url") or res.get("label_created")
+    raw_label_url = res.get("label_url")
+    if not isinstance(raw_label_url, str) or not raw_label_url.startswith("http"):
+        pdf_url = res.get("pdf_url")
+        if isinstance(pdf_url, str) and pdf_url.startswith("http"):
+            raw_label_url = pdf_url
+        else:
+            raw_label_url = None
+
+    if not raw_label_url:
+        err_msg = res.get("message") or "Label URL not yet ready. Ensure AWB is assigned first."
+        raise ShiprocketError(err_msg)
+
     return {
-        "label_url": label_url,
+        "label_url": raw_label_url,
         "label_created": res.get("label_created"),
         "raw_response": res,
     }
@@ -389,9 +609,16 @@ def generate_invoice(order_id: int) -> Dict[str, Any]:
     logger.info(f"[Shiprocket] Generating invoice for shiprocket_order_id={order_id}")
     res = _request("POST", "/orders/print/invoice", json=payload)
 
-    invoice_url = res.get("invoice_url") or res.get("is_invoice_created")
+    raw_invoice_url = res.get("invoice_url")
+    if not isinstance(raw_invoice_url, str) or not raw_invoice_url.startswith("http"):
+        raw_invoice_url = None
+
+    if not raw_invoice_url:
+        err_msg = res.get("message") or "Invoice PDF is still generating or not available."
+        raise ShiprocketError(err_msg)
+
     return {
-        "invoice_url": invoice_url,
+        "invoice_url": raw_invoice_url,
         "raw_response": res,
     }
 
@@ -403,16 +630,25 @@ def track_by_awb(awb_code: str) -> Dict[str, Any]:
     logger.info(f"[Shiprocket] Tracking AWB: {awb_code}")
     res = _request("GET", f"/courier/track/awb/{awb_code}")
 
-    tracking_data = res.get("tracking_data", {})
+    tracking_data = res.get("tracking_data") if isinstance(res.get("tracking_data"), dict) else {}
     track_status = tracking_data.get("track_status")
     current_status = tracking_data.get("current_status")
-    activities = tracking_data.get("shipment_track_activities", [])
+    activities = tracking_data.get("shipment_track_activities") or []
     etd = tracking_data.get("etd")
+
+    # If current_status or etd is empty, inspect shipment_track array
+    shipment_tracks = tracking_data.get("shipment_track")
+    if isinstance(shipment_tracks, list) and len(shipment_tracks) > 0 and isinstance(shipment_tracks[0], dict):
+        first_track = shipment_tracks[0]
+        if not current_status:
+            current_status = first_track.get("current_status")
+        if not etd:
+            etd = first_track.get("edd")
 
     return {
         "awb_code": awb_code,
         "track_status": track_status,
-        "current_status": current_status,
+        "current_status": current_status or "In Process",
         "etd": etd,
         "activities": activities,
         "raw_response": res,
@@ -451,13 +687,13 @@ def create_return_order(
     phone = _clean_phone(order.get("phone") or order.get("user_phone") or (shipping_addr.get("phone") if isinstance(shipping_addr, dict) else "") or "9909382031")
     email = order.get("email") or order.get("user_email") or "support@deluzexlighting.com"
 
-    warehouse_loc = pickup_location or settings.SHIPROCKET_PICKUP_LOCATION
+    warehouse_loc = (pickup_location or settings.SHIPROCKET_PICKUP_LOCATION or "work").strip()
 
     items_payload = []
     for item in (order.get("items") or []):
         items_payload.append({
-            "name": item.get("title", "Luxury Lighting Fixture"),
-            "sku": str(item.get("product_id", "DELUZEX-RETURN-SKU"))[:50],
+            "name": item.get("title") or item.get("name") or "Luxury Lighting Fixture",
+            "sku": str(item.get("product_id") or "DELUZEX-RETURN-SKU")[:50],
             "units": int(item.get("quantity", 1)),
             "selling_price": float(item.get("price", 0)),
             "discount": 0,
@@ -491,7 +727,7 @@ def create_return_order(
         "pickup_city": shipping_addr.get("city", "N/A"),
         "pickup_state": shipping_addr.get("state", "Gujarat"),
         "pickup_country": "India",
-        "pickup_pincode": shipping_addr.get("pin_code", "380001"),
+        "pickup_pincode": str(shipping_addr.get("pin_code", "380001")).strip(),
         "pickup_email": email,
         "pickup_phone": phone,
         "pickup_isd_code": "91",
@@ -524,7 +760,7 @@ def create_return_order(
     if not return_order_id or not return_shipment_id:
         err = res.get("message") or res.get("errors") or str(res)
         logger.error(f"[Shiprocket] Return order creation failed: {err}")
-        raise ValueError(f"Return order creation failed: {err}")
+        raise ShiprocketError(f"Return order creation failed: {err}")
 
     return {
         "return_order_id": return_order_id,
@@ -542,13 +778,46 @@ def generate_return_awb(return_shipment_id: int) -> Dict[str, Any]:
     logger.info(f"[Shiprocket] Assigning Reverse AWB for shipment_id={return_shipment_id}")
     res = _request("POST", "/courier/assign/awb", json=payload)
 
-    response_data = res.get("response", {}).get("data", {})
-    awb_code = response_data.get("awb_code") or res.get("awb_code")
-    courier_name = response_data.get("courier_name") or res.get("courier_name")
+    response_obj = res.get("response") if isinstance(res.get("response"), dict) else {}
+    data_obj = response_obj.get("data") if isinstance(response_obj.get("data"), dict) else {}
+
+    awb_code = None
+    courier_name = None
+
+    if isinstance(data_obj, dict):
+        awb_code = data_obj.get("awb_code")
+        courier_name = data_obj.get("courier_name")
+
+    if not awb_code and isinstance(res.get("data"), dict):
+        awb_code = res["data"].get("awb_code")
+        courier_name = res["data"].get("courier_name") or courier_name
+
+    if not awb_code:
+        awb_code = res.get("awb_code")
+
+    awb_status = res.get("awb_assign_status")
+
+    if not awb_code or awb_status == 0:
+        err_msg = ""
+        if isinstance(data_obj, dict) and data_obj.get("awb_assign_error"):
+            err_msg = str(data_obj.get("awb_assign_error"))
+        elif isinstance(response_obj.get("data"), str) and response_obj.get("data").strip():
+            err_msg = response_obj.get("data").strip()
+        elif res.get("message"):
+            err_msg = str(res.get("message"))
+        else:
+            err_msg = "Reverse AWB assignment pending courier availability"
+
+        logger.warning(f"[Shiprocket] Reverse AWB auto-assignment: {err_msg}")
+        if "recharge" in err_msg.lower() or "wallet" in err_msg.lower() or res.get("status_code") == 350:
+            raise ShiprocketWalletError(
+                f"Shiprocket Wallet Recharge Required: {err_msg} (Minimum ₹100 required in Shiprocket wallet to assign couriers)."
+            )
+        raise ShiprocketError(err_msg)
 
     return {
-        "return_awb_code": awb_code,
-        "courier_name": courier_name,
+        "return_awb_code": str(awb_code),
+        "courier_name": str(courier_name or "Reverse Courier Partner"),
         "shipment_id": return_shipment_id,
         "raw_response": res,
     }

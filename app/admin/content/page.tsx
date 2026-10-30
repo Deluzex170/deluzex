@@ -189,7 +189,7 @@ export default function AdminContentPage() {
           onClick={() => handleSave(activeTab)}
           disabled={saving}
           className={styles.primaryButton}
-          style={{ padding: "0.75rem 1.75rem", display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
+          style={{ height: "var(--a-control-h)", padding: "0 var(--a-space-4)", display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
         >
           <Save size={18} />
           {saving ? "Saving Changes..." : `Save ${activeTab === "homepage" ? "Homepage" : activeTab === "about" ? "About Page" : "Settings"}`}
@@ -261,6 +261,8 @@ export default function AdminContentPage() {
           marginBottom: "1.75rem",
           borderBottom: "1px solid var(--admin-border)",
           paddingBottom: "0.75rem",
+          overflowX: "auto",
+          scrollbarWidth: "none",
         }}
       >
         <button
@@ -268,6 +270,8 @@ export default function AdminContentPage() {
           onClick={() => setActiveTab("homepage")}
           style={{
             padding: "0.65rem 1.5rem",
+            flexShrink: 0,
+            whiteSpace: "nowrap",
             borderRadius: "8px",
             border: activeTab === "homepage" ? "1px solid var(--admin-primary)" : "1px solid var(--admin-border)",
             background: activeTab === "homepage" ? "var(--admin-primary)" : "#ffffff",
@@ -290,6 +294,8 @@ export default function AdminContentPage() {
           onClick={() => setActiveTab("about")}
           style={{
             padding: "0.65rem 1.5rem",
+            flexShrink: 0,
+            whiteSpace: "nowrap",
             borderRadius: "8px",
             border: activeTab === "about" ? "1px solid var(--admin-primary)" : "1px solid var(--admin-border)",
             background: activeTab === "about" ? "var(--admin-primary)" : "#ffffff",
@@ -312,6 +318,8 @@ export default function AdminContentPage() {
           onClick={() => setActiveTab("site_settings")}
           style={{
             padding: "0.65rem 1.5rem",
+            flexShrink: 0,
+            whiteSpace: "nowrap",
             borderRadius: "8px",
             border: activeTab === "site_settings" ? "1px solid var(--admin-primary)" : "1px solid var(--admin-border)",
             background: activeTab === "site_settings" ? "var(--admin-primary)" : "#ffffff",
@@ -326,7 +334,7 @@ export default function AdminContentPage() {
           }}
         >
           <Settings size={18} />
-          Site Identity &amp; Footer
+          Site Identity, Footer &amp; Invoice Settings
         </button>
       </div>
 
@@ -336,7 +344,7 @@ export default function AdminContentPage() {
       {activeTab === "homepage" && homepageData && (
         <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
           {/* 1. HERO SECTION */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 1. Hero Showcase Section
@@ -346,7 +354,7 @@ export default function AdminContentPage() {
               </p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "2rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(340px, 100%), 1fr))", gap: "2rem" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                   <label className={styles.formLabel}>Cursive Tagline</label>
@@ -393,7 +401,7 @@ export default function AdminContentPage() {
                   />
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div className={styles.formGrid2} style={{ display: "grid", gap: "1rem" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                     <label className={styles.formLabel}>Button 1 Label</label>
                     <input
@@ -475,7 +483,7 @@ export default function AdminContentPage() {
                       justifyContent: "center",
                       gap: "0.5rem",
                       padding: "0.6rem 1rem",
-                      background: "#f1f5f9",
+                      background: "var(--admin-surface-muted)",
                       borderRadius: "8px",
                     }}
                   >
@@ -488,7 +496,7 @@ export default function AdminContentPage() {
           </div>
 
           {/* 2. STATEMENT SECTION */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 2. Brand Statement Section
@@ -498,7 +506,7 @@ export default function AdminContentPage() {
               </p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+            <div className={styles.formGrid2} style={{ display: "grid", gap: "1.5rem" }}>
               <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                 <label className={styles.formLabel}>Highlighted Gold Phrase</label>
                 <textarea
@@ -532,7 +540,7 @@ export default function AdminContentPage() {
           </div>
 
           {/* 3. STORY & STATS SECTION */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 3. Craftsmanship Story &amp; Numerical Stats
@@ -542,7 +550,7 @@ export default function AdminContentPage() {
               </p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "2rem", marginBottom: "2rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(340px, 100%), 1fr))", gap: "2rem", marginBottom: "2rem" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                   <label className={styles.formLabel}>Section Headline</label>
@@ -600,7 +608,7 @@ export default function AdminContentPage() {
                   type="button"
                   onClick={() => triggerImageUpload("homepage", "story.image")}
                   className={styles.actionButton}
-                  style={{ width: "100%", padding: "0.5rem", background: "#f1f5f9", borderRadius: "8px" }}
+                  style={{ width: "100%", padding: "0.5rem", background: "var(--admin-surface-muted)", borderRadius: "8px" }}
                 >
                   <Upload size={14} color="#C49A45" /> {uploadingField === "story.image" ? "Uploading..." : "Replace Story Image"}
                 </button>
@@ -611,12 +619,12 @@ export default function AdminContentPage() {
             <label className={styles.formLabel} style={{ marginBottom: "0.75rem", display: "block" }}>
               Key Statistics Cards (4 Columns)
             </label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))", gap: "1rem" }}>
               {(homepageData.story?.stats || []).map((st: any, idx: number) => (
                 <div
                   key={idx}
                   style={{
-                    background: "#f8fafc",
+                    background: "var(--admin-surface-muted)",
                     border: "1px solid var(--admin-border)",
                     borderRadius: "10px",
                     padding: "1rem",
@@ -662,14 +670,14 @@ export default function AdminContentPage() {
           </div>
 
           {/* 4. CTA BANNER */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 4. Call To Action Footer Banner
               </h3>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+            <div className={styles.formGrid2} style={{ display: "grid", gap: "1.5rem" }}>
               <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                 <label className={styles.formLabel}>Banner Title</label>
                 <input
@@ -710,14 +718,14 @@ export default function AdminContentPage() {
       {activeTab === "about" && aboutData && (
         <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
           {/* 1. HERO SECTION */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 1. About Hero Section
               </h3>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "2rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(340px, 100%), 1fr))", gap: "2rem" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                   <label className={styles.formLabel}>Hero Headline</label>
@@ -749,7 +757,7 @@ export default function AdminContentPage() {
                   />
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div className={styles.formGrid2} style={{ display: "grid", gap: "1rem" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                     <label className={styles.formLabel}>Hero Link Text</label>
                     <input
@@ -808,7 +816,7 @@ export default function AdminContentPage() {
                   type="button"
                   onClick={() => triggerImageUpload("about", "hero.bg_image")}
                   className={styles.actionButton}
-                  style={{ width: "100%", padding: "0.5rem", background: "#f1f5f9", borderRadius: "8px" }}
+                  style={{ width: "100%", padding: "0.5rem", background: "var(--admin-surface-muted)", borderRadius: "8px" }}
                 >
                   <Upload size={14} color="#C49A45" /> {uploadingField === "hero.bg_image" ? "Uploading..." : "Upload New Hero Background"}
                 </button>
@@ -817,14 +825,14 @@ export default function AdminContentPage() {
           </div>
 
           {/* 2. OUR STORY & 3 FEATURE ICONS */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 2. Our Story &amp; Feature Highlights
               </h3>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "2rem", marginBottom: "1.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(340px, 100%), 1fr))", gap: "2rem", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                   <label className={styles.formLabel}>Story Headline</label>
@@ -881,7 +889,7 @@ export default function AdminContentPage() {
                   type="button"
                   onClick={() => triggerImageUpload("about", "story.image")}
                   className={styles.actionButton}
-                  style={{ width: "100%", padding: "0.5rem", background: "#f1f5f9", borderRadius: "8px" }}
+                  style={{ width: "100%", padding: "0.5rem", background: "var(--admin-surface-muted)", borderRadius: "8px" }}
                 >
                   <Upload size={14} color="#C49A45" /> {uploadingField === "story.image" ? "Uploading..." : "Replace Story Image"}
                 </button>
@@ -892,9 +900,9 @@ export default function AdminContentPage() {
             <label className={styles.formLabel} style={{ marginBottom: "0.75rem", display: "block" }}>
               3 Key Feature Highlights (Under Story)
             </label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
+            <div className={styles.formGrid3} style={{ display: "grid", gap: "1rem" }}>
               {(aboutData.story?.features || []).map((f: any, idx: number) => (
-                <div key={idx} style={{ background: "#f8fafc", padding: "1rem", borderRadius: "10px", border: "1px solid var(--admin-border)" }}>
+                <div key={idx} style={{ background: "var(--admin-surface-muted)", padding: "1rem", borderRadius: "10px", border: "1px solid var(--admin-border)" }}>
                   <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--admin-primary)" }}>Feature #{idx + 1}</span>
                   <input
                     type="text"
@@ -916,14 +924,14 @@ export default function AdminContentPage() {
           </div>
 
           {/* 3. WHY CHOOSE US ACCORDIONS */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 3. &quot;Why Choose Us&quot; Section &amp; 4 Value Pillars
               </h3>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "2rem", marginBottom: "1.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(340px, 100%), 1fr))", gap: "2rem", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                   <label className={styles.formLabel}>Section Title</label>
@@ -980,7 +988,7 @@ export default function AdminContentPage() {
                   type="button"
                   onClick={() => triggerImageUpload("about", "why_choose_us.image")}
                   className={styles.actionButton}
-                  style={{ width: "100%", padding: "0.5rem", background: "#f1f5f9", borderRadius: "8px" }}
+                  style={{ width: "100%", padding: "0.5rem", background: "var(--admin-surface-muted)", borderRadius: "8px" }}
                 >
                   <Upload size={14} color="#C49A45" /> {uploadingField === "why_choose_us.image" ? "Uploading..." : "Replace Showcase Image"}
                 </button>
@@ -991,9 +999,9 @@ export default function AdminContentPage() {
             <label className={styles.formLabel} style={{ marginBottom: "0.75rem", display: "block" }}>
               4 Value Pillars (Title &amp; Description)
             </label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))", gap: "1rem" }}>
               {(aboutData.why_choose_us?.items || []).map((it: any, idx: number) => (
-                <div key={idx} style={{ background: "#f8fafc", padding: "1rem", borderRadius: "10px", border: "1px solid var(--admin-border)" }}>
+                <div key={idx} style={{ background: "var(--admin-surface-muted)", padding: "1rem", borderRadius: "10px", border: "1px solid var(--admin-border)" }}>
                   <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--admin-primary)" }}>Pillar #{idx + 1}</span>
                   <input
                     type="text"
@@ -1038,14 +1046,14 @@ export default function AdminContentPage() {
       {activeTab === "site_settings" && settingsData && (
         <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
           {/* Brand Identity & Contact */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 Company Brand &amp; Concierge Contact Information
               </h3>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: "1.5rem" }}>
               <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                 <label className={styles.formLabel}>Brand Name</label>
                 <input
@@ -1108,8 +1116,125 @@ export default function AdminContentPage() {
             </div>
           </div>
 
+          
+          {/* Tax Invoice & Registered Entity Details */}
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
+            <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                <FileText size={20} color="var(--admin-primary)" />
+                <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+                  Tax Invoice &amp; Official Company Registered Information
+                </h3>
+              </div>
+              <p style={{ margin: "0.35rem 0 0 0", fontSize: "0.85rem", color: "var(--admin-text-muted)" }}>
+                This legal business information, GSTIN, CIN, and registered address are dynamically rendered on customer tax invoices and order receipts.
+              </p>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: "1.5rem" }}>
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label className={styles.formLabel}>Legal Company Name (Registered Entity)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. De Luzex Living Pvt. Ltd."
+                  value={settingsData.legal_company_name ?? "De Luzex Living Pvt. Ltd."}
+                  onChange={(e) => setSettingsData({ ...settingsData, legal_company_name: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label className={styles.formLabel}>Atelier Subtitle</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Luxury Luminaire Atelier"
+                  value={settingsData.atelier_subtitle ?? "Luxury Luminaire Atelier"}
+                  onChange={(e) => setSettingsData({ ...settingsData, atelier_subtitle: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label className={styles.formLabel}>GSTIN (GST Identification Number)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 27AABCD1234E1Z5"
+                  value={settingsData.gstin ?? "27AABCD1234E1Z5"}
+                  onChange={(e) => setSettingsData({ ...settingsData, gstin: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label className={styles.formLabel}>CIN (Corporate Identification Number)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. U74999MH2024PTC123456"
+                  value={settingsData.cin ?? "U74999MH2024PTC123456"}
+                  onChange={(e) => setSettingsData({ ...settingsData, cin: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label className={styles.formLabel}>Invoice Concierge Email</label>
+                <input
+                  type="email"
+                  placeholder="concierge@deluzex.com"
+                  value={settingsData.invoice_email ?? (settingsData.email || "concierge@deluzex.com")}
+                  onChange={(e) => setSettingsData({ ...settingsData, invoice_email: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label className={styles.formLabel}>Invoice Concierge Phone</label>
+                <input
+                  type="text"
+                  placeholder="+91 98765 43210"
+                  value={settingsData.invoice_phone ?? (settingsData.phone || "+91 98765 43210")}
+                  onChange={(e) => setSettingsData({ ...settingsData, invoice_phone: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0, gridColumn: "span 2" }}>
+                <label className={styles.formLabel}>Registered Office Address (Line 1)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Level 14, Crest Tower, Bandra Kurla Complex"
+                  value={settingsData.address_line1 ?? "Level 14, Crest Tower, Bandra Kurla Complex"}
+                  onChange={(e) => setSettingsData({ ...settingsData, address_line1: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0, gridColumn: "span 2" }}>
+                <label className={styles.formLabel}>City, State, Pincode &amp; Country (Line 2)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Mumbai, Maharashtra, 400051 India"
+                  value={settingsData.address_line2 ?? "Mumbai, Maharashtra, 400051 India"}
+                  onChange={(e) => setSettingsData({ ...settingsData, address_line2: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ marginBottom: 0, gridColumn: "span 2" }}>
+                <label className={styles.formLabel}>Signatory / Declaration Label</label>
+                <input
+                  type="text"
+                  placeholder="e.g. For De Luzex Living Pvt. Ltd."
+                  value={settingsData.signatory_company ?? "For De Luzex Living Pvt. Ltd."}
+                  onChange={(e) => setSettingsData({ ...settingsData, signatory_company: e.target.value })}
+                  className={styles.formInput}
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Available On Platforms & Marketplaces (Footer Logos) */}
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
                 <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
@@ -1121,7 +1246,7 @@ export default function AdminContentPage() {
               </p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: "1.5rem" }}>
               {/* Amazon Link */}
               <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                 <label className={styles.formLabel} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -1170,14 +1295,14 @@ export default function AdminContentPage() {
             </div>
           </div>
 
-          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "2rem" }}>
+          <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
                 Social Media Links &amp; Footer Copyright
               </h3>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+            <div className={styles.formGrid2} style={{ display: "grid", gap: "1.5rem" }}>
               <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                 <label className={styles.formLabel}>WhatsApp URL / Number</label>
                 <input

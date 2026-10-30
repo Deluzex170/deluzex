@@ -25,8 +25,8 @@
 .templateButton span { color: var(--admin-text-muted); font-size: 12px; }
 .page .delete { background: transparent; color: #b91c1c; padding: 10px; min-width: 44px; }
 .page .delete:hover { background: #fef2f2; }
-.editor { padding: clamp(18px, 2.5vw, 30px); min-width: 0; }
-.empty { padding: 80px 16px; text-align: center; max-width: 540px; margin: auto; }
+.editor { padding: var(--a-space-5); min-width: 0; }
+.empty { padding: 48px 16px; text-align: center; max-width: 540px; margin: auto; }
 .empty svg { color: var(--admin-text-muted); }
 .empty h2 { font-size: 21px; margin: 20px 0 10px; }
 .editorTitle { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
@@ -53,3 +53,15 @@
 .preview pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
 @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .library { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .library h2, .library > .hint { grid-column: 1 / -1; } .card { margin: 0; } .saved { margin: 0; } }
 @media (max-width: 560px) { .header { align-items: stretch; flex-direction: column; } .row, .library { grid-template-columns: 1fr; } .preview iframe { height: 400px; } }
+
+/* ─── Admin density layer (compact, professional sizing on design tokens) ─── */
+@media all {
+  .header {
+    margin-bottom: var(--a-space-4);
+    gap: var(--a-space-3);
+  }
+  .card {
+    padding: var(--a-space-4);
+    border-radius: var(--a-radius-lg);
+  }
+}

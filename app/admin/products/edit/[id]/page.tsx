@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { uploadFileToCloudinary } from "@/lib/upload";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import styles from "../../../../admin/admin.module.css";
@@ -180,7 +181,21 @@ export default function EditProduct() {
       const retainedGallery = currentGallery.filter(url => Boolean(url));
       payload.append("existing_images", JSON.stringify(retainedGallery));
 
+      let mainImageUrl = "";
       if (mainImage) {
+        try {
+          const uploadRes = await uploadFileToCloudinary(mainImage, "products");
+          if (uploadRes?.url) {
+            mainImageUrl = uploadRes.url;
+          }
+        } catch (uploadErr) {
+          console.warn("Direct upload fallback:", uploadErr);
+        }
+      }
+
+      if (mainImageUrl) {
+        payload.append("product_main_image_url", mainImageUrl);
+      } else if (mainImage) {
         payload.append("product_main_image", mainImage);
       }
       
@@ -206,9 +221,9 @@ export default function EditProduct() {
   };
 
   const inputStyle = {
-    width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', 
-    border: '1px solid rgba(0,0,0,0.12)', marginTop: '0.4rem', 
-    fontSize: '0.9rem', fontFamily: 'inherit', boxSizing: 'border-box' as const,
+    width: '100%', padding: '0.45rem 0.75rem', height: '38px', borderRadius: '6px', 
+    border: '1px solid var(--admin-border, rgba(0,0,0,0.12))', marginTop: '0.25rem', 
+    fontSize: '0.875rem', fontFamily: 'inherit', boxSizing: 'border-box' as const,
   };
 
   const sectionHeaderStyle = {
@@ -228,11 +243,11 @@ export default function EditProduct() {
         </p>
       </div>
 
-      <div style={{ background: 'var(--color-white)', borderRadius: '12px', padding: '2rem', width: '100%', maxWidth: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
+      <div style={{ background: 'var(--color-white)', borderRadius: '12px', padding: 'var(--a-space-5)', width: '100%', maxWidth: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
         {loading ? (
           <p>Loading product details...</p>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <form onSubmit={handleSubmit} className={styles.formGrid2} style={{ display: 'grid', gap: '1rem' }}>
             
             {/* BASIC INFO */}
             <div style={{ gridColumn: '1 / -1' }}>
@@ -284,10 +299,18 @@ export default function EditProduct() {
             </div>
 
             <div>
-              <label style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--color-text)' }}>Category *</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <label style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--color-text)', margin: 0 }}>Category *</label>
+                <Link href="/admin/categories" target="_blank" style={{ fontSize: '0.75rem', color: '#C49A45', textDecoration: 'none' }}>
+                  + Manage Categories
+                </Link>
+              </div>
               <select required name="product_category" value={formData.product_category} onChange={handleChange} style={inputStyle}>
                 <option value="" disabled>Select a category</option>
-                {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                {formData.product_category && !categories.some(c => c.name === formData.product_category) && (
+                  <option value={formData.product_category}>{formData.product_category} (Current)</option>
+                )}
+                {categories.map((c, idx) => <option key={c.id || c._id || c.name || idx} value={c.name}>{c.name}</option>)}
               </select>
             </div>
 
@@ -350,11 +373,11 @@ export default function EditProduct() {
             </div>
 
             {/* CUSTOM SPECIFICATIONS BUILDER */}
-            <div style={{ gridColumn: '1 / -1', background: '#F8FAFC', padding: '1.25rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+            <div style={{ gridColumn: '1 / -1', background: 'var(--admin-surface-muted)', padding: '1.25rem', borderRadius: '10px', border: '1px solid var(--admin-border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <div>
-                  <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1E293B' }}>+ Additional Custom Specifications</span>
-                  <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748B' }}>Add any other custom key-value rows to the Technical Specifications table.</p>
+                  <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--admin-text-main)' }}>+ Additional Custom Specifications</span>
+                  <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>Add any other custom key-value rows to the Technical Specifications table.</p>
                 </div>
                 <button
                   type="button"
@@ -407,15 +430,15 @@ export default function EditProduct() {
             <p style={{ fontSize: '0.825rem', color: 'var(--admin-text-muted)', marginBottom: '0.75rem' }}>
               Upload an official product datasheet or brochure PDF. Customers can view and download this document from the product page.
             </p>
-            <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+            <div style={{ background: 'var(--admin-surface-muted)', padding: '1.25rem', borderRadius: '10px', border: '1px solid var(--admin-border)' }}>
               {currentPdf && !removePdf ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FFFFFF', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1', marginBottom: specPdf ? '1rem' : '0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--admin-surface)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid var(--admin-border)', marginBottom: specPdf ? '1rem' : '0' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: '#0B4228', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem' }}>
                       PDF
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B' }}>Current Technical Datasheet</div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--admin-text-main)' }}>Current Technical Datasheet</div>
                       <a href={currentPdf} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.78rem', color: '#E0531C', textDecoration: 'underline' }}>
                         View / Download current PDF &rarr;
                       </a>
@@ -432,19 +455,19 @@ export default function EditProduct() {
               ) : removePdf ? (
                 <div style={{ background: '#FEF2F2', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #FCA5A5', color: '#B91C1C', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
                   <span>Current PDF will be removed upon saving.</span>
-                  <button type="button" onClick={() => setRemovePdf(false)} style={{ background: '#FFFFFF', border: '1px solid #FCA5A5', borderRadius: '4px', padding: '2px 8px', fontSize: '0.78rem', cursor: 'pointer', color: '#B91C1C' }}>Undo</button>
+                  <button type="button" onClick={() => setRemovePdf(false)} style={{ background: 'var(--admin-surface)', border: '1px solid #FCA5A5', borderRadius: '4px', padding: '2px 8px', fontSize: '0.78rem', cursor: 'pointer', color: '#B91C1C' }}>Undo</button>
                 </div>
               ) : null}
 
               {specPdf ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FFFFFF', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid #FCD34D', marginTop: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--admin-surface)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid #FCD34D', marginTop: '0.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: '#FEF3C7', color: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem' }}>
                       NEW
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B' }}>{specPdf.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748B' }}>{(specPdf.size / 1024).toFixed(1)} KB (Will replace current PDF on save)</div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--admin-text-main)' }}>{specPdf.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>{(specPdf.size / 1024).toFixed(1)} KB (Will replace current PDF on save)</div>
                     </div>
                   </div>
                   <button
@@ -457,7 +480,7 @@ export default function EditProduct() {
                 </div>
               ) : (
                 <div style={{ marginTop: currentPdf && !removePdf ? '1rem' : '0' }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 500, color: '#475569', display: 'block', marginBottom: '0.35rem' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--admin-text-secondary)', display: 'block', marginBottom: '0.35rem' }}>
                     {currentPdf && !removePdf ? "Upload New PDF to Replace" : "Upload Datasheet PDF"}
                   </label>
                   <input
@@ -473,7 +496,7 @@ export default function EditProduct() {
                   />
 
                   <div style={{ margin: '0.85rem 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase' }}>OR Enter ImageKit / PDF URL</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-subtle)', fontWeight: 600, textTransform: 'uppercase' }}>OR Enter ImageKit / PDF URL</span>
                     <div style={{ flex: 1, height: '1px', background: '#E2E8F0' }} />
                   </div>
                   <input
@@ -547,7 +570,7 @@ export default function EditProduct() {
               </div>
 
               {/* Main Cover Image */}
-              <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '1.5rem' }}>
+              <div style={{ background: 'var(--admin-surface-muted)', padding: '1.25rem', borderRadius: '10px', border: '1px solid var(--admin-border)', marginBottom: '1.5rem' }}>
                 <label style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text)', display: 'block', marginBottom: '0.5rem' }}>
                   Main Cover Image
                 </label>
@@ -559,14 +582,14 @@ export default function EditProduct() {
                       <span style={{ position: 'absolute', bottom: '2px', left: '2px', right: '2px', background: '#E0531C', color: '#fff', fontSize: '0.62rem', textAlign: 'center', borderRadius: '2px' }}>New</span>
                     </div>
                   ) : currentMainImage ? (
-                    <div style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #CBD5E1', flexShrink: 0 }}>
+                    <div style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)', flexShrink: 0 }}>
                       <Image src={currentMainImage} alt="Current main" fill style={{ objectFit: 'cover' }} unoptimized />
                       <span style={{ position: 'absolute', bottom: '2px', left: '2px', right: '2px', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.62rem', textAlign: 'center', borderRadius: '2px' }}>Current</span>
                     </div>
                   ) : null}
                   <div style={{ flex: 1, minWidth: '220px' }}>
                     <input type="file" accept="image/*" onChange={handleMainImageChange} style={inputStyle} />
-                    <span style={{ fontSize: '0.78rem', color: '#64748B', display: 'block', marginTop: '0.35rem' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--admin-text-muted)', display: 'block', marginTop: '0.35rem' }}>
                       Upload a new file to change the cover image, or leave empty to keep the current one.
                     </span>
                   </div>
@@ -574,13 +597,13 @@ export default function EditProduct() {
               </div>
 
               {/* Dynamic Gallery Images */}
-              <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+              <div style={{ background: 'var(--admin-surface-muted)', padding: '1.25rem', borderRadius: '10px', border: '1px solid var(--admin-border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <div>
                     <label style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text)' }}>
                       Gallery Images
                     </label>
-                    <span style={{ fontSize: '0.8rem', color: '#64748B', marginLeft: '0.5rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)', marginLeft: '0.5rem' }}>
                       ({currentGallery.length} saved, {newGalleryFiles.length} new selected)
                     </span>
                   </div>
@@ -595,9 +618,9 @@ export default function EditProduct() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       padding: '1.25rem',
-                      border: '2px dashed #CBD5E1',
+                      border: '2px dashed var(--admin-border)',
                       borderRadius: '8px',
-                      background: '#FFFFFF',
+                      background: 'var(--admin-surface)',
                       cursor: 'pointer',
                       textAlign: 'center',
                       transition: 'all 0.2s',
@@ -618,7 +641,7 @@ export default function EditProduct() {
                     <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--admin-primary)' }}>
                       + Click to choose or add more gallery images (single or multiple)
                     </span>
-                    <span style={{ fontSize: '0.78rem', color: '#94A3B8', marginTop: '0.25rem' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--admin-text-subtle)', marginTop: '0.25rem' }}>
                       Upload 1, 2, 3 or more photos. Any images you add here will be uploaded upon saving.
                     </span>
                   </label>
@@ -628,7 +651,7 @@ export default function EditProduct() {
                 {(currentGallery.length > 0 || newGalleryFiles.length > 0) ? (
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(min(130px, 100%), 1fr))',
                     gap: '0.85rem',
                     marginTop: '1rem',
                   }}>
@@ -638,16 +661,16 @@ export default function EditProduct() {
                         key={`existing-${idx}`}
                         style={{
                           position: 'relative',
-                          background: '#FFFFFF',
+                          background: 'var(--admin-surface)',
                           borderRadius: '8px',
-                          border: '1px solid #E2E8F0',
+                          border: '1px solid var(--admin-border)',
                           overflow: 'hidden',
                           boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                           display: 'flex',
                           flexDirection: 'column',
                         }}
                       >
-                        <div style={{ position: 'relative', width: '100%', height: '100px', background: '#F1F5F9' }}>
+                        <div style={{ position: 'relative', width: '100%', height: '100px', background: 'var(--admin-surface-muted)' }}>
                           <Image
                             src={imgUrl}
                             alt={`Gallery saved ${idx + 1}`}
@@ -709,7 +732,7 @@ export default function EditProduct() {
                           key={`new-${file.name}-${idx}`}
                           style={{
                             position: 'relative',
-                            background: '#FFFFFF',
+                            background: 'var(--admin-surface)',
                             borderRadius: '8px',
                             border: '1px solid #FCD34D',
                             overflow: 'hidden',
@@ -764,7 +787,7 @@ export default function EditProduct() {
                               ✕
                             </button>
                           </div>
-                          <div style={{ padding: '0.4rem 0.5rem', fontSize: '0.72rem', color: '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ padding: '0.4rem 0.5rem', fontSize: '0.72rem', color: 'var(--admin-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {file.name}
                           </div>
                         </div>
@@ -772,7 +795,7 @@ export default function EditProduct() {
                     })}
                   </div>
                 ) : (
-                  <p style={{ fontSize: '0.825rem', color: '#94A3B8', margin: '0.5rem 0 0', textAlign: 'center' }}>
+                  <p style={{ fontSize: '0.825rem', color: 'var(--admin-text-subtle)', margin: '0.5rem 0 0', textAlign: 'center' }}>
                     No gallery images yet. Click the box above to add photos.
                   </p>
                 )}

@@ -50,7 +50,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     : [];
 
   const menuItems = [
-    ...adminMenuItems,
     {
       group: "My Account",
       items: [
@@ -67,7 +66,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { name: "Notifications", path: "/dashboard/notifications", icon: "M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0" },
         { name: "Support & Help", path: "/dashboard/support", icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" },
       ]
-    }
+    },
+    ...adminMenuItems,
   ];
 
   return (
@@ -76,14 +76,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Sidebar */}
       <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarCollapsed}`}>
         <div className={styles.sidebarInner}>
-          <div style={{ padding: "1.25rem 1.25rem 0.75rem 1.25rem", borderBottom: "1px solid rgba(0,0,0,0.06)", marginBottom: "0.75rem" }}>
-            <Link href="/" title="De Luzex Storefront" style={{ display: "flex", alignItems: "center" }}>
-              <img src="/images/logos/de_luzex_black.svg" alt="De Luzex" height="30" style={{ height: "30px", width: "auto" }} />
-            </Link>
-          </div>
-
           {menuItems.map((group, idx) => (
-            <div key={idx} className={styles.menuGroup}>
+            <div key={idx} className={`${styles.menuGroup} ${group.group === "Administration" ? styles.adminGroup : ""}`}>
               <h4 className={styles.groupTitle}>{group.group}</h4>
               <ul className={styles.menuList}>
                 {group.items.map((item, i) => {
@@ -92,6 +86,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <li key={i}>
                       <Link
                         href={item.path}
+                        title={item.name}
+                        aria-current={isActive ? "page" : undefined}
                         className={`${styles.menuLink} ${isActive ? styles.activeLink : ""}`}
                         onClick={() => setSidebarOpen(false)}
                       >

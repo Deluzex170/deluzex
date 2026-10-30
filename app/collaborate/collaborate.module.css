@@ -625,53 +625,76 @@
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   5. SUBMISSION FORM SECTION
+   5. SUBMISSION FORM SECTION (COMPACT LUXURY REDESIGN)
    ────────────────────────────────────────────────────────────────────────── */
 .formSection {
   width: 100%;
   background: #F8F3EC;
-  padding: 70px 80px;
+  padding: 32px 32px 40px;
   scroll-margin-top: 80px;
+  box-sizing: border-box;
 }
 
 .formInner {
-  width: 1280px;
+  width: 960px;
   max-width: 100%;
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 48px;
-}
-
-/* ── Top Header Row: title left, image right ── */
-.formHeaderRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 56px;
-  align-items: center;
-}
-
-.formHeaderLeft {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.formHeaderImage {
-  position: relative;
-  width: 100%;
-  height: 320px;
-  overflow: hidden;
-  border-radius: 12px;
+/* ── Top Header Row: title left, image right ── */
+.formHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
 }
 
-/* ── Form Card (full width, white) ── */
+.formHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.formTitle {
+  font-family: var(--font-libre), 'Adobe Arabic', serif;
+  font-size: 26px;
+  color: #1A1A1A;
+  font-weight: 500;
+  line-height: 1.2;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.formDesc {
+  font-family: var(--font-hanken), 'Hanken Grotesk', sans-serif;
+  font-size: 13.5px;
+  color: #636875;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.formHeaderImage {
+  position: relative;
+  width: 220px;
+  height: 95px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Form Card (compact luxury white card) ── */
 .formCard {
   width: 100%;
   background: #FFFFFF;
-  border-radius: 16px;
-  padding: 40px 48px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(226, 220, 211, 0.7);
   box-sizing: border-box;
 }
 
@@ -679,160 +702,91 @@
 .formFieldsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px 32px;
+  gap: 10px 18px;
 }
 
 .colSpan2 {
   grid-column: 1 / -1;
 }
 
-/* ── Centered footer with terms + submit ── */
-.formFooter {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid #EEE9E0;
-}
-
-.formTag {
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 25px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #7A808C;
-  margin: 0 0 12px;
-  display: block;
-}
-
-.formTitle {
-  font-family: 'Adobe Arabic', serif;
-  font-size: 46px;
-  color: #1A1A1A;
-  font-weight: 400;
-  line-height: 1.15;
-  margin: 0 0 14px;
-}
-
-.formDesc {
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 24px;
-  color: #636875;
-  line-height: 1.35;
-  margin: 0 0 32px;
-}
-
-.formLeftImage {
-  flex: 1;
-  min-height: 200px;
-  position: relative;
-  overflow: hidden;
-  border-radius: 8px;
-  box-shadow: none;
-}
-
-.formCard {
-  width: 100%;
-  background: #FFFFFF;
-  border-radius: 16px;
-  padding: 32px 34px 34px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
-  border: none;
-  box-sizing: border-box;
-}
-
-.formSectionHeader {
-  font-family: 'Adobe Arabic', serif;
-  font-size: 30px;
-  color: #2E3340;
-  margin: 0 0 10px;
-  font-weight: 700;
-}
-
-.formGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: 10px;
-}
-
+/* ── Input Fields ── */
 .inputField {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .inputField label {
-  font-family: 'Adobe Arabic', serif;
-  font-size: 24px;
+  font-family: var(--font-hanken), 'Hanken Grotesk', sans-serif;
+  font-size: 12.5px;
   font-weight: 600;
-  color: #1A1A1A;
+  color: #292524;
   margin: 0;
   letter-spacing: 0.01em;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 3px;
 }
 
 .requiredStar {
   color: #D79322;
-  font-size: 20px;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .inputField input {
   width: 100%;
-  height: 48px;
-  padding: 0 14px;
-  border-radius: 8px;
-  border: 1px solid #E2DCD3;
-  background: #FFFFFF;
-  font-size: 20px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 7px;
+  border: 1px solid #D6CEBE;
+  background: #FAF8F5;
+  font-size: 13.5px;
   color: #1A1A1A;
   outline: none;
   transition: all 0.2s ease;
-  font-family: 'Adobe Arabic', sans-serif;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  font-family: var(--font-hanken), sans-serif;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
   box-sizing: border-box;
 }
 
 .inputField input::placeholder {
-  color: #8C8275;
-  font-size: 19px;
-  font-family: 'Adobe Arabic', sans-serif;
-}
-
-.inputField textarea {
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid #E2DCD3;
-  background: #FFFFFF;
-  font-size: 20px;
-  color: #1A1A1A;
-  outline: none;
-  transition: all 0.2s ease;
-  font-family: 'Adobe Arabic', sans-serif;
-  resize: vertical;
-  min-height: 105px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-  box-sizing: border-box;
-}
-
-.inputField textarea::placeholder {
-  color: #8C8275;
-  font-size: 19px;
-  font-family: 'Adobe Arabic', sans-serif;
+  color: #A8A29E;
+  font-size: 13px;
+  font-family: var(--font-hanken), sans-serif;
 }
 
 .inputField input:focus,
 .inputField textarea:focus {
   border-color: #D79322;
-  box-shadow: 0 0 0 3px rgba(215, 147, 34, 0.16);
   background: #FFFFFF;
+  box-shadow: 0 0 0 2.5px rgba(215, 147, 34, 0.16);
+}
+
+.inputField textarea {
+  width: 100%;
+  min-height: 52px;
+  height: 52px;
+  max-height: 100px;
+  padding: 7px 12px;
+  border-radius: 7px;
+  border: 1px solid #D6CEBE;
+  background: #FAF8F5;
+  font-size: 13.5px;
+  color: #1A1A1A;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: var(--font-hanken), sans-serif;
+  resize: vertical;
+  line-height: 1.35;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  box-sizing: border-box;
+}
+
+.inputField textarea::placeholder {
+  color: #A8A29E;
+  font-size: 13px;
+  font-family: var(--font-hanken), sans-serif;
 }
 
 .inputError {
@@ -842,30 +796,24 @@
 
 .inputError:focus {
   border-color: #EF4444 !important;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+  box-shadow: 0 0 0 2.5px rgba(239, 68, 68, 0.15) !important;
 }
 
 .fieldError {
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 17px;
+  font-family: var(--font-hanken), sans-serif;
+  font-size: 11px;
   color: #DC2626;
-  margin-top: 3px;
+  margin-top: 1px;
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 4px;
 }
 
 .inputHelper {
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 17px;
+  font-family: var(--font-hanken), sans-serif;
+  font-size: 11px;
   color: #78716C;
-  margin-top: 3px;
-}
-
-.row2Col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  margin-top: 1px;
 }
 
 /* Custom Select Dropdowns */
@@ -876,53 +824,55 @@
 
 .customSelectTrigger {
   width: 100%;
-  height: 48px;
-  padding: 0 14px;
-  border-radius: 8px;
-  border: 1px solid #E2DCD3;
-  background: #FFFFFF;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 7px;
+  border: 1px solid #D6CEBE;
+  background: #FAF8F5;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
   outline: none;
   transition: all 0.2s ease;
-  font-family: 'Adobe Arabic', sans-serif;
+  font-family: var(--font-hanken), sans-serif;
   text-align: left;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
   box-sizing: border-box;
 }
 
 .customSelectTrigger:hover {
   border-color: #D79322;
+  background: #FFFFFF;
 }
 
 .customSelectTriggerOpen {
   border-color: #D79322;
-  box-shadow: 0 0 0 3px rgba(215, 147, 34, 0.16);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 2.5px rgba(215, 147, 34, 0.16);
 }
 
 .customSelectValue {
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 20px;
+  font-family: var(--font-hanken), sans-serif;
+  font-size: 13.5px;
   color: #1A1A1A;
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .customSelectPlaceholder {
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 19px;
-  color: #8C8275;
+  font-family: var(--font-hanken), sans-serif;
+  font-size: 13px;
+  color: #A8A29E;
 }
 
 .customSelectChevron {
   color: #D8A56E;
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
-  margin-left: 8px;
+  margin-left: 6px;
 }
 
 .customSelectChevronOpen {
@@ -931,42 +881,29 @@
 
 .customSelectMenu {
   position: absolute;
-  top: calc(100% + 5px);
+  top: calc(100% + 4px);
   left: 0;
   width: 100%;
-  max-height: 220px;
+  max-height: 180px;
   overflow-y: auto;
   background: #FFFFFF;
-  border: 1.5px solid rgba(215, 147, 34, 0.45);
-  border-radius: 8px;
-  box-shadow: 0 12px 28px rgba(45, 35, 20, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04);
-  padding: 6px;
+  border: 1px solid rgba(215, 147, 34, 0.45);
+  border-radius: 7px;
+  box-shadow: 0 8px 24px rgba(45, 35, 20, 0.12);
+  padding: 4px;
   margin: 0;
   list-style: none;
   z-index: 100;
-  animation: selectDropdownFade 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes selectDropdownFade {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .customSelectOption {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 19px;
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-family: var(--font-hanken), sans-serif;
+  font-size: 13px;
   color: #1A1A1A;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -986,50 +923,37 @@
 
 /* Radio Choices */
 .radioGroup {
-  margin: 10px 0 12px;
+  margin: 2px 0 2px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
 }
 
 .radioLabel {
-  font-family: 'Adobe Arabic', serif;
-  font-size: 24px;
+  font-family: var(--font-hanken), sans-serif;
+  font-size: 12.5px;
   font-weight: 600;
-  color: #1A1A1A;
-  margin-bottom: 8px;
-  display: block;
+  color: #292524;
+  margin: 0;
   letter-spacing: 0.01em;
 }
 
 .radioChoices {
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 16px;
 }
 
 .radioOption {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 0;
-  border-radius: 0;
-  border: none;
-  background: transparent;
+  gap: 6px;
+  padding: 2px 0;
   cursor: pointer;
   position: relative;
   user-select: none;
   transition: opacity 0.2s ease;
-  box-shadow: none;
-}
-
-.radioOption:hover {
-  border: none;
-  background: transparent;
-  opacity: 0.85;
-}
-
-.radioOptionActive {
-  border: none;
-  background: transparent;
-  box-shadow: none;
 }
 
 .radioOption input[type="radio"] {
@@ -1041,18 +965,16 @@
 }
 
 .customRadio {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   box-sizing: border-box;
   border-radius: 50%;
-  border: 1.5px solid #8C8275;
+  border: 1.5px solid #A8A29E;
   background: #FFFFFF;
   display: grid;
   place-items: center;
   transition: border-color 0.2s ease;
   flex-shrink: 0;
-  padding: 0;
-  margin: 0;
 }
 
 .customRadioChecked {
@@ -1060,47 +982,41 @@
 }
 
 .customRadioDot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   box-sizing: border-box;
   border-radius: 50%;
   background: #D79322;
-  margin: 0;
-  padding: 0;
   display: block;
 }
 
 .radioText {
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 20px;
+  font-family: var(--font-hanken), sans-serif;
+  font-size: 13px;
   font-weight: 500;
   color: #1A1A1A;
 }
 
-.radioOptionActive .radioText {
-  color: #1A1A1A;
-  font-weight: 500;
-}
-
-/* Drop Zone Upload Box */
+/* Drop Zone Upload Box (Compact Sleek Bar) */
 .uploadDropZone {
   border: 1.5px dashed #D8A56E;
-  border-radius: 12px;
+  border-radius: 8px;
   background: #FDFBF8;
-  padding: 26px 20px 22px;
+  padding: 8px 14px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  text-align: center;
+  justify-content: space-between;
+  gap: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .uploadDropZone:hover {
   border-color: #B87310;
   background: #FAF6F0;
-  box-shadow: 0 4px 14px rgba(216, 165, 110, 0.12);
+  box-shadow: 0 2px 10px rgba(216, 165, 110, 0.12);
 }
 
 .uploadDropZoneError {
@@ -1114,54 +1030,84 @@
   background: rgba(216, 165, 110, 0.08);
 }
 
+.uploadLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
 .uploadIcon {
   color: #D8A56E;
-  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.uploadTextGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
 }
 
 .uploadTitle {
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 21px;
+  font-family: var(--font-hanken), sans-serif;
+  font-size: 12.5px;
   font-weight: 600;
-  color: #1A1A1A;
-  margin: 6px 0 2px;
+  color: #1C1917;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .uploadSub {
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 17px;
+  font-family: var(--font-hanken), sans-serif;
+  font-size: 11px;
   color: #78716C;
-  margin: 0 0 14px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.uploadActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .uploadBtn {
-  font-family: 'Adobe Arabic', sans-serif;
+  font-family: var(--font-hanken), sans-serif;
   background: #D79322;
   color: #FFFFFF;
   border: none;
-  border-radius: 9999px;
-  padding: 8px 24px;
-  font-size: 18px;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s, transform 0.15s;
-  box-shadow: 0 2px 6px rgba(215, 147, 34, 0.25);
+  box-shadow: 0 2px 6px rgba(215, 147, 34, 0.2);
 }
 
 .uploadBtn:hover {
   background: #B87310;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(215, 147, 34, 0.35);
 }
 
 .uploadRemoveBtn {
-  font-family: 'Adobe Arabic', sans-serif;
+  font-family: var(--font-hanken), sans-serif;
   background: transparent;
   color: #DC2626;
   border: 1px solid #DC2626;
-  border-radius: 9999px;
-  padding: 7px 18px;
-  font-size: 17px;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -1172,70 +1118,122 @@
   color: #FFFFFF;
 }
 
-/* Checkbox Terms */
+/* ── Form Footer ── */
+.formFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #F0ECE4;
+}
+
+.formFooterLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
 .termsCheckbox {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 18px;
-  color: #4A4E58;
-  margin: 14px 0 12px;
+  gap: 8px;
+  font-family: var(--font-hanken), sans-serif;
+  font-size: 12.5px;
+  color: #44403C;
   cursor: pointer;
   user-select: none;
+  margin: 0;
 }
 
 .termsCheckbox input {
   accent-color: #D79322;
-  width: 17px;
-  height: 17px;
+  width: 15px;
+  height: 15px;
   cursor: pointer;
+  margin: 0;
+}
+
+.formGlobalError {
+  color: #DC2626;
+  font-size: 12px;
+  padding: 4px 8px;
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  margin-top: 4px;
 }
 
 .btnSubmitForm {
   width: auto;
-  min-width: 280px;
-  font-family: 'Adobe Arabic', serif;
+  font-family: var(--font-hanken), sans-serif;
   background: #D8A56E;
   color: #FFFFFF;
   border: none;
-  border-radius: 8px;
-  padding: 12px 48px;
-  font-size: 22px;
+  border-radius: 7px;
+  padding: 8px 26px;
+  height: 38px;
+  font-size: 13.5px;
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 4px 14px rgba(216, 165, 110, 0.4);
+  box-shadow: 0 3px 10px rgba(216, 165, 110, 0.35);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .btnSubmitForm:hover {
   background: #C5925A;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(216, 165, 110, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(216, 165, 110, 0.45);
+}
+
+.btnSubmitForm:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .successCard {
   text-align: center;
-  padding: 40px 10px;
+  padding: 30px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
-.successIconBadge {
-  width: 64px;
-  height: 64px;
+.successIcon {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: rgba(216, 165, 110, 0.15);
-  color: #D8A56E;
+  color: #D79322;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 22px;
+}
+
+.successTitle {
+  font-family: var(--font-libre), serif;
+  font-size: 24px;
+  color: #1C1917;
+  margin: 0;
+}
+
+.successDesc {
+  font-family: var(--font-hanken), sans-serif;
+  font-size: 13.5px;
+  color: #57534E;
+  max-width: 440px;
+  line-height: 1.5;
+  margin: 0;
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -1251,7 +1249,34 @@
   }
 
   .formSection {
-    padding: 60px 40px;
+    padding: 24px 20px 32px;
+  }
+
+  .formInner {
+    width: 100%;
+    gap: 14px;
+  }
+
+  .formHeaderRow {
+    gap: 16px;
+  }
+
+  .formHeaderImage {
+    width: 160px;
+    height: 80px;
+  }
+
+  .formCard {
+    padding: 16px 18px;
+  }
+
+  .formFieldsGrid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .colSpan2 {
+    grid-column: 1;
   }
 
   .faqInner {
@@ -1293,16 +1318,18 @@
   }
 
   .formHeaderRow {
-    grid-template-columns: 1fr;
-    gap: 24px;
+    flex-direction: column;
+    gap: 14px;
   }
 
   .formHeaderImage {
-    height: 260px;
+    width: 100%;
+    height: 120px;
+    border-radius: 10px;
   }
 
   .formCard {
-    padding: 28px 24px;
+    padding: 18px 20px;
   }
 
   .formFieldsGrid {
@@ -1369,10 +1396,61 @@
   }
 
   .formSection {
-    padding: 40px 16px;
+    padding: 18px 12px 28px;
     width: 100%;
     box-sizing: border-box;
     overflow-x: hidden;
+  }
+
+  .formHeaderRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .formHeaderImage {
+    width: 100%;
+    height: 110px;
+  }
+
+  .formTitle {
+    font-size: 22px;
+  }
+
+  .formDesc {
+    font-size: 12.5px;
+  }
+
+  .formCard {
+    padding: 14px 12px;
+    border-radius: 12px;
+  }
+
+  .formFieldsGrid {
+    gap: 8px;
+  }
+
+  .uploadDropZone {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .uploadActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .formFooter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .btnSubmitForm {
+    width: 100%;
+    height: 40px;
   }
 
   .formInner {

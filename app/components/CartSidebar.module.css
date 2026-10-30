@@ -222,6 +222,18 @@
   opacity: 0.6;
 }
 
+.quantity button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.stockLimitNote {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.72rem;
+  color: #B4572E;
+  margin-top: 0.35rem;
+}
+
 .quantity span {
   font-family: var(--font-inter), sans-serif;
   font-size: 0.85rem;

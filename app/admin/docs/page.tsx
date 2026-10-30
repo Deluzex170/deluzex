@@ -49,12 +49,12 @@ export default function AdminSwaggerDocsPage() {
   }, []);
 
   return (
-    <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", padding: "28px", boxShadow: "0 1px 3px rgba(0,0,0,0.08)", minHeight: "80vh" }}>
-      <div style={{ marginBottom: "20px", paddingBottom: "16px", borderBottom: "1px solid #e5e7eb" }}>
-        <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#111827", margin: "0 0 6px 0" }}>
+    <div style={{ backgroundColor: "var(--admin-surface)", borderRadius: "12px", padding: "28px", boxShadow: "0 1px 3px rgba(0,0,0,0.08)", minHeight: "80vh" }}>
+      <div style={{ marginBottom: "20px", paddingBottom: "16px", borderBottom: "1px solid var(--admin-border)" }}>
+        <h2 style={{ fontSize: "22px", fontWeight: "700", color: "var(--admin-text-main)", margin: "0 0 6px 0" }}>
           Backend REST APIs Explorer (Swagger UI)
         </h2>
-        <p style={{ fontSize: "14px", color: "#6b7280", margin: 0 }}>
+        <p style={{ fontSize: "14px", color: "var(--admin-text-muted)", margin: 0 }}>
           Direct live OpenAPI interaction with Deluzex FastAPI server endpoints.
         </p>
       </div>

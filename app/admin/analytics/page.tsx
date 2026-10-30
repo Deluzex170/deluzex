@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useEffect, useState, useTransition, useMemo } from "react";
+import type { ColDef } from "ag-grid-community";
+import { AdminDataGrid } from "../../components/admin/AdminDataGrid";
 import styles from "./analytics.module.css";
 import {
   fetchAnalyticsStats,
@@ -46,9 +48,9 @@ export default function VisitorAnalyticsPage() {
     const interval = setInterval(() => {
       loadData(false);
     }, 30000);
+    
     return () => clearInterval(interval);
   }, []);
-
   // Re-fetch logs when filter or search changes
   useEffect(() => {
     const handler = setTimeout(async () => {
@@ -89,7 +91,113 @@ export default function VisitorAnalyticsPage() {
   const mobilePct = Math.round(((stats?.devices.mobile || 0) / totalDeviceVisits) * 100);
   const tabletPct = Math.round(((stats?.devices.tablet || 0) / totalDeviceVisits) * 100);
 
-  return (
+  const columnDefs = useMemo<ColDef<VisitorLogItem>[]>(
+    () => [
+      {
+        field: "user_name",
+        headerName: "Visitor / Identity",
+        width: 220,
+        cellRenderer: (params: any) => {
+          const log = params.data as VisitorLogItem;
+          if (!log) return null;
+          return log.is_member ? (
+            <div>
+              <div style={{ fontWeight: 700, color: "var(--admin-text-main)" }}>
+                {log.user_name || "Registered Member"}
+              </div>
+              <div style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)" }}>{log.user_email}</div>
+            </div>
+          ) : (
+            <div>
+              <div style={{ fontWeight: 600, color: "var(--admin-text-secondary)" }}>Guest Visitor</div>
+              <div
+                style={{
+                  fontSize: "0.72rem",
+                  color: "var(--admin-text-subtle)",
+                  fontFamily: "monospace",
+                }}
+              >
+                {log.visitor_id ? log.visitor_id.substring(0, 16) + "..." : "Anonymous"}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        field: "is_member",
+        headerName: "Type",
+        width: 120,
+        cellRenderer: (params: any) => {
+          const log = params.data as VisitorLogItem;
+          if (!log) return null;
+          return log.is_member ? (
+            <span className={styles.badgeMember}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              Member
+            </span>
+          ) : (
+            <span className={styles.badgeGuest}>Guest</span>
+          );
+        },
+      },
+      {
+        field: "path",
+        headerName: "Page Visited",
+        flex: 1.5,
+        minWidth: 180,
+        cellRenderer: (params: any) => {
+          const log = params.data as VisitorLogItem;
+          if (!log) return null;
+          return <span className={styles.pathTag}>{log.path}</span>;
+        },
+      },
+      {
+        field: "browser",
+        headerName: "Device & OS",
+        width: 180,
+        cellRenderer: (params: any) => {
+          const log = params.data as VisitorLogItem;
+          if (!log) return null;
+          return (
+            <div className={styles.devicePill}>
+              <span>{log.device_type}</span>
+              <span>•</span>
+              <span>{log.browser}</span>
+              <span>({log.os})</span>
+            </div>
+          );
+        },
+      },
+      {
+        field: "ip_address",
+        headerName: "IP Address",
+        width: 130,
+        cellRenderer: (params: any) => {
+          const log = params.data as VisitorLogItem;
+          return (
+            <span style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "var(--admin-text-muted)" }}>
+              {log?.ip_address || "127.0.0.1"}
+            </span>
+          );
+        },
+      },
+      {
+        field: "created_at",
+        headerName: "Time",
+        width: 120,
+        valueFormatter: (params: any) => {
+          if (!params.value) return "N/A";
+          return formatTimeAgo(params.value);
+        },
+      },
+    ],
+    []
+  );
+
+
+    return (
     <div className={styles.container}>
       {/* HEADER */}
       <div className={styles.header}>
@@ -202,7 +310,7 @@ export default function VisitorAnalyticsPage() {
               </svg>
               Device Breakdown
             </h3>
-            <span style={{ fontSize: "0.82rem", color: "#64748b" }}>{totalDeviceVisits} total hits</span>
+            <span style={{ fontSize: "0.82rem", color: "var(--admin-text-muted)" }}>{totalDeviceVisits} total hits</span>
           </div>
 
           <div className={styles.deviceBarWrapper}>
@@ -260,7 +368,7 @@ export default function VisitorAnalyticsPage() {
               </svg>
               Top Visited Pages
             </h3>
-            <span style={{ fontSize: "0.82rem", color: "#64748b" }}>Ranked by visits</span>
+            <span style={{ fontSize: "0.82rem", color: "var(--admin-text-muted)" }}>Ranked by visits</span>
           </div>
 
           <div className={styles.topPagesList}>
@@ -272,7 +380,7 @@ export default function VisitorAnalyticsPage() {
                 </div>
               ))
             ) : (
-              <p style={{ color: "#94a3b8", fontSize: "0.875rem", margin: "1rem 0" }}>
+              <p style={{ color: "var(--admin-text-subtle)", fontSize: "0.875rem", margin: "1rem 0" }}>
                 No page view data recorded yet.
               </p>
             )}
@@ -290,7 +398,7 @@ export default function VisitorAnalyticsPage() {
               </svg>
               Registered Members Who Visited ({members.length})
             </h3>
-            <p style={{ margin: "0.25rem 0 0 0", fontSize: "0.85rem", color: "#64748b" }}>
+            <p style={{ margin: "0.25rem 0 0 0", fontSize: "0.85rem", color: "var(--admin-text-muted)" }}>
               Logged-in customers currently browsing or recently visited your store.
             </p>
           </div>
@@ -311,14 +419,14 @@ export default function VisitorAnalyticsPage() {
                   <div className={styles.memberInfo}>
                     <div className={styles.memberName}>{m.name || "Customer Member"}</div>
                     <div className={styles.memberEmail}>{m.email}</div>
-                    <div style={{ marginTop: "0.4rem", fontSize: "0.75rem", color: "#64748b" }}>
+                    <div style={{ marginTop: "0.4rem", fontSize: "0.75rem", color: "var(--admin-text-muted)" }}>
                       Last page: <span className={styles.pathTag}>{m.last_path || "/"}</span>
                     </div>
                   </div>
                   <div className={styles.memberStats}>
                     <div className={styles.memberVisitsCount}>{m.total_visits}</div>
                     <div className={styles.memberVisitsLabel}>Visits</div>
-                    <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.3rem" }}>
+                    <div style={{ fontSize: "0.72rem", color: "var(--admin-text-subtle)", marginTop: "0.3rem" }}>
                       {formatTimeAgo(m.last_seen)}
                     </div>
                   </div>
@@ -381,91 +489,16 @@ export default function VisitorAnalyticsPage() {
           </div>
         </div>
 
-        <div className={styles.tableResponsive}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Visitor / Identity</th>
-                <th>Type</th>
-                <th>Page Visited</th>
-                <th>Device & OS</th>
-                <th>IP Address</th>
-                <th>Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.length > 0 ? (
-                logs.map((log) => (
-                  <tr key={log.id}>
-                    <td>
-                      {log.is_member ? (
-                        <div>
-                          <div style={{ fontWeight: 700, color: "#0f172a" }}>
-                            {log.user_name || "Registered Member"}
-                          </div>
-                          <div style={{ fontSize: "0.78rem", color: "#64748b" }}>{log.user_email}</div>
-                        </div>
-                      ) : (
-                        <div>
-                          <div style={{ fontWeight: 600, color: "#334155" }}>Guest Visitor</div>
-                          <div
-                            style={{
-                              fontSize: "0.72rem",
-                              color: "#94a3b8",
-                              fontFamily: "monospace",
-                            }}
-                          >
-                            {log.visitor_id.substring(0, 16)}...
-                          </div>
-                        </div>
-                      )}
-                    </td>
-
-                    <td>
-                      {log.is_member ? (
-                        <span className={styles.badgeMember}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                          </svg>
-                          Member
-                        </span>
-                      ) : (
-                        <span className={styles.badgeGuest}>Guest</span>
-                      )}
-                    </td>
-
-                    <td>
-                      <span className={styles.pathTag}>{log.path}</span>
-                    </td>
-
-                    <td>
-                      <div className={styles.devicePill}>
-                        <span>{log.device_type}</span>
-                        <span>•</span>
-                        <span>{log.browser}</span>
-                        <span>({log.os})</span>
-                      </div>
-                    </td>
-
-                    <td style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "#64748b" }}>
-                      {log.ip_address || "127.0.0.1"}
-                    </td>
-
-                    <td style={{ whiteSpace: "nowrap", fontSize: "0.82rem", color: "#64748b" }}>
-                      {formatTimeAgo(log.created_at)}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "#94a3b8" }}>
-                    No visitor logs found matching your filter criteria.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <AdminDataGrid<VisitorLogItem>
+          ariaLabel="Recent Live Traffic & Activity"
+          rowData={logs}
+          columnDefs={columnDefs}
+          loading={isLoading}
+          getRowId={(s: VisitorLogItem) => String(s.id || s.created_at)}
+          quickFilterText={searchQuery}
+          emptyTitle="No visitor logs found"
+          emptyDescription="No events match your current filter criteria."
+        />
       </div>
     </div>
   );
