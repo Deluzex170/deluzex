@@ -492,7 +492,7 @@ export default function AdminOrdersPage() {
                 <h2 className={styles.drawerTitle}>
                   Order #{((selectedOrder.id || selectedOrder._id || selectedOrder.order_id) || "").slice(-8).toUpperCase()}
                 </h2>
-                <span style={{ fontSize: "0.8rem", color: "#8e8e93" }}>
+                <span className={styles.drawerSubtitle}>
                   Placed on {formatDate(selectedOrder.created_at || selectedOrder.createdAt)}
                 </span>
               </div>
@@ -519,50 +519,47 @@ export default function AdminOrdersPage() {
               )}
 
               {/* SHIPROCKET 1-CLICK INTEGRATION BANNER */}
-              <div
-                style={{
-                  background: "linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(212, 175, 55, 0.08) 100%)",
-                  border: "1px solid rgba(124, 58, 237, 0.35)",
-                  borderRadius: "10px",
-                  padding: "1rem 1.15rem",
-                  display: "flex",
-                  flexWrap: "wrap",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "1rem",
-                }}
-              >
-                <div style={{ flex: "1 1 220px", minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "#ffffff", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <span>🚀 Shiprocket Automated Logistics</span>
-                    {selectedOrder.awb_code && (
-                      <span style={{ fontSize: "0.7rem", background: "#7c3aed", color: "#fff", padding: "0.15rem 0.45rem", borderRadius: "4px" }}>
-                        ACTIVE
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: "0.8rem", color: "#9ca3af", marginTop: "0.25rem" }}>
-                    {selectedOrder.awb_code
-                      ? `AWB: ${selectedOrder.awb_code} • ${selectedOrder.courier_name || "Assigned Courier"}`
-                      : "Create shipment, generate AWB, print barcode labels, track live & initiate returns."}
+              <div className={styles.drawerColumns}>
+              <div className={styles.drawerColumn}>
+              <div className={styles.logisticsCard}>
+                <div className={styles.logisticsInfo}>
+                  <span className={styles.logisticsIcon} aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="1" y="3" width="15" height="13" />
+                      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                      <circle cx="5.5" cy="18.5" r="2.5" />
+                      <circle cx="18.5" cy="18.5" r="2.5" />
+                    </svg>
+                  </span>
+                  <div style={{ minWidth: 0 }}>
+                    <div className={styles.logisticsTitle}>
+                      <span>Shiprocket Automated Logistics</span>
+                      {selectedOrder.awb_code && <span className={styles.logisticsBadge}>Active</span>}
+                    </div>
+                    <div className={styles.logisticsText}>
+                      {selectedOrder.awb_code
+                        ? `AWB: ${selectedOrder.awb_code} • ${selectedOrder.courier_name || "Assigned Courier"}`
+                        : "Create shipment, generate AWB, print barcode labels, track live & initiate returns."}
+                    </div>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShiprocketOrder(selectedOrder)}
-                  style={{
-                    background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)",
-                    color: "#ffffff",
-                    border: "none",
-                    padding: "0.55rem 1.15rem",
-                    borderRadius: "8px",
-                    fontSize: "0.85rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                  }}
+                  className={styles.logisticsBtn}
                 >
-                  {selectedOrder.awb_code ? "🚚 Track & Manage" : "📦 Ship with Shiprocket"}
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    {selectedOrder.awb_code ? (
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    ) : (
+                      <>
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                        <line x1="12" y1="22.08" x2="12" y2="12" />
+                      </>
+                    )}
+                  </svg>
+                  {selectedOrder.awb_code ? "Track & Manage" : "Ship with Shiprocket"}
                 </button>
               </div>
 
@@ -579,8 +576,8 @@ export default function AdminOrdersPage() {
                     Order Status & Courier Dispatch
                   </div>
                   {selectedOrder.awb_code && (
-                    <span style={{ fontSize: "0.72rem", background: "rgba(124, 58, 237, 0.15)", color: "#a78bfa", border: "1px solid rgba(124, 58, 237, 0.3)", padding: "0.15rem 0.5rem", borderRadius: "4px", fontWeight: 500 }}>
-                      ⚡ Auto-Synced with Shiprocket
+                    <span className={styles.logisticsBadge}>
+                      Auto-synced with Shiprocket
                     </span>
                   )}
                 </div>
@@ -631,7 +628,7 @@ export default function AdminOrdersPage() {
                     />
                   </div>
 
-                  <div className={styles.formGroup}>
+                  <div className={`${styles.formGroup} ${styles.fulfillFormWide}`}>
                     <label>Internal Dispatch Notes (Optional)</label>
                     <input
                       type="text"
@@ -652,6 +649,9 @@ export default function AdminOrdersPage() {
                 </form>
               </div>
 
+              </div>
+
+              <div className={styles.drawerColumn}>
               {/* CLIENT & SHIPPING ADDRESS */}
               <div className={styles.sectionBlock}>
                 <div className={styles.sectionBlockTitle}>
@@ -687,14 +687,14 @@ export default function AdminOrdersPage() {
                 </div>
 
                 {selectedOrder.shipping_address && (
-                  <div style={{ marginTop: "1rem", paddingTop: "0.8rem", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                    <label style={{ fontSize: "0.75rem", color: "#8e8e93", display: "block", marginBottom: "4px" }}>
+                  <div className={styles.addressBlock}>
+                    <span className={styles.addressLabel}>
                       Delivery Destination
-                    </label>
-                    <p style={{ margin: 0, color: "#fff", lineHeight: 1.5, fontSize: "0.9rem" }}>
+                    </span>
+                    <p className={styles.addressText}>
                       {selectedOrder.shipping_address.street}, {selectedOrder.shipping_address.city},{" "}
                       {selectedOrder.shipping_address.state} —{" "}
-                      <strong style={{ color: "#d4af37" }}>{selectedOrder.shipping_address.pin_code}</strong>
+                      <strong className={styles.addressPin}>{selectedOrder.shipping_address.pin_code}</strong>
                     </p>
                   </div>
                 )}
@@ -736,7 +736,7 @@ export default function AdminOrdersPage() {
                 </div>
 
                 {/* FINANCIAL BREAKDOWN */}
-                <div className={styles.totalsList} style={{ marginTop: "1.2rem", paddingTop: "1rem", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className={styles.totalsList}>
                   <div className={styles.totalRow}>
                     <span>Subtotal</span>
                     <span>{formatCurrency(selectedOrder.subtotal)}</span>
@@ -755,15 +755,23 @@ export default function AdminOrdersPage() {
                   </div>
                 </div>
               </div>
+              </div>
+              </div>
             </div>
 
             <div className={styles.drawerFooter}>
               <button
                 className={styles.viewBtn}
                 onClick={() => setInvoiceOrder(selectedOrder)}
-                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(196, 154, 69, 0.15)", color: "#c49a45", borderColor: "rgba(196, 154, 69, 0.4)" }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "var(--admin-primary-glow)", color: "var(--admin-primary)", borderColor: "var(--admin-border-gold)" }}
               >
-                📄 View GST Tax Invoice
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
+                View GST Tax Invoice
               </button>
               <button
                 className={styles.viewBtn}

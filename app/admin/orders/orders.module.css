@@ -751,3 +751,337 @@
     font-size: 1.5rem;
   }
 }
+
+/* ─── Order detail panel: wide two-column layout on design tokens ─── */
+.drawer {
+  max-width: min(1040px, 100vw);
+  height: 100dvh;
+}
+
+.drawerHeader {
+  padding: var(--a-space-3) var(--a-space-5);
+  min-height: var(--a-topbar-h);
+}
+
+.drawerTitle {
+  font-size: var(--a-fs-xl);
+  line-height: var(--a-lh-tight);
+}
+
+.drawerSubtitle {
+  font-size: var(--a-fs-xs);
+  color: var(--admin-text-muted);
+}
+
+.closeBtn {
+  width: var(--a-control-h);
+  height: var(--a-control-h);
+  font-size: var(--a-fs-lg);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--a-radius-md);
+}
+
+.closeBtn:focus-visible {
+  outline: 2px solid var(--admin-primary);
+  outline-offset: 1px;
+}
+
+.drawerBody {
+  padding: var(--a-space-5);
+  gap: var(--a-space-4);
+}
+
+.drawerColumns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--a-space-4);
+  align-items: start;
+}
+
+.drawerColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--a-space-4);
+  min-width: 0;
+}
+
+.sectionBlock {
+  padding: var(--a-space-4);
+  border-radius: var(--a-radius-lg);
+}
+
+.sectionBlockTitle {
+  font-size: var(--a-fs-2xs);
+  letter-spacing: var(--a-tracking-label);
+  color: var(--admin-text-muted);
+  font-weight: var(--a-fw-semibold);
+  margin-bottom: var(--a-space-3);
+}
+
+.sectionBlockTitle svg {
+  color: var(--admin-primary);
+}
+
+.detailGrid {
+  gap: var(--a-space-3) var(--a-space-4);
+  font-size: var(--a-fs-sm);
+}
+
+.detailItem label,
+.addressLabel {
+  display: block;
+  font-size: var(--a-fs-2xs);
+  color: var(--admin-text-muted);
+  margin-bottom: 2px;
+  font-weight: var(--a-fw-medium);
+}
+
+.detailItem p {
+  font-size: var(--a-fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.addressBlock {
+  margin-top: var(--a-space-3);
+  padding-top: var(--a-space-3);
+  border-top: 1px solid var(--admin-border);
+}
+
+.addressText {
+  margin: 0;
+  color: var(--admin-text-main);
+  line-height: var(--a-lh-base);
+  font-size: var(--a-fs-sm);
+}
+
+.addressPin {
+  color: var(--admin-primary);
+}
+
+.drawerItemRow {
+  gap: var(--a-space-3);
+  padding-bottom: var(--a-space-3);
+}
+
+.drawerItemImg {
+  width: 44px;
+  height: 44px;
+}
+
+.drawerItemInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.drawerItemTitle {
+  font-size: var(--a-fs-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawerItemQtyPrice {
+  font-size: var(--a-fs-xs);
+}
+
+.drawerItemTotal {
+  font-size: var(--a-fs-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.totalsList {
+  gap: 6px;
+  font-size: var(--a-fs-sm);
+  margin-top: var(--a-space-3);
+  padding-top: var(--a-space-3);
+  border-top: 1px solid var(--admin-border);
+}
+
+.totalRow span:last-child,
+.grandTotalRow span:last-child {
+  font-variant-numeric: tabular-nums;
+}
+
+.grandTotalRow {
+  font-size: var(--a-fs-md);
+  padding-top: var(--a-space-3);
+  margin-top: var(--a-space-1);
+}
+
+.grandTotalAmount {
+  color: var(--admin-primary);
+}
+
+.fulfillForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--a-space-3);
+}
+
+.fulfillFormWide {
+  grid-column: 1 / -1;
+}
+
+.formGroup label {
+  font-size: var(--a-fs-2xs);
+  font-weight: var(--a-fw-semibold);
+  color: var(--admin-text-muted);
+  height: var(--a-label-h);
+  line-height: var(--a-label-h);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fulfillForm .textInput,
+.fulfillForm .selectInput {
+  height: var(--a-control-h);
+  padding: 0 var(--a-space-3);
+  font-size: var(--a-fs-sm);
+  width: 100%;
+}
+
+.submitFulfillBtn {
+  grid-column: 1 / -1;
+  margin-top: var(--a-space-1);
+  height: var(--a-control-h);
+  padding: 0 var(--a-space-4);
+  background: var(--admin-primary);
+  color: #111111;
+  font-size: var(--a-fs-sm);
+  box-shadow: none;
+}
+
+.submitFulfillBtn:hover:not(:disabled) {
+  background: var(--admin-primary-hover);
+}
+
+/* Shiprocket logistics card, re-skinned on brand tokens */
+.logisticsCard {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--a-space-3);
+  padding: var(--a-space-4);
+  border-radius: var(--a-radius-lg);
+  background: linear-gradient(135deg, var(--admin-primary-glow) 0%, var(--admin-surface-muted) 70%);
+  border: 1px solid var(--admin-border-gold);
+}
+
+.logisticsInfo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--a-space-3);
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.logisticsIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--a-radius-md);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border-gold);
+  color: var(--admin-primary);
+}
+
+.logisticsTitle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--a-space-2);
+  font-size: var(--a-fs-base);
+  font-weight: var(--a-fw-semibold);
+  color: var(--admin-text-main);
+}
+
+.logisticsText {
+  margin-top: 2px;
+  font-size: var(--a-fs-xs);
+  color: var(--admin-text-muted);
+  line-height: var(--a-lh-base);
+}
+
+.logisticsBadge {
+  font-size: 10px;
+  font-weight: var(--a-fw-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 999px;
+  color: var(--admin-primary);
+  background: var(--admin-primary-glow);
+  border: 1px solid var(--admin-border-gold);
+}
+
+.logisticsBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--a-space-2);
+  height: var(--a-control-h);
+  padding: 0 var(--a-space-4);
+  border: 1px solid var(--admin-primary);
+  border-radius: var(--a-radius-md);
+  background: var(--admin-primary);
+  color: #111111;
+  font-size: var(--a-fs-sm);
+  font-weight: var(--a-fw-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.logisticsBtn:hover {
+  background: var(--admin-primary-hover);
+}
+
+.logisticsBtn:focus-visible {
+  outline: 2px solid var(--admin-primary);
+  outline-offset: 2px;
+}
+
+.drawerFooter {
+  padding: var(--a-space-3) var(--a-space-5);
+  gap: var(--a-space-2);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .drawerColumns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .fulfillForm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .drawerBody {
+    padding: var(--a-space-3);
+  }
+  .drawerHeader,
+  .drawerFooter {
+    padding-left: var(--a-space-3);
+    padding-right: var(--a-space-3);
+  }
+}
+
+.fulfillForm .selectInput {
+  border: 1px solid var(--admin-border);
+  border-radius: var(--a-radius-md);
+  background: var(--admin-surface);
+  color: var(--admin-text-main);
+  outline: none;
+}
+
+.fulfillForm .textInput:focus,
+.fulfillForm .selectInput:focus {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px var(--admin-primary-glow);
+}

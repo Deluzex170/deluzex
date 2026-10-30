@@ -166,9 +166,6 @@
 .adminRoot[data-theme="light"] [class*="tableWrapper"],
 .adminRoot[data-theme="light"] [class*="modalCard"],
 .adminRoot[data-theme="light"] [class*="modalContent"],
-.adminRoot[data-theme="light"] [class*="modal"],
-.adminRoot[data-theme="light"] [class*="drawer"],
-.adminRoot[data-theme="light"] [class*="card"],
 .adminRoot[data-theme="light"] [class*="navCard"],
 .adminRoot[data-theme="light"] [class*="feedCard"],
 .adminRoot[data-theme="light"] [class*="panelCard"],
@@ -1402,8 +1399,7 @@
 .adminRoot[data-theme="light"] [class*="feedCard"],
 .adminRoot[data-theme="light"] [class*="membersCard"],
 .adminRoot[data-theme="light"] [class*="navCard"],
-.adminRoot[data-theme="light"] [class*="controlsBar"],
-.adminRoot[data-theme="light"] [class*="card"] {
+.adminRoot[data-theme="light"] [class*="controlsBar"] {
   background: var(--admin-surface) !important;
   border-color: var(--admin-border) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
