@@ -204,9 +204,9 @@ export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = 
         {NAV_ITEMS.map((item) => {
           const active = isItemActive(item.href);
           const cutoutMaskPath =
-            "M 0,46 C 14,46 20,36 22,24 C 24,12 30,0 44,0 L 116,0 C 130,0 136,12 138,24 C 140,36 146,46 160,46 L 160,100 L 0,100 Z";
+            "M 0,58 C 14,58 20,44 22,30 C 24,16 30,0 44,0 L 116,0 C 130,0 136,16 138,30 C 140,44 146,58 160,58 L 160,100 L 0,100 Z";
           const solidTabPath =
-            "M 0,46 C 14,46 20,36 22,24 C 24,12 30,0 44,0 L 116,0 C 130,0 136,12 138,24 C 140,36 146,46 160,46 L 160,52 L 0,52 Z";
+            "M 0,58 C 14,58 20,44 22,30 C 24,16 30,0 44,0 L 116,0 C 130,0 136,16 138,30 C 140,44 146,58 160,58 L 160,100 L 0,100 Z";
           const maskId = `tab-cutout-mask-${item.name}`;
 
           if (active) {
@@ -220,7 +220,7 @@ export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = 
                 <div className={styles.tabBgWrapper}>
                   {isState1 ? (
                     <svg
-                      viewBox="0 0 160 46"
+                      viewBox="0 0 160 58"
                       className={styles.tabCutoutSvg}
                       preserveAspectRatio="none"
                     >
@@ -241,7 +241,7 @@ export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = 
                     </svg>
                   ) : (
                     <svg
-                      viewBox="0 0 160 46"
+                      viewBox="0 0 160 58"
                       className={styles.tabSolidSvg}
                       preserveAspectRatio="none"
                     >
