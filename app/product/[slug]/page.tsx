@@ -24,33 +24,6 @@ import { useAuth } from "../../context/AuthContext";
 import WishlistButton from "../../components/WishlistButton";
 import PincodeChecker from "../../components/PincodeChecker";
 
-const DEFAULT_PRODUCT_FAQS = [
-  {
-    q: "Do you offer custom lighting solutions?",
-    a: "Yes, our studio creates bespoke lighting pieces tailored to your exact architectural space, ceiling height, and aesthetic requirements.",
-  },
-  {
-    q: "What is the lead time for custom architectural orders?",
-    a: "Standard custom production takes 3-4 weeks depending on the design complexity, hand-blown glass, and artisanal metallic finishes.",
-  },
-  {
-    q: "Do you provide installation support across India?",
-    a: "Yes, we provide detailed technical wiring schematics and coordinate with certified electricians and white-glove technicians across major metro cities.",
-  },
-  {
-    q: "Can I request a specific metallic finish or custom cord length?",
-    a: "Absolutely! Our studio can customize dimensions, metallic finishes (brushed brass, antique gold, matte black, satin nickel), and suspension drop lengths.",
-  },
-  {
-    q: "Do your luminaires come with a comprehensive warranty?",
-    a: "All our luxury lighting fixtures include a comprehensive 3-year warranty covering manufacturing integrity, structural metalwork, and electrical components.",
-  },
-  {
-    q: "How are fixtures packaged for insured pan-India delivery?",
-    a: "Every luminaire is secured in custom high-density foam within export-grade reinforced wooden crates, insured against all transit damage.",
-  },
-];
-
 export default function ProductDetail() {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -80,7 +53,8 @@ export default function ProductDetail() {
   // UI State
   const [activeThumb, setActiveThumb] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [productFaqs, setProductFaqs] = useState<{ q: string; a: string }[]>(DEFAULT_PRODUCT_FAQS);
+  const [productFaqs, setProductFaqs] = useState<{ q: string; a: string }[]>([]);
+  const [faqsLoading, setFaqsLoading] = useState(true);
 
   useEffect(() => {
     fetchFaqs("product")
@@ -92,10 +66,16 @@ export default function ProductDetail() {
               a: item.answer,
             }))
           );
+        } else {
+          setProductFaqs([]);
         }
       })
       .catch((err) => {
         console.error("Failed to load product FAQs:", err);
+        setProductFaqs([]);
+      })
+      .finally(() => {
+        setFaqsLoading(false);
       });
   }, []);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -1337,46 +1317,64 @@ export default function ProductDetail() {
           </div>
         </section>
 
-        {/* FAQ ACCORDION */}
-        <section className={styles.faqSection}>
-          <div className={styles.faqContainer}>
-            <h2 className={styles.faqTitle}>
-              Frequently asked<br />questions
-            </h2>
-            <p className={styles.faqSub}>
-              Everything you need to know about our handcrafted finishes, architectural specifications, warranty, and insured pan-India white-glove delivery.
-            </p>
+        {/* FAQ ACCORDION (100% PURE DYNAMIC FROM DB) */}
+        {(faqsLoading || productFaqs.length > 0) && (
+          <section className={styles.faqSection}>
+            <div className={styles.faqContainer}>
+              <h2 className={styles.faqTitle}>
+                Frequently asked<br />questions
+              </h2>
+              <p className={styles.faqSub}>
+                Everything you need to know about our handcrafted finishes, architectural specifications, warranty, and insured pan-India white-glove delivery.
+              </p>
 
-            <div className={styles.faqList}>
-              {productFaqs.map((faq, i) => (
-                <div
-                  key={i}
-                  className={`${styles.faqAccordion} ${openFaq === i ? styles.faqAccordionOpen : ""}`}
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                >
-                  <div className={styles.faqAccordionHeader}>
-                    <span className={styles.faqQuestion}>{faq.q}</span>
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className={styles.faqIcon}
+              <div className={styles.faqList}>
+                {faqsLoading ? (
+                  [1, 2, 3, 4].map((n) => (
+                    <div
+                      key={n}
+                      style={{
+                        height: "56px",
+                        borderRadius: "10px",
+                        background: "var(--theme-surface-muted, #f8f6f3)",
+                        border: "1.5px solid #E8E0D8",
+                        marginBottom: "10px",
+                        opacity: 0.6,
+                      }}
+                    />
+                  ))
+                ) : (
+                  productFaqs.map((faq, i) => (
+                    <div
+                      key={i}
+                      className={`${styles.faqAccordion} ${openFaq === i ? styles.faqAccordionOpen : ""}`}
+                      onClick={() => setOpenFaq(openFaq === i ? null : i)}
                     >
-                      <line x1="12" y1="5" x2="12" y2="19"></line>
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                  </div>
-                  <div className={styles.faqAccordionContent}>{faq.a}</div>
-                </div>
-              ))}
+                      <div className={styles.faqAccordionHeader}>
+                        <span className={styles.faqQuestion}>{faq.q}</span>
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className={styles.faqIcon}
+                        >
+                          <line x1="12" y1="5" x2="12" y2="19"></line>
+                          <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                      </div>
+                      <div className={styles.faqAccordionContent}>{faq.a}</div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
       </div>
 
       {/* ==================== WRITE REVIEW MODAL ==================== */}

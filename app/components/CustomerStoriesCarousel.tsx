@@ -9,63 +9,10 @@ interface CustomerStoriesCarouselProps {
   initialStories?: Testimonial[];
 }
 
-const DEFAULT_STORIES: Testimonial[] = [
-  {
-    id: "default-1",
-    author_name: "Anna Clark",
-    author_title: "Interior Architect, Studio Aura",
-    text: "The quality and craftsmanship are truly exceptional. The bespoke chandelier we ordered for our penthouse project became the defining statement piece of the entire home.",
-    rating: 5,
-    avatar_url: "/images/avatar_woman_1784107804209.jpg",
-  },
-  {
-    id: "default-2",
-    author_name: "Marcus Vance",
-    author_title: "Principal Architect, Vance & Co.",
-    text: "Deluzex lighting transformed our luxury villa project. The hand-finished brass and warm ambient diffusion exceeded all our architectural standards.",
-    rating: 5,
-    avatar_url: "/images/logos/de_luzex_black.svg",
-  },
-  {
-    id: "default-3",
-    author_name: "Priya Sharma",
-    author_title: "Residential Interior Designer, Mumbai",
-    text: "From the initial design consultation to white-glove delivery, the experience was flawless. Our clients were stunned by the crystal detailing and warm illumination.",
-    rating: 5,
-    avatar_url: "/images/avatar_woman_1784107804209.jpg",
-  },
-  {
-    id: "default-4",
-    author_name: "Devang Patel",
-    author_title: "Heritage Homeowner, Ahmedabad",
-    text: "Finding fixtures that blend classical grandeur with contemporary elegance is rare. Deluzex delivers perfection in every handcrafted dimension.",
-    rating: 5,
-    avatar_url: "/images/logos/de_luzex_black.svg",
-  },
-  {
-    id: "default-5",
-    author_name: "Sophia Moreau",
-    author_title: "Hospitality Lighting Consultant",
-    text: "We specified Deluzex luminaires for a boutique hotel lounge. The precision of the dimming and the tactile richness of the brushed metals were simply unmatched.",
-    rating: 5,
-    avatar_url: "/images/avatar_woman_1784107804209.jpg",
-  },
-  {
-    id: "default-6",
-    author_name: "Vikramaditya Roy",
-    author_title: "Design Director, Atelier Luxe",
-    text: "The level of engineering behind their pendant lamps is extraordinary. It feels more like living sculpture than mere functional illumination.",
-    rating: 5,
-    avatar_url: "/images/logos/de_luzex_black.svg",
-  },
-];
-
 export default function CustomerStoriesCarousel({
   initialStories,
 }: CustomerStoriesCarouselProps) {
-  const [stories, setStories] = useState<Testimonial[]>(
-    initialStories && initialStories.length > 0 ? initialStories : DEFAULT_STORIES
-  );
+  const [stories, setStories] = useState<Testimonial[]>(initialStories || []);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -79,7 +26,7 @@ export default function CustomerStoriesCarousel({
   useEffect(() => {
     fetchTestimonials()
       .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setStories(data);
         }
       })

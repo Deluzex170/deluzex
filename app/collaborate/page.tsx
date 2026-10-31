@@ -6,63 +6,6 @@ import Link from "next/link";
 import styles from "./collaborate.module.css";
 import { submitCollaboration, fetchFaqs, FAQItem } from "../services/api";
 
-const FAQ_DATA: FAQItem[] = [
-  {
-    id: 1,
-    question: "Can I apply if I'm still studying?",
-    answer:
-      "Yes, Design And Architecture Students Can Apply, Along With Practising Architects, Interior Designers And Lighting Designers.",
-    category: "collaborate",
-    sequence: 1,
-    is_active: true,
-  },
-  {
-    id: 2,
-    question: "How are royalties calculated?",
-    answer:
-      "Royalties are calculated as a fixed percentage on the net selling price of every unit sold across our global e-commerce platform, showroom partner network, and bespoke architectural trade orders.",
-    category: "collaborate",
-    sequence: 2,
-    is_active: true,
-  },
-  {
-    id: 3,
-    question: "When will I hear back?",
-    answer:
-      "Our design and engineering panel reviews submissions every fortnight. You will receive an initial review status and manufacturing feasibility feedback within 10 to 14 business days.",
-    category: "collaborate",
-    sequence: 3,
-    is_active: true,
-  },
-  {
-    id: 4,
-    question: "Who owns the design?",
-    answer:
-      "You retain moral authorship and credit rights as the creator. Deluzex acquires an exclusive manufacturing and worldwide distribution license for the realized commercial product line.",
-    category: "collaborate",
-    sequence: 4,
-    is_active: true,
-  },
-  {
-    id: 5,
-    question: "Can I submit a light designed for a client?",
-    answer:
-      "Yes, provided that your client agreement allows you to retain or license the design concept, or if written commercialization permission has been granted.",
-    category: "collaborate",
-    sequence: 5,
-    is_active: true,
-  },
-  {
-    id: 6,
-    question: "What happens if my design is not selected?",
-    answer:
-      "Your concept remains your sole intellectual property. With your permission, we keep it in our archive for future thematic collections, or provide guidance on refining it for future consideration.",
-    category: "collaborate",
-    sequence: 6,
-    is_active: true,
-  },
-];
-
 const CITIES = [
   "Ahmedabad",
   "Mumbai",
@@ -84,8 +27,9 @@ const ROLES = [
 ];
 
 export default function CollaboratePage() {
-  const [faqs, setFaqs] = useState<FAQItem[]>(FAQ_DATA);
-  const [activeFaq, setActiveFaq] = useState<number | string | null>(1);
+  const [faqs, setFaqs] = useState<FAQItem[]>([]);
+  const [faqsLoading, setFaqsLoading] = useState(true);
+  const [activeFaq, setActiveFaq] = useState<number | string | null>(null);
   const [hasMadeBefore, setHasMadeBefore] = useState<"no" | "yes">("no");
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -99,17 +43,23 @@ export default function CollaboratePage() {
   const cityDropdownRef = useRef<HTMLDivElement>(null);
   const roleDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch dynamic FAQs on mount
+  // Fetch dynamic FAQs on mount (Pure Dynamic from DB)
   useEffect(() => {
     fetchFaqs("collaborate")
       .then((data) => {
         if (data && data.length > 0) {
           setFaqs(data);
-          setActiveFaq(data[0]._id || data[0].id || 1);
+          setActiveFaq(data[0]._id || data[0].id || null);
+        } else {
+          setFaqs([]);
         }
       })
       .catch((err) => {
         console.error("Failed to load FAQs:", err);
+        setFaqs([]);
+      })
+      .finally(() => {
+        setFaqsLoading(false);
       });
   }, []);
 
@@ -584,47 +534,65 @@ export default function CollaboratePage() {
       </section>
 
       {/* ──────────────────────────────────────────────────────────────────
-          4. FREQUENTLY ASKED QUESTIONS (DARK LUXURY SECTION)
+          4. FREQUENTLY ASKED QUESTIONS (DARK LUXURY SECTION - 100% PURE DYNAMIC)
           ────────────────────────────────────────────────────────────────── */}
-      <section className={styles.faqSection}>
-        <div className={styles.faqInner}>
-          <div className={styles.faqHeader}>
-            <h2 className={styles.faqTitle}>Frequently asked questions</h2>
-            <div className={styles.faqDivider} />
-            <p className={styles.faqSubtitle}>Common questions before you send your design to the Deluzex atelier.</p>
-          </div>
+      {(faqsLoading || faqs.length > 0) && (
+        <section className={styles.faqSection}>
+          <div className={styles.faqInner}>
+            <div className={styles.faqHeader}>
+              <h2 className={styles.faqTitle}>Frequently asked questions</h2>
+              <div className={styles.faqDivider} />
+              <p className={styles.faqSubtitle}>Common questions before you send your design to the Deluzex atelier.</p>
+            </div>
 
-          <div className={styles.accordionList}>
-            {faqs.map((item, idx) => {
-              const itemId = item._id || item.id || idx;
-              const isOpen = activeFaq === itemId;
-              return (
-                <div
-                  key={itemId}
-                  className={`${styles.accordionItem} ${isOpen ? styles.accordionItemActive : ""}`}
-                >
-                  <button
-                    type="button"
-                    className={styles.accordionHeader}
-                    onClick={() => toggleFaq(itemId)}
-                    aria-expanded={isOpen}
-                  >
-                    <span>{item.question}</span>
-                    <span className={styles.accordionIcon}>
-                      {isOpen ? "×" : "+"}
-                    </span>
-                  </button>
-                  {isOpen && (
-                    <div className={styles.accordionBody}>
-                      <p style={{ margin: 0 }}>{item.answer}</p>
+            <div className={styles.accordionList}>
+              {faqsLoading ? (
+                [1, 2, 3, 4].map((n) => (
+                  <div
+                    key={n}
+                    style={{
+                      height: "58px",
+                      borderRadius: "10px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      marginBottom: "12px",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                      opacity: 0.6,
+                    }}
+                  />
+                ))
+              ) : (
+                faqs.map((item, idx) => {
+                  const itemId = item._id || item.id || idx;
+                  const isOpen = activeFaq === itemId;
+                  return (
+                    <div
+                      key={itemId}
+                      className={`${styles.accordionItem} ${isOpen ? styles.accordionItemActive : ""}`}
+                    >
+                      <button
+                        type="button"
+                        className={styles.accordionHeader}
+                        onClick={() => toggleFaq(itemId)}
+                        aria-expanded={isOpen}
+                      >
+                        <span>{item.question}</span>
+                        <span className={styles.accordionIcon}>
+                          {isOpen ? "×" : "+"}
+                        </span>
+                      </button>
+                      {isOpen && (
+                        <div className={styles.accordionBody}>
+                          <p style={{ margin: 0 }}>{item.answer}</p>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
             {/* 5. SUBMISSION FORM SECTION */}
       <section id="submission-form" className={styles.formSection}>

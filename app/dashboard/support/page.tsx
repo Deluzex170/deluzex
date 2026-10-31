@@ -5,25 +5,6 @@ import Link from "next/link";
 import styles from "./support.module.css";
 import { fetchFaqs } from "../../services/api";
 
-const DEFAULT_SUPPORT_FAQS = [
-  {
-    question: "How long does bespoke luminaire manufacturing take?",
-    answer: "Typically, bespoke or customized architectural pieces take 4-6 weeks to manufacture, electroplate, and inspect prior to white-glove dispatch.",
-  },
-  {
-    question: "How do I track my active shipment status in real time?",
-    answer: "Navigate to the Orders section in your dashboard to view active shipment tracking numbers, live milestones, and scheduled delivery dates.",
-  },
-  {
-    question: "What is your warranty coverage on architectural fixtures?",
-    answer: "Every DeLuzex fixture comes backed by our 5-year structural warranty, premium LED driver protection, and 30-day architectural return policy.",
-  },
-  {
-    question: "Can I request custom installation assistance?",
-    answer: "Yes, our certified lighting specialists and white-glove delivery team can coordinate on-site installation support across major metro regions.",
-  },
-];
-
 const TOPICS = [
   {
     title: "Orders & Tracking",
@@ -47,7 +28,8 @@ const TOPICS = [
 
 export default function SupportPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [faqs, setFaqs] = useState<{ question: string; answer: string }[]>(DEFAULT_SUPPORT_FAQS);
+  const [faqs, setFaqs] = useState<{ question: string; answer: string }[]>([]);
+  const [faqsLoading, setFaqsLoading] = useState(true);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,10 +40,16 @@ export default function SupportPage() {
       .then((data) => {
         if (data && data.length > 0) {
           setFaqs(data);
+        } else {
+          setFaqs([]);
         }
       })
       .catch((err) => {
         console.error("Error loading support FAQs:", err);
+        setFaqs([]);
+      })
+      .finally(() => {
+        setFaqsLoading(false);
       });
   }, []);
 
@@ -169,23 +157,43 @@ export default function SupportPage() {
         <div className={styles.faqSection}>
           <h2 className={styles.sectionTitle}>Frequently Asked Questions</h2>
           <div className={styles.faqList}>
-            {faqs.map((faq, i) => (
-              <div key={i} className={`${styles.faqItem} ${openFaq === i ? styles.faqOpen : ""}`}>
-                <button
-                  type="button"
-                  className={styles.faqHeader}
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                >
-                  <span className={styles.faqQuestion}>{faq.question || (faq as any).q}</span>
-                  <span className={styles.faqToggleIcon}>{openFaq === i ? "−" : "+"}</span>
-                </button>
-                {openFaq === i && (
-                  <div className={styles.faqBody}>
-                    <p>{faq.answer || (faq as any).a}</p>
-                  </div>
-                )}
-              </div>
-            ))}
+            {faqsLoading ? (
+              [1, 2, 3].map((n) => (
+                <div
+                  key={n}
+                  style={{
+                    height: "52px",
+                    borderRadius: "8px",
+                    background: "var(--theme-surface-muted, #f8f6f3)",
+                    border: "1px solid var(--theme-border, #E8E0D8)",
+                    marginBottom: "10px",
+                    opacity: 0.6,
+                  }}
+                />
+              ))
+            ) : faqs.length > 0 ? (
+              faqs.map((faq, i) => (
+                <div key={i} className={`${styles.faqItem} ${openFaq === i ? styles.faqOpen : ""}`}>
+                  <button
+                    type="button"
+                    className={styles.faqHeader}
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  >
+                    <span className={styles.faqQuestion}>{faq.question || (faq as any).q}</span>
+                    <span className={styles.faqToggleIcon}>{openFaq === i ? "−" : "+"}</span>
+                  </button>
+                  {openFaq === i && (
+                    <div className={styles.faqBody}>
+                      <p>{faq.answer || (faq as any).a}</p>
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p style={{ color: "var(--text-muted, #78716c)", fontSize: "0.9rem", padding: "1rem 0" }}>
+                No support FAQs currently listed.
+              </p>
+            )}
           </div>
         </div>
 
