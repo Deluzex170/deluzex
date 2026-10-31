@@ -160,7 +160,7 @@ export default function CreateProduct() {
   };
 
   const sectionHeaderStyle = {
-    fontSize: '1rem', fontWeight: 600, color: 'var(--admin-primary)',
+    fontSize: '1rem', fontWeight: 600, color: 'var(--admin-gold-text)',
     marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem'
   };
 
@@ -176,7 +176,7 @@ export default function CreateProduct() {
         </p>
       </div>
 
-      <div style={{ background: 'var(--color-white)', borderRadius: '12px', padding: 'var(--a-space-5)', width: '100%', maxWidth: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
+      <div style={{ background: 'var(--admin-surface)', borderRadius: '12px', padding: 'var(--a-space-5)', width: '100%', maxWidth: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
         <form onSubmit={handleSubmit} className={styles.formGrid2} style={{ display: 'grid', gap: '1rem' }}>
           
           {/* GENERAL INFO */}
@@ -231,7 +231,7 @@ export default function CreateProduct() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
               <label style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--color-text)', margin: 0 }}>Category *</label>
-              <Link href="/admin/categories" target="_blank" style={{ fontSize: '0.75rem', color: '#C49A45', textDecoration: 'none' }}>
+              <Link href="/admin/categories" target="_blank" style={{ fontSize: '0.75rem', color: 'var(--admin-gold-text)', textDecoration: 'none' }}>
                 + Manage Categories
               </Link>
             </div>
@@ -309,7 +309,7 @@ export default function CreateProduct() {
               <button
                 type="button"
                 onClick={handleAddCustomSpec}
-                style={{ background: '#0F172A', color: '#fff', border: 'none', padding: '0.45rem 0.9rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                className={[styles.btn, styles.btnSecondary].join(" ")}
               >
                 + Add Spec Row
               </button>
@@ -334,7 +334,7 @@ export default function CreateProduct() {
                 <button
                   type="button"
                   onClick={() => handleRemoveCustomSpec(idx)}
-                  style={{ background: '#FEE2E2', color: '#B91C1C', border: 'none', padding: '0.65rem 0.85rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}
+                  style={{ background: 'rgba(239, 68, 68, 0.14)', color: 'var(--admin-danger-text)', border: 'none', padding: '0.65rem 0.85rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}
                 >
                   ✕
                 </button>
@@ -361,7 +361,7 @@ export default function CreateProduct() {
               {specPdf ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--admin-surface)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid var(--admin-border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: '#FEE2E2', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.14)', color: 'var(--admin-danger-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem' }}>
                       PDF
                     </div>
                     <div>
@@ -372,7 +372,7 @@ export default function CreateProduct() {
                   <button
                     type="button"
                     onClick={() => setSpecPdf(null)}
-                    style={{ background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '6px', padding: '0.4rem 0.85rem', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                    style={{ background: 'rgba(239, 68, 68, 0.14)', color: 'var(--admin-danger-text)', border: 'none', borderRadius: '6px', padding: '0.4rem 0.85rem', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
                   >
                     ✕ Remove
                   </button>
@@ -461,9 +461,9 @@ export default function CreateProduct() {
                   type="button"
                   onClick={handleClearAllGalleryFiles}
                   style={{
-                    background: '#FEE2E2',
-                    border: '1px solid #FCA5A5',
-                    color: '#DC2626',
+                    background: 'rgba(239, 68, 68, 0.14)',
+                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                    color: 'var(--admin-danger-text)',
                     borderRadius: '6px',
                     padding: '0.35rem 0.75rem',
                     fontSize: '0.8rem',
@@ -539,7 +539,7 @@ export default function CreateProduct() {
                     <circle cx="9" cy="9" r="2"/>
                     <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
                   </svg>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--admin-primary)' }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--admin-gold-text)' }}>
                     + Click to select gallery images (upload single or multiple)
                   </span>
                   <span style={{ fontSize: '0.78rem', color: 'var(--admin-text-subtle)', marginTop: '0.25rem' }}>
@@ -632,7 +632,7 @@ export default function CreateProduct() {
           {/* NEW ARRIVAL TOGGLE */}
           <div style={{ gridColumn: '1 / -1', borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '1.5rem' }}>
             <div style={{
-              background: isNewArrival ? '#FFFBEB' : '#f8fafc',
+              background: isNewArrival ? 'rgba(245, 158, 11, 0.12)' : '#f8fafc',
               border: isNewArrival ? '1px solid #F59E0B' : '1px solid var(--admin-border)',
               borderRadius: '10px',
               padding: '1.25rem',
@@ -642,10 +642,10 @@ export default function CreateProduct() {
               transition: 'all 0.2s',
             }}>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, color: isNewArrival ? '#92400E' : 'var(--admin-primary)', fontSize: '0.95rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, color: isNewArrival ? 'var(--admin-warning-text)' : 'var(--admin-gold-text)', fontSize: '0.95rem' }}>
                   <span>★ Feature in Homepage New Arrivals Carousel</span>
                   {isNewArrival && (
-                    <span style={{ fontSize: '0.75rem', background: '#FEF3C7', color: '#B45309', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                    <span style={{ fontSize: '0.75rem', background: 'rgba(245, 158, 11, 0.15)', color: 'var(--admin-warning-text)', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
                       Active
                     </span>
                   )}
@@ -674,7 +674,7 @@ export default function CreateProduct() {
                     width: '20px',
                     left: isNewArrival ? '24px' : '4px',
                     bottom: '3px',
-                    backgroundColor: 'white',
+                    backgroundColor: 'var(--admin-surface)',
                     borderRadius: '50%',
                     transition: '0.2s',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.2)',

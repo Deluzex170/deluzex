@@ -545,11 +545,11 @@ export default function AdminOrdersPage() {
         </div>
         <div className={styles.kpiCard}>
           <span className={styles.kpiLabel}>Pending / COD</span>
-          <span className={styles.kpiValue} style={{ color: "#d97706" }}>{stats.pending}</span>
+          <span className={styles.kpiValue} style={{ color: "var(--admin-warning-text)" }}>{stats.pending}</span>
         </div>
         <div className={styles.kpiCard}>
           <span className={styles.kpiLabel}>In Production</span>
-          <span className={styles.kpiValue} style={{ color: "#2563eb" }}>{stats.processing}</span>
+          <span className={styles.kpiValue} style={{ color: "var(--admin-info-text)" }}>{stats.processing}</span>
         </div>
         <div className={styles.kpiCard}>
           <span className={styles.kpiLabel}>Dispatched</span>
@@ -557,7 +557,7 @@ export default function AdminOrdersPage() {
         </div>
         <div className={styles.kpiCard}>
           <span className={styles.kpiLabel}>Delivered</span>
-          <span className={styles.kpiValue} style={{ color: "#16a34a" }}>{stats.delivered}</span>
+          <span className={styles.kpiValue} style={{ color: "var(--admin-success-text)" }}>{stats.delivered}</span>
         </div>
         <div className={styles.kpiCard}>
           <span className={styles.kpiLabel}>Gross Revenue</span>
@@ -573,7 +573,6 @@ export default function AdminOrdersPage() {
         loading={loading}
         getRowId={(o) => String(o.id || o._id || o.order_id || o.order_number)}
         showSearch={false}
-        quickFilterText={searchQuery}
         emptyTitle="No orders found"
         emptyDescription="No orders match the current status filter or search."
         toolbar={
@@ -890,7 +889,7 @@ export default function AdminOrdersPage() {
               <button
                 className={styles.viewBtn}
                 onClick={() => setInvoiceOrder(selectedOrder)}
-                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "var(--admin-primary-glow)", color: "var(--admin-primary)", borderColor: "var(--admin-border-gold)" }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "var(--admin-primary-glow)", color: "var(--admin-gold-text)", borderColor: "var(--admin-border-gold)" }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />

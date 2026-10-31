@@ -36,7 +36,7 @@
 }
 
 .goldAccent {
-  color: #c49a45;
+  color: var(--admin-gold-text);
 }
 
 .subtitle {
@@ -113,7 +113,7 @@
 }
 
 .kpiRatingVal {
-  color: #c49a45;
+  color: var(--admin-gold-text);
 }
 
 .kpiStarsRow {
@@ -122,7 +122,7 @@
   gap: 2px;
   margin-top: 0.4rem;
   font-size: 0.95rem;
-  color: #c49a45;
+  color: var(--admin-gold-text);
 }
 
 .kpiDesc {
@@ -190,7 +190,7 @@
 
 .activeTab .tabBadge {
   background: rgba(196, 154, 69, 0.15);
-  color: #b45309;
+  color: var(--admin-warning-text);
 }
 
 .searchForm {
@@ -317,7 +317,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #c49a45;
+  color: var(--admin-gold-text);
   font-size: 1.2rem;
   flex-shrink: 0;
 }
@@ -354,7 +354,7 @@
 }
 
 .stars {
-  color: #c49a45;
+  color: var(--admin-gold-text);
   letter-spacing: 1px;
   font-size: 0.9rem;
 }
@@ -407,15 +407,15 @@
 }
 
 .statusApproved {
-  background: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--admin-success-text);
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 .statusPending {
-  background: #fffbeb;
-  color: #d97706;
-  border: 1px solid #fde68a;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--admin-warning-text);
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
 /* Action Buttons */
@@ -440,23 +440,23 @@
 }
 
 .btnApprove {
-  background: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--admin-success-text);
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 .btnApprove:hover {
-  background: #d1fae5;
+  background: rgba(16, 185, 129, 0.15);
 }
 
 .btnHide {
-  background: #fffbeb;
-  color: #d97706;
-  border: 1px solid #fde68a;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--admin-warning-text);
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
 .btnHide:hover {
-  background: #fef3c7;
+  background: rgba(245, 158, 11, 0.15);
 }
 
 .iconBtn {
@@ -480,9 +480,9 @@
 }
 
 .deleteBtn:hover {
-  background: #fee2e2;
-  border-color: #fecaca;
-  color: #dc2626;
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: var(--admin-danger-text);
 }
 
 /* Empty State */
@@ -805,4 +805,19 @@
 .tableWrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Brand-consistent actions: gold primary, soft hovers */
+.searchBtn {
+  background: var(--admin-primary);
+  border-color: var(--admin-primary);
+  color: #111111;
+}
+.searchBtn:hover {
+  background: var(--admin-primary-hover);
+  color: #111111;
+}
+.iconBtn:hover {
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-main);
 }

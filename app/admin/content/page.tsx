@@ -202,10 +202,10 @@ export default function AdminContentPage() {
           style={{
             marginBottom: "1.25rem",
             padding: "0.85rem 1.25rem",
-            background: "#ECFDF5",
-            border: "1px solid #A7F3D0",
+            background: "rgba(16, 185, 129, 0.12)",
+            border: "1px solid rgba(16, 185, 129, 0.35)",
             borderRadius: "8px",
-            color: "#065F46",
+            color: "var(--admin-success-text)",
             fontSize: "0.875rem",
             display: "flex",
             justifyContent: "space-between",
@@ -218,7 +218,7 @@ export default function AdminContentPage() {
           </div>
           <button
             onClick={() => setSuccessMsg("")}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#065F46", fontWeight: 700 }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--admin-success-text)", fontWeight: 700 }}
           >
             ×
           </button>
@@ -230,10 +230,10 @@ export default function AdminContentPage() {
           style={{
             marginBottom: "1.25rem",
             padding: "0.85rem 1.25rem",
-            background: "#FEF2F2",
-            border: "1px solid #FECACA",
+            background: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid rgba(239, 68, 68, 0.35)",
             borderRadius: "8px",
-            color: "#991B1B",
+            color: "var(--admin-danger-text)",
             fontSize: "0.875rem",
             display: "flex",
             justifyContent: "space-between",
@@ -246,7 +246,7 @@ export default function AdminContentPage() {
           </div>
           <button
             onClick={() => setErrorMsg("")}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#991B1B", fontWeight: 700 }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--admin-danger-text)", fontWeight: 700 }}
           >
             ×
           </button>
@@ -274,7 +274,7 @@ export default function AdminContentPage() {
             whiteSpace: "nowrap",
             borderRadius: "8px",
             border: activeTab === "homepage" ? "1px solid var(--admin-primary)" : "1px solid var(--admin-border)",
-            background: activeTab === "homepage" ? "var(--admin-primary)" : "#ffffff",
+            background: activeTab === "homepage" ? "var(--admin-primary)" : "var(--admin-surface)",
             color: activeTab === "homepage" ? "#ffffff" : "var(--admin-text-main)",
             fontWeight: 600,
             fontSize: "0.9rem",
@@ -298,7 +298,7 @@ export default function AdminContentPage() {
             whiteSpace: "nowrap",
             borderRadius: "8px",
             border: activeTab === "about" ? "1px solid var(--admin-primary)" : "1px solid var(--admin-border)",
-            background: activeTab === "about" ? "var(--admin-primary)" : "#ffffff",
+            background: activeTab === "about" ? "var(--admin-primary)" : "var(--admin-surface)",
             color: activeTab === "about" ? "#ffffff" : "var(--admin-text-main)",
             fontWeight: 600,
             fontSize: "0.9rem",
@@ -322,7 +322,7 @@ export default function AdminContentPage() {
             whiteSpace: "nowrap",
             borderRadius: "8px",
             border: activeTab === "site_settings" ? "1px solid var(--admin-primary)" : "1px solid var(--admin-border)",
-            background: activeTab === "site_settings" ? "var(--admin-primary)" : "#ffffff",
+            background: activeTab === "site_settings" ? "var(--admin-primary)" : "var(--admin-surface)",
             color: activeTab === "site_settings" ? "#ffffff" : "var(--admin-text-main)",
             fontWeight: 600,
             fontSize: "0.9rem",
@@ -346,7 +346,7 @@ export default function AdminContentPage() {
           {/* 1. HERO SECTION */}
           <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
-              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
                 1. Hero Showcase Section
               </h3>
               <p style={{ margin: "0.25rem 0 0", fontSize: "0.825rem", color: "var(--admin-text-muted)" }}>
@@ -498,7 +498,7 @@ export default function AdminContentPage() {
           {/* 2. STATEMENT SECTION */}
           <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
-              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
                 2. Brand Statement Section
               </h3>
               <p style={{ margin: "0.25rem 0 0", fontSize: "0.825rem", color: "var(--admin-text-muted)" }}>
@@ -542,7 +542,7 @@ export default function AdminContentPage() {
           {/* 3. STORY & STATS SECTION */}
           <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
-              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
                 3. Craftsmanship Story &amp; Numerical Stats
               </h3>
               <p style={{ margin: "0.25rem 0 0", fontSize: "0.825rem", color: "var(--admin-text-muted)" }}>
@@ -633,7 +633,7 @@ export default function AdminContentPage() {
                     gap: "0.5rem",
                   }}
                 >
-                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--admin-primary)" }}>Stat #{idx + 1}</span>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>Stat #{idx + 1}</span>
                   <input
                     type="text"
                     placeholder="Number (e.g. 10+)"
@@ -672,7 +672,7 @@ export default function AdminContentPage() {
           {/* 4. CTA BANNER */}
           <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
-              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
                 4. Call To Action Footer Banner
               </h3>
             </div>
@@ -720,7 +720,7 @@ export default function AdminContentPage() {
           {/* 1. HERO SECTION */}
           <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
-              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
                 1. About Hero Section
               </h3>
             </div>
@@ -827,7 +827,7 @@ export default function AdminContentPage() {
           {/* 2. OUR STORY & 3 FEATURE ICONS */}
           <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
-              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
                 2. Our Story &amp; Feature Highlights
               </h3>
             </div>
@@ -903,7 +903,7 @@ export default function AdminContentPage() {
             <div className={styles.formGrid3} style={{ display: "grid", gap: "1rem" }}>
               {(aboutData.story?.features || []).map((f: any, idx: number) => (
                 <div key={idx} style={{ background: "var(--admin-surface-muted)", padding: "1rem", borderRadius: "10px", border: "1px solid var(--admin-border)" }}>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--admin-primary)" }}>Feature #{idx + 1}</span>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>Feature #{idx + 1}</span>
                   <input
                     type="text"
                     value={f.title || ""}
@@ -926,7 +926,7 @@ export default function AdminContentPage() {
           {/* 3. WHY CHOOSE US ACCORDIONS */}
           <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
-              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
                 3. &quot;Why Choose Us&quot; Section &amp; 4 Value Pillars
               </h3>
             </div>
@@ -1002,7 +1002,7 @@ export default function AdminContentPage() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))", gap: "1rem" }}>
               {(aboutData.why_choose_us?.items || []).map((it: any, idx: number) => (
                 <div key={idx} style={{ background: "var(--admin-surface-muted)", padding: "1rem", borderRadius: "10px", border: "1px solid var(--admin-border)" }}>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--admin-primary)" }}>Pillar #{idx + 1}</span>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>Pillar #{idx + 1}</span>
                   <input
                     type="text"
                     placeholder="Pillar Title"
@@ -1048,7 +1048,7 @@ export default function AdminContentPage() {
           {/* Brand Identity & Contact */}
           <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
-              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
                 Company Brand &amp; Concierge Contact Information
               </h3>
             </div>
@@ -1122,7 +1122,7 @@ export default function AdminContentPage() {
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
                 <FileText size={20} color="var(--admin-primary)" />
-                <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+                <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
                   Tax Invoice &amp; Official Company Registered Information
                 </h3>
               </div>
@@ -1237,7 +1237,7 @@ export default function AdminContentPage() {
           <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+                <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
                   &quot;Available On&quot; Platform Links (Footer Logos)
                 </h3>
               </div>
@@ -1297,7 +1297,7 @@ export default function AdminContentPage() {
 
           <div className={styles.card} style={{ width: "100%", maxWidth: "100%", padding: "var(--a-space-5)" }}>
             <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
-              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
                 Social Media Links &amp; Footer Copyright
               </h3>
             </div>

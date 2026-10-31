@@ -104,10 +104,10 @@ export default function CreateCategory() {
           style={{
             marginBottom: "1.5rem",
             padding: "0.9rem 1.25rem",
-            background: "#fef2f2",
-            border: "1px solid #fecaca",
+            background: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid rgba(239, 68, 68, 0.35)",
             borderRadius: "10px",
-            color: "#991b1b",
+            color: "var(--admin-danger-text)",
             fontSize: "0.9rem",
             display: "flex",
             alignItems: "center",
@@ -131,7 +131,7 @@ export default function CreateCategory() {
         >
           {/* Left Column: Form Fields */}
           <div className={styles.card} style={{ padding: "var(--a-space-5)" }}>
-            <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+            <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
               Category Information
             </h3>
 
@@ -174,7 +174,7 @@ export default function CreateCategory() {
                   style={{ display: "none" }}
                   onChange={handleFileChange}
                 />
-                <UploadCloud size={28} style={{ color: "var(--admin-primary)" }} />
+                <UploadCloud size={28} style={{ color: "var(--admin-gold-text)" }} />
                 <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--admin-text-main)" }}>
                   {imageFile ? imageFile.name : "Click to select a photo from your computer"}
                 </div>
@@ -193,7 +193,7 @@ export default function CreateCategory() {
                     style={{
                       background: "none",
                       border: "none",
-                      color: "#b91c1c",
+                      color: "var(--admin-danger-text)",
                       fontSize: "0.8rem",
                       display: "inline-flex",
                       alignItems: "center",
@@ -249,7 +249,7 @@ export default function CreateCategory() {
 
           {/* Right Column: Live Card Preview */}
           <div className={styles.card} style={{ padding: "var(--a-space-5)" }}>
-            <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+            <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
               Live Storefront Preview
             </h3>
 

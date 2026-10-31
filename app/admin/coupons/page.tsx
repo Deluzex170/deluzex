@@ -778,7 +778,7 @@ export default function AdminCouponsPage() {
         <div className={styles.modalBackdrop} onClick={() => !deleting && setDeleteTarget(null)}>
           <div className={styles.modalContent} style={{ maxWidth: "450px" }} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h2 style={{ color: "#ef4444" }}>Delete Coupon Permanently</h2>
+              <h2 style={{ color: "var(--admin-danger-text)" }}>Delete Coupon Permanently</h2>
               <button
                 type="button"
                 className={styles.btnCloseModal}
@@ -795,7 +795,7 @@ export default function AdminCouponsPage() {
                 Are you sure you want to permanently delete coupon{" "}
                 <strong style={{ color: "#d4af37" }}>{deleteTarget.code}</strong>?
               </p>
-              <p style={{ margin: 0, fontSize: "0.85rem", color: "#9ca3af" }}>
+              <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--admin-text-muted)" }}>
                 This coupon has been redeemed {deleteTarget.times_used} times. Existing placed orders will not be affected, but future checkouts will no longer accept this code.
               </p>
             </div>

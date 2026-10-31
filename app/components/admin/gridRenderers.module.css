@@ -95,7 +95,7 @@
 :global([data-theme="dark"]) .badge_warning { color: #fbbf24; }
 :global([data-theme="dark"]) .badge_danger { color: #f87171; }
 :global([data-theme="dark"]) .badge_info { color: #93c5fd; }
-:global([data-theme="dark"]) .badge_gold { color: #e5b869; }
+:global([data-theme="dark"]) .badge_gold { color: var(--admin-gold-text); }
 
 /* Row actions: 30px square icon buttons */
 .actions {
@@ -122,7 +122,7 @@
 }
 
 .actionBtn:hover {
-  color: var(--admin-primary);
+  color: var(--admin-gold-text);
   border-color: var(--admin-border-gold);
   background: var(--admin-primary-glow);
 }
@@ -193,7 +193,7 @@
 }
 
 .rowActionGold {
-  color: var(--admin-primary);
+  color: var(--admin-gold-text);
   border-color: var(--admin-border-gold);
   background: var(--admin-primary-glow);
 }
@@ -221,7 +221,7 @@
 }
 
 .rowIconBtn:hover {
-  color: var(--admin-primary);
+  color: var(--admin-gold-text);
   border-color: var(--admin-border-gold);
   background: var(--admin-primary-glow);
 }
