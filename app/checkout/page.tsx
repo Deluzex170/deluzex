@@ -881,24 +881,24 @@ export default function CheckoutPage() {
               </div>
             )}
             <div className={styles.formGroup}>
-              <label className={styles.label}>Email Address (for Order Confirmation & Invoice) *</label>
+              <label className={styles.label}>Email Address *</label>
               <input
                 type="email"
                 required
                 className={styles.input}
-                placeholder="e.g. client@architects.in"
+                placeholder="admin@deluzex.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isProcessing}
               />
             </div>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Phone Number (with SMS / WhatsApp delivery dispatch) *</label>
+              <label className={styles.label}>Phone Number (for Delivery Updates) *</label>
               <input
                 type="tel"
                 required
                 className={styles.input}
-                placeholder="e.g. 9876543210"
+                placeholder="98765 43210"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 disabled={isProcessing}
@@ -942,25 +942,17 @@ export default function CheckoutPage() {
                         <span className={styles.savedBadge}>{addr.type || "Home"}</span>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                           {isSelected && (
-                            <span style={{ color: "#C89B60", fontSize: "0.82rem", fontWeight: 700 }}>
+                            <span className={styles.addressSelectedBadge}>
                               ✓ Selected
                             </span>
                           )}
                           <button
                             type="button"
+                            className={styles.addrActionBtn}
                             title="Edit / Load address into form"
                             onClick={(e) => {
                               e.stopPropagation();
                               applyAddress(addr);
-                            }}
-                            style={{
-                              background: "transparent",
-                              border: "none",
-                              cursor: "pointer",
-                              padding: "2px 4px",
-                              color: "#888",
-                              display: "flex",
-                              alignItems: "center",
                             }}
                           >
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -970,17 +962,9 @@ export default function CheckoutPage() {
                           </button>
                           <button
                             type="button"
+                            className={styles.addrDeleteBtn}
                             title="Delete address"
                             onClick={(e) => handleDeleteSavedAddress(addr, e)}
-                            style={{
-                              background: "transparent",
-                              border: "none",
-                              cursor: "pointer",
-                              padding: "2px 4px",
-                              color: "#c0392b",
-                              display: "flex",
-                              alignItems: "center",
-                            }}
                           >
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <polyline points="3 6 5 6 21 6" />
@@ -997,7 +981,7 @@ export default function CheckoutPage() {
                       <div className={styles.savedItemDetails}>
                         {addr.street}, {addr.city}, {addr.state} - {addr.pin_code}
                       </div>
-                      <div style={{ marginTop: "0.5rem", fontSize: "0.78rem", color: "#666" }}>
+                      <div className={styles.addrPhoneRow}>
                         📞 {addr.phone || phone}
                       </div>
                     </div>
@@ -1034,12 +1018,12 @@ export default function CheckoutPage() {
             </div>
 
             <div className={styles.formGroup}>
-              <label className={styles.label}>Street Address & Residence / Landmark *</label>
+              <label className={styles.label}>Street Address & Landmark *</label>
               <input
                 type="text"
                 required
                 className={styles.input}
-                placeholder="House/Villa no., building, street name, locality"
+                placeholder="Flat / House no., building, street, locality"
                 value={street}
                 onChange={(e) => setStreet(e.target.value)}
                 disabled={isProcessing}
@@ -1053,7 +1037,7 @@ export default function CheckoutPage() {
                   type="text"
                   required
                   className={styles.input}
-                  placeholder="e.g. Mumbai, Ahmedabad"
+                  placeholder="City (e.g. Mumbai, Ahmedabad)"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   disabled={isProcessing}
@@ -1072,13 +1056,13 @@ export default function CheckoutPage() {
                 />
               </div>
               <div className={styles.formGroup}>
-                <label className={styles.label}>PIN Code (6 digits) *</label>
+                <label className={styles.label}>PIN Code *</label>
                 <input
                   type="text"
                   required
                   maxLength={6}
                   className={styles.input}
-                  placeholder="380054"
+                  placeholder="6-digit PIN code"
                   value={pinCode}
                   onChange={(e) => setPinCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   disabled={isProcessing}
@@ -1092,19 +1076,7 @@ export default function CheckoutPage() {
                   type="button"
                   onClick={handleUpdateCurrentSavedAddress}
                   disabled={isUpdatingAddress}
-                  style={{
-                    background: "rgba(200, 155, 96, 0.08)",
-                    border: "1px solid #C89B60",
-                    color: "#C89B60",
-                    borderRadius: "6px",
-                    padding: "0.45rem 0.9rem",
-                    fontSize: "0.82rem",
-                    fontWeight: 600,
-                    cursor: isUpdatingAddress ? "not-allowed" : "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.4rem",
-                  }}
+                  className={styles.btnUpdateAddress}
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
