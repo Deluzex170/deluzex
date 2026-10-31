@@ -15,7 +15,6 @@ import {
   ImageIcon,
   ArrowLeft,
   CheckCircle2,
-  Search,
   Eye,
   ArrowUp,
   ArrowDown,
@@ -472,7 +471,7 @@ export default function AdminProjectsPage() {
                   fontFamily: "monospace",
                   fontWeight: 700,
                   fontSize: "0.82rem",
-                  color: "var(--admin-primary)",
+                  color: "var(--admin-gold-text)",
                   minWidth: "22px",
                 }}
               >
@@ -569,18 +568,18 @@ export default function AdminProjectsPage() {
           if (!project) return null;
           return (
             <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", overflow: "hidden" }}>
-              <div style={{ fontWeight: 600, color: "var(--admin-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ fontWeight: 600, color: "var(--admin-gold-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {project.title}
               </div>
               <div style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", gap: "6px", alignItems: "center" }}>
                 {project.subtitle && <span>{project.subtitle}</span>}
                 {project.gallery_images && project.gallery_images.length > 0 && (
-                  <span style={{ color: "#C49A45", fontWeight: 600, fontSize: "0.72rem" }}>
+                  <span style={{ color: "var(--admin-gold-text)", fontWeight: 600, fontSize: "0.72rem" }}>
                     • {project.gallery_images.length} photo{project.gallery_images.length > 1 ? "s" : ""}
                   </span>
                 )}
                 {project.videos && project.videos.length > 0 && (
-                  <span style={{ color: "#2563eb", fontWeight: 600, fontSize: "0.72rem" }}>
+                  <span style={{ color: "var(--admin-info-text)", fontWeight: 600, fontSize: "0.72rem" }}>
                     • {project.videos.length} video{project.videos.length > 1 ? "s" : ""}
                   </span>
                 )}
@@ -647,9 +646,9 @@ export default function AdminProjectsPage() {
               onClick={() => handleToggleFeatured(project)}
               title={project.is_featured ? "Featured on homepage (click to remove)" : "Click to feature on homepage"}
               style={{
-                background: project.is_featured ? "#fffbeb" : "#f8fafc",
-                border: `1px solid ${project.is_featured ? "#fde68a" : "#e2e8f0"}`,
-                color: project.is_featured ? "#b45309" : "#94a3b8",
+                background: project.is_featured ? "rgba(245, 158, 11, 0.12)" : "var(--admin-surface-muted)",
+                border: `1px solid ${project.is_featured ? "rgba(245, 158, 11, 0.35)" : "var(--admin-border)"}`,
+                color: project.is_featured ? "var(--admin-warning-text)" : "var(--admin-text-muted)",
                 padding: "3px 8px",
                 borderRadius: "14px",
                 fontSize: "0.74rem",
@@ -660,7 +659,7 @@ export default function AdminProjectsPage() {
                 gap: "4px",
               }}
             >
-              <Star size={11} fill={project.is_featured ? "#b45309" : "none"} />
+              <Star size={11} fill={project.is_featured ? "currentColor" : "none"} />
               {project.is_featured ? "Featured" : "Standard"}
             </button>
           );
@@ -761,8 +760,8 @@ export default function AdminProjectsPage() {
               fontWeight: 600,
               padding: "4px 12px",
               borderRadius: "20px",
-              background: isEdit ? "#eff6ff" : "#fefce8",
-              color: isEdit ? "#1d4ed8" : "#854d0e",
+              background: isEdit ? "rgba(59, 130, 246, 0.1)" : "#fefce8",
+              color: isEdit ? "var(--admin-info-text)" : "var(--admin-warning-text)",
               border: `1px solid ${isEdit ? "#bfdbfe" : "#fef08a"}`,
               display: "inline-flex",
               alignItems: "center",
@@ -797,10 +796,10 @@ export default function AdminProjectsPage() {
                 style={{
                   margin: "1.5rem 2rem 0",
                   padding: "0.85rem 1.25rem",
-                  background: "#FEF2F2",
-                  border: "1px solid #FECACA",
+                  background: "rgba(239, 68, 68, 0.1)",
+                  border: "1px solid rgba(239, 68, 68, 0.35)",
                   borderRadius: "8px",
-                  color: "#991B1B",
+                  color: "var(--admin-danger-text)",
                   fontSize: "0.875rem",
                   display: "flex",
                   alignItems: "center",
@@ -824,7 +823,7 @@ export default function AdminProjectsPage() {
               {/* LEFT COLUMN: Project Details */}
               <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem" }}>
-                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
                     1. Project Information &amp; Classification
                   </h3>
                   <p style={{ margin: "0.25rem 0 0", fontSize: "0.825rem", color: "var(--admin-text-muted)" }}>
@@ -967,8 +966,8 @@ export default function AdminProjectsPage() {
                         cursor: "pointer",
                         fontSize: "0.9rem",
                         fontWeight: 600,
-                        color: formData.is_featured ? "#b45309" : "var(--admin-text-muted)",
-                        background: formData.is_featured ? "#fffbeb" : "#f8fafc",
+                        color: formData.is_featured ? "var(--admin-warning-text)" : "var(--admin-text-muted)",
+                        background: formData.is_featured ? "rgba(245, 158, 11, 0.12)" : "var(--admin-surface-muted)",
                         border: `1px solid ${formData.is_featured ? "#fde68a" : "#e2e8f0"}`,
                         padding: "0.7rem 1rem",
                         borderRadius: "8px",
@@ -1001,7 +1000,7 @@ export default function AdminProjectsPage() {
               {/* RIGHT COLUMN: Imagery & Live Customer Preview */}
               <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem" }}>
-                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
                     2. Cover Photography &amp; Live Card Preview
                   </h3>
                   <p style={{ margin: "0.25rem 0 0", fontSize: "0.825rem", color: "var(--admin-text-muted)" }}>
@@ -1030,7 +1029,7 @@ export default function AdminProjectsPage() {
                       fontSize: "0.85rem",
                       fontWeight: 600,
                       cursor: "pointer",
-                      background: imageTab === "file" ? "#ffffff" : "transparent",
+                      background: imageTab === "file" ? "var(--admin-surface)" : "transparent",
                       color: imageTab === "file" ? "var(--admin-primary)" : "var(--admin-text-muted)",
                       boxShadow: imageTab === "file" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
                       transition: "all 0.15s",
@@ -1048,7 +1047,7 @@ export default function AdminProjectsPage() {
                       fontSize: "0.85rem",
                       fontWeight: 600,
                       cursor: "pointer",
-                      background: imageTab === "url" ? "#ffffff" : "transparent",
+                      background: imageTab === "url" ? "var(--admin-surface)" : "transparent",
                       color: imageTab === "url" ? "var(--admin-primary)" : "var(--admin-text-muted)",
                       boxShadow: imageTab === "url" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
                       transition: "all 0.15s",
@@ -1112,7 +1111,7 @@ export default function AdminProjectsPage() {
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.75rem" }}>
                     <Eye size={16} color="#C49A45" />
-                    <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--admin-primary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--admin-gold-text)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                       Live Project Card Preview (Customer View)
                     </span>
                   </div>
@@ -1226,7 +1225,7 @@ export default function AdminProjectsPage() {
                             <MapPin size={12} color="#C49A45" />
                             <span>{formData.location || "Location City, Country"}</span>
                             <span>•</span>
-                            <span style={{ color: "#C49A45" }}>View Details &gt;</span>
+                            <span style={{ color: "var(--admin-gold-text)" }}>View Details &gt;</span>
                           </div>
                         </div>
 
@@ -1254,7 +1253,7 @@ export default function AdminProjectsPage() {
                 <div style={{ borderTop: "1px solid var(--admin-border)", paddingTop: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.5rem" }}>
                     <div>
-                      <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-primary)", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-gold-text)", display: "flex", alignItems: "center", gap: "6px" }}>
                         <ImageIcon size={18} color="#C49A45" />
                         <span>3. Project Gallery Showcase Images ({galleryImages.length})</span>
                       </h3>
@@ -1451,7 +1450,7 @@ export default function AdminProjectsPage() {
                 <div style={{ borderTop: "1px solid var(--admin-border)", paddingTop: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.5rem" }}>
                     <div>
-                      <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-primary)", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-gold-text)", display: "flex", alignItems: "center", gap: "6px" }}>
                         <Video size={18} color="#C49A45" />
                         <span>4. Project Showcase Videos ({videos.length})</span>
                       </h3>
@@ -1552,8 +1551,8 @@ export default function AdminProjectsPage() {
                                 width: "32px",
                                 height: "32px",
                                 borderRadius: "6px",
-                                background: "#fef3c7",
-                                color: "#b45309",
+                                background: "rgba(245, 158, 11, 0.15)",
+                                color: "var(--admin-warning-text)",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -1571,7 +1570,7 @@ export default function AdminProjectsPage() {
                                 rel="noopener noreferrer"
                                 style={{
                                   fontSize: "0.85rem",
-                                  color: "#2563eb",
+                                  color: "var(--admin-info-text)",
                                   textDecoration: "underline",
                                   display: "inline-flex",
                                   alignItems: "center",
@@ -1589,8 +1588,8 @@ export default function AdminProjectsPage() {
                             onClick={() => handleRemoveVideo(vidIdx)}
                             title="Remove Video"
                             style={{
-                              background: "#fee2e2",
-                              color: "#dc2626",
+                              background: "rgba(239, 68, 68, 0.14)",
+                              color: "var(--admin-danger-text)",
                               border: "none",
                               borderRadius: "6px",
                               padding: "6px 8px",
@@ -1682,10 +1681,10 @@ export default function AdminProjectsPage() {
           style={{
             marginBottom: "1.25rem",
             padding: "0.85rem 1.25rem",
-            background: "#ECFDF5",
-            border: "1px solid #A7F3D0",
+            background: "rgba(16, 185, 129, 0.12)",
+            border: "1px solid rgba(16, 185, 129, 0.35)",
             borderRadius: "8px",
-            color: "#065F46",
+            color: "var(--admin-success-text)",
             fontSize: "0.875rem",
             display: "flex",
             justifyContent: "space-between",
@@ -1698,7 +1697,7 @@ export default function AdminProjectsPage() {
           </div>
           <button
             onClick={() => setSuccessMsg("")}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#065F46", fontWeight: 700 }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--admin-success-text)", fontWeight: 700 }}
           >
             ×
           </button>
@@ -1711,10 +1710,10 @@ export default function AdminProjectsPage() {
           style={{
             marginBottom: "1.25rem",
             padding: "0.85rem 1.25rem",
-            background: "#FEF2F2",
-            border: "1px solid #FECACA",
+            background: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid rgba(239, 68, 68, 0.35)",
             borderRadius: "8px",
-            color: "#991B1B",
+            color: "var(--admin-danger-text)",
             fontSize: "0.875rem",
             display: "flex",
             justifyContent: "space-between",
@@ -1727,7 +1726,7 @@ export default function AdminProjectsPage() {
           </div>
           <button
             onClick={() => setErrorMsg("")}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#991B1B", fontWeight: 700 }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--admin-danger-text)", fontWeight: 700 }}
           >
             ×
           </button>
@@ -1738,7 +1737,7 @@ export default function AdminProjectsPage() {
       {projectToDelete && (
         <div
           style={{
-            background: "#FEF2F2",
+            background: "rgba(239, 68, 68, 0.1)",
             border: "2px solid #EF4444",
             borderRadius: "10px",
             padding: "var(--a-space-4) var(--a-space-5)",
@@ -1757,18 +1756,18 @@ export default function AdminProjectsPage() {
                 width: "42px",
                 height: "42px",
                 borderRadius: "50%",
-                background: "#FEE2E2",
+                background: "rgba(239, 68, 68, 0.14)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#DC2626",
+                color: "var(--admin-danger-text)",
                 flexShrink: 0,
               }}
             >
               <Trash2 size={22} />
             </div>
             <div>
-              <h4 style={{ margin: 0, color: "#991B1B", fontSize: "1rem", fontWeight: 700 }}>
+              <h4 style={{ margin: 0, color: "var(--admin-danger-text)", fontSize: "1rem", fontWeight: 700 }}>
                 Confirm Project Deletion
               </h4>
               <p style={{ margin: "0.25rem 0 0", color: "#7F1D1D", fontSize: "0.85rem" }}>
@@ -1817,7 +1816,7 @@ export default function AdminProjectsPage() {
                   padding: "0.5rem 0.95rem",
                   borderRadius: "8px",
                   border: isActive ? "1px solid var(--admin-primary)" : "1px solid var(--admin-border)",
-                  background: isActive ? "var(--admin-primary)" : "#ffffff",
+                  background: isActive ? "var(--admin-primary)" : "var(--admin-surface)",
                   color: isActive ? "#ffffff" : "var(--admin-text-main)",
                   fontWeight: 600,
                   fontSize: "0.825rem",
@@ -1834,7 +1833,7 @@ export default function AdminProjectsPage() {
                     fontSize: "0.7rem",
                     padding: "1px 6px",
                     borderRadius: "10px",
-                    background: isActive ? "rgba(255,255,255,0.2)" : "#f1f5f9",
+                    background: isActive ? "rgba(255,255,255,0.2)" : "var(--admin-surface-muted)",
                     color: isActive ? "#ffffff" : "var(--admin-text-muted)",
                   }}
                 >
@@ -1845,21 +1844,6 @@ export default function AdminProjectsPage() {
           })}
         </div>
 
-        {/* Search Input */}
-        <div style={{ position: "relative", minWidth: "min(260px, 100%)" }}>
-          <Search
-            size={16}
-            style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--admin-text-subtle)" }}
-          />
-          <input
-            type="text"
-            placeholder="Search projects or locations..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={styles.formInput}
-            style={{ paddingLeft: "2.25rem", paddingRight: "1rem", margin: 0 }}
-          />
-        </div>
       </div>
 
       {/* FULL-WIDTH TABLE CARD */}
@@ -1875,7 +1859,7 @@ export default function AdminProjectsPage() {
           }}
         >
           <div>
-            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--admin-primary)", margin: 0 }}>
+            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--admin-gold-text)", margin: 0 }}>
               Portfolio Installations
             </h3>
             <p style={{ fontSize: "0.8rem", color: "var(--admin-text-muted)", margin: "0.25rem 0 0" }}>
@@ -1885,9 +1869,9 @@ export default function AdminProjectsPage() {
           <span
             style={{
               fontSize: "0.75rem",
-              background: "#f0fdf4",
-              color: "#166534",
-              border: "1px solid #bbf7d0",
+              background: "rgba(16, 185, 129, 0.12)",
+              color: "var(--admin-success-text)",
+              border: "1px solid rgba(16, 185, 129, 0.35)",
               padding: "4px 12px",
               borderRadius: "20px",
               fontWeight: 600,
@@ -1904,6 +1888,8 @@ export default function AdminProjectsPage() {
           loading={loading}
           getRowId={(s: Project) => String(s.id || s._id || s.title)}
           quickFilterText={searchQuery}
+          onQuickFilterChange={setSearchQuery}
+          searchPlaceholder="Search projects or locations…"
           emptyTitle="No projects found"
           emptyDescription="Click 'Add New Project' to showcase your first installation."
         />

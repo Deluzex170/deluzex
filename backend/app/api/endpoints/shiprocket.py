@@ -1,7 +1,9 @@
 import logging
+import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from bson import ObjectId
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel
 
@@ -120,6 +122,77 @@ def check_pincode_serviceability(
             "couriers": [],
             "note": "Standard Pan-India Express Delivery available.",
         }
+
+
+@router.get("/pincode-details")
+def get_pincode_details(
+    pincode: str = Query(..., description="Indian 6-digit PIN code"),
+):
+    """
+    Look up Indian Postal PIN code for City, District, State, and localities.
+    Uses India Post API with instant fallback.
+    """
+    clean_pin = re.sub(r"\D", "", pincode)[:6]
+    if len(clean_pin) != 6:
+        raise HTTPException(status_code=400, detail="Invalid PIN code format. Must be 6 digits.")
+
+    # Try India Post API
+    try:
+        with httpx.Client(timeout=3.0, follow_redirects=True) as client:
+            resp = client.get(f"https://api.postalpincode.in/pincode/{clean_pin}")
+            if resp.status_code == 200:
+                data = resp.json()
+                if isinstance(data, list) and len(data) > 0 and data[0].get("Status") == "Success":
+                    offices = data[0].get("PostOffice", [])
+                    if offices:
+                        first = offices[0]
+                        district = first.get("District", "").strip()
+                        state = first.get("State", "").strip()
+                        block = first.get("Block", "").strip()
+                        if block.upper() == "NA":
+                            block = ""
+                        city = block or district or first.get("Name", "").strip()
+                        if city.lower() == "naidiad":
+                            city = "Nadiad"
+                        localities = [o.get("Name") for o in offices if o.get("Name")]
+                        return {
+                            "success": True,
+                            "pincode": clean_pin,
+                            "city": city,
+                            "district": district,
+                            "state": state,
+                            "localities": list(set(localities)),
+                        }
+    except Exception as exc:
+        logger.warning(f"[PincodeLookup] External postal lookup failed for {clean_pin}: {exc}")
+
+    # Fallback to prefix map
+    prefix_map = {
+        "11": "Delhi", "12": "Haryana", "13": "Haryana", "14": "Punjab", "15": "Punjab",
+        "16": "Chandigarh", "17": "Himachal Pradesh", "18": "Jammu and Kashmir", "19": "Jammu and Kashmir",
+        "20": "Uttar Pradesh", "21": "Uttar Pradesh", "22": "Uttar Pradesh", "23": "Uttar Pradesh",
+        "24": "Uttarakhand", "25": "Uttar Pradesh", "26": "Uttarakhand", "27": "Uttar Pradesh", "28": "Uttar Pradesh",
+        "30": "Rajasthan", "31": "Rajasthan", "32": "Rajasthan", "33": "Rajasthan", "34": "Rajasthan",
+        "36": "Gujarat", "37": "Gujarat", "38": "Gujarat", "39": "Gujarat",
+        "40": "Maharashtra", "41": "Maharashtra", "42": "Maharashtra", "43": "Maharashtra", "44": "Maharashtra",
+        "45": "Madhya Pradesh", "46": "Madhya Pradesh", "47": "Madhya Pradesh", "48": "Madhya Pradesh",
+        "49": "Chhattisgarh", "50": "Telangana", "51": "Andhra Pradesh", "52": "Andhra Pradesh", "53": "Andhra Pradesh",
+        "56": "Karnataka", "57": "Karnataka", "58": "Karnataka", "59": "Karnataka",
+        "60": "Tamil Nadu", "61": "Tamil Nadu", "62": "Tamil Nadu", "63": "Tamil Nadu", "64": "Tamil Nadu",
+        "67": "Kerala", "68": "Kerala", "69": "Kerala",
+        "70": "West Bengal", "71": "West Bengal", "72": "West Bengal", "73": "West Bengal", "74": "West Bengal",
+        "75": "Odisha", "76": "Odisha", "77": "Odisha", "78": "Assam", "79": "Meghalaya",
+        "80": "Bihar", "81": "Bihar", "82": "Jharkhand", "83": "Jharkhand", "84": "Bihar", "85": "Bihar"
+    }
+    state = prefix_map.get(clean_pin[:2], "")
+    return {
+        "success": bool(state),
+        "pincode": clean_pin,
+        "city": "",
+        "district": "",
+        "state": state,
+        "localities": [],
+    }
 
 
 @router.get("/track-public/{order_id}")

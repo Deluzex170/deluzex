@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
     SMTP_FROM_EMAIL: str = "Deluzex Lighting <support@deluzexlighting.com>"
+    ADMIN_INQUIRY_EMAIL: str = "info@deluzexlighting.com"
 
     # Shiprocket Logistics Configuration
     SHIPROCKET_EMAIL: str = "deluzexdata+api@gmail.com"

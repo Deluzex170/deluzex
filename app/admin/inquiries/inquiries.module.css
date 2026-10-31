@@ -261,7 +261,7 @@
   padding: 0.2rem 0.55rem;
   border-radius: 4px;
   background: rgba(196, 154, 69, 0.12);
-  color: #b45309;
+  color: var(--admin-warning-text);
   border: 1px solid rgba(196, 154, 69, 0.25);
   margin-bottom: 0.35rem;
   text-transform: uppercase;
@@ -283,21 +283,21 @@
 }
 
 .status_new {
-  background: #fef3c7;
-  color: #b45309;
-  border-color: #fde68a;
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--admin-warning-text);
+  border-color: rgba(245, 158, 11, 0.35);
 }
 
 .status_contacted {
-  background: #eff6ff;
-  color: #2563eb;
-  border-color: #bfdbfe;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--admin-info-text);
+  border-color: rgba(59, 130, 246, 0.35);
 }
 
 .status_resolved {
-  background: #ecfdf5;
-  color: #059669;
-  border-color: #a7f3d0;
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--admin-success-text);
+  border-color: rgba(16, 185, 129, 0.35);
 }
 
 .status_archived {
@@ -337,9 +337,9 @@
 .deleteBtn {
   padding: 0.45rem 0.75rem;
   border-radius: 6px;
-  border: 1px solid #fecaca;
-  background: #fef2f2;
-  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--admin-danger-text);
   font-size: 0.82rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -347,7 +347,7 @@
 }
 
 .deleteBtn:hover {
-  background: #fee2e2;
+  background: rgba(239, 68, 68, 0.14);
   border-color: #f87171;
 }
 
@@ -446,7 +446,7 @@
 }
 
 .metaItem a:hover {
-  color: #c49a45;
+  color: var(--admin-gold-text);
   text-decoration: underline;
 }
 
@@ -703,4 +703,23 @@
 .tableContainer, .tableWrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Brand-consistent actions: gold primary, soft hovers */
+.replyBtn {
+  background: var(--admin-primary);
+  border-color: var(--admin-primary);
+  color: #111111;
+}
+.replyBtn:hover {
+  background: var(--admin-primary-hover);
+  color: #111111;
+}
+.viewBtn:hover {
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-main);
+  border-color: var(--admin-primary);
+}
+.scopeBadge {
+  font-size: 10.5px;
 }

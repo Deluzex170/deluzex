@@ -341,10 +341,10 @@ export default function AdminHeroProducts() {
               style={{
                 marginBottom: "1.5rem",
                 padding: "0.9rem 1.25rem",
-                background: "#fef2f2",
-                border: "1px solid #fecaca",
+                background: "rgba(239, 68, 68, 0.1)",
+                border: "1px solid rgba(239, 68, 68, 0.35)",
                 borderRadius: "10px",
-                color: "#991b1b",
+                color: "var(--admin-danger-text)",
                 fontSize: "0.9rem",
                 display: "flex",
                 alignItems: "center",
@@ -462,7 +462,7 @@ export default function AdminHeroProducts() {
                           onChange={handleFileChange}
                         />
                         <Upload size={22} color="var(--admin-text-subtle)" style={{ margin: "0 auto var(--a-space-2)" }} />
-                        <p style={{ margin: "0 0 2px", fontSize: "var(--a-fs-sm)", fontWeight: 600, color: "var(--admin-primary)" }}>
+                        <p style={{ margin: "0 0 2px", fontSize: "var(--a-fs-sm)", fontWeight: 600, color: "var(--admin-gold-text)" }}>
                           {selectedFile ? selectedFile.name : "Click to select a photo"}
                         </p>
                         <span style={{ fontSize: "var(--a-fs-xs)", color: "var(--admin-text-muted)" }}>
@@ -599,7 +599,7 @@ export default function AdminHeroProducts() {
                     fontSize: "0.75rem",
                     fontWeight: 700,
                     background: "rgba(196, 154, 69, 0.12)",
-                    color: "#C49A45",
+                    color: "var(--admin-gold-text)",
                     padding: "3px 10px",
                     borderRadius: "12px",
                   }}
@@ -624,10 +624,10 @@ export default function AdminHeroProducts() {
               style={{
                 marginBottom: "1.5rem",
                 padding: "0.9rem 1.25rem",
-                background: "#ecfdf5",
-                border: "1px solid #a7f3d0",
+                background: "rgba(16, 185, 129, 0.12)",
+                border: "1px solid rgba(16, 185, 129, 0.35)",
                 borderRadius: "10px",
-                color: "#065f46",
+                color: "var(--admin-success-text)",
                 fontSize: "0.9rem",
                 display: "flex",
                 alignItems: "center",
@@ -645,10 +645,10 @@ export default function AdminHeroProducts() {
               style={{
                 marginBottom: "1.5rem",
                 padding: "0.9rem 1.25rem",
-                background: "#fef2f2",
-                border: "1px solid #fecaca",
+                background: "rgba(239, 68, 68, 0.1)",
+                border: "1px solid rgba(239, 68, 68, 0.35)",
                 borderRadius: "10px",
-                color: "#991b1b",
+                color: "var(--admin-danger-text)",
                 fontSize: "0.9rem",
                 display: "flex",
                 alignItems: "center",
@@ -666,8 +666,8 @@ export default function AdminHeroProducts() {
               style={{
                 marginBottom: "1.75rem",
                 padding: "1.25rem 1.75rem",
-                background: "#FEF2F2",
-                border: "1px solid #FECACA",
+                background: "rgba(239, 68, 68, 0.1)",
+                border: "1px solid rgba(239, 68, 68, 0.35)",
                 borderRadius: "12px",
                 display: "flex",
                 alignItems: "center",
@@ -683,8 +683,8 @@ export default function AdminHeroProducts() {
                     width: 44,
                     height: 44,
                     borderRadius: "50%",
-                    background: "#FEE2E2",
-                    color: "#DC2626",
+                    background: "rgba(239, 68, 68, 0.14)",
+                    color: "var(--admin-danger-text)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -694,10 +694,10 @@ export default function AdminHeroProducts() {
                   <Trash2 size={22} />
                 </div>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#991B1B" }}>
+                  <h4 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "var(--admin-danger-text)" }}>
                     Confirm Slider Fixture Deletion
                   </h4>
-                  <p style={{ margin: "0.25rem 0 0", fontSize: "0.875rem", color: "#B91C1C" }}>
+                  <p style={{ margin: "0.25rem 0 0", fontSize: "0.875rem", color: "var(--admin-danger-text)" }}>
                     Are you sure you want to remove <strong>&quot;{itemToDelete.name}&quot;</strong> from the homepage slider? This action cannot be undone.
                   </p>
                 </div>

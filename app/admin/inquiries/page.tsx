@@ -155,7 +155,7 @@ export default function AdminInquiries() {
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             <a
               href={`mailto:${item.email}`}
-              style={{ color: "#C49A45", textDecoration: "none", fontSize: "12.5px", fontWeight: 500 }}
+              style={{ color: "var(--admin-gold-text)", textDecoration: "none", fontSize: "12.5px", fontWeight: 500 }}
               title={item.email}
             >
               {item.email}
@@ -166,7 +166,7 @@ export default function AdminInquiries() {
                   href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "#10b981", textDecoration: "none" }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "var(--admin-success-text)", textDecoration: "none" }}
                   title="WhatsApp chat"
                 >
                   <MessageCircle size={10} />
@@ -296,16 +296,16 @@ export default function AdminInquiries() {
           <div className={styles.kpiValue}>{stats.total}</div>
         </div>
         <div className={styles.kpiCard}>
-          <div className={styles.kpiLabel} style={{ color: "#d97706" }}>New / Unread</div>
-          <div className={styles.kpiValue} style={{ color: "#d97706" }}>{stats.new}</div>
+          <div className={styles.kpiLabel} style={{ color: "var(--admin-warning-text)" }}>New / Unread</div>
+          <div className={styles.kpiValue} style={{ color: "var(--admin-warning-text)" }}>{stats.new}</div>
         </div>
         <div className={styles.kpiCard}>
-          <div className={styles.kpiLabel} style={{ color: "#2563eb" }}>Contacted</div>
-          <div className={styles.kpiValue} style={{ color: "#2563eb" }}>{stats.contacted}</div>
+          <div className={styles.kpiLabel} style={{ color: "var(--admin-info-text)" }}>Contacted</div>
+          <div className={styles.kpiValue} style={{ color: "var(--admin-info-text)" }}>{stats.contacted}</div>
         </div>
         <div className={styles.kpiCard}>
-          <div className={styles.kpiLabel} style={{ color: "#16a34a" }}>Resolved</div>
-          <div className={styles.kpiValue} style={{ color: "#16a34a" }}>{stats.resolved}</div>
+          <div className={styles.kpiLabel} style={{ color: "var(--admin-success-text)" }}>Resolved</div>
+          <div className={styles.kpiValue} style={{ color: "var(--admin-success-text)" }}>{stats.resolved}</div>
         </div>
         <div className={styles.kpiCard}>
           <div className={styles.kpiLabel} style={{ color: "var(--admin-text-muted)" }}>Archived</div>
@@ -321,6 +321,8 @@ export default function AdminInquiries() {
         loading={loading}
         getRowId={(inq) => String(inq._id || inq.id || inq.email)}
         quickFilterText={searchQuery}
+        onQuickFilterChange={setSearchQuery}
+        searchPlaceholder="Search client, email, phone…"
         emptyTitle="No Consultation Inquiries Found"
         emptyDescription="No messages match the current status or filter criteria."
         toolbar={
@@ -343,24 +345,6 @@ export default function AdminInquiries() {
               ))}
             </div>
 
-            <div style={{ marginLeft: "auto" }}>
-              <input
-                type="search"
-                placeholder="Search client, email, phone..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  height: "36px",
-                  padding: "0 12px",
-                  borderRadius: "8px",
-                  border: "1px solid var(--admin-border)",
-                  background: "var(--admin-surface)",
-                  color: "var(--admin-text-main)",
-                  fontSize: "13px",
-                  outline: "none",
-                }}
-              />
-            </div>
           </>
         }
       />

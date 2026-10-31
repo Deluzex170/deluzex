@@ -68,7 +68,7 @@ export default function AdminOverview() {
             <span className={styles.kpiIcon}>📦</span>
           </div>
           <div className={styles.kpiValue}>
-            <span style={{ color: "#16a34a" }}>{summary?.revenue.pending_orders || 0}</span>
+            <span style={{ color: "var(--admin-success-text)" }}>{summary?.revenue.pending_orders || 0}</span>
             <span style={{ fontSize: "1rem", color: "var(--admin-text-muted)", fontWeight: 500 }}> active</span>
           </div>
           <div className={styles.kpiFootnote}>
@@ -83,7 +83,7 @@ export default function AdminOverview() {
             <span className={styles.kpiIcon}>⚠️</span>
           </div>
           <div className={styles.kpiValue}>
-            <span style={{ color: (summary?.inventory.low_stock_count || 0) > 0 ? "#dc2626" : "#16a34a" }}>
+            <span style={{ color: (summary?.inventory.low_stock_count || 0) > 0 ? "var(--admin-danger-text)" : "var(--admin-success-text)" }}>
               {summary?.inventory.low_stock_count || 0}
             </span>
             <span style={{ fontSize: "1rem", color: "var(--admin-text-muted)", fontWeight: 500 }}> low stock</span>
@@ -232,7 +232,7 @@ export default function AdminOverview() {
             </div>
 
             {(summary?.inventory.low_stock_items.length || 0) === 0 ? (
-              <div style={{ color: "#16a34a", fontSize: "0.85rem", padding: "0.5rem 0", fontWeight: 500 }}>
+              <div style={{ color: "var(--admin-success-text)", fontSize: "0.85rem", padding: "0.5rem 0", fontWeight: 500 }}>
                 ✓ All catalog products currently have healthy inventory.
               </div>
             ) : (

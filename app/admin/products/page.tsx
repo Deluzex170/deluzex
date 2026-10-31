@@ -340,7 +340,7 @@ export default function AdminProducts() {
             background: "rgba(16, 185, 129, 0.12)",
             border: "1px solid rgba(16, 185, 129, 0.3)",
             borderRadius: "10px",
-            color: "#34D399",
+            color: "var(--admin-success-text)",
             fontSize: "0.875rem",
             display: "flex",
             alignItems: "center",
@@ -355,7 +355,7 @@ export default function AdminProducts() {
           </div>
           <button
             onClick={() => setSuccessMsg("")}
-            style={{ background: "transparent", border: "none", color: "#34D399", cursor: "pointer", fontSize: "1rem" }}
+            style={{ background: "transparent", border: "none", color: "var(--admin-success-text)", cursor: "pointer", fontSize: "1rem" }}
           >
             ✕
           </button>
@@ -386,7 +386,7 @@ export default function AdminProducts() {
                 height: 44,
                 borderRadius: "50%",
                 background: "rgba(239, 68, 68, 0.2)",
-                color: "#F87171",
+                color: "var(--admin-danger-text)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

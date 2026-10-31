@@ -207,15 +207,15 @@ export default function AdminFaqsPage() {
                     ? "rgba(16, 185, 129, 0.12)"
                     : faq.category === "product"
                     ? "rgba(59, 130, 246, 0.12)"
-                    : "#f1f5f9",
+                    : "var(--admin-surface-muted)",
                 color:
                   faq.category === "collaborate"
-                    ? "#9a762e"
+                    ? "var(--admin-gold-text)"
                     : faq.category === "support"
-                    ? "#10b981"
+                    ? "var(--admin-success-text)"
                     : faq.category === "product"
                     ? "#2563eb"
-                    : "#475569",
+                    : "var(--admin-text-secondary)",
               }}
             >
               {faq.category || "collaborate"}
@@ -235,7 +235,7 @@ export default function AdminFaqsPage() {
               onClick={() => handleToggleActive(faq)}
               style={{
                 background: faq.is_active ? "rgba(16, 185, 129, 0.1)" : "rgba(100, 116, 139, 0.1)",
-                color: faq.is_active ? "#10b981" : "#64748b",
+                color: faq.is_active ? "var(--admin-success-text)" : "var(--admin-text-muted)",
                 border: "none",
                 borderRadius: "6px",
                 padding: "0.25rem 0.6rem",
@@ -283,11 +283,11 @@ export default function AdminFaqsPage() {
                 title="Delete FAQ"
                 onClick={() => setItemToDelete(faq)}
                 style={{
-                  background: "#fef2f2",
-                  border: "1px solid #fecaca",
+                  background: "rgba(239, 68, 68, 0.1)",
+                  border: "1px solid rgba(239, 68, 68, 0.35)",
                   borderRadius: "6px",
                   padding: "0.35rem",
-                  color: "#ef4444",
+                  color: "var(--admin-danger-text)",
                   cursor: "pointer",
                   display: "inline-flex",
                   alignItems: "center",
@@ -369,8 +369,8 @@ export default function AdminFaqsPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: "0.5rem",
-              background: "#0f172a",
-              color: "#ffffff",
+              background: "var(--admin-primary)",
+              color: "#111111",
               border: "none",
               borderRadius: "8px",
               padding: "0.6rem 1.25rem",
@@ -386,7 +386,7 @@ export default function AdminFaqsPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+      <div className={styles.segmented} role="tablist" aria-label="Filter FAQs by page" style={{ marginBottom: "var(--a-space-4)", flexWrap: "wrap" }}>
         {[
           { label: "All FAQs", value: "all" },
           { label: "Collaborate Page", value: "collaborate" },
@@ -396,18 +396,11 @@ export default function AdminFaqsPage() {
         ].map((tab) => (
           <button
             key={tab.value}
+            type="button"
+            role="tab"
+            aria-selected={categoryFilter === tab.value}
             onClick={() => setCategoryFilter(tab.value)}
-            style={{
-              background: categoryFilter === tab.value ? "#0f172a" : "#ffffff",
-              color: categoryFilter === tab.value ? "#ffffff" : "#64748b",
-              border: "1px solid var(--admin-border)",
-              borderRadius: "8px",
-              padding: "0.5rem 1.1rem",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              cursor: "pointer",
-              transition: "all 0.2s",
-            }}
+            className={[styles.segmentedBtn, categoryFilter === tab.value ? styles.segmentedBtnActive : ""].join(" ")}
           >
             {tab.label}
           </button>
@@ -422,29 +415,10 @@ export default function AdminFaqsPage() {
         loading={loading}
         getRowId={(s: FAQItem) => String(s._id || s.id || s.question)}
         quickFilterText={searchQuery}
+        onQuickFilterChange={setSearchQuery}
+        searchPlaceholder="Search questions or answers…"
         emptyTitle="No FAQs found"
         emptyDescription="Click 'Seed Default FAQs' or 'Add New Question' to add entries for your visitors."
-        toolbar={
-          <div style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
-            <input
-              type="search"
-              placeholder="Search questions or answers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                height: "36px",
-                padding: "0 12px",
-                borderRadius: "8px",
-                border: "1px solid var(--admin-border)",
-                background: "var(--admin-surface)",
-                color: "var(--admin-text-main)",
-                fontSize: "13px",
-                outline: "none",
-                minWidth: "240px",
-              }}
-            />
-          </div>
-        }
       />
 
       {/* CREATE / EDIT MODAL */}
@@ -621,8 +595,8 @@ export default function AdminFaqsPage() {
                   type="submit"
                   disabled={submitting}
                   style={{
-                    background: "#0f172a",
-                    color: "#ffffff",
+                    background: "var(--admin-primary)",
+                    color: "#111111",
                     border: "none",
                     borderRadius: "8px",
                     padding: "0.65rem 1.4rem",
@@ -670,8 +644,8 @@ export default function AdminFaqsPage() {
                 width: "48px",
                 height: "48px",
                 borderRadius: "50%",
-                background: "#fef2f2",
-                color: "#ef4444",
+                background: "rgba(239, 68, 68, 0.1)",
+                color: "var(--admin-danger-text)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

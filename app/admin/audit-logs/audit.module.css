@@ -44,7 +44,7 @@
   border-radius: 9px;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #E5B869;
+  color: var(--admin-gold-text);
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -139,19 +139,19 @@
 
 .kpiIconGreen {
   background: rgba(16, 185, 129, 0.14);
-  color: #34D399;
+  color: var(--admin-success-text);
   border-color: rgba(16, 185, 129, 0.3);
 }
 
 .kpiIconAmber {
   background: rgba(245, 158, 11, 0.14);
-  color: #FBBF24;
+  color: var(--admin-warning-text);
   border-color: rgba(245, 158, 11, 0.3);
 }
 
 .kpiIconGold {
   background: rgba(196, 154, 69, 0.16);
-  color: #C49A45;
+  color: var(--admin-gold-text);
   border-color: rgba(196, 154, 69, 0.3);
 }
 
@@ -291,7 +291,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #C49A45;
+  color: var(--admin-gold-text);
   background: var(--admin-bg, #0E0E12);
   border-bottom: 1px solid var(--admin-border, #23232A);
 }
@@ -364,7 +364,7 @@
 .roleAdmin {
   padding: 0.15rem 0.5rem;
   background: rgba(196, 154, 69, 0.15);
-  color: #E5B869;
+  color: var(--admin-gold-text);
   border: 1px solid rgba(196, 154, 69, 0.35);
   border-radius: 999px;
   font-size: 0.7rem;
@@ -405,19 +405,19 @@
 
 .actionSuccess {
   background: rgba(16, 185, 129, 0.14);
-  color: #16a34a;
+  color: var(--admin-success-text);
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .actionUpdate {
   background: rgba(245, 158, 11, 0.14);
-  color: #d97706;
+  color: var(--admin-warning-text);
   border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .actionDanger {
   background: rgba(239, 68, 68, 0.14);
-  color: #dc2626;
+  color: var(--admin-danger-text);
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
@@ -590,7 +590,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.5rem;
-  color: #C49A45;
+  color: var(--admin-gold-text);
 }
 
 .jsonViewer {

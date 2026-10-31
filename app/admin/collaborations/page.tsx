@@ -141,13 +141,13 @@ export default function AdminCollaborationsPage() {
   const getStatusBadgeStyle = (status: string) => {
     switch (status.toLowerCase()) {
       case "shortlisted":
-        return { background: "rgba(16, 185, 129, 0.12)", color: "#10b981", border: "1px solid rgba(16, 185, 129, 0.3)" };
+        return { background: "rgba(16, 185, 129, 0.12)", color: "var(--admin-success-text)", border: "1px solid rgba(16, 185, 129, 0.3)" };
       case "reviewed":
         return { background: "rgba(59, 130, 246, 0.12)", color: "#3b82f6", border: "1px solid rgba(59, 130, 246, 0.3)" };
       case "archived":
         return { background: "rgba(100, 116, 139, 0.12)", color: "var(--admin-text-muted)", border: "1px solid rgba(100, 116, 139, 0.3)" };
       default:
-        return { background: "rgba(245, 158, 11, 0.12)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.3)" };
+        return { background: "rgba(245, 158, 11, 0.12)", color: "var(--admin-warning-text)", border: "1px solid rgba(245, 158, 11, 0.3)" };
     }
   };
 
@@ -168,7 +168,7 @@ export default function AdminCollaborationsPage() {
                   height: "32px",
                   borderRadius: "50%",
                   background: "linear-gradient(135deg, rgba(196, 154, 69, 0.25), rgba(196, 154, 69, 0.08))",
-                  color: "#C49A45",
+                  color: "var(--admin-gold-text)",
                   border: "1px solid rgba(196, 154, 69, 0.35)",
                   display: "flex",
                   alignItems: "center",
@@ -214,7 +214,7 @@ export default function AdminCollaborationsPage() {
                   <a
                     href={`mailto:${sub.email}?subject=${encodeURIComponent(`Deluzex Collaboration - ${sub.concept_title}`)}`}
                     title={`Send email to ${sub.email}`}
-                    style={{ color: "#2563eb", display: "inline-flex", alignItems: "center", flexShrink: 0 }}
+                    style={{ color: "var(--admin-info-text)", display: "inline-flex", alignItems: "center", flexShrink: 0 }}
                   >
                     <Mail size={12} />
                   </a>
@@ -229,7 +229,7 @@ export default function AdminCollaborationsPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Direct WhatsApp Chat"
-                      style={{ color: "#16a34a", display: "inline-flex", alignItems: "center", flexShrink: 0 }}
+                      style={{ color: "var(--admin-success-text)", display: "inline-flex", alignItems: "center", flexShrink: 0 }}
                     >
                       <MessageCircle size={12} />
                     </a>
@@ -296,7 +296,7 @@ export default function AdminCollaborationsPage() {
                   borderRadius: "6px",
                   fontWeight: 600,
                   background: isYes ? "rgba(245, 158, 11, 0.12)" : "rgba(100, 116, 139, 0.1)",
-                  color: isYes ? "#b45309" : "#64748b",
+                  color: isYes ? "var(--admin-warning-text)" : "var(--admin-text-muted)",
                   border: isYes ? "1px solid rgba(245, 158, 11, 0.3)" : "1px solid rgba(100, 116, 139, 0.2)",
                   display: "inline-flex",
                   alignItems: "center",
@@ -329,7 +329,7 @@ export default function AdminCollaborationsPage() {
                   alignItems: "center",
                   gap: "0.4rem",
                   background: isImg ? "rgba(59, 130, 246, 0.08)" : isPdf ? "rgba(239, 68, 68, 0.08)" : "var(--admin-surface-muted)",
-                  color: isImg ? "#2563eb" : isPdf ? "#dc2626" : "var(--admin-text-main)",
+                  color: isImg ? "var(--admin-info-text)" : isPdf ? "var(--admin-danger-text)" : "var(--admin-text-main)",
                   border: isImg ? "1px solid rgba(59, 130, 246, 0.25)" : isPdf ? "1px solid rgba(239, 68, 68, 0.25)" : "1px solid var(--admin-border)",
                   padding: "0.25rem 0.6rem",
                   borderRadius: "6px",
@@ -358,7 +358,7 @@ export default function AdminCollaborationsPage() {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "0.3rem",
-                  color: "#2563eb",
+                  color: "var(--admin-info-text)",
                   fontSize: "0.76rem",
                   textDecoration: "none",
                   fontWeight: 600,
@@ -475,11 +475,11 @@ export default function AdminCollaborationsPage() {
                 title="Delete Submission"
                 onClick={() => setItemToDelete(sub)}
                 style={{
-                  background: "#fef2f2",
-                  border: "1px solid #fecaca",
+                  background: "rgba(239, 68, 68, 0.1)",
+                  border: "1px solid rgba(239, 68, 68, 0.35)",
                   borderRadius: "6px",
                   padding: "0.35rem",
-                  color: "#ef4444",
+                  color: "var(--admin-danger-text)",
                   cursor: "pointer",
                   display: "inline-flex",
                   alignItems: "center",
@@ -563,12 +563,12 @@ export default function AdminCollaborationsPage() {
           <div style={{ fontSize: "var(--a-fs-kpi)", fontWeight: 700, color: "var(--admin-text-main)", marginTop: "0.35rem" }}>{totalCount}</div>
         </div>
         <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
-          <span style={{ fontSize: "0.8rem", color: "#f59e0b", fontWeight: 600, textTransform: "uppercase" }}>Pending Review</span>
-          <div style={{ fontSize: "var(--a-fs-kpi)", fontWeight: 700, color: "#f59e0b", marginTop: "0.35rem" }}>{pendingCount}</div>
+          <span style={{ fontSize: "0.8rem", color: "var(--admin-warning-text)", fontWeight: 600, textTransform: "uppercase" }}>Pending Review</span>
+          <div style={{ fontSize: "var(--a-fs-kpi)", fontWeight: 700, color: "var(--admin-warning-text)", marginTop: "0.35rem" }}>{pendingCount}</div>
         </div>
         <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
-          <span style={{ fontSize: "0.8rem", color: "#10b981", fontWeight: 600, textTransform: "uppercase" }}>Shortlisted</span>
-          <div style={{ fontSize: "var(--a-fs-kpi)", fontWeight: 700, color: "#10b981", marginTop: "0.35rem" }}>{shortlistedCount}</div>
+          <span style={{ fontSize: "0.8rem", color: "var(--admin-success-text)", fontWeight: 600, textTransform: "uppercase" }}>Shortlisted</span>
+          <div style={{ fontSize: "var(--a-fs-kpi)", fontWeight: 700, color: "var(--admin-success-text)", marginTop: "0.35rem" }}>{shortlistedCount}</div>
         </div>
         <div style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
           <span style={{ fontSize: "0.8rem", color: "#3b82f6", fontWeight: 600, textTransform: "uppercase" }}>Reviewed / Contacted</span>
@@ -584,6 +584,8 @@ export default function AdminCollaborationsPage() {
         loading={loading}
         getRowId={(s: CollaborationSubmission) => String(s._id || s.id || s.email)}
         quickFilterText={searchQuery}
+        onQuickFilterChange={setSearchQuery}
+        searchPlaceholder="Search designer, email, phone, concept…"
         emptyTitle="No submissions found"
         emptyDescription={
           statusFilter !== "all"
@@ -592,46 +594,20 @@ export default function AdminCollaborationsPage() {
         }
         toolbar={
           <>
-            <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>
+            <div className={styles.segmented} role="tablist" aria-label="Filter submissions by status">
               {["all", "pending", "reviewed", "shortlisted", "archived"].map((st) => (
                 <button
                   key={st}
+                  type="button"
+                  role="tab"
+                  aria-selected={statusFilter === st}
                   onClick={() => setStatusFilter(st)}
-                  style={{
-                    background: statusFilter === st ? "#0f172a" : "var(--admin-surface-muted)",
-                    color: statusFilter === st ? "#ffffff" : "var(--admin-text-secondary)",
-                    border: "1px solid var(--admin-border)",
-                    borderRadius: "6px",
-                    padding: "0.4rem 0.85rem",
-                    fontSize: "0.82rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    textTransform: "capitalize",
-                    transition: "all 0.2s",
-                  }}
+                  className={[styles.segmentedBtn, statusFilter === st ? styles.segmentedBtnActive : ""].join(" ")}
+                  style={{ textTransform: "capitalize" }}
                 >
                   {st}
                 </button>
               ))}
-            </div>
-            <div style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
-              <input
-                type="search"
-                placeholder="Search designer, email, phone, concept..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  height: "36px",
-                  padding: "0 12px",
-                  borderRadius: "8px",
-                  border: "1px solid var(--admin-border)",
-                  background: "var(--admin-surface)",
-                  color: "var(--admin-text-main)",
-                  fontSize: "13px",
-                  outline: "none",
-                  minWidth: "240px",
-                }}
-              />
             </div>
           </>
         }
@@ -692,7 +668,7 @@ export default function AdminCollaborationsPage() {
 
             {/* Modal Header */}
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.35rem" }}>
-              <span style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", color: "#C49A45", letterSpacing: "0.08em" }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", color: "var(--admin-gold-text)", letterSpacing: "0.08em" }}>
                 Submission Dossier
               </span>
               <span
@@ -788,7 +764,7 @@ export default function AdminCollaborationsPage() {
                 <div>
                   <div style={{ fontSize: "0.74rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Email Address</div>
                   <div style={{ fontSize: "0.92rem", color: "var(--admin-text-main)", marginTop: "0.15rem" }}>
-                    <a href={`mailto:${selectedSubmission.email}`} style={{ color: "#2563eb", textDecoration: "none", fontWeight: 500 }}>
+                    <a href={`mailto:${selectedSubmission.email}`} style={{ color: "var(--admin-info-text)", textDecoration: "none", fontWeight: 500 }}>
                       {selectedSubmission.email}
                     </a>
                   </div>
@@ -953,8 +929,8 @@ export default function AdminCollaborationsPage() {
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "0.4rem",
-                              background: "#0f172a",
-                              color: "#ffffff",
+                              background: "var(--admin-primary)",
+                              color: "#111111",
                               padding: "0.45rem 0.95rem",
                               borderRadius: "6px",
                               fontSize: "0.82rem",
@@ -978,7 +954,7 @@ export default function AdminCollaborationsPage() {
                             height: "44px",
                             borderRadius: "8px",
                             background: "rgba(239, 68, 68, 0.12)",
-                            color: "#dc2626",
+                            color: "var(--admin-danger-text)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -1005,8 +981,8 @@ export default function AdminCollaborationsPage() {
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "0.4rem",
-                            background: "#0f172a",
-                            color: "#ffffff",
+                            background: "var(--admin-primary)",
+                            color: "#111111",
                             padding: "0.5rem 1rem",
                             borderRadius: "6px",
                             fontSize: "0.82rem",
@@ -1033,7 +1009,7 @@ export default function AdminCollaborationsPage() {
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "0.4rem",
-                          color: "#2563eb",
+                          color: "var(--admin-info-text)",
                           fontSize: "0.82rem",
                           fontWeight: 600,
                           textDecoration: "none",
@@ -1139,8 +1115,8 @@ export default function AdminCollaborationsPage() {
                 width: "48px",
                 height: "48px",
                 borderRadius: "50%",
-                background: "#fef2f2",
-                color: "#ef4444",
+                background: "rgba(239, 68, 68, 0.1)",
+                color: "var(--admin-danger-text)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

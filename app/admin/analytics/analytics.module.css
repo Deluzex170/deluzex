@@ -44,7 +44,7 @@
   border-radius: 9px;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #E5B869;
+  color: var(--admin-gold-text);
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -141,13 +141,13 @@
 
 .kpiIconGold {
   background: rgba(196, 154, 69, 0.16);
-  color: #C49A45;
+  color: var(--admin-gold-text);
   border-color: rgba(196, 154, 69, 0.3);
 }
 
 .kpiIconGreen {
   background: rgba(16, 185, 129, 0.16);
-  color: #34D399;
+  color: var(--admin-success-text);
   border-color: rgba(16, 185, 129, 0.3);
 }
 
@@ -161,7 +161,7 @@
 }
 
 .kpiValueGold {
-  color: #E5B869;
+  color: var(--admin-gold-text);
 }
 
 .kpiMeta {
@@ -306,7 +306,7 @@
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #E5B869;
+  color: var(--admin-gold-text);
 }
 
 /* MEMBERS SECTION */
@@ -390,14 +390,14 @@
 .memberVisitsCount {
   font-size: 1.1rem;
   font-weight: 800;
-  color: #E5B869;
+  color: var(--admin-gold-text);
   line-height: 1;
 }
 
 .memberVisitsLabel {
   font-size: 0.72rem;
   text-transform: uppercase;
-  color: #C49A45;
+  color: var(--admin-gold-text);
   font-weight: 600;
   margin-top: 0.2rem;
 }
@@ -498,7 +498,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #C49A45;
+  color: var(--admin-gold-text);
   background: var(--admin-bg, #0E0E12);
   border-bottom: 1px solid var(--admin-border, #23232A);
 }
@@ -520,7 +520,7 @@
   gap: 0.35rem;
   padding: 0.25rem 0.65rem;
   background: rgba(196, 154, 69, 0.15);
-  color: #E5B869;
+  color: var(--admin-gold-text);
   border: 1px solid rgba(196, 154, 69, 0.35);
   border-radius: 999px;
   font-size: 0.75rem;
@@ -572,7 +572,7 @@
 .emptyStateTitle {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #9CA3AF;
+  color: var(--admin-text-muted);
   margin-bottom: 0.5rem;
 }
 

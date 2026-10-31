@@ -270,7 +270,7 @@ export default function AdminCustomersPage() {
 
         <div className={styles.kpiCard}>
           <div className={styles.kpiLabel}>Cumulative Orders Placed</div>
-          <div className={styles.kpiValue} style={{ color: "#4ade80" }}>
+          <div className={styles.kpiValue} style={{ color: "var(--admin-success-text)" }}>
             {stats.total_orders}
           </div>
           <div className={styles.kpiDesc}>Orders placed by registered client accounts</div>
@@ -299,7 +299,6 @@ export default function AdminCustomersPage() {
         loading={loading}
         getRowId={(c) => String(c.id)}
         showSearch={false}
-        quickFilterText={searchQuery}
         emptyTitle="No customers found"
         emptyDescription="There are no accounts matching the selected filter or query."
         toolbar={
@@ -392,7 +391,7 @@ export default function AdminCustomersPage() {
               <div style={{ background: "var(--admin-surface-muted)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
                 <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Email Address</div>
                 <div style={{ fontWeight: 600, color: "var(--admin-text-main)", marginTop: "0.25rem" }}>
-                  <a href={`mailto:${selectedCustomer.email}`} style={{ color: "#c49a45", textDecoration: "none" }}>
+                  <a href={`mailto:${selectedCustomer.email}`} style={{ color: "var(--admin-gold-text)", textDecoration: "none" }}>
                     {selectedCustomer.email || "—"}
                   </a>
                 </div>
@@ -414,7 +413,7 @@ export default function AdminCustomersPage() {
 
               <div style={{ background: "var(--admin-surface-muted)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
                 <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Total Spend</div>
-                <div style={{ fontWeight: 700, color: "#c49a45", marginTop: "0.25rem", fontSize: "1.1rem" }}>
+                <div style={{ fontWeight: 700, color: "var(--admin-gold-text)", marginTop: "0.25rem", fontSize: "1.1rem" }}>
                   ₹{selectedCustomer.total_spent.toLocaleString("en-IN")}
                 </div>
               </div>

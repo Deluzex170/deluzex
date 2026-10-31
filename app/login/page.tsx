@@ -250,7 +250,7 @@ export default function Login() {
   };
 
   // -------------------------------------------------------------
-  // Sign Up Step 1: Submit Details & Request WhatsApp OTP
+  // Sign Up: Submit Details & Request Email Verification OTP
   // -------------------------------------------------------------
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -275,7 +275,7 @@ export default function Login() {
     }
 
     const cleanDigits = phone.replace(/\D/g, "");
-    if (!cleanDigits || cleanDigits.length < 10) {
+    if (phone.trim() && cleanDigits.length < 10) {
       setPhoneError("Please enter a valid 10-digit mobile number.");
       isValid = false;
     }
@@ -290,25 +290,58 @@ export default function Login() {
 
     setIsLoading(true);
     try {
-      const fullPhone = cleanDigits.length === 10 ? `+91${cleanDigits}` : `+${cleanDigits}`;
-      const res = await sendSignupWhatsAppOtp(fullPhone, email.trim());
+      const nameParts = fullName.trim().split(" ");
+      const firstName = nameParts[0] || "User";
+      const lastName = nameParts.slice(1).join(" ") || "Customer";
+      const fullPhone = cleanDigits.length >= 10 ? (cleanDigits.length === 10 ? `+91${cleanDigits}` : `+${cleanDigits}`) : undefined;
 
-      setToast({
-        type: "success",
-        message: res.message || "A 6-digit verification code has been dispatched to your WhatsApp!",
+      const response = await authFetch("/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          email: email.trim(),
+          password,
+          phone: fullPhone,
+          accept_terms: true,
+        }),
       });
-      setWhatsappCooldown(res.retry_after || 60);
-      setWhatsappOtp("");
-      setWhatsappOtpError("");
-      setAuthMode("signup_whatsapp_otp");
-    } catch (err: any) {
-      const msg = err.message || "Failed to dispatch WhatsApp OTP. Please check your number.";
-      setToast({ type: "error", message: msg });
-      if (msg.toLowerCase().includes("whatsapp") || msg.toLowerCase().includes("mobile")) {
-        setPhoneError(msg);
-      } else if (msg.toLowerCase().includes("email")) {
-        setEmailError(msg);
+
+      const data = await safeParseResponse(response);
+
+      if (response.ok && data.success) {
+        setPendingEmail(email.trim());
+        setEmailOtp("");
+        setEmailOtpError("");
+        setResendCooldown(data.retry_after ?? 45);
+        setToast({
+          type: "success",
+          message: data.message || "A 6-digit verification code has been dispatched to your email!",
+        });
+        setAuthMode("email_otp");
+      } else {
+        const detailMsg = parseErrorDetail(data, "Failed to register account.");
+        if (response.status === 400 && detailMsg.toLowerCase().includes("already exists")) {
+          setToast({
+            type: "error",
+            message: "Account already exists with this email. Switching to Sign In...",
+          });
+          setTimeout(() => {
+            setAuthMode("login");
+          }, 1500);
+        } else {
+          setToast({ type: "error", message: detailMsg });
+          if (detailMsg.toLowerCase().includes("email")) {
+            setEmailError(detailMsg);
+          } else if (detailMsg.toLowerCase().includes("password")) {
+            setPasswordError(detailMsg);
+          }
+        }
       }
+    } catch (err: any) {
+      const msg = err.message || "Failed to dispatch verification code. Please check your connection.";
+      setToast({ type: "error", message: msg });
     } finally {
       setIsLoading(false);
     }
@@ -592,11 +625,11 @@ export default function Login() {
             {authMode === "login"
               ? "Sign in with your email or mobile number"
               : authMode === "register"
-              ? "Verified with WhatsApp for maximum account security"
+              ? "Enter your details to create your account and verify via email"
               : authMode === "signup_whatsapp_otp"
               ? "Enter the 6-digit code received on your WhatsApp"
               : authMode === "email_otp"
-              ? "Enter the 6-digit code sent to your inbox"
+              ? "Enter the 6-digit code sent to your email inbox"
               : forgotStep === "email"
               ? "Enter your registered email to receive a reset code"
               : "Enter the code and set your new password"}
@@ -903,7 +936,7 @@ export default function Login() {
             </div>
 
             <div className={styles.formGroup}>
-              <label>WhatsApp Mobile Number</label>
+              <label>Mobile Number (Optional)</label>
               <div className={styles.phoneInputWrapper}>
                 <span className={styles.countryPrefix}>+91</span>
                 <input
@@ -960,7 +993,7 @@ export default function Login() {
 
             <div className={styles.btnRow}>
               <button type="submit" className={styles.btnPrimary} disabled={isLoading}>
-                {isLoading ? "Sending WhatsApp Code..." : "Verify via WhatsApp & Sign Up"}
+                {isLoading ? "Creating Account..." : "Create Account & Verify Email"}
               </button>
             </div>
 

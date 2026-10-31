@@ -938,7 +938,29 @@ export async function submitContactForm(contactData: JsonObject) {
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Failed to submit contact form');
+    throw new Error(errorData.message || errorData.detail || 'Failed to submit contact form');
+  }
+  return res.json();
+}
+
+export async function submitSupportTicket(ticketData: {
+  subject: string;
+  message: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+}): Promise<{ success: boolean; message: string; ticket_id?: string }> {
+  const res = await fetch(`${API_BASE_URL}/contact/support`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(ticketData),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || errorData.message || 'Failed to submit support ticket');
   }
   return res.json();
 }
@@ -2160,6 +2182,56 @@ export function getNewsletterCsvExportUrl(): string {
   return `${API_BASE_URL}/newsletter/export-csv`;
 }
 
+export interface NewsletterBroadcastPayload {
+  subject: string;
+  headline: string;
+  subtitle?: string;
+  paragraphs: string[];
+  promo_code?: string;
+  promo_text?: string;
+  cta_text: string;
+  cta_url: string;
+  audience: "all" | "pending" | "notified" | string;
+  test_email?: string;
+}
+
+export async function broadcastNewsletter(payload: NewsletterBroadcastPayload): Promise<{
+  success: boolean;
+  message: string;
+  sent_count?: number;
+  total_recipients?: number;
+  is_test?: boolean;
+}> {
+  const res = await fetch(`${API_BASE_URL}/newsletter/broadcast`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || errorData.message || "Failed to broadcast newsletter");
+  }
+  return res.json();
+}
+
+export async function previewNewsletterBroadcast(payload: NewsletterBroadcastPayload): Promise<{ html: string }> {
+  const res = await fetch(`${API_BASE_URL}/newsletter/preview-broadcast`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || errorData.message || "Failed to preview newsletter");
+  }
+  return res.json();
+}
 
 // ==========================================
 // SITE CONTENT (CMS) API

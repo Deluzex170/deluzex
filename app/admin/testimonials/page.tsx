@@ -366,16 +366,16 @@ export default function AdminTestimonialsPage() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "4px",
-                background: "#FEF9C3",
-                color: "#854D0E",
-                border: "1px solid #FEF08A",
+                background: "rgba(234, 179, 8, 0.14)",
+                color: "var(--admin-warning-text)",
+                border: "1px solid rgba(234, 179, 8, 0.35)",
                 padding: "3px 8px",
                 borderRadius: "6px",
                 fontWeight: 700,
                 fontSize: "0.78rem",
               }}
             >
-              <Star size={12} fill="#854D0E" strokeWidth={0} />
+              <Star size={12} fill="currentColor" strokeWidth={0} aria-hidden="true" />
               {Number(item.rating || 5).toFixed(1)}
             </span>
           );
@@ -498,8 +498,8 @@ export default function AdminTestimonialsPage() {
               fontWeight: 600,
               padding: "4px 12px",
               borderRadius: "20px",
-              background: isEdit ? "#eff6ff" : "#fefce8",
-              color: isEdit ? "#1d4ed8" : "#854d0e",
+              background: isEdit ? "rgba(59, 130, 246, 0.1)" : "#fefce8",
+              color: isEdit ? "var(--admin-info-text)" : "var(--admin-warning-text)",
               border: `1px solid ${isEdit ? "#bfdbfe" : "#fef08a"}`,
               display: "inline-flex",
               alignItems: "center",
@@ -543,10 +543,10 @@ export default function AdminTestimonialsPage() {
                 style={{
                   margin: "1.5rem 2rem 0",
                   padding: "0.85rem 1.25rem",
-                  background: "#FEF2F2",
-                  border: "1px solid #FECACA",
+                  background: "rgba(239, 68, 68, 0.1)",
+                  border: "1px solid rgba(239, 68, 68, 0.35)",
                   borderRadius: "8px",
-                  color: "#991B1B",
+                  color: "var(--admin-danger-text)",
                   fontSize: "0.875rem",
                   display: "flex",
                   alignItems: "center",
@@ -570,7 +570,7 @@ export default function AdminTestimonialsPage() {
               {/* LEFT COLUMN: Text & Story Content */}
               <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem" }}>
-                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
                     1. Author Information &amp; Review
                   </h3>
                   <p style={{ margin: "0.25rem 0 0", fontSize: "0.825rem", color: "var(--admin-text-muted)" }}>
@@ -647,7 +647,7 @@ export default function AdminTestimonialsPage() {
               {/* RIGHT COLUMN: Avatar Upload & Real-Time Live Preview */}
               <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 <div style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "0.75rem" }}>
-                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-primary)" }}>
+                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--admin-gold-text)" }}>
                     2. Author Avatar &amp; Live Preview
                   </h3>
                   <p style={{ margin: "0.25rem 0 0", fontSize: "0.825rem", color: "var(--admin-text-muted)" }}>
@@ -692,8 +692,8 @@ export default function AdminTestimonialsPage() {
                         onChange={handleFileChange}
                         style={{ display: "none" }}
                       />
-                      <Upload size={28} style={{ color: "#C49A45", marginBottom: "0.4rem" }} />
-                      <p style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--admin-primary)", margin: 0 }}>
+                      <Upload size={28} style={{ color: "var(--admin-gold-text)", marginBottom: "0.4rem" }} />
+                      <p style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--admin-gold-text)", margin: 0 }}>
                         {selectedFile ? selectedFile.name : "Click to browse and upload portrait"}
                       </p>
                       <span style={{ fontSize: "0.8rem", color: "var(--admin-text-muted)" }}>
@@ -870,10 +870,10 @@ export default function AdminTestimonialsPage() {
           style={{
             marginBottom: "1.5rem",
             padding: "0.9rem 1.25rem",
-            background: "#F0FDF4",
-            border: "1px solid #BBF7D0",
+            background: "rgba(16, 185, 129, 0.12)",
+            border: "1px solid rgba(16, 185, 129, 0.35)",
             borderRadius: "10px",
-            color: "#166534",
+            color: "var(--admin-success-text)",
             fontSize: "0.875rem",
             display: "flex",
             alignItems: "center",
@@ -888,7 +888,7 @@ export default function AdminTestimonialsPage() {
           </div>
           <button
             onClick={() => setSuccessMsg("")}
-            style={{ background: "transparent", border: "none", color: "#166534", cursor: "pointer", fontSize: "1rem" }}
+            style={{ background: "transparent", border: "none", color: "var(--admin-success-text)", cursor: "pointer", fontSize: "1rem" }}
           >
             ✕
           </button>
@@ -901,8 +901,8 @@ export default function AdminTestimonialsPage() {
           style={{
             marginBottom: "1.75rem",
             padding: "var(--a-space-4) var(--a-space-5)",
-            background: "#FEF2F2",
-            border: "1px solid #FECACA",
+            background: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid rgba(239, 68, 68, 0.35)",
             borderRadius: "12px",
             display: "flex",
             alignItems: "center",
@@ -918,8 +918,8 @@ export default function AdminTestimonialsPage() {
                 width: 44,
                 height: 44,
                 borderRadius: "50%",
-                background: "#FEE2E2",
-                color: "#DC2626",
+                background: "rgba(239, 68, 68, 0.14)",
+                color: "var(--admin-danger-text)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -929,10 +929,10 @@ export default function AdminTestimonialsPage() {
               <Trash2 size={22} />
             </div>
             <div>
-              <h4 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#991B1B" }}>
+              <h4 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "var(--admin-danger-text)" }}>
                 Confirm Deletion
               </h4>
-              <p style={{ margin: "0.25rem 0 0", fontSize: "0.875rem", color: "#B91C1C" }}>
+              <p style={{ margin: "0.25rem 0 0", fontSize: "0.875rem", color: "var(--admin-danger-text)" }}>
                 Are you sure you want to delete the testimonial from &quot;{itemToDelete.author_name}&quot;? This cannot be undone.
               </p>
             </div>
@@ -965,7 +965,7 @@ export default function AdminTestimonialsPage() {
           }}
         >
           <div>
-            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--admin-primary)", margin: 0 }}>
+            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--admin-gold-text)", margin: 0 }}>
               Published Customer Stories
             </h3>
             <p style={{ fontSize: "0.8rem", color: "var(--admin-text-muted)", margin: "0.25rem 0 0" }}>
@@ -975,9 +975,9 @@ export default function AdminTestimonialsPage() {
           <span
             style={{
               fontSize: "0.75rem",
-              background: "#f0fdf4",
-              color: "#166534",
-              border: "1px solid #bbf7d0",
+              background: "rgba(16, 185, 129, 0.12)",
+              color: "var(--admin-success-text)",
+              border: "1px solid rgba(16, 185, 129, 0.35)",
               padding: "4px 12px",
               borderRadius: "20px",
               fontWeight: 600,
@@ -994,29 +994,10 @@ export default function AdminTestimonialsPage() {
           loading={loading}
           getRowId={(s: Testimonial) => String(s._id || s.id || s.author_name)}
           quickFilterText={searchQuery}
+          onQuickFilterChange={setSearchQuery}
+          searchPlaceholder="Search author, story…"
           emptyTitle="No customer stories found"
           emptyDescription="Click 'Add Testimonial' to publish your first story on the homepage."
-          toolbar={
-            <div style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
-              <input
-                type="search"
-                placeholder="Search author, story..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  height: "36px",
-                  padding: "0 12px",
-                  borderRadius: "8px",
-                  border: "1px solid var(--admin-border)",
-                  background: "var(--admin-surface)",
-                  color: "var(--admin-text-main)",
-                  fontSize: "13px",
-                  outline: "none",
-                  minWidth: "220px",
-                }}
-              />
-            </div>
-          }
         />
       </div>
     </div>

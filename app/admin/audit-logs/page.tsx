@@ -378,27 +378,6 @@ export default function AuditLogsPage() {
           </div>
 
           <div className={styles.toolbarRight}>
-            <div className={styles.searchInputWrapper}>
-              <svg
-                className={styles.searchIcon}
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search actor, email, action, target..."
-                className={styles.searchInput}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
 
             <select
               className={styles.statusSelect}
@@ -419,6 +398,8 @@ export default function AuditLogsPage() {
           loading={isLoading}
           getRowId={(s: AuditLogItem) => String(s.id || s.created_at)}
           quickFilterText={search}
+          onQuickFilterChange={setSearch}
+          searchPlaceholder="Search actor, email, action, target…"
           emptyTitle="No audit records found"
           emptyDescription="No events match your current filter criteria."
         />
@@ -430,7 +411,7 @@ export default function AuditLogsPage() {
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>
-                Audit Event: <span style={{ color: "#C49A45" }}>{selectedLog.action}</span>
+                Audit Event: <span style={{ color: "var(--admin-gold-text)" }}>{selectedLog.action}</span>
               </h3>
               <button
                 className={styles.modalCloseBtn}

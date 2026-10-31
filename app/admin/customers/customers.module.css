@@ -33,7 +33,7 @@
 }
 
 .goldAccent {
-  color: #c49a45;
+  color: var(--admin-gold-text);
 }
 
 .subtitle {
@@ -105,7 +105,7 @@
 }
 
 .kpiGoldVal {
-  color: #c49a45;
+  color: var(--admin-gold-text);
 }
 
 .kpiDesc {
@@ -173,7 +173,7 @@
 
 .activeTab .tabBadge {
   background: rgba(196, 154, 69, 0.15);
-  color: #b45309;
+  color: var(--admin-warning-text);
 }
 
 .searchForm {
@@ -304,9 +304,9 @@
 }
 
 .vipBadge {
-  background: #fef3c7;
-  color: #b45309;
-  border: 1px solid #fde68a;
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--admin-warning-text);
+  border: 1px solid rgba(245, 158, 11, 0.35);
   font-size: 0.65rem;
   padding: 2px 6px;
   border-radius: 4px;
@@ -335,15 +335,15 @@
 }
 
 .statusActive {
-  background: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--admin-success-text);
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 .statusInactive {
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--admin-danger-text);
+  border: 1px solid rgba(239, 68, 68, 0.35);
 }
 
 .roleBadge {
@@ -359,7 +359,7 @@
 
 .roleAdmin {
   background: rgba(196, 154, 69, 0.12);
-  color: #b45309;
+  color: var(--admin-warning-text);
   border-color: rgba(196, 154, 69, 0.3);
   font-weight: 700;
 }
@@ -395,9 +395,9 @@
 }
 
 .btnGold {
-  background: #fef3c7;
-  color: #b45309;
-  border: 1px solid #fde68a;
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--admin-warning-text);
+  border: 1px solid rgba(245, 158, 11, 0.35);
   font-weight: 600;
 }
 
@@ -719,4 +719,23 @@
 .tableWrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Brand-consistent actions: gold primary, soft hovers */
+.searchBtn {
+  background: var(--admin-primary);
+  border-color: var(--admin-primary);
+  color: #111111;
+}
+.searchBtn:hover {
+  background: var(--admin-primary-hover);
+  color: #111111;
+}
+.btnSecondary:hover {
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-main);
+  border-color: var(--admin-primary);
+}
+.vipBadge {
+  font-size: 10.5px;
 }

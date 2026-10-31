@@ -121,6 +121,13 @@
   --sidebar-active-border: #C49A45;
   --admin-text-secondary: #CBD5E1;
   --admin-surface-muted: #18181D;
+  --admin-gold-text: #D4AF6A;
+  --admin-success-text: #34D399;
+  --admin-warning-text: #FBBF24;
+  --admin-danger-text: #F87171;
+  --admin-info-text: #93C5FD;
+  --admin-card-bg: var(--admin-surface);
+  --admin-input-bg: var(--admin-surface-muted);
   color-scheme: dark;
 }
 
@@ -137,7 +144,7 @@
   --admin-accent-hover: #9E772E;
   --admin-text-main: #0F172A;
   --admin-text-muted: #64748B;
-  --admin-text-subtle: #94A3B8;
+  --admin-text-subtle: #6B7585;
   --admin-border: #E2E8F0;
   --admin-border-subtle: rgba(0, 0, 0, 0.06);
   --admin-border-gold: rgba(184, 142, 59, 0.35);
@@ -151,6 +158,13 @@
   --sidebar-active-border: #B88E3B;
   --admin-text-secondary: #475569;
   --admin-surface-muted: #F8FAFC;
+  --admin-gold-text: #8A6A2B;
+  --admin-success-text: #047857;
+  --admin-warning-text: #B45309;
+  --admin-danger-text: #B91C1C;
+  --admin-info-text: #1D4ED8;
+  --admin-card-bg: var(--admin-surface);
+  --admin-input-bg: var(--admin-surface-muted);
   color-scheme: light;
 }
 
@@ -620,7 +634,7 @@
 }
 
 .menuLink:hover svg {
-  color: var(--admin-primary);
+  color: var(--admin-gold-text);
 }
 
 .menuLink:focus-visible,
@@ -641,7 +655,7 @@
 }
 
 .activeLink svg {
-  color: var(--admin-primary);
+  color: var(--admin-gold-text);
 }
 
 .activeLink:hover {
@@ -686,7 +700,7 @@
 }
 
 .themeToggleBtn svg {
-  color: var(--admin-primary);
+  color: var(--admin-gold-text);
 }
 
 .themeToggleBtn:hover {
@@ -702,7 +716,7 @@
   padding: 1px 6px;
   border-radius: 999px;
   background: var(--admin-primary-glow);
-  color: var(--admin-primary);
+  color: var(--admin-gold-text);
   border: 1px solid var(--admin-border-gold);
 }
 
@@ -712,12 +726,12 @@
 
 .logoutBtn:hover {
   background: rgba(239, 68, 68, 0.1);
-  color: #DC2626;
+  color: var(--admin-danger-text);
   border-color: rgba(239, 68, 68, 0.25);
 }
 
 .logoutBtn:hover svg {
-  color: #DC2626;
+  color: var(--admin-danger-text);
 }
 
 .logoutConfirm {
@@ -730,7 +744,7 @@
 .logoutConfirmTitle {
   font-size: var(--a-fs-xs);
   font-weight: var(--a-fw-bold);
-  color: #DC2626;
+  color: var(--admin-danger-text);
   margin-bottom: var(--a-space-2);
 }
 
@@ -858,7 +872,7 @@
 .mobileMenuBtn:hover,
 .collapseBtn:hover {
   background: var(--admin-surface-muted);
-  color: var(--admin-primary);
+  color: var(--admin-gold-text);
 }
 
 .topBarTitle {
@@ -895,7 +909,7 @@
 
 .storefrontLink:hover {
   background: var(--admin-surface-muted);
-  color: var(--admin-primary);
+  color: var(--admin-gold-text);
 }
 
 .mainContent {
@@ -1040,7 +1054,7 @@
 }
 
 .actionLink {
-  color: #E5B869;
+  color: var(--admin-gold-text);
   font-size: 0.82rem;
   font-weight: 600;
   text-decoration: none;
@@ -1061,7 +1075,7 @@
 }
 
 .actionDelete {
-  color: #F87171;
+  color: var(--admin-danger-text);
   font-size: 0.82rem;
   font-weight: 600;
   background: rgba(239, 68, 68, 0.1);
@@ -1167,7 +1181,7 @@
   }
   .drawerCloseBtn:hover,
   .drawerCloseBtn:focus-visible {
-    color: var(--admin-primary);
+    color: var(--admin-gold-text);
     border-color: var(--admin-primary);
   }
   .mainContent input,
@@ -1260,7 +1274,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #9CA3AF;
+  color: var(--admin-text-muted);
   cursor: pointer;
   transition: all 0.15s;
   flex-shrink: 0;
@@ -1351,7 +1365,7 @@
 
 .tabSwitchBtnActive {
   background: var(--admin-surface);
-  color: #C49A45;
+  color: var(--admin-gold-text);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(196, 154, 69, 0.25);
 }
@@ -2162,7 +2176,7 @@ textarea.control {
 
 .segmentedBtnActive .segmentedCount {
   background: var(--admin-primary-glow);
-  color: var(--admin-primary);
+  color: var(--admin-gold-text);
   border-color: var(--admin-border-gold);
 }
 
@@ -2204,5 +2218,23 @@ textarea.control {
 .featureToggleOn {
   border-color: var(--admin-border-gold);
   background: var(--admin-primary-glow);
-  color: var(--admin-primary);
+  color: var(--admin-gold-text);
+}
+
+/* KPI stat cards: label above value on every page, even when the page
+   marks them up as inline <span>s (they ran together as "TOTAL AUDIENCE5") */
+.adminRoot .mainContent :is([class$="__kpiCard"], [class*="__kpiCard "], [class*="_kpiCard__"]) {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+/* Storefront colour tokens used inside admin pages follow the admin theme
+   (e.g. form labels written with var(--color-text) were black on dark). */
+.adminRoot {
+  --color-text: var(--admin-text-main);
+  --color-text-light: var(--admin-text-muted);
+  --color-white: var(--admin-surface);
+  --color-bg: var(--admin-bg);
 }

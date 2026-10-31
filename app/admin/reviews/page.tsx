@@ -91,7 +91,7 @@ export default function AdminReviewsPage() {
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
-      <span key={i} style={{ color: i < rating ? "#c49a45" : "#cbd5e1" }}>
+      <span key={i} style={{ color: i < rating ? "var(--admin-gold-text)" : "#cbd5e1" }}>
         ★
       </span>
     ));
@@ -138,7 +138,7 @@ export default function AdminReviewsPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               ) : (
-                <span style={{ color: "#c49a45", fontSize: 13 }}>✦</span>
+                <span style={{ color: "var(--admin-gold-text)", fontSize: 13 }}>✦</span>
               )}
             </div>
             <span
@@ -212,7 +212,7 @@ export default function AdminReviewsPage() {
         const rating = Math.max(1, Math.min(5, Number(params.value || 5)));
         return (
           <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <span style={{ color: "#c49a45", letterSpacing: 1, fontSize: 13 }}>
+            <span style={{ color: "var(--admin-gold-text)", letterSpacing: 1, fontSize: 13 }}>
               {"★".repeat(rating)}
             </span>
             <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-text-muted)" }}>
@@ -308,7 +308,7 @@ export default function AdminReviewsPage() {
                   ? "1px solid rgba(245, 158, 11, 0.45)"
                   : "1px solid rgba(34, 197, 94, 0.45)",
                 background: isApproved ? "rgba(245, 158, 11, 0.1)" : "rgba(34, 197, 94, 0.12)",
-                color: isApproved ? "#d97706" : "#16a34a",
+                color: isApproved ? "var(--admin-warning-text)" : "var(--admin-success-text)",
                 cursor: "pointer",
                 transition: "all 0.15s ease",
               }}
@@ -370,7 +370,7 @@ export default function AdminReviewsPage() {
                   borderRadius: 5,
                   border: "1px solid rgba(239, 68, 68, 0.3)",
                   background: "rgba(239, 68, 68, 0.08)",
-                  color: "#ef4444",
+                  color: "var(--admin-danger-text)",
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -414,7 +414,7 @@ export default function AdminReviewsPage() {
 
         <div className={styles.kpiCard}>
           <div className={styles.kpiLabel}>Live Approved Reviews</div>
-          <div className={styles.kpiValue} style={{ color: "#22c55e" }}>
+          <div className={styles.kpiValue} style={{ color: "var(--admin-success-text)" }}>
             {stats.approved}
           </div>
           <div className={styles.kpiDesc}>Published and visible on storefront</div>
@@ -422,7 +422,7 @@ export default function AdminReviewsPage() {
 
         <div className={styles.kpiCard}>
           <div className={styles.kpiLabel}>Pending / Hidden Reviews</div>
-          <div className={styles.kpiValue} style={{ color: "#f59e0b" }}>
+          <div className={styles.kpiValue} style={{ color: "var(--admin-warning-text)" }}>
             {stats.pending}
           </div>
           <div className={styles.kpiDesc}>Awaiting moderation or unapproved</div>
@@ -506,7 +506,7 @@ export default function AdminReviewsPage() {
               </h2>
               <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.4rem" }}>
                 <span className={styles.stars}>{renderStars(selectedReview.rating)}</span>
-                <span style={{ color: "#c49a45", fontWeight: 600, fontSize: "0.9rem" }}>
+                <span style={{ color: "var(--admin-gold-text)", fontWeight: 600, fontSize: "0.9rem" }}>
                   {selectedReview.rating} out of 5 stars
                 </span>
                 <StatusBadge
@@ -544,7 +544,7 @@ export default function AdminReviewsPage() {
                   {selectedReview.author_name}
                 </div>
                 {selectedReview.author_email && (
-                  <div style={{ color: "#c49a45", fontSize: "0.85rem", marginTop: 2 }}>
+                  <div style={{ color: "var(--admin-gold-text)", fontSize: "0.85rem", marginTop: 2 }}>
                     <a href={`mailto:${selectedReview.author_email}`} style={{ color: "inherit", textDecoration: "none" }}>
                       ✉ {selectedReview.author_email}
                     </a>
@@ -589,7 +589,7 @@ export default function AdminReviewsPage() {
 
               <button
                 className={styles.refreshBtn}
-                style={{ color: "#dc2626", borderColor: "rgba(220, 38, 38, 0.3)", background: "rgba(220, 38, 38, 0.08)" }}
+                style={{ color: "var(--admin-danger-text)", borderColor: "rgba(220, 38, 38, 0.3)", background: "rgba(220, 38, 38, 0.08)" }}
                 onClick={() => handleDelete(selectedReview.id)}
                 disabled={isUpdating === selectedReview.id}
               >

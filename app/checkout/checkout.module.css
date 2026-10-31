@@ -324,6 +324,90 @@
   border-color: #E6E2DC;
 }
 
+.selectWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.select {
+  width: 100%;
+  height: 42px;
+  padding: 0 36px 0 14px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1A1918;
+  background: #FFFFFF;
+  border: 1px solid #DDD6CD;
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.select:hover:not(:disabled) {
+  border-color: #B8B0A4;
+}
+
+.select:focus {
+  border-color: #C49A45;
+  box-shadow: 0 0 0 3px rgba(196, 154, 69, 0.15);
+}
+
+.select:disabled {
+  background: #F8F7F4;
+  color: #8A8884;
+  cursor: not-allowed;
+  border-color: #E6E2DC;
+}
+
+.selectChevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #8C8276;
+  pointer-events: none;
+}
+
+.savedDropdownWrapper {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: #FAF8F5;
+  border: 1px solid #EADBCA;
+  border-radius: 10px;
+}
+
+.savedCountBadge {
+  font-size: 11.5px;
+  color: #8C6A23;
+  font-weight: 600;
+  background: #F4EBD9;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.pinDetectedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: #166534;
+  font-weight: 600;
+}
+
+.pinCheckingBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: #C49A45;
+  font-weight: 600;
+}
+
 .checkboxWrapper {
   display: inline-flex;
   align-items: center;

@@ -466,27 +466,6 @@ export default function VisitorAnalyticsPage() {
             </button>
           </div>
 
-          <div className={styles.searchInputWrapper}>
-            <svg
-              className={styles.searchIcon}
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search by IP, email, name, or path..."
-              className={styles.searchInput}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
         </div>
 
         <AdminDataGrid<VisitorLogItem>
@@ -496,6 +475,8 @@ export default function VisitorAnalyticsPage() {
           loading={isLoading}
           getRowId={(s: VisitorLogItem) => String(s.id || s.created_at)}
           quickFilterText={searchQuery}
+          onQuickFilterChange={setSearchQuery}
+          searchPlaceholder="Search by IP, email, name, or path…"
           emptyTitle="No visitor logs found"
           emptyDescription="No events match your current filter criteria."
         />

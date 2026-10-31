@@ -7,6 +7,7 @@ import { ReduxProvider } from "./store/ReduxProvider";
 import CartSidebar from "./components/CartSidebar";
 import MainSidebar from "./components/MainSidebar";
 import UserLoginModal from "./components/UserLoginModal";
+import EmailVerificationPrompt from "./components/EmailVerificationPrompt";
 import ConsoleBanner from "./components/ConsoleBanner";
 import { Suspense } from "react";
 import TopProgressBar from "./components/TopProgressBar";
@@ -62,6 +63,7 @@ export default function RootLayout({
             <ReduxProvider>
               <WishlistProvider>
                 <CartSyncManager />
+                <EmailVerificationPrompt />
                 <Header />
                 {children}
                 <ConditionalFooter />
