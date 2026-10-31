@@ -3125,7 +3125,7 @@ export interface FAQItem {
   id?: string | number;
   question: string;
   answer: string;
-  category: string; // "collaborate" | "support" | "general"
+  category: string; // "collaborate" | "support" | "general" | "product"
   sequence: number;
   is_active: boolean;
   created_at?: string;

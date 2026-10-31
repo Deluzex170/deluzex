@@ -16,12 +16,40 @@ import {
   checkWishlistStatus,
   fetchProductReviews,
   submitProductReview,
+  fetchFaqs,
   ProductReviewsResponse,
   Product,
 } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import WishlistButton from "../../components/WishlistButton";
 import PincodeChecker from "../../components/PincodeChecker";
+
+const DEFAULT_PRODUCT_FAQS = [
+  {
+    q: "Do you offer custom lighting solutions?",
+    a: "Yes, our studio creates bespoke lighting pieces tailored to your exact architectural space, ceiling height, and aesthetic requirements.",
+  },
+  {
+    q: "What is the lead time for custom architectural orders?",
+    a: "Standard custom production takes 3-4 weeks depending on the design complexity, hand-blown glass, and artisanal metallic finishes.",
+  },
+  {
+    q: "Do you provide installation support across India?",
+    a: "Yes, we provide detailed technical wiring schematics and coordinate with certified electricians and white-glove technicians across major metro cities.",
+  },
+  {
+    q: "Can I request a specific metallic finish or custom cord length?",
+    a: "Absolutely! Our studio can customize dimensions, metallic finishes (brushed brass, antique gold, matte black, satin nickel), and suspension drop lengths.",
+  },
+  {
+    q: "Do your luminaires come with a comprehensive warranty?",
+    a: "All our luxury lighting fixtures include a comprehensive 3-year warranty covering manufacturing integrity, structural metalwork, and electrical components.",
+  },
+  {
+    q: "How are fixtures packaged for insured pan-India delivery?",
+    a: "Every luminaire is secured in custom high-density foam within export-grade reinforced wooden crates, insured against all transit damage.",
+  },
+];
 
 export default function ProductDetail() {
   const dispatch = useDispatch();
@@ -52,6 +80,24 @@ export default function ProductDetail() {
   // UI State
   const [activeThumb, setActiveThumb] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [productFaqs, setProductFaqs] = useState<{ q: string; a: string }[]>(DEFAULT_PRODUCT_FAQS);
+
+  useEffect(() => {
+    fetchFaqs("product")
+      .then((data) => {
+        if (data && data.length > 0) {
+          setProductFaqs(
+            data.map((item) => ({
+              q: item.question,
+              a: item.answer,
+            }))
+          );
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load product FAQs:", err);
+      });
+  }, []);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [inquiryModalOpen, setInquiryModalOpen] = useState(false);
@@ -1297,35 +1343,12 @@ export default function ProductDetail() {
             <h2 className={styles.faqTitle}>
               Frequently asked<br />questions
             </h2>
-            <p className={styles.faqSub}>Start free, scale as you grow. All plans include core features.</p>
+            <p className={styles.faqSub}>
+              Everything you need to know about our handcrafted finishes, architectural specifications, warranty, and insured pan-India white-glove delivery.
+            </p>
 
             <div className={styles.faqList}>
-              {[
-                {
-                  q: "Do you offer custom lighting solutions?",
-                  a: "Yes, we create bespoke lighting pieces tailored to your space and requirements.",
-                },
-                {
-                  q: "What is the lead time for custom orders?",
-                  a: "Standard custom production takes 3-4 weeks depending on the design complexity and materials.",
-                },
-                {
-                  q: "Do you provide installation support?",
-                  a: "Yes, we provide detailed technical wiring guides and partner with certified electricians across major cities.",
-                },
-                {
-                  q: "Can I request a specific finish or size?",
-                  a: "Absolutely! Our studio can customize dimensions, metallic finishes, and cord lengths for your project.",
-                },
-                {
-                  q: "Do your products come with a warranty?",
-                  a: "All our lighting products include a comprehensive 3-year warranty covering manufacturing and electrical components.",
-                },
-                {
-                  q: "Do you ship across India?",
-                  a: "Yes, we offer insured pan-India delivery with premium wooden crate packaging for complete safety.",
-                },
-              ].map((faq, i) => (
+              {productFaqs.map((faq, i) => (
                 <div
                   key={i}
                   className={`${styles.faqAccordion} ${openFaq === i ? styles.faqAccordionOpen : ""}`}

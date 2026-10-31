@@ -7,7 +7,7 @@ class FAQItem(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     question: str
     answer: str
-    category: str = "collaborate"  # "collaborate", "support", "general"
+    category: str = "collaborate"  # "collaborate", "support", "general", "product"
     sequence: int = 1
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)

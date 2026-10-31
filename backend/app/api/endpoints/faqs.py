@@ -74,6 +74,56 @@ DEFAULT_FAQS = [
         "sequence": 3,
         "is_active": True,
     },
+    # Product Page FAQs
+    {
+        "question": "Do you offer custom lighting solutions?",
+        "answer": "Yes, our studio creates bespoke lighting pieces tailored to your exact architectural space, ceiling height, and aesthetic requirements.",
+        "category": "product",
+        "sequence": 1,
+        "is_active": True,
+    },
+    {
+        "question": "What is the lead time for custom architectural orders?",
+        "answer": "Standard custom production takes 3-4 weeks depending on the design complexity, hand-blown glass, and artisanal metallic finishes.",
+        "category": "product",
+        "sequence": 2,
+        "is_active": True,
+    },
+    {
+        "question": "Do you provide installation support across India?",
+        "answer": "Yes, we provide detailed technical wiring schematics and coordinate with certified electricians and white-glove technicians across major metro cities.",
+        "category": "product",
+        "sequence": 3,
+        "is_active": True,
+    },
+    {
+        "question": "Can I request a specific metallic finish or custom cord length?",
+        "answer": "Absolutely! Our studio can customize dimensions, metallic finishes (brushed brass, antique gold, matte black, satin nickel), and suspension drop lengths.",
+        "category": "product",
+        "sequence": 4,
+        "is_active": True,
+    },
+    {
+        "question": "Do your luminaires come with a comprehensive warranty?",
+        "answer": "All our luxury lighting fixtures include a comprehensive 3-year warranty covering manufacturing integrity, structural metalwork, and electrical components.",
+        "category": "product",
+        "sequence": 5,
+        "is_active": True,
+    },
+    {
+        "question": "How are fixtures packaged for insured pan-India delivery?",
+        "answer": "Every luminaire is secured in custom high-density foam within export-grade reinforced wooden crates, insured against all transit damage.",
+        "category": "product",
+        "sequence": 6,
+        "is_active": True,
+    },
+    {
+        "question": "Are Deluzex luminaires compatible with smart home automation and dimmers?",
+        "answer": "All our LED drivers and dimmable chandeliers are engineered to interface smoothly with Lutron, Dali, Control4, Casambi, and standard TRIAC trailing-edge wall dimmers.",
+        "category": "product",
+        "sequence": 7,
+        "is_active": True,
+    },
 ]
 
 def ensure_faqs_seeded():

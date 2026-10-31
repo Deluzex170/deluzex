@@ -200,8 +200,22 @@ export default function AdminFaqsPage() {
                 padding: "0.25rem 0.6rem",
                 borderRadius: "5px",
                 textTransform: "capitalize",
-                background: faq.category === "collaborate" ? "rgba(196, 154, 69, 0.12)" : "#f1f5f9",
-                color: faq.category === "collaborate" ? "#9a762e" : "#475569",
+                background:
+                  faq.category === "collaborate"
+                    ? "rgba(196, 154, 69, 0.12)"
+                    : faq.category === "support"
+                    ? "rgba(16, 185, 129, 0.12)"
+                    : faq.category === "product"
+                    ? "rgba(59, 130, 246, 0.12)"
+                    : "#f1f5f9",
+                color:
+                  faq.category === "collaborate"
+                    ? "#9a762e"
+                    : faq.category === "support"
+                    ? "#10b981"
+                    : faq.category === "product"
+                    ? "#2563eb"
+                    : "#475569",
               }}
             >
               {faq.category || "collaborate"}
@@ -377,6 +391,7 @@ export default function AdminFaqsPage() {
           { label: "All FAQs", value: "all" },
           { label: "Collaborate Page", value: "collaborate" },
           { label: "Customer Support", value: "support" },
+          { label: "Product Page", value: "product" },
           { label: "General", value: "general" },
         ].map((tab) => (
           <button
@@ -549,6 +564,7 @@ export default function AdminFaqsPage() {
                   >
                     <option value="collaborate">Collaborate Page</option>
                     <option value="support">Customer Support</option>
+                    <option value="product">Product Details Page</option>
                     <option value="general">General</option>
                   </select>
                 </div>
