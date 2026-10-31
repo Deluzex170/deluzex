@@ -5,3 +5,4 @@ Whenever designing, building, or modifying frontend user interfaces, pages, comp
 - ALWAYS reference and follow `.agents/skills/ui-ux-pro-max/SKILL.md`.
 - Enforce the rules in `.gemini/rules/ui-ux-design-standards.md`.
 - Ensure sleek, compact inputs (40px-44px), clean professional typography, responsive luxury layouts, and zero visual clutter.
+

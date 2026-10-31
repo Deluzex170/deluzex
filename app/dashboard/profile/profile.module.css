@@ -1,24 +1,24 @@
 /* --- Page Container --- */
 .container {
-  padding: 1rem 1.5rem 1.5rem;
-  max-width: 1100px;
-  margin: 0 auto;
+  padding: 0 0 2rem;
+  max-width: 1040px;
   font-family: var(--font-inter), sans-serif;
   color: #2B2B2B;
+  width: 100%;
 }
 
 /* --- Grid of Sections --- */
 .grid {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 1.25rem;
 }
 
 /* --- Row 1: Title (left) | Profile Card (right) --- */
 .topRow {
   display: grid;
-  grid-template-columns: 1fr 1.6fr;
-  gap: 9rem;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 1.5rem;
   align-items: stretch;
 }
 
@@ -26,57 +26,71 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 0.5rem 0.25rem;
+  gap: 0.35rem;
+  padding: 0.25rem 0;
 }
 
 .title {
-  font-family: var(--font-libre), serif;
-  font-size: 3rem;
-  font-weight: 400;
-  color: #2B2B2B;
-  margin: 0 0 0rem 0;
-  line-height: 1.15;
+  font-family: var(--font-libre), Georgia, serif;
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: #1A1A1A;
+  margin: 0;
+  line-height: 1.2;
 }
 
 .subtitle {
-  font-size: 1.5rem;
-  color: #656565;
+  font-size: 0.82rem;
+  color: #6B7280;
   margin: 0;
-  line-height: 1;
+  line-height: 1.45;
 }
 
 /* --- Row 2: Two-column --- */
 .twoColRow {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  gap: 1.25rem;
   align-items: stretch;
 }
 
 /* --- Card --- */
 .card {
-  background: #ffffff;
-  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.07);
   border-radius: 10px;
-  padding: 0.85rem 1rem;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.03);
+  padding: 1.15rem 1.35rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
   display: flex;
   flex-direction: column;
 }
 
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
 /* --- Card Title --- */
 .cardTitle {
-  font-family: var(--font-libre), serif;
-  font-size: 1.6rem;
-  font-weight: 400;
-  color: #2B2B2B;
-  margin-bottom: 0.6rem;
-  padding-bottom: 0.45rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  font-family: var(--font-libre), Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: #1A1A1A;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  line-height: 1;
+  line-height: 1.2;
+}
+
+.cardSubtitle {
+  font-size: 0.78rem;
+  color: #6B7280;
+  margin-top: 0.2rem;
 }
 
 /* --- Profile Card --- */
@@ -84,8 +98,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 2rem;
-  padding: 0.2rem 0;
+  gap: 1.25rem;
   height: 100%;
 }
 
@@ -97,12 +110,12 @@
 
 .avatarWrapper {
   position: relative;
-  width: 64px;
-  height: 64px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid #C89B60;
-  background: #f5f5f5;
+  border: 2px solid #C49A45;
+  background: #F5F5F5;
 }
 
 .avatarImg {
@@ -111,9 +124,9 @@
 
 .avatarEditBtn {
   position: absolute;
-  top: 0;
-  right: 0;
-  background: #2B2B2B;
+  top: -2px;
+  right: -2px;
+  background: #1A1A1A;
   color: white;
   border-radius: 50%;
   width: 20px;
@@ -127,23 +140,23 @@
 }
 
 .avatarEditBtn:hover {
-  background: #C89B60;
+  background: #C49A45;
 }
 
 .profileDetailsColumn {
   display: flex;
   flex-direction: column;
-  gap: 0.20rem;
+  gap: 0.2rem;
   text-align: left;
   flex: 1;
   min-width: 0;
 }
 
 .profileCardName {
-  font-family: var(--font-libre), serif;
-  font-size: 1.35rem;
-  font-weight: 400;
-  color: #2B2B2B;
+  font-family: var(--font-libre), Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: #1A1A1A;
   margin: 0;
   line-height: 1.2;
   white-space: nowrap;
@@ -153,20 +166,20 @@
 
 .profileCardEmail,
 .profileCardPhone {
-  font-size: 0.85rem;
-  color: #777;
+  font-size: 0.8rem;
+  color: #6B7280;
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 .memberBadge {
   display: inline-flex;
   align-items: center;
-  gap: 0rem;
-  background: rgba(200, 155, 96, 0.1);
+  gap: 0.25rem;
+  background: rgba(196, 154, 69, 0.12);
   color: #8C6228;
   font-size: 0.65rem;
   font-weight: 700;
@@ -174,8 +187,8 @@
   border-radius: 20px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  margin-top: 0rem;
   width: fit-content;
+  border: 1px solid rgba(196, 154, 69, 0.25);
 }
 
 /* --- Form Layout --- */
@@ -183,12 +196,12 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .formRow {
   display: flex;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .formRow .formGroup {
@@ -200,40 +213,40 @@
   margin-bottom: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.18rem;
+  gap: 0.3rem;
 }
 
 .label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   font-weight: 600;
-  color: #555;
+  color: #4B5563;
   letter-spacing: 0.01em;
 }
 
 .input {
   width: 100%;
-  padding: 0.38rem 0.65rem;
-  border: 1px solid rgba(0, 0, 0, 0.13);
+  height: 42px;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid #DDD6CD;
   border-radius: 6px;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   font-family: var(--font-inter), sans-serif;
   outline: none;
-  background: #FAFAF8;
+  background: #FFFFFF;
+  color: #1A1A1A;
   transition: all 0.2s ease;
   box-sizing: border-box;
-  line-height: 1.4;
 }
 
 .input:focus {
-  border-color: #C89B60;
-  background: #ffffff;
-  box-shadow: 0 0 0 1.5px rgba(200, 155, 96, 0.3);
+  border-color: #C49A45;
+  box-shadow: 0 0 0 2px rgba(196, 154, 69, 0.2);
 }
 
 .input:disabled {
-  background: #f0f0f0;
-  color: #888;
+  background: #F3F4F6;
+  color: #9CA3AF;
   cursor: not-allowed;
 }
 
@@ -246,99 +259,99 @@
 }
 
 .passwordWrapper .input {
-  padding-right: 36px;
+  padding-right: 38px;
 }
 
 .passwordToggleBtn {
   position: absolute;
-  right: 9px;
+  right: 10px;
   background: none;
   border: none;
   cursor: pointer;
-  color: #999;
+  color: #9CA3AF;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 3px;
+  padding: 4px;
   transition: color 0.2s;
 }
 
 .passwordToggleBtn:hover {
-  color: #C89B60;
+  color: #C49A45;
 }
 
 /* --- Save Button --- */
 .btnSave {
-  padding: 0.42rem 1.1rem;
-  background: #2B2B2B;
-  color: white;
+  height: 38px;
+  padding: 0 1.25rem;
+  background: #1A1A1A;
+  color: #FFFFFF;
   border: none;
   border-radius: 6px;
   font-weight: 600;
-  font-size: 0.78rem;
-  letter-spacing: 0.03em;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
   cursor: pointer;
   transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   align-self: flex-end;
+  margin-top: 0.25rem;
 }
 
 .btnSave:hover {
-  background: #C89B60;
-  transform: translateY(-1px);
+  background: #C49A45;
 }
 
 /* --- Addresses (full width, horizontal grid) --- */
 .addressListRow {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.85rem;
 }
 
 .btnAddAddress {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.28rem 0.75rem;
+  padding: 0.35rem 0.85rem;
   background: #1A1A1A;
   color: #FFFFFF;
   border: none;
-  border-radius: 5px;
-  font-size: 0.72rem;
+  border-radius: 6px;
+  font-size: 0.76rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  letter-spacing: 0.01em;
+  height: 32px;
 }
 
 .btnAddAddress:hover {
-  background: #C89B60;
-  transform: translateY(-1px);
+  background: #C49A45;
 }
 
 .addressCard {
   border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 7px;
-  padding: 0.6rem 0.75rem;
-  background: #FAFAF8;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  background: #FFFFFF;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
-  gap: 0.08rem;
+  gap: 0.25rem;
 }
 
 .addressCard:hover {
-  border-color: rgba(200, 155, 96, 0.4);
-  background: #FDFBF8;
+  border-color: rgba(196, 154, 69, 0.4);
+  background: #FAF8F5;
 }
 
 .addressCardActive {
-  border-color: #C89B60;
+  border-color: #C49A45;
   background: #FFFDF9;
-  box-shadow: 0 2px 8px rgba(200, 155, 96, 0.08);
+  box-shadow: 0 2px 8px rgba(196, 154, 69, 0.1);
 }
 
 .addressTopRow {
@@ -349,13 +362,13 @@
 }
 
 .defaultBadge {
-  font-size: 0.6rem;
+  font-size: 0.64rem;
   font-weight: 700;
-  color: #C89B60;
-  background: rgba(200, 155, 96, 0.1);
-  border: 1px solid rgba(200, 155, 96, 0.3);
+  color: #C49A45;
+  background: rgba(196, 154, 69, 0.12);
+  border: 1px solid rgba(196, 154, 69, 0.3);
   border-radius: 4px;
-  padding: 0.08rem 0.4rem;
+  padding: 0.1rem 0.45rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -364,7 +377,7 @@
   background: none;
   border: none;
   color: #8C6228;
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 600;
   cursor: pointer;
   padding: 0;
@@ -372,13 +385,13 @@
 }
 
 .btnSetDefault:hover {
-  color: #C89B60;
+  color: #C49A45;
   text-decoration: underline;
 }
 
 .radioBtn {
-  width: 13px;
-  height: 13px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   border: 1.5px solid rgba(0, 0, 0, 0.2);
   display: flex;
@@ -389,48 +402,46 @@
 }
 
 .radioBtnActive {
-  border-color: #C89B60;
+  border-color: #C49A45;
 }
 
 .radioDot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: #C89B60;
+  background: #C49A45;
 }
 
 .addressTypeRow {
   display: flex;
   align-items: center;
-  gap: 0.28rem;
-  color: #C89B60;
-  margin-bottom: 0.1rem;
+  gap: 0.35rem;
+  color: #C49A45;
 }
 
 .addressType {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  color: #2B2B2B;
+  color: #1A1A1A;
   text-transform: capitalize;
 }
 
 .addressPersonName {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #2B2B2B;
+  color: #1A1A1A;
 }
 
 .addressText {
   font-size: 0.78rem;
-  color: #666;
-  line-height: 1.4;
+  color: #6B7280;
+  line-height: 1.45;
   flex-grow: 1;
 }
 
 .addressPhone {
   font-size: 0.78rem;
-  color: #777;
-  margin-bottom: 0.25rem;
+  color: #6B7280;
 }
 
 .addressCardActions {
@@ -438,93 +449,97 @@
   align-items: center;
   justify-content: flex-end;
   border-top: 1px solid rgba(0, 0, 0, 0.06);
-  padding-top: 0.3rem;
-  margin-top: 0.2rem;
+  padding-top: 0.45rem;
+  margin-top: 0.35rem;
 }
 
 .btnDeleteAddress {
   display: inline-flex;
   align-items: center;
-  gap: 0.22rem;
+  gap: 0.3rem;
   background: none;
   border: none;
-  font-size: 0.7rem;
-  color: #999;
+  font-size: 0.72rem;
+  color: #9CA3AF;
   cursor: pointer;
   font-weight: 500;
-  padding: 0;
-  transition: color 0.2s;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  transition: all 0.2s;
 }
 
 .btnDeleteAddress:hover {
-  color: #ef4444;
+  color: #DC2626;
+  background: #FEF2F2;
 }
 
 /* --- Empty Address State --- */
 .emptyAddressState {
-  background: #FAFAF8;
+  background: #FAF8F5;
   border-radius: 8px;
   border: 1px dashed rgba(0, 0, 0, 0.1);
-  padding: 1.1rem 1rem;
+  padding: 1.5rem;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.28rem;
+  gap: 0.35rem;
 }
 
 .emptyAddressIcon {
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: rgba(200, 155, 96, 0.1);
-  border: 1px solid rgba(200, 155, 96, 0.25);
-  color: #C89B60;
+  background: rgba(196, 154, 69, 0.12);
+  color: #C49A45;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 0.25rem;
 }
 
 .emptyAddressTitle {
-  font-family: var(--font-libre), serif;
-  font-size: 0.92rem;
-  color: #2B2B2B;
-  margin: 0.08rem 0 0;
+  font-family: var(--font-libre), Georgia, serif;
+  font-size: 0.95rem;
+  color: #1A1A1A;
+  margin: 0;
 }
 
 .emptyAddressSubtitle {
-  font-size: 0.73rem;
-  color: #777;
-  max-width: 280px;
+  font-size: 0.76rem;
+  color: #6B7280;
+  max-width: 320px;
   line-height: 1.45;
   margin: 0;
 }
 
 .btnAddAddressFirst {
-  margin-top: 0.3rem;
+  margin-top: 0.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: #1A1A1A;
   color: #FFFFFF;
-  padding: 0.38rem 0.95rem;
+  padding: 0.45rem 1rem;
   border-radius: 6px;
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   font-weight: 600;
   border: none;
   cursor: pointer;
   transition: all 0.2s;
+  height: 36px;
 }
 
 .btnAddAddressFirst:hover {
-  background: #C89B60;
+  background: #C49A45;
 }
 
 /* --- Modal --- */
 .modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -536,7 +551,7 @@
   background: #FFFFFF;
   border-radius: 12px;
   padding: 1.5rem;
-  max-width: 500px;
+  max-width: 480px;
   width: 100%;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
   animation: slideUp 0.22s ease;
@@ -550,90 +565,90 @@
 }
 
 .modalHeader h2 {
-  font-family: var(--font-libre), serif;
-  font-size: 1.15rem;
-  color: #2B2B2B;
+  font-family: var(--font-libre), Georgia, serif;
+  font-size: 1.2rem;
+  color: #1A1A1A;
   margin: 0;
 }
 
 .modalCloseBtn {
   background: none;
   border: none;
-  font-size: 1.45rem;
+  font-size: 1.35rem;
   line-height: 1;
-  color: #888;
+  color: #9CA3AF;
   cursor: pointer;
-  padding: 0.15rem;
+  padding: 0.2rem;
   transition: color 0.2s;
 }
 
 .modalCloseBtn:hover {
-  color: #2B2B2B;
+  color: #1A1A1A;
 }
 
 .typeSelector {
   display: flex;
-  gap: 0.45rem;
-  margin-bottom: 0.2rem;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .typeBtn {
   flex: 1;
   padding: 0.45rem;
   border-radius: 6px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: #FAFAF8;
+  border: 1px solid #DDD6CD;
+  background: #FAF8F5;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #555;
+  color: #4B5563;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .typeBtnActive {
-  border-color: #C89B60;
-  background: rgba(200, 155, 96, 0.1);
+  border-color: #C49A45;
+  background: rgba(196, 154, 69, 0.12);
   color: #8C6228;
 }
 
 .modalActions {
   display: flex;
-  gap: 0.65rem;
-  margin-top: 0.65rem;
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 
 .btnCancelModal {
   flex: 1;
-  padding: 0.6rem;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  height: 40px;
+  border: 1px solid #DDD6CD;
   border-radius: 6px;
-  background: #FAFAF8;
-  color: #555;
+  background: #FFFFFF;
+  color: #4B5563;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   transition: background 0.2s;
 }
 
 .btnCancelModal:hover {
-  background: #F0F0EE;
+  background: #F3F4F6;
 }
 
 .btnSubmitModal {
   flex: 1;
-  padding: 0.6rem;
+  height: 40px;
   border: none;
   border-radius: 6px;
-  background: #C89B60;
+  background: #C49A45;
   color: #FFFFFF;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   transition: background 0.2s;
 }
 
 .btnSubmitModal:hover {
-  background: #B3864D;
+  background: #9E7422;
 }
 
 /* --- Toast --- */
@@ -641,9 +656,9 @@
   position: fixed;
   bottom: 1.5rem;
   right: 1.5rem;
-  background: #2B2B2B;
+  background: #1A1A1A;
   color: white;
-  padding: 0.7rem 1.3rem;
+  padding: 0.65rem 1.15rem;
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   display: flex;
@@ -651,9 +666,9 @@
   gap: 0.6rem;
   z-index: 9999;
   animation: slideUp 0.25s ease;
-  font-size: 0.875rem;
+  font-size: 0.82rem;
   font-weight: 500;
-  border-left: 3px solid #C89B60;
+  border-left: 3px solid #C49A45;
 }
 
 @keyframes slideUp {
@@ -661,77 +676,61 @@
     transform: translateY(16px);
     opacity: 0;
   }
-
   to {
     transform: translateY(0);
     opacity: 1;
   }
 }
 
-/* --- Responsive --- */
-@media (max-width: 900px) {
-  .container {
-    padding: 0.75rem 1rem 1.25rem;
-  }
-
-  .grid {
-    gap: 0.75rem;
-  }
-
-  .topRow,
-  .twoColRow {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-
-  .titleBlock {
-    padding: 0.25rem 0;
-  }
-
-  .title {
-    font-size: 1.6rem;
-  }
-
-  .subtitle {
-    font-size: 0.85rem;
-  }
-
-  .formRow {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .card {
-    padding: 0.75rem 0.875rem;
-  }
-
-  .profileCardContent {
-    flex-direction: row;
-    gap: 0.85rem;
-  }
-
-  .addressListRow {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .toast {
-    left: 1rem;
-    right: 1rem;
-    bottom: 1rem;
-    justify-content: center;
-  }
+/* --- Photo Buttons --- */
+.changePhotoBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #FFFFFF;
+  border: 1px solid #DDD6CD;
+  color: #374151;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  height: 28px;
 }
 
-@media (max-width: 500px) {
-  .addressListRow {
-    grid-template-columns: 1fr;
-  }
+.changePhotoBtn:hover {
+  border-color: #C49A45;
+  color: #C49A45;
+  background: #FAF8F5;
+}
+
+.removePhotoBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  color: #DC2626;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  height: 28px;
+}
+
+.removePhotoBtn:hover {
+  background: #FEE2E2;
+  border-color: #EF4444;
+  color: #B91C1C;
 }
 
 .avatarRemoveBtn {
   position: absolute;
-  bottom: 0;
-  right: 0;
+  bottom: -2px;
+  right: -2px;
   background: #DC2626;
   color: white;
   border-radius: 50%;
@@ -747,65 +746,36 @@
 
 .avatarRemoveBtn:hover {
   background: #B91C1C;
-  transform: scale(1.1);
-}
-
-.changePhotoBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  background: #FFFFFF;
-  border: 1px solid #D1D5DB;
-  color: #374151;
-  font-size: 0.76rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0.28rem 0.65rem;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.changePhotoBtn:hover {
-  border-color: #C89B60;
-  color: #C89B60;
-  background: #FAF8F5;
-}
-
-.removePhotoBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  background: #FEF2F2;
-  border: 1px solid #FCA5A5;
-  color: #DC2626;
-  font-size: 0.76rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0.28rem 0.65rem;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.removePhotoBtn:hover {
-  background: #FEE2E2;
-  border-color: #EF4444;
-  color: #B91C1C;
 }
 
 .btnDeleteAccount {
-  padding: 0.65rem 1.25rem;
+  padding: 0.5rem 1.15rem;
   background: #DC2626;
   color: #FFFFFF;
   border: none;
-  border-radius: 8px;
-  font-size: 0.85rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  height: 36px;
 }
 
 .btnDeleteAccount:hover {
   background: #B91C1C;
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+}
+
+/* --- Responsive --- */
+@media (max-width: 900px) {
+  .topRow,
+  .twoColRow {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .formRow {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
 }

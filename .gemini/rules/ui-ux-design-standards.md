@@ -48,3 +48,4 @@
 ## 4. UI/UX Pro Max Skill Tooling
 * For palette lookups, component patterns, and typography recommendations:
   `python .agents/skills/ui-ux-pro-max/scripts/search.py "<query>" --design-system`
+
