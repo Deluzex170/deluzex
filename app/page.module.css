@@ -1320,17 +1320,23 @@
    Figma: 1440x856, large Libre Caslon "CUSTOMER STORIES" title, 3 cards, arrows
           Center card has golden border and is the active/featured one
    ========================================================================== */
+/* ==========================================================================
+   CUSTOMER STORIES SECTION
+   Figma: 1440x856, large Libre Caslon "CUSTOMER STORIES" title, 3 cards, arrows
+          Center card has golden border and is the active/featured one
+   ========================================================================== */
 .storiesSection {
-  width: 1440px;
-  max-width: 100%;
+  width: 100%;
+  max-width: 1440px;
   height: auto;
   margin: 0 auto;
-  padding: 64px 80px 24px;
+  padding: 64px 40px 32px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 36px;
   background: #FAFAF8;
+  box-sizing: border-box;
 }
 
 .storiesTitle {
@@ -1344,58 +1350,185 @@
   margin: 0;
 }
 
-.storiesMarquee {
-  width: 100vw;
-  max-width: 100vw;
+/* Dedicated Single Story Showcase (Centered, No Right Gap, No Arrows) */
+.singleStoryWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 6px 16px 16px;
+  box-sizing: border-box;
+}
+
+.singleStoryCard {
+  width: 100%;
+  max-width: 680px;
+  background: #FFFFFF;
+  border: 1.5px solid #E8E0D8;
+  border-radius: 24px;
+  padding: 44px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+}
+
+.singleStoryCard:hover {
+  transform: translateY(-4px);
+  border-color: #D79322;
+  box-shadow: 0 14px 40px rgba(215, 147, 34, 0.16);
+}
+
+.singleStoryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.quoteDecor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+}
+
+.singleStoryText {
+  font-family: var(--font-hanken), 'Hanken Grotesk', sans-serif;
+  font-size: 22px;
+  line-height: 1.7;
+  color: #1E1E28;
+  margin: 0;
+  font-weight: 400;
+}
+
+.singleStoryAuthor {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 4px;
+  padding-top: 22px;
+  border-top: 1px solid #F0EAE2;
+}
+
+.singleStoryAvatarWrap {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+  border: 2px solid #E0D5C7;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.authorMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.verifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #C28928;
+  background: #FDF8F0;
+  border: 1px solid #F3DFB8;
+  padding: 2px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.02em;
+}
+
+/* Multi-Story Carousel Track & Controls */
+.storiesCarouselWrapper {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.storiesTrack {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  gap: 28px;
   overflow-x: auto;
   scroll-behavior: smooth;
   scrollbar-width: none;
   -ms-overflow-style: none;
   -webkit-overflow-scrolling: touch;
-  margin-left: calc(50% - 50vw);
-  padding: 10px 0 24px;
+  padding: 12px calc(50% - 200px) 24px;
+  box-sizing: border-box;
 }
 
-.storiesMarquee::-webkit-scrollbar {
+.storiesTrack::-webkit-scrollbar {
   display: none;
 }
 
-.marqueeGroupStories {
-  display: flex;
-  gap: 28px;
-  width: max-content;
-  padding: 0 max(80px, calc((100vw - 1200px) / 2));
+.storiesTrackCentered {
+  justify-content: center;
+  padding: 12px 24px 24px;
 }
 
 .storyCard {
-  width: 420px;
+  width: 400px;
   flex-shrink: 0;
-  background: #fff;
+  background: #FFFFFF;
   border: 1.5px solid #E8E0D8;
   border-radius: 20px;
-  padding: 36px 32px;
+  padding: 34px 30px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  box-sizing: border-box;
 }
 
 .storyCard:hover {
   transform: translateY(-4px);
   border-color: #D79322;
-  box-shadow: 0 10px 30px rgba(215, 147, 34, 0.18);
+  box-shadow: 0 10px 30px rgba(215, 147, 34, 0.16);
+}
+
+.storyCardActive {
+  border-color: #D79322;
+  box-shadow: 0 10px 30px rgba(215, 147, 34, 0.15);
+  background: #FFFFFF;
+}
+
+.storyCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.quoteDecorMini {
+  opacity: 0.7;
 }
 
 .storyStars {
   color: #D79322;
-  font-size: 20px;
+  font-size: 18px;
   letter-spacing: 2px;
 }
 
 .storyText {
   font-family: var(--font-hanken), 'Hanken Grotesk', sans-serif;
-  font-size: 21px;
+  font-size: 18.5px;
   line-height: 1.65;
   color: #24242E;
   flex: 1;
@@ -1406,28 +1539,86 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-top: 8px;
+  margin-top: 6px;
+  padding-top: 16px;
+  border-top: 1px solid #F2ECE4;
 }
 
-.storyAvatar {
+.storyAvatarWrap {
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  object-fit: cover;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
   border: 2px solid #F0E8DA;
 }
 
 .storyAuthorInfo h5 {
   font-family: var(--font-hanken), 'Hanken Grotesk', sans-serif;
-  font-size: 22px;
+  font-size: 19px;
   font-weight: 700;
   color: #14141C;
-  margin: 0 0 4px;
+  margin: 0 0 2px;
 }
 
 .storyAuthorInfo span {
   font-family: var(--font-hanken), 'Hanken Grotesk', sans-serif;
-  font-size: 17px;
+  font-size: 14.5px;
   font-weight: 500;
-  color: #4C4C58;
+  color: #5A5A68;
+}
+
+/* Controls: Arrows + Dots */
+.storiesControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 4px;
+}
+
+.storiesDots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.storyDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background: #E0D5C7;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.storyDot:hover {
+  background: #C49A45;
+}
+
+.storyDotActive {
+  width: 26px;
+  background: #D79322;
+  box-shadow: 0 2px 8px rgba(215, 147, 34, 0.35);
+}
+
+/* Backward compatibility classes for any existing references */
+.storiesMarquee {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+.marqueeGroupStories {
+  display: flex;
+  gap: 28px;
+  width: max-content;
+  min-width: 100%;
+  justify-content: center;
 }
 
 /* ==========================================================================
@@ -2380,15 +2571,97 @@ pointer-events: auto;
   .storiesSection {
     width: 100%;
     max-width: 100%;
-    padding: 36px 0 16px;
-    gap: 16px;
+    padding: 38px 16px 20px;
+    gap: 20px;
     overflow: hidden;
+    box-sizing: border-box;
   }
 
   .storiesTitle {
     font-size: 28px;
-    padding: 0 16px;
+    padding: 0 12px;
     text-align: center;
+  }
+
+  .singleStoryWrapper {
+    padding: 4px 8px 12px;
+  }
+
+  .singleStoryCard {
+    max-width: 440px;
+    padding: 26px 22px;
+    border-radius: 18px;
+    gap: 18px;
+  }
+
+  .singleStoryText {
+    font-size: 16.5px;
+    line-height: 1.6;
+  }
+
+  .singleStoryAvatarWrap {
+    width: 52px;
+    height: 52px;
+  }
+
+  .storiesTrack {
+    padding: 8px 16px 16px;
+    gap: 16px;
+    scroll-snap-type: x mandatory;
+  }
+
+  .storyCard {
+    width: min(calc(100vw - 36px), 360px);
+    max-width: 360px;
+    margin: 0 auto;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    padding: 22px 20px 18px;
+    gap: 14px;
+    border-radius: 16px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+  }
+
+  .storyStars {
+    font-size: 15px;
+    letter-spacing: 1.5px;
+  }
+
+  .storyText {
+    font-size: 15.5px;
+    line-height: 1.55;
+  }
+
+  .storyAuthor {
+    gap: 10px;
+    margin-top: 4px;
+    padding-top: 12px;
+  }
+
+  .storyAvatarWrap {
+    width: 46px;
+    height: 46px;
+  }
+
+  .storyAuthorInfo h5 {
+    font-size: 16px;
+    margin: 0 0 2px;
+  }
+
+  .storyAuthorInfo span {
+    font-size: 13px;
+  }
+
+  .arrowOutline,
+  .arrowSolid {
+    width: 44px;
+    height: 44px;
+  }
+
+  .storiesControls {
+    gap: 14px;
   }
 
   .storiesMarquee {
@@ -2410,50 +2683,6 @@ pointer-events: auto;
     min-width: 100%;
     width: 100%;
     box-sizing: border-box;
-  }
-
-  .arrowOutline,
-  .arrowSolid {
-    width: 44px;
-    height: 44px;
-  }
-
-  .storyCard {
-    width: min(calc(100vw - 32px), 360px);
-    max-width: 360px;
-    margin: 0 auto;
-    scroll-snap-align: center;
-    scroll-snap-stop: always;
-    padding: 22px 20px 18px;
-    gap: 12px;
-    border-radius: 16px;
-    flex-shrink: 0;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
-    box-sizing: border-box;
-  }
-
-  .storyStars {
-    font-size: 15px;
-    letter-spacing: 1.5px;
-  }
-
-  .storyText {
-    font-size: 14px;
-    line-height: 1.45;
-  }
-
-  .storyAuthor {
-    gap: 10px;
-    margin-top: 2px;
-  }
-
-  .storyAuthorInfo h5 {
-    font-size: 15px;
-    margin: 0 0 2px;
-  }
-
-  .storyAuthorInfo span {
-    font-size: 12px;
   }
 
   .ctaSection {
@@ -2774,31 +3003,52 @@ pointer-events: auto;
   }
 
   .storiesSection {
-    padding: 28px 0 12px;
-    gap: 14px;
+    padding: 30px 12px 16px;
+    gap: 16px;
   }
 
   .storiesTitle {
     font-size: 24px;
-    padding: 0 14px;
+    padding: 0 8px;
   }
 
-  .storiesMarquee {
-    padding: 6px 0 4px;
+  .singleStoryWrapper {
+    padding: 2px 4px 8px;
   }
 
-  .marqueeGroupStories {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0 12px;
+  .singleStoryCard {
+    max-width: 100%;
+    padding: 20px 16px;
+    border-radius: 16px;
+    gap: 14px;
+  }
+
+  .singleStoryText {
+    font-size: 14.5px;
+    line-height: 1.55;
+  }
+
+  .singleStoryAuthor {
+    padding-top: 14px;
     gap: 12px;
-    width: 100%;
-    box-sizing: border-box;
+  }
+
+  .singleStoryAvatarWrap {
+    width: 46px;
+    height: 46px;
+  }
+
+  .storyAuthorInfo h5 {
+    font-size: 16px;
+  }
+
+  .storiesTrack {
+    padding: 6px 12px 12px;
+    gap: 12px;
   }
 
   .storyCard {
-    width: min(calc(100vw - 24px), 330px);
+    width: min(calc(100vw - 28px), 330px);
     max-width: 330px;
     margin: 0 auto;
     scroll-snap-align: center;
@@ -2816,13 +3066,19 @@ pointer-events: auto;
   }
 
   .storyText {
-    font-size: 13px;
-    line-height: 1.4;
+    font-size: 14px;
+    line-height: 1.5;
   }
 
   .storyAuthor {
     gap: 8px;
     margin-top: 0;
+    padding-top: 10px;
+  }
+
+  .storyAvatarWrap {
+    width: 42px;
+    height: 42px;
   }
 
   .storyAuthorInfo h5 {
@@ -2838,6 +3094,28 @@ pointer-events: auto;
   .arrowSolid {
     width: 38px;
     height: 38px;
+  }
+
+  .storiesControls {
+    gap: 10px;
+  }
+
+  .storyDotActive {
+    width: 20px;
+  }
+
+  .storiesMarquee {
+    padding: 6px 0 4px;
+  }
+
+  .marqueeGroupStories {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 12px;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .ctaSection {
