@@ -14,9 +14,10 @@ import {
   removeUserAvatar,
   deleteUserProfile,
   SavedAddress,
-   sendProfilePhoneOtp,
+  sendProfilePhoneOtp,
   verifyProfilePhoneOtp,
 } from "../../services/api";
+import { INDIAN_STATES, lookupPincode, normalizeIndianState } from "../../lib/indiaAddress";
 import styles from "./profile.module.css";
 
 function getInitialUserValue(key: string, defaultValue: string, userObj?: Record<string, string> | null): string {
@@ -152,6 +153,9 @@ export default function ProfilePage() {
   const [email, setEmail] = useState(() =>
     getInitialUserValue("email", "Hasanabbas@gmail.com", userRecord)
   );
+  const [isEmailVerified, setIsEmailVerified] = useState<boolean>(() =>
+    Boolean(userRecord?.is_verified)
+  );
   const [phone, setPhone] = useState(() =>
     getInitialUserValue("phone", "+91 9982791722", userRecord)
   );
@@ -226,6 +230,9 @@ export default function ProfilePage() {
         if (profile.city) setCity(profile.city);
         if (profile.state) setState(profile.state);
         if (profile.country) setCountry(profile.country);
+        if ((profile as any).is_verified !== undefined) {
+          setIsEmailVerified(Boolean((profile as any).is_verified));
+        }
         setSavedProfile({
           firstName: profile.first_name || profile.name?.split(" ")[0] || "Hasanabbas",
           lastName: profile.last_name || profile.name?.split(" ").slice(1).join(" ") || "Chaudhary",
@@ -247,6 +254,12 @@ export default function ProfilePage() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (user && typeof user === "object" && (user as any).is_verified !== undefined) {
+      setIsEmailVerified(Boolean((user as any).is_verified));
+    }
+  }, [user]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -419,6 +432,34 @@ export default function ProfilePage() {
   const [addrPinCode, setAddrPinCode] = useState("");
   const [addrPhone, setAddrPhone] = useState("");
   const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const [isLookingUpAddrPin, setIsLookingUpAddrPin] = useState(false);
+  const [addrPinAutoMessage, setAddrPinAutoMessage] = useState<string | null>(null);
+
+  const handleAddrPinCodeChange = async (newVal: string) => {
+    const clean = newVal.replace(/\D/g, "").slice(0, 6);
+    setAddrPinCode(clean);
+
+    if (clean.length === 6) {
+      setIsLookingUpAddrPin(true);
+      setAddrPinAutoMessage(null);
+      try {
+        const res = await lookupPincode(clean);
+        if (res.success) {
+          if (res.city) setAddrCity(res.city);
+          if (res.state) setAddrState(res.state);
+          const detected = res.city ? `${res.city}, ${res.state}` : res.state;
+          if (detected) {
+            setAddrPinAutoMessage(`✓ Auto-detected ${detected}`);
+            setTimeout(() => setAddrPinAutoMessage(null), 4000);
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to auto-lookup addr pin:", err);
+      } finally {
+        setIsLookingUpAddrPin(false);
+      }
+    }
+  };
 
   const userEmail = (user as Record<string, string>)?.email || email || "";
 
@@ -455,7 +496,7 @@ export default function ProfilePage() {
       last_name: addrLastName.trim(),
       street: addrStreet.trim(),
       city: addrCity.trim(),
-      state: addrState.trim(),
+      state: normalizeIndianState(addrState.trim()),
       pin_code: addrPinCode.trim(),
       phone: addrPhone.trim(),
       is_default: addresses.length === 0,
@@ -673,7 +714,29 @@ export default function ProfilePage() {
 
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Email Address</label>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                    <label className={styles.label} style={{ margin: 0 }}>Email Address</label>
+                    {isEmailVerified ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: 600, color: "#166534", background: "#DCFCE7", padding: "2px 8px", borderRadius: "10px" }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                        Verified
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (typeof window !== "undefined") {
+                            window.dispatchEvent(new CustomEvent("deluzex:open-email-verify"));
+                          }
+                        }}
+                        style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: 600, color: "#C49A45", background: "rgba(196, 154, 69, 0.12)", border: "1px solid rgba(196, 154, 69, 0.35)", padding: "2px 8px", borderRadius: "10px", cursor: "pointer", transition: "all 0.2s ease" }}
+                        title="Click to verify your email via 6-digit OTP"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                        Unverified — Verify Now
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="email"
                     required
@@ -706,12 +769,22 @@ export default function ProfilePage() {
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>State</label>
-                  <input
-                    type="text"
+                  <select
                     className={styles.input}
-                    value={state}
+                    value={normalizeIndianState(state)}
                     onChange={(e) => setState(e.target.value)}
-                  />
+                    style={{ cursor: "pointer", background: "#FFFFFF" }}
+                  >
+                    <option value="">Select State</option>
+                    {INDIAN_STATES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                    {state && !INDIAN_STATES.includes(normalizeIndianState(state)) && (
+                      <option value={state}>{state}</option>
+                    )}
+                  </select>
                 </div>
               </div>
 
@@ -1101,40 +1174,58 @@ export default function ProfilePage() {
 
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                    <label className={styles.label} style={{ margin: 0 }}>PIN Code *</label>
+                    {isLookingUpAddrPin && (
+                      <span style={{ fontSize: "11px", color: "#C49A45", fontWeight: 600 }}>Searching...</span>
+                    )}
+                    {addrPinAutoMessage && !isLookingUpAddrPin && (
+                      <span style={{ fontSize: "11px", color: "#166534", fontWeight: 600 }}>{addrPinAutoMessage}</span>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    className={styles.input}
+                    placeholder="6-digit PIN code (e.g. 387002)"
+                    value={addrPinCode}
+                    onChange={(e) => handleAddrPinCodeChange(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formGroup}>
                   <label className={styles.label}>City *</label>
                   <input
                     type="text"
                     required
                     className={styles.input}
-                    placeholder="City"
+                    placeholder="City / District"
                     value={addrCity}
                     onChange={(e) => setAddrCity(e.target.value)}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>State *</label>
-                  <input
-                    type="text"
-                    required
-                    className={styles.input}
-                    placeholder="State"
-                    value={addrState}
-                    onChange={(e) => setAddrState(e.target.value)}
                   />
                 </div>
               </div>
 
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>PIN Code *</label>
-                  <input
-                    type="text"
+                  <label className={styles.label}>State *</label>
+                  <select
                     required
                     className={styles.input}
-                    placeholder="PIN Code"
-                    value={addrPinCode}
-                    onChange={(e) => setAddrPinCode(e.target.value)}
-                  />
+                    value={normalizeIndianState(addrState)}
+                    onChange={(e) => setAddrState(e.target.value)}
+                    style={{ cursor: "pointer", background: "#FFFFFF" }}
+                  >
+                    <option value="">Select State</option>
+                    {INDIAN_STATES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                    {addrState && !INDIAN_STATES.includes(normalizeIndianState(addrState)) && (
+                      <option value={addrState}>{addrState}</option>
+                    )}
+                  </select>
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Phone Number *</label>
@@ -1142,7 +1233,7 @@ export default function ProfilePage() {
                     type="tel"
                     required
                     className={styles.input}
-                    placeholder="Phone Number"
+                    placeholder="10-digit mobile number"
                     value={addrPhone}
                     onChange={(e) => setAddrPhone(e.target.value)}
                   />

@@ -23,6 +23,7 @@ interface AuthContextType {
   loading: boolean;
   login: (token: string, userData: AuthUser) => void;
   logout: () => void;
+  updateUser: (fields: Partial<Record<string, unknown>>) => void;
   showLoginModal: boolean;
   loginModalMessage: string;
   pendingCartProduct: PendingCartProduct | null;
@@ -221,6 +222,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateUser = (fields: Partial<Record<string, unknown>>) => {
+    setUser((prev) => {
+      if (!prev || typeof prev !== "object") return prev;
+      const updated = { ...prev, ...fields };
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("user", JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -230,6 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         login,
         logout,
+        updateUser,
         showLoginModal,
         loginModalMessage,
         pendingCartProduct,

@@ -35,6 +35,7 @@ import {
   updateBackendCartItem,
   removeBackendCartItem,
 } from "../services/api";
+import { INDIAN_STATES, lookupPincode, normalizeIndianState } from "../lib/indiaAddress";
 import styles from "./checkout.module.css";
 
 function getOrCreateIdempotencyKey(): string {
@@ -112,6 +113,8 @@ export default function CheckoutPage() {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [pinCode, setPinCode] = useState("");
+  const [isLookingUpPin, setIsLookingUpPin] = useState(false);
+  const [pinAutoMessage, setPinAutoMessage] = useState<string | null>(null);
 
   // Coupon & Promo Code State
   const [availableOffers, setAvailableOffers] = useState<AvailableCoupon[]>([]);
@@ -282,9 +285,39 @@ export default function CheckoutPage() {
     setLastName(addr.last_name || "");
     setStreet(addr.street || "");
     setCity(addr.city || "");
-    setState(addr.state || "");
+    setState(normalizeIndianState(addr.state || ""));
     setPinCode(addr.pin_code || "");
     if (addr.phone) setPhone(addr.phone);
+  }, []);
+
+  const handlePinCodeChange = useCallback(async (newVal: string) => {
+    const clean = newVal.replace(/\D/g, "").slice(0, 6);
+    setPinCode(clean);
+
+    if (clean.length === 6) {
+      setIsLookingUpPin(true);
+      setPinAutoMessage(null);
+      try {
+        const res = await lookupPincode(clean);
+        if (res.success) {
+          if (res.city) {
+            setCity(res.city);
+          }
+          if (res.state) {
+            setState(res.state);
+          }
+          const detected = res.city ? `${res.city}, ${res.state}` : res.state;
+          if (detected) {
+            setPinAutoMessage(`✓ Auto-detected ${detected}`);
+            setTimeout(() => setPinAutoMessage(null), 4500);
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to auto-lookup pincode:", err);
+      } finally {
+        setIsLookingUpPin(false);
+      }
+    }
   }, []);
 
   const [isUpdatingAddress, setIsUpdatingAddress] = useState(false);
@@ -926,6 +959,55 @@ export default function CheckoutPage() {
               )}
             </div>
 
+            {/* Saved Addresses Dropdown Quick-Selector */}
+            {savedAddresses.length > 0 && (
+              <div className={styles.savedDropdownWrapper}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                  <label className={styles.label} style={{ margin: 0 }}>
+                    Select from Saved Addresses
+                  </label>
+                  <span className={styles.savedCountBadge}>{savedAddresses.length} saved</span>
+                </div>
+                <div className={styles.selectWrapper}>
+                  <select
+                    className={styles.select}
+                    value={selectedAddressId || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val || val === "NEW") {
+                        setSelectedAddressId(null);
+                        setFirstName(typeof (user as any)?.first_name === "string" ? (user as any).first_name : "");
+                        setLastName(typeof (user as any)?.last_name === "string" ? (user as any).last_name : "");
+                        setStreet("");
+                        setCity("");
+                        setState("");
+                        setPinCode("");
+                        setPhone(typeof (user as any)?.phone === "string" ? (user as any).phone : "");
+                      } else {
+                        const found = savedAddresses.find((a) => (a.id || a._id) === val);
+                        if (found) applyAddress(found);
+                      }
+                    }}
+                    disabled={isProcessing}
+                  >
+                    <option value="">-- Choose a Saved Address or Add New --</option>
+                    {savedAddresses.map((addr) => {
+                      const id = addr.id || addr._id;
+                      return (
+                        <option key={id} value={id}>
+                          {addr.type || "Address"} • {addr.first_name} {addr.last_name} — {addr.street}, {addr.city}, {addr.state} ({addr.pin_code})
+                        </option>
+                      );
+                    })}
+                    <option value="NEW">+ Enter a New Delivery Address</option>
+                  </select>
+                  <svg className={styles.selectChevron} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+              </div>
+            )}
+
             {/* Saved Addresses Cards (Matching User's Reference Layout) */}
             {savedAddresses.length > 0 && (
               <div className={styles.savedGrid}>
@@ -1032,41 +1114,64 @@ export default function CheckoutPage() {
 
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
-                <label className={styles.label}>City *</label>
-                <input
-                  type="text"
-                  required
-                  className={styles.input}
-                  placeholder="City (e.g. Mumbai, Ahmedabad)"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  disabled={isProcessing}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>State *</label>
-                <input
-                  type="text"
-                  required
-                  className={styles.input}
-                  placeholder="State"
-                  value={state}
-                  onChange={(e) => setState(e.target.value)}
-                  disabled={isProcessing}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>PIN Code *</label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <label className={styles.label} style={{ margin: 0 }}>PIN Code *</label>
+                  {isLookingUpPin && (
+                    <span className={styles.pinCheckingBadge}>Searching...</span>
+                  )}
+                  {pinAutoMessage && !isLookingUpPin && (
+                    <span className={styles.pinDetectedBadge}>{pinAutoMessage}</span>
+                  )}
+                </div>
                 <input
                   type="text"
                   required
                   maxLength={6}
                   className={styles.input}
-                  placeholder="6-digit PIN code"
+                  placeholder="6-digit PIN code (e.g. 387002)"
                   value={pinCode}
-                  onChange={(e) => setPinCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  onChange={(e) => handlePinCodeChange(e.target.value)}
                   disabled={isProcessing}
                 />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>City *</label>
+                <input
+                  type="text"
+                  required
+                  className={styles.input}
+                  placeholder="City / District"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  disabled={isProcessing}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>State *</label>
+                <div className={styles.selectWrapper}>
+                  <select
+                    required
+                    className={styles.select}
+                    value={normalizeIndianState(state)}
+                    onChange={(e) => setState(e.target.value)}
+                    disabled={isProcessing}
+                  >
+                    <option value="">Select State</option>
+                    {INDIAN_STATES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                    {state && !INDIAN_STATES.includes(normalizeIndianState(state)) && (
+                      <option value={state}>{state}</option>
+                    )}
+                  </select>
+                  <svg className={styles.selectChevron} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
               </div>
             </div>
 
