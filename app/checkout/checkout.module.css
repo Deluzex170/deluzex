@@ -582,6 +582,222 @@
   cursor: not-allowed;
 }
 
+.addrRadioCircle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid #DDD6CD;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.addrRadioCircleSelected {
+  border-color: #C49A45;
+  background: #FFFDF9;
+}
+
+.addrRadioDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #C49A45;
+}
+
+.defaultBadge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #E8F5E9;
+  color: #2E7D32;
+  border: 1px solid #C8E6C9;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.selectedIndicatorRow {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(196, 154, 69, 0.25);
+  display: flex;
+  align-items: center;
+}
+
+.addNewAddressCard {
+  background: #FFFFFF;
+  border: 1.5px dashed #D4C3A3;
+  border-radius: 12px;
+  padding: 20px 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #C49A45;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+  min-height: 140px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.addNewAddressCard:hover {
+  border-color: #C49A45;
+  background: #FCF9F2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(196, 154, 69, 0.1);
+}
+
+.addNewAddressIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #F4EFE6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #C49A45;
+  transition: all 0.2s ease;
+}
+
+.addNewAddressCard:hover .addNewAddressIcon {
+  background: #C49A45;
+  color: #FFFFFF;
+}
+
+.addressFormBox {
+  background: #FFFDF9;
+  border: 1px solid #EAE0D0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 8px;
+}
+
+.addressFormHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #EAE5DE;
+}
+
+.addressFormTitle {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #181822;
+  margin: 0;
+}
+
+.addressFormActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.btnSaveAddressCTA {
+  background: linear-gradient(135deg, #D4AF37 0%, #C49A45 50%, #B58B35 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  height: 42px;
+  padding: 0 20px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btnSaveAddressCTA:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(196, 154, 69, 0.3);
+}
+
+.btnSaveAddressCTA:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btnCancelAddress {
+  background: transparent;
+  border: 1px solid #DDD6CD;
+  color: #66635E;
+  border-radius: 8px;
+  height: 42px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btnCancelAddress:hover {
+  background: #F4EFE6;
+  color: #181822;
+  border-color: #C49A45;
+}
+
+.addressTypeGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.typePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid #DDD6CD;
+  background: #FFFFFF;
+  color: #4A4844;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.typePill:hover {
+  border-color: #C49A45;
+  color: #181822;
+  background: #FCF9F2;
+}
+
+.typePillActive {
+  border-color: #C49A45;
+  background: #FFFDF9;
+  color: #8C6A23;
+  box-shadow: 0 0 0 1px #C49A45;
+  font-weight: 700;
+}
+
+.savedBadgeOffice {
+  background: #EFF6FF !important;
+  color: #1D4ED8 !important;
+  border-color: #DBEAFE !important;
+}
+
+.savedBadgeOther {
+  background: #F3E8FF !important;
+  color: #7E22CE !important;
+  border-color: #E9D5FF !important;
+}
+
 /* ──────────────────────────────────────────────────────────────────────────
    7. PAYMENT METHODS SELECTION
    ────────────────────────────────────────────────────────────────────────── */

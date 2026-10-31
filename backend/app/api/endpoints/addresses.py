@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query, status, Depends
+import re
 from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
@@ -60,7 +61,9 @@ def create_user_address(
     current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
 ):
     """
-    Save a new delivery address to MongoDB.
+    Save a new delivery address to MongoDB, with deduplication protection.
+    If the exact same street, city, and pin_code already exists for this user,
+    updates mutable attributes and returns existing address rather than duplicating.
     """
     email_clean = address_in.user_email.strip().lower()
 
@@ -71,6 +74,44 @@ def create_user_address(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Cannot save address under another user's email address",
             )
+
+    street_clean = (address_in.street or "").strip()
+    city_clean = (address_in.city or "").strip()
+    pin_clean = (address_in.pin_code or "").strip()
+
+    # Deduplication check: check if user already has an address with identical street, city, pin
+    existing_addr = db.addresses.find_one({
+        "user_email": email_clean,
+        "street": {"$regex": f"^{re.escape(street_clean)}$", "$options": "i"},
+        "city": {"$regex": f"^{re.escape(city_clean)}$", "$options": "i"},
+        "pin_code": pin_clean,
+    })
+
+    if existing_addr:
+        update_fields = {}
+        if address_in.first_name:
+            update_fields["first_name"] = address_in.first_name.strip()
+        if address_in.last_name:
+            update_fields["last_name"] = address_in.last_name.strip()
+        if address_in.phone:
+            update_fields["phone"] = address_in.phone.strip()
+        if address_in.state:
+            update_fields["state"] = address_in.state.strip()
+        if address_in.type:
+            update_fields["type"] = address_in.type.strip()
+
+        if address_in.is_default:
+            db.addresses.update_many(
+                {"user_email": email_clean},
+                {"$set": {"is_default": False}}
+            )
+            update_fields["is_default"] = True
+
+        if update_fields:
+            db.addresses.update_one({"_id": existing_addr["_id"]}, {"$set": update_fields})
+            existing_addr = db.addresses.find_one({"_id": existing_addr["_id"]})
+
+        return AddressResponse(**serialize_address(existing_addr))
 
     # Check if user has any existing addresses
     existing_count = db.addresses.count_documents({"user_email": email_clean})
@@ -87,6 +128,9 @@ def create_user_address(
 
     doc_data = address_in.model_dump()
     doc_data["user_email"] = email_clean
+    doc_data["street"] = street_clean
+    doc_data["city"] = city_clean
+    doc_data["pin_code"] = pin_clean
     doc_data["is_default"] = is_default
     doc_data["created_at"] = datetime.utcnow()
 

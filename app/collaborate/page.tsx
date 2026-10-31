@@ -187,7 +187,7 @@ export default function CollaboratePage() {
     }
 
     if (!agreedTerms) {
-      errors.terms = "Please agree to the submission terms to proceed.";
+      errors.terms = "Please agree to the Terms & Conditions and Privacy Policy to proceed.";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -863,7 +863,29 @@ export default function CollaboratePage() {
                         if (e.target.checked) setFormErrors((prev) => ({ ...prev, terms: undefined }));
                       }}
                     />
-                    <span>I have read and agree to the submission terms.</span>
+                    <span>
+                      I agree to the{" "}
+                      <Link
+                        href="/terms"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.termsLink}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Terms &amp; Conditions
+                      </Link>{" "}
+                      and{" "}
+                      <Link
+                        href="/privacy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.termsLink}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Privacy Policy
+                      </Link>
+                      .
+                    </span>
                   </label>
                   {formErrors.terms && (
                     <span className={styles.fieldError}>

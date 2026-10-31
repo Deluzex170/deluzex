@@ -279,8 +279,15 @@ export default function CheckoutPage() {
     }
   };
 
+  const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const [addressType, setAddressType] = useState<"Home" | "Office" | "Other">("Home");
+  const [isUpdatingAddress, setIsUpdatingAddress] = useState(false);
+  const [addressUpdateMessage, setAddressUpdateMessage] = useState<string | null>(null);
+
   const applyAddress = useCallback((addr: SavedAddress) => {
     setSelectedAddressId(addr.id || addr._id || null);
+    setAddressType((addr.type as "Home" | "Office" | "Other") || "Home");
     setFirstName(addr.first_name || "");
     setLastName(addr.last_name || "");
     setStreet(addr.street || "");
@@ -288,7 +295,42 @@ export default function CheckoutPage() {
     setState(normalizeIndianState(addr.state || ""));
     setPinCode(addr.pin_code || "");
     if (addr.phone) setPhone(addr.phone);
+    setIsAddingNewAddress(false);
+    setEditingAddressId(null);
   }, []);
+
+  const handleStartAddNew = () => {
+    setSelectedAddressId(null);
+    setEditingAddressId(null);
+    setIsAddingNewAddress(true);
+    setAddressType("Home");
+    const userObj = user as Record<string, string> | null;
+    if (userObj?.first_name) setFirstName(userObj.first_name);
+    if (userObj?.last_name) setLastName(userObj.last_name);
+    if (userObj?.phone) setPhone(userObj.phone);
+    setStreet("");
+    setCity("");
+    setState("");
+    setPinCode("");
+  };
+
+  const handleStartEdit = (addr: SavedAddress, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const addrId = addr.id || addr._id || null;
+    applyAddress(addr);
+    setAddressType((addr.type as "Home" | "Office" | "Other") || "Home");
+    setEditingAddressId(addrId);
+    setIsAddingNewAddress(false);
+  };
+
+  const handleCancelForm = () => {
+    setIsAddingNewAddress(false);
+    setEditingAddressId(null);
+    if (savedAddresses.length > 0) {
+      const current = savedAddresses.find((a) => (a.id || a._id) === selectedAddressId) || savedAddresses[0];
+      applyAddress(current);
+    }
+  };
 
   const handlePinCodeChange = useCallback(async (newVal: string) => {
     const clean = newVal.replace(/\D/g, "").slice(0, 6);
@@ -320,9 +362,6 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  const [isUpdatingAddress, setIsUpdatingAddress] = useState(false);
-  const [addressUpdateMessage, setAddressUpdateMessage] = useState<string | null>(null);
-
   const handleDeleteSavedAddress = async (addr: SavedAddress, e: React.MouseEvent) => {
     e.stopPropagation();
     const addrId = addr.id || addr._id;
@@ -340,6 +379,7 @@ export default function CheckoutPage() {
               applyAddress(updated[0]);
             } else {
               setSelectedAddressId(null);
+              setIsAddingNewAddress(true);
             }
           }
           return updated;
@@ -350,8 +390,63 @@ export default function CheckoutPage() {
     }
   };
 
+  const handleSaveAndUseNewAddress = async () => {
+    if (!firstName.trim() || !lastName.trim() || !street.trim() || !city.trim() || !state.trim() || !pinCode.trim()) {
+      setErrorMessage("Please complete all required address fields.");
+      scrollToError();
+      return;
+    }
+    const cleanPin = pinCode.replace(/\D/g, "");
+    if (cleanPin.length !== 6) {
+      setErrorMessage("Please provide a valid 6-digit postal PIN code.");
+      scrollToError();
+      return;
+    }
+
+    if (isAuthenticated && saveAddressToProfile) {
+      setIsUpdatingAddress(true);
+      const userObj = user as Record<string, string> | null;
+      const userId = userObj?._id || userObj?.id || "";
+      try {
+        const newAddr = await saveUserAddress({
+          user_id: userId,
+          user_email: email.trim(),
+          user_phone: phone.trim(),
+          type: addressType,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          street: street.trim(),
+          city: city.trim(),
+          state: state.trim(),
+          pin_code: pinCode.trim(),
+          phone: phone.trim(),
+          is_default: savedAddresses.length === 0,
+        });
+        if (newAddr) {
+          setSavedAddresses((prev) => {
+            const exists = prev.some((a) => (a.id || a._id) === (newAddr.id || newAddr._id));
+            return exists ? prev.map((a) => (a.id || a._id) === (newAddr.id || newAddr._id) ? newAddr : a) : [newAddr, ...prev];
+          });
+          applyAddress(newAddr);
+          setIsAddingNewAddress(false);
+          setAddressUpdateMessage("New address saved and selected!");
+          setTimeout(() => setAddressUpdateMessage(null), 4000);
+        }
+      } catch (err: any) {
+        console.error("Failed to save address:", err);
+        setErrorMessage(err?.message || "Failed to save address.");
+      } finally {
+        setIsUpdatingAddress(false);
+      }
+    } else {
+      setSelectedAddressId(null);
+      setIsAddingNewAddress(false);
+    }
+  };
+
   const handleUpdateCurrentSavedAddress = async () => {
-    if (!selectedAddressId) return;
+    const targetId = editingAddressId || selectedAddressId;
+    if (!targetId) return;
     if (!firstName.trim() || !street.trim() || !city.trim() || !state.trim() || !pinCode.trim()) {
       setErrorMessage("Please complete all required address fields before updating.");
       return;
@@ -362,7 +457,7 @@ export default function CheckoutPage() {
     const activeEmail = ((user as Record<string, string>)?.email) || email || "";
     try {
       const updated = await updateUserAddress(
-        selectedAddressId,
+        targetId,
         {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
@@ -371,13 +466,15 @@ export default function CheckoutPage() {
           state: state.trim(),
           pin_code: pinCode.trim(),
           phone: phone.trim(),
+          type: addressType,
         },
         activeEmail
       );
       setSavedAddresses((prev) =>
-        prev.map((a) => ((a.id || a._id) === selectedAddressId ? { ...a, ...updated } : a))
+        prev.map((a) => ((a.id || a._id) === targetId ? { ...a, ...updated } : a))
       );
       setAddressUpdateMessage("Saved address updated successfully!");
+      setEditingAddressId(null);
       setTimeout(() => setAddressUpdateMessage(null), 4000);
     } catch (err: any) {
       console.error("Failed to update saved address:", err);
@@ -398,20 +495,26 @@ export default function CheckoutPage() {
     }
   }, [user, email, phone, firstName, lastName]);
 
-  // Load saved addresses for signed-in users only (guests must not see addresses tied to a typed email)
+  // Load saved addresses for signed-in users only (once on initial auth/mount)
+  const hasLoadedAddressesRef = useRef(false);
+
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      hasLoadedAddressesRef.current = false;
+      return;
+    }
     const activeEmail = ((user as Record<string, string>)?.email) || "";
-    if (activeEmail) {
+    if (activeEmail && !hasLoadedAddressesRef.current) {
+      hasLoadedAddressesRef.current = true;
       fetchUserAddresses(activeEmail).then((list) => {
         setSavedAddresses(list);
-        if (list.length > 0 && !selectedAddressId) {
+        if (list.length > 0) {
           const defaultAddr = list.find((a) => a.is_default) || list[0];
           applyAddress(defaultAddr);
         }
       });
     }
-  }, [isAuthenticated, user, applyAddress, selectedAddressId]);
+  }, [isAuthenticated, user, applyAddress]);
 
   const scrollToError = () => {
     setTimeout(() => {
@@ -479,13 +582,13 @@ export default function CheckoutPage() {
       const userObj = user as Record<string, string> | null;
       const userId = userObj?._id || userObj?.id || "";
 
-      // Save address if requested
-      if (isAuthenticated && saveAddressToProfile) {
+      // Only save address if requested and user entered a NEW address (not an already selected saved address)
+      if (isAuthenticated && saveAddressToProfile && !selectedAddressId) {
         saveUserAddress({
           user_id: userId,
           user_email: email.trim(),
           user_phone: phone.trim(),
-          type: "Home",
+          type: addressType,
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           street: street.trim(),
@@ -494,7 +597,17 @@ export default function CheckoutPage() {
           pin_code: pinCode.trim(),
           phone: phone.trim(),
           is_default: savedAddresses.length === 0,
-        }).catch((err) => console.warn("Failed to persist address:", err));
+        })
+          .then((newAddr) => {
+            if (newAddr) {
+              setSavedAddresses((prev) => {
+                const exists = prev.some((a) => (a.id || a._id) === (newAddr.id || newAddr._id));
+                return exists ? prev : [newAddr, ...prev];
+              });
+              setSelectedAddressId(newAddr.id || newAddr._id || null);
+            }
+          })
+          .catch((err) => console.warn("Failed to persist address:", err));
       }
 
       // Verify the payment returned by the official gateway.
@@ -943,73 +1056,27 @@ export default function CheckoutPage() {
           <div className={styles.section}>
             <div className={styles.sectionTitle}>
               <span>2. Delivery Address</span>
-              {savedAddresses.length > 0 && (
-                <span
+              {savedAddresses.length > 0 && !isAddingNewAddress && !editingAddressId && (
+                <button
+                  type="button"
                   className={styles.savedHeaderLabel}
-                  onClick={() => {
-                    setSelectedAddressId(null);
-                    setStreet("");
-                    setCity("");
-                    setState("");
-                    setPinCode("");
-                  }}
+                  onClick={handleStartAddNew}
+                  style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
                 >
                   + Add New Address
-                </span>
+                </button>
               )}
             </div>
 
-            {/* Saved Addresses Dropdown Quick-Selector */}
-            {savedAddresses.length > 0 && (
-              <div className={styles.savedDropdownWrapper}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                  <label className={styles.label} style={{ margin: 0 }}>
-                    Select from Saved Addresses
-                  </label>
-                  <span className={styles.savedCountBadge}>{savedAddresses.length} saved</span>
-                </div>
-                <div className={styles.selectWrapper}>
-                  <select
-                    className={styles.select}
-                    value={selectedAddressId || ""}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (!val || val === "NEW") {
-                        setSelectedAddressId(null);
-                        setFirstName(typeof (user as any)?.first_name === "string" ? (user as any).first_name : "");
-                        setLastName(typeof (user as any)?.last_name === "string" ? (user as any).last_name : "");
-                        setStreet("");
-                        setCity("");
-                        setState("");
-                        setPinCode("");
-                        setPhone(typeof (user as any)?.phone === "string" ? (user as any).phone : "");
-                      } else {
-                        const found = savedAddresses.find((a) => (a.id || a._id) === val);
-                        if (found) applyAddress(found);
-                      }
-                    }}
-                    disabled={isProcessing}
-                  >
-                    <option value="">-- Choose a Saved Address or Add New --</option>
-                    {savedAddresses.map((addr) => {
-                      const id = addr.id || addr._id;
-                      return (
-                        <option key={id} value={id}>
-                          {addr.type || "Address"} • {addr.first_name} {addr.last_name} — {addr.street}, {addr.city}, {addr.state} ({addr.pin_code})
-                        </option>
-                      );
-                    })}
-                    <option value="NEW">+ Enter a New Delivery Address</option>
-                  </select>
-                  <svg className={styles.selectChevron} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </div>
+            {/* Address Feedback Notice */}
+            {addressUpdateMessage && (
+              <div style={{ background: "#E8F5E9", border: "1px solid #C8E6C9", color: "#2E7D32", padding: "8px 12px", borderRadius: "8px", fontSize: "12.5px", fontWeight: 600, marginBottom: "12px" }}>
+                ✓ {addressUpdateMessage}
               </div>
             )}
 
-            {/* Saved Addresses Cards (Matching User's Reference Layout) */}
-            {savedAddresses.length > 0 && (
+            {/* Saved Addresses Cards (Amazon/Flipkart Luxury Layout) */}
+            {savedAddresses.length > 0 && !isAddingNewAddress && !editingAddressId && (
               <div className={styles.savedGrid}>
                 {savedAddresses.map((addr) => {
                   const addrId = addr.id || addr._id || "";
@@ -1019,23 +1086,27 @@ export default function CheckoutPage() {
                       key={addrId}
                       className={`${styles.savedItemCard} ${isSelected ? styles.savedItemCardActive : ""}`}
                       onClick={() => applyAddress(addr)}
+                      role="button"
+                      tabIndex={0}
                     >
                       <div className={styles.savedItemHeader}>
-                        <span className={styles.savedBadge}>{addr.type || "Home"}</span>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                          {isSelected && (
-                            <span className={styles.addressSelectedBadge}>
-                              ✓ Selected
-                            </span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <div className={`${styles.addrRadioCircle} ${isSelected ? styles.addrRadioCircleSelected : ""}`}>
+                            {isSelected && <div className={styles.addrRadioDot} />}
+                          </div>
+                          <span className={`${styles.savedBadge} ${addr.type === "Office" ? styles.savedBadgeOffice : addr.type === "Other" ? styles.savedBadgeOther : ""}`}>
+                            {addr.type || "Home"}
+                          </span>
+                          {addr.is_default && (
+                            <span className={styles.defaultBadge}>Default</span>
                           )}
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                           <button
                             type="button"
                             className={styles.addrActionBtn}
-                            title="Edit / Load address into form"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              applyAddress(addr);
-                            }}
+                            title="Edit this address"
+                            onClick={(e) => handleStartEdit(addr, e)}
                           >
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -1066,149 +1137,253 @@ export default function CheckoutPage() {
                       <div className={styles.addrPhoneRow}>
                         📞 {addr.phone || phone}
                       </div>
+                      {isSelected && (
+                        <div className={styles.selectedIndicatorRow}>
+                          <span className={styles.addressSelectedBadge}>
+                            ✓ Deliver to this address
+                          </span>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
+
+
               </div>
             )}
 
-            <div className={styles.formRow}>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>First Name *</label>
-                <input
-                  type="text"
-                  required
-                  className={styles.input}
-                  placeholder="First Name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  disabled={isProcessing}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Last Name *</label>
-                <input
-                  type="text"
-                  required
-                  className={styles.input}
-                  placeholder="Last Name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  disabled={isProcessing}
-                />
-              </div>
-            </div>
+            {/* Address Input Form (Shown when Adding New, Editing, or when No Saved Addresses exist) */}
+            {(isAddingNewAddress || editingAddressId || savedAddresses.length === 0) && (
+              <div className={savedAddresses.length > 0 ? styles.addressFormBox : undefined}>
+                {savedAddresses.length > 0 && (
+                  <div className={styles.addressFormHeader}>
+                    <h3 className={styles.addressFormTitle}>
+                      {editingAddressId ? "Edit Delivery Address" : "Add New Delivery Address"}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={handleCancelForm}
+                      className={styles.savedHeaderLabel}
+                      style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                    >
+                      {editingAddressId ? "Cancel" : "← Back to Saved Addresses"}
+                    </button>
+                  </div>
+                )}
 
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Street Address & Landmark *</label>
-              <input
-                type="text"
-                required
-                className={styles.input}
-                placeholder="Flat / House no., building, street, locality"
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
-                disabled={isProcessing}
-              />
-            </div>
-
-            <div className={styles.formRow}>
-              <div className={styles.formGroup}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                  <label className={styles.label} style={{ margin: 0 }}>PIN Code *</label>
-                  {isLookingUpPin && (
-                    <span className={styles.pinCheckingBadge}>Searching...</span>
-                  )}
-                  {pinAutoMessage && !isLookingUpPin && (
-                    <span className={styles.pinDetectedBadge}>{pinAutoMessage}</span>
-                  )}
+                {/* Address Type Selector */}
+                <div className={styles.formGroup} style={{ marginBottom: "16px" }}>
+                  <label className={styles.label}>Address Type</label>
+                  <div className={styles.addressTypeGroup}>
+                    <button
+                      type="button"
+                      className={`${styles.typePill} ${addressType === "Home" ? styles.typePillActive : ""}`}
+                      onClick={() => setAddressType("Home")}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                      </svg>
+                      <span>Home</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.typePill} ${addressType === "Office" ? styles.typePillActive : ""}`}
+                      onClick={() => setAddressType("Office")}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+                        <line x1="9" y1="22" x2="9" y2="22.01" />
+                        <line x1="15" y1="22" x2="15.01" y2="22" />
+                        <line x1="8" y1="6" x2="8.01" y2="6" />
+                        <line x1="16" y1="6" x2="16.01" y2="6" />
+                        <line x1="12" y1="6" x2="12.01" y2="6" />
+                        <line x1="12" y1="10" x2="12.01" y2="10" />
+                        <line x1="12" y1="14" x2="12.01" y2="14" />
+                        <line x1="12" y1="18" x2="12.01" y2="18" />
+                        <line x1="8" y1="10" x2="8.01" y2="10" />
+                        <line x1="8" y1="14" x2="8.01" y2="14" />
+                        <line x1="8" y1="18" x2="8.01" y2="18" />
+                        <line x1="16" y1="10" x2="16.01" y2="10" />
+                        <line x1="16" y1="14" x2="16.01" y2="14" />
+                        <line x1="16" y1="18" x2="16.01" y2="18" />
+                      </svg>
+                      <span>Office / Work</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.typePill} ${addressType === "Other" ? styles.typePillActive : ""}`}
+                      onClick={() => setAddressType("Other")}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                      <span>Other</span>
+                    </button>
+                  </div>
                 </div>
-                <input
-                  type="text"
-                  required
-                  maxLength={6}
-                  className={styles.input}
-                  placeholder="6-digit PIN code (e.g. 387002)"
-                  value={pinCode}
-                  onChange={(e) => handlePinCodeChange(e.target.value)}
-                  disabled={isProcessing}
-                />
-              </div>
 
-              <div className={styles.formGroup}>
-                <label className={styles.label}>City *</label>
-                <input
-                  type="text"
-                  required
-                  className={styles.input}
-                  placeholder="City / District"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  disabled={isProcessing}
-                />
-              </div>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>First Name *</label>
+                    <input
+                      type="text"
+                      required
+                      className={styles.input}
+                      placeholder="First Name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      disabled={isProcessing}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>Last Name *</label>
+                    <input
+                      type="text"
+                      required
+                      className={styles.input}
+                      placeholder="Last Name"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      disabled={isProcessing}
+                    />
+                  </div>
+                </div>
 
-              <div className={styles.formGroup}>
-                <label className={styles.label}>State *</label>
-                <div className={styles.selectWrapper}>
-                  <select
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Street Address &amp; Landmark *</label>
+                  <input
+                    type="text"
                     required
-                    className={styles.select}
-                    value={normalizeIndianState(state)}
-                    onChange={(e) => setState(e.target.value)}
+                    className={styles.input}
+                    placeholder="Flat / House no., building, street, locality"
+                    value={street}
+                    onChange={(e) => setStreet(e.target.value)}
                     disabled={isProcessing}
-                  >
-                    <option value="">Select State</option>
-                    {INDIAN_STATES.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                    {state && !INDIAN_STATES.includes(normalizeIndianState(state)) && (
-                      <option value={state}>{state}</option>
-                    )}
-                  </select>
-                  <svg className={styles.selectChevron} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
+                  />
                 </div>
-              </div>
-            </div>
 
-            {selectedAddressId && isAuthenticated && (
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.5rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  onClick={handleUpdateCurrentSavedAddress}
-                  disabled={isUpdatingAddress}
-                  className={styles.btnUpdateAddress}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                    <polyline points="17 21 17 13 7 13 7 21" />
-                    <polyline points="7 3 7 8 15 8" />
-                  </svg>
-                  {isUpdatingAddress ? "Updating Address..." : "Save changes to this address"}
-                </button>
-                {addressUpdateMessage && (
-                  <span style={{ color: "#27ae60", fontSize: "0.82rem", fontWeight: 600 }}>
-                    ✓ {addressUpdateMessage}
-                  </span>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                      <label className={styles.label} style={{ margin: 0 }}>PIN Code *</label>
+                      {isLookingUpPin && (
+                        <span className={styles.pinCheckingBadge}>Searching...</span>
+                      )}
+                      {pinAutoMessage && !isLookingUpPin && (
+                        <span className={styles.pinDetectedBadge}>{pinAutoMessage}</span>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      maxLength={6}
+                      className={styles.input}
+                      placeholder="6-digit PIN code (e.g. 387002)"
+                      value={pinCode}
+                      onChange={(e) => handlePinCodeChange(e.target.value)}
+                      disabled={isProcessing}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>City *</label>
+                    <input
+                      type="text"
+                      required
+                      className={styles.input}
+                      placeholder="City / District"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      disabled={isProcessing}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>State *</label>
+                    <div className={styles.selectWrapper}>
+                      <select
+                        required
+                        className={styles.select}
+                        value={normalizeIndianState(state)}
+                        onChange={(e) => setState(e.target.value)}
+                        disabled={isProcessing}
+                      >
+                        <option value="">Select State</option>
+                        {INDIAN_STATES.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                        {state && !INDIAN_STATES.includes(normalizeIndianState(state)) && (
+                          <option value={state}>{state}</option>
+                        )}
+                      </select>
+                      <svg className={styles.selectChevron} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile Save Checkbox: Only when adding new address or no saved addresses */}
+                {isAuthenticated && (isAddingNewAddress || savedAddresses.length === 0) && (
+                  <label className={styles.checkboxWrapper}>
+                    <input
+                      type="checkbox"
+                      checked={saveAddressToProfile}
+                      onChange={(e) => setSaveAddressToProfile(e.target.checked)}
+                    />
+                    <span className={styles.checkboxLabel}>
+                      Save this address to my profile for fast one-click checkout in future
+                    </span>
+                  </label>
+                )}
+
+                {/* Action buttons when editing or adding new address */}
+                {savedAddresses.length > 0 && (
+                  <div className={styles.addressFormActions}>
+                    {editingAddressId ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleUpdateCurrentSavedAddress}
+                          disabled={isUpdatingAddress}
+                          className={styles.btnSaveAddressCTA}
+                        >
+                          {isUpdatingAddress ? "Saving Changes..." : "Save Changes & Deliver Here"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelForm}
+                          className={styles.btnCancelAddress}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : isAddingNewAddress ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleSaveAndUseNewAddress}
+                          disabled={isUpdatingAddress}
+                          className={styles.btnSaveAddressCTA}
+                        >
+                          {isUpdatingAddress ? "Saving Address..." : "Deliver to This Address"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelForm}
+                          className={styles.btnCancelAddress}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : null}
+                  </div>
                 )}
               </div>
-            )}
-
-            {isAuthenticated && (
-              <label className={styles.checkboxWrapper}>
-                <input
-                  type="checkbox"
-                  checked={saveAddressToProfile}
-                  onChange={(e) => setSaveAddressToProfile(e.target.checked)}
-                />
-                <span className={styles.checkboxLabel}>
-                  Save this address to my profile for fast one-click checkout in future
-                </span>
-              </label>
             )}
           </div>
 
