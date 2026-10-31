@@ -163,3 +163,110 @@ def export_subscribers_csv(admin: models.User = Depends(deps.get_current_active_
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+
+class BroadcastCampaignRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    subject: str
+    headline: str = "We Are Live."
+    subtitle: Optional[str] = "exclusive luxury illumination"
+    paragraphs: List[str] = []
+    promo_code: Optional[str] = None
+    promo_text: Optional[str] = None
+    cta_text: str = "Explore The Collection →"
+    cta_url: str = "https://deluzexlighting.com/shop"
+    audience: str = "all"  # "all", "pending", "notified"
+    test_email: Optional[str] = None
+
+
+@router.post("/preview-broadcast")
+def preview_newsletter_broadcast(
+    payload: BroadcastCampaignRequest,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
+    """Generates and returns rendered HTML for previewing the newsletter broadcast."""
+    from app.services.email import build_newsletter_campaign_html
+    html = build_newsletter_campaign_html(
+        headline=payload.headline,
+        subtitle=payload.subtitle or "",
+        paragraphs=payload.paragraphs,
+        promo_code=payload.promo_code or "",
+        promo_text=payload.promo_text or "",
+        cta_text=payload.cta_text,
+        cta_url=payload.cta_url,
+    )
+    return {"html": html}
+
+
+@router.post("/broadcast")
+def broadcast_newsletter(
+    payload: BroadcastCampaignRequest,
+    admin: models.User = Depends(deps.get_current_active_admin),
+):
+    """
+    Broadcasts a luxury newsletter campaign email to targeted subscribers.
+    If test_email is provided, only sends one test email.
+    Otherwise, sends to the specified audience and marks them as notified.
+    """
+    from app.services.email import build_newsletter_campaign_html, send_newsletter_broadcast_message
+    
+    html_content = build_newsletter_campaign_html(
+        headline=payload.headline,
+        subtitle=payload.subtitle or "",
+        paragraphs=payload.paragraphs,
+        promo_code=payload.promo_code or "",
+        promo_text=payload.promo_text or "",
+        cta_text=payload.cta_text,
+        cta_url=payload.cta_url,
+    )
+
+    # 1. Test Email Mode
+    if payload.test_email and "@" in payload.test_email:
+        test_to = payload.test_email.strip().lower()
+        res = send_newsletter_broadcast_message(test_to, payload.subject, html_content)
+        if not res.get("success"):
+            raise HTTPException(status_code=500, detail=f"Failed to send test email: {res.get('error')}")
+        return {
+            "success": True,
+            "is_test": True,
+            "message": f"Test campaign email successfully delivered to {test_to}",
+        }
+
+    # 2. Audience Selection
+    query: Dict[str, Any] = {}
+    if payload.audience == "pending":
+        query["is_notified"] = {"$ne": True}
+    elif payload.audience == "notified":
+        query["is_notified"] = True
+
+    subscribers = list(db.newsletter_subscribers.find(query, {"email": 1, "_id": 1}))
+    if not subscribers:
+        raise HTTPException(
+            status_code=400,
+            detail=f"No subscribers found for audience: '{payload.audience}'",
+        )
+
+    sent_count = 0
+    now = datetime.utcnow()
+    for sub in subscribers:
+        email_addr = (sub.get("email") or "").strip().lower()
+        if not email_addr or "@" not in email_addr:
+            continue
+        try:
+            res = send_newsletter_broadcast_message(email_addr, payload.subject, html_content)
+            if res.get("success"):
+                sent_count += 1
+                db.newsletter_subscribers.update_one(
+                    {"_id": sub["_id"]},
+                    {"$set": {"is_notified": True, "notified_at": now}},
+                )
+        except Exception:
+            pass
+
+    return {
+        "success": True,
+        "is_test": False,
+        "sent_count": sent_count,
+        "total_recipients": len(subscribers),
+        "message": f"Newsletter broadcast successfully sent to {sent_count} subscriber(s).",
+    }

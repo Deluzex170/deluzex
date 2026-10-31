@@ -1,5 +1,6 @@
 import re
-from fastapi import APIRouter, HTTPException, Depends, Request, UploadFile, File, Form, Body, status
+from fastapi import APIRouter, HTTPException, Depends, Request, UploadFile, File, Form, Body, status, BackgroundTasks
+from app.services.email import send_collaboration_inquiry_notification
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from bson import ObjectId
@@ -26,6 +27,7 @@ async def create_collaboration_submission(
     description: Optional[str] = Form(None),
     portfolio_link: Optional[str] = Form(None),
     source: Optional[str] = Form("collaborate_page"),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
     """
     Submit a lighting concept / design collaboration request.
@@ -114,6 +116,9 @@ async def create_collaboration_submission(
 
     result = db.collaborations.insert_one(doc)
     doc["_id"] = str(result.inserted_id)
+
+    # Send email notification to admin (settings.ADMIN_INQUIRY_EMAIL) and auto-reply to designer
+    background_tasks.add_task(send_collaboration_inquiry_notification, doc)
 
     return {
         "success": True,

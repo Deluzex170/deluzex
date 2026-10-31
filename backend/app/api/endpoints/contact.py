@@ -1,20 +1,32 @@
 import re
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 from bson import ObjectId
-from fastapi import APIRouter, HTTPException, Query, status, Depends
+from fastapi import APIRouter, HTTPException, Query, status, Depends, BackgroundTasks
 from pydantic import BaseModel, Field, ConfigDict
 
 from app import models
 from app.api import deps
 from app.core.database import db
 from app.core.sanitizer import sanitize_text, sanitize_search_term, sanitize_phone
+from app.services.email import (
+    send_contact_inquiry_notification,
+    send_support_ticket_notification,
+)
 
 router = APIRouter()
 
 class InquiryStatusUpdateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     status: str = Field(..., description="Status must be one of: new, contacted, resolved, archived")
+
+class SupportTicketCreate(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    subject: str = Field(..., max_length=200, description="Subject of the support ticket")
+    message: str = Field(..., max_length=5000, description="Detailed inquiry message")
+    name: Optional[str] = Field(None, max_length=100)
+    email: Optional[str] = Field(None, max_length=100)
+    phone: Optional[str] = Field(None, max_length=30)
 
 @router.get("", response_model=List[models.ContactMessage])
 def read_contacts(
@@ -61,7 +73,10 @@ def read_contact_stats(admin: models.User = Depends(deps.get_current_active_admi
     }
 
 @router.post("", response_model=models.ContactMessage)
-def create_contact(contact: models.ContactMessageCreate):
+def create_contact(
+    contact: models.ContactMessageCreate,
+    background_tasks: BackgroundTasks,
+):
     clean_name = sanitize_text(contact.name, max_len=100) if contact.name else None
     clean_phone = sanitize_phone(contact.phone) if contact.phone else None
     clean_message = sanitize_text(contact.message, max_len=3000)
@@ -77,7 +92,61 @@ def create_contact(contact: models.ContactMessageCreate):
     }
     result = db.contacts.insert_one(data)
     data["_id"] = result.inserted_id
+
+    # Send notification email to admin (settings.ADMIN_INQUIRY_EMAIL) and auto-reply to customer
+    background_tasks.add_task(send_contact_inquiry_notification, data)
+
     return models.ContactMessage(**data)
+
+@router.post("/support")
+def create_support_ticket(
+    ticket_in: SupportTicketCreate,
+    background_tasks: BackgroundTasks,
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+):
+    """
+    Submit a Support & Concierge query from /dashboard/support.
+    Saves inquiry to DB and sends an email to settings.ADMIN_INQUIRY_EMAIL.
+    """
+    user_name = ticket_in.name or (
+        f"{getattr(current_user, 'first_name', '') or ''} {getattr(current_user, 'last_name', '') or ''}".strip()
+        if current_user else ""
+    ) or "Valued Client"
+    user_email = (ticket_in.email or (current_user.email if current_user else "") or "").strip().lower()
+    user_phone = ticket_in.phone or (getattr(current_user, "phone", None) if current_user else None)
+
+    clean_subject = sanitize_text(ticket_in.subject, max_len=200)
+    clean_message = sanitize_text(ticket_in.message, max_len=5000)
+
+    doc = {
+        "type": "support_ticket",
+        "name": sanitize_text(user_name, max_len=100),
+        "email": user_email if user_email else None,
+        "phone": sanitize_phone(user_phone) if user_phone else None,
+        "subject": clean_subject,
+        "message": f"[Subject: {clean_subject}]\n\n{clean_message}",
+        "status": "new",
+        "created_at": datetime.utcnow(),
+    }
+    res = db.contacts.insert_one(doc)
+    doc["_id"] = str(res.inserted_id)
+
+    # Email notification to admin (settings.ADMIN_INQUIRY_EMAIL) and auto-reply to client
+    background_tasks.add_task(send_support_ticket_notification, {
+        "name": doc["name"],
+        "email": doc["email"],
+        "phone": doc["phone"],
+        "subject": clean_subject,
+        "message": clean_message,
+        "ticket_id": str(res.inserted_id),
+    })
+
+    return {
+        "success": True,
+        "message": "Inquiry received! Our concierge team will reach out within 2 hours.",
+        "ticket_id": str(res.inserted_id),
+        "data": doc,
+    }
 
 @router.patch("/{id}/status", response_model=models.ContactMessage)
 def update_contact_status(
