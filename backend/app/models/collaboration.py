@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
 from app.models.common import PyObjectId
@@ -12,10 +12,11 @@ class CollaborationSubmission(BaseModel):
     role: Optional[str] = Field(default=None, max_length=100)
     studio_or_college: Optional[str] = Field(default=None, max_length=200)
     has_made_before: Optional[str] = Field(default="no", max_length=10)
-    concept_title: str = Field(..., min_length=1, max_length=200)
+    concept_title: Optional[str] = Field(default="Lighting Design Submission", max_length=200)
     description: Optional[str] = Field(default=None, max_length=5000)
     portfolio_link: Optional[str] = Field(default=None, max_length=1000)
     file_url: Optional[str] = Field(default=None, max_length=1000)
+    file_name: Optional[str] = Field(default=None, max_length=300)
     status: str = Field(default="pending", max_length=50)  # "pending", "reviewed", "shortlisted", "archived"
     source: str = Field(default="collaborate_page", max_length=50)  # "collaborate_page" or "homepage_modal"
     created_at: datetime = Field(default_factory=datetime.utcnow)

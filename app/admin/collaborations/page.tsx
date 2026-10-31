@@ -30,7 +30,33 @@ import {
   MapPin,
   Building,
   Lightbulb,
+  Image as ImageIcon,
+  MessageCircle,
+  FileCheck,
+  Calendar,
+  Layers,
+  Check,
 } from "lucide-react";
+
+const isImageFile = (url?: string, fileName?: string): boolean => {
+  if (!url && !fileName) return false;
+  const target = (fileName || url || "").toLowerCase();
+  return (
+    target.endsWith(".png") ||
+    target.endsWith(".jpg") ||
+    target.endsWith(".jpeg") ||
+    target.endsWith(".webp") ||
+    target.endsWith(".svg") ||
+    target.endsWith(".gif") ||
+    target.includes("/image/upload/")
+  );
+};
+
+const isPdfFile = (url?: string, fileName?: string): boolean => {
+  if (!url && !fileName) return false;
+  const target = (fileName || url || "").toLowerCase();
+  return target.endsWith(".pdf") || target.includes(".pdf?") || target.includes("/raw/upload/");
+};
 
 export default function AdminCollaborationsPage() {
   const [submissions, setSubmissions] = useState<CollaborationSubmission[]>([]);
@@ -125,36 +151,46 @@ export default function AdminCollaborationsPage() {
     }
   };
 
-
   const columnDefs = useMemo<ColDef<CollaborationSubmission>[]>(
     () => [
       {
         field: "name",
         headerName: "Designer",
-        minWidth: 180,
+        minWidth: 190,
         cellRenderer: (params: any) => {
           const sub = params.data as CollaborationSubmission;
           if (!sub) return null;
           return (
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", height: "100%" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", height: "100%" }}>
               <div
                 style={{
-                  width: "30px",
-                  height: "30px",
+                  width: "32px",
+                  height: "32px",
                   borderRadius: "50%",
-                  background: "rgba(196, 154, 69, 0.15)",
+                  background: "linear-gradient(135deg, rgba(196, 154, 69, 0.25), rgba(196, 154, 69, 0.08))",
                   color: "#C49A45",
+                  border: "1px solid rgba(196, 154, 69, 0.35)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: "0.82rem",
+                  fontSize: "0.85rem",
                   fontWeight: 700,
                   flexShrink: 0,
                 }}
               >
                 {sub.name ? sub.name.charAt(0).toUpperCase() : "D"}
               </div>
-              <span style={{ fontWeight: 600, color: "var(--admin-text-main)" }}>{sub.name}</span>
+              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden" }}>
+                <span style={{ fontWeight: 600, color: "var(--admin-text-main)", fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {sub.name}
+                </span>
+                {sub.city && (
+                  <span style={{ fontSize: "0.72rem", color: "var(--admin-text-muted)", display: "flex", alignItems: "center", gap: "3px" }}>
+                    <MapPin size={10} />
+                    {sub.city}
+                  </span>
+                )}
+              </div>
             </div>
           );
         },
@@ -167,32 +203,35 @@ export default function AdminCollaborationsPage() {
           if (!sub) return null;
           const cleanPhone = (sub.phone || "").replace(/[^0-9]/g, "");
           const waNumber = cleanPhone.length === 10 ? "91" + cleanPhone : cleanPhone;
+          const waText = encodeURIComponent(
+            `Hello ${sub.name}, thank you for submitting your lighting design concept "${sub.concept_title}" to Deluzex. We would love to discuss your design!`
+          );
           return (
-            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", fontSize: "0.82rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ color: "var(--admin-text-main)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub.email}</span>
-                {sub.email && (
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", fontSize: "0.8rem", gap: "2px" }}>
+              {sub.email && (
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ color: "var(--admin-text-main)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub.email}</span>
                   <a
-                    href={"mailto:" + sub.email}
-                    title={"Send email to " + sub.email}
-                    style={{ color: "#2563eb", display: "inline-flex", alignItems: "center" }}
+                    href={`mailto:${sub.email}?subject=${encodeURIComponent(`Deluzex Collaboration - ${sub.concept_title}`)}`}
+                    title={`Send email to ${sub.email}`}
+                    style={{ color: "#2563eb", display: "inline-flex", alignItems: "center", flexShrink: 0 }}
                   >
-                    <Mail size={13} />
+                    <Mail size={12} />
                   </a>
-                )}
-              </div>
+                </div>
+              )}
               {sub.phone && (
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--admin-text-muted)", fontSize: "0.76rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--admin-text-muted)", fontSize: "0.74rem" }}>
                   <span>{sub.phone}</span>
                   {waNumber && (
                     <a
-                      href={"https://wa.me/" + waNumber}
+                      href={`https://wa.me/${waNumber}?text=${waText}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      title="Chat on WhatsApp"
-                      style={{ color: "#16a34a", display: "inline-flex", alignItems: "center" }}
+                      title="Direct WhatsApp Chat"
+                      style={{ color: "#16a34a", display: "inline-flex", alignItems: "center", flexShrink: 0 }}
                     >
-                      <Phone size={11} />
+                      <MessageCircle size={12} />
                     </a>
                   )}
                 </div>
@@ -203,19 +242,19 @@ export default function AdminCollaborationsPage() {
       },
       {
         field: "concept_title",
-        headerName: "Concept Title",
+        headerName: "Concept & Inspiration",
         flex: 1.5,
-        minWidth: 200,
+        minWidth: 220,
         cellRenderer: (params: any) => {
           const sub = params.data as CollaborationSubmission;
           if (!sub) return null;
           return (
             <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", overflow: "hidden" }}>
-              <div style={{ fontWeight: 600, color: "var(--admin-text-main)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ fontWeight: 600, color: "var(--admin-text-main)", fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {sub.concept_title}
               </div>
               {sub.description && (
-                <div style={{ fontSize: "0.76rem", color: "var(--admin-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {sub.description}
                 </div>
               )}
@@ -225,15 +264,15 @@ export default function AdminCollaborationsPage() {
       },
       {
         headerName: "Background / Firm",
-        minWidth: 150,
+        minWidth: 160,
         cellRenderer: (params: any) => {
           const sub = params.data as CollaborationSubmission;
           if (!sub) return null;
           return (
-            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", fontSize: "0.82rem" }}>
-              <div style={{ color: "var(--admin-text-secondary)" }}>{sub.role || "Designer"}</div>
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", fontSize: "0.8rem", gap: "2px" }}>
+              <div style={{ color: "var(--admin-text-secondary)", fontWeight: 500 }}>{sub.role || "Designer / Creator"}</div>
               {sub.studio_or_college && (
-                <div style={{ fontSize: "0.76rem", color: "var(--admin-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div style={{ fontSize: "0.74rem", color: "var(--admin-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {sub.studio_or_college}
                 </div>
               )}
@@ -242,32 +281,70 @@ export default function AdminCollaborationsPage() {
         },
       },
       {
+        headerName: "Prototyped?",
+        width: 140,
+        cellRenderer: (params: any) => {
+          const sub = params.data as CollaborationSubmission;
+          if (!sub) return null;
+          const isYes = (sub.has_made_before || "").toLowerCase() === "yes";
+          return (
+            <div style={{ display: "flex", alignItems: "center", height: "100%" }}>
+              <span
+                style={{
+                  fontSize: "0.72rem",
+                  padding: "0.2rem 0.55rem",
+                  borderRadius: "6px",
+                  fontWeight: 600,
+                  background: isYes ? "rgba(245, 158, 11, 0.12)" : "rgba(100, 116, 139, 0.1)",
+                  color: isYes ? "#b45309" : "#64748b",
+                  border: isYes ? "1px solid rgba(245, 158, 11, 0.3)" : "1px solid rgba(100, 116, 139, 0.2)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                {isYes ? "⚡ Made Before" : "💡 Fresh Concept"}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
         headerName: "Attachment",
-        width: 120,
+        minWidth: 155,
         cellRenderer: (params: any) => {
           const sub = params.data as CollaborationSubmission;
           if (!sub) return null;
           if (sub.file_url) {
+            const isImg = isImageFile(sub.file_url, sub.file_name);
+            const isPdf = isPdfFile(sub.file_url, sub.file_name);
             return (
               <a
                 href={sub.file_url}
                 target="_blank"
                 rel="noopener noreferrer"
+                title={sub.file_name || "View attachment"}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "0.3rem",
-                  background: "var(--admin-surface-muted)",
-                  color: "#2563eb",
-                  padding: "0.25rem 0.55rem",
+                  gap: "0.4rem",
+                  background: isImg ? "rgba(59, 130, 246, 0.08)" : isPdf ? "rgba(239, 68, 68, 0.08)" : "var(--admin-surface-muted)",
+                  color: isImg ? "#2563eb" : isPdf ? "#dc2626" : "var(--admin-text-main)",
+                  border: isImg ? "1px solid rgba(59, 130, 246, 0.25)" : isPdf ? "1px solid rgba(239, 68, 68, 0.25)" : "1px solid var(--admin-border)",
+                  padding: "0.25rem 0.6rem",
                   borderRadius: "6px",
-                  fontSize: "0.78rem",
+                  fontSize: "0.76rem",
                   fontWeight: 600,
                   textDecoration: "none",
+                  maxWidth: "100%",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
                 }}
               >
-                <FileText size={13} />
-                File
+                {isImg ? <ImageIcon size={13} /> : isPdf ? <FileText size={13} /> : <FileCheck size={13} />}
+                <span>{isImg ? "Drawing / Img" : isPdf ? "PDF Spec" : "Design File"}</span>
+                <ExternalLink size={10} style={{ opacity: 0.7 }} />
               </a>
             );
           }
@@ -282,16 +359,17 @@ export default function AdminCollaborationsPage() {
                   alignItems: "center",
                   gap: "0.3rem",
                   color: "#2563eb",
-                  fontSize: "0.78rem",
+                  fontSize: "0.76rem",
                   textDecoration: "none",
+                  fontWeight: 600,
                 }}
               >
-                <ExternalLink size={13} />
+                <ExternalLink size={12} />
                 Portfolio
               </a>
             );
           }
-          return <span style={{ color: "var(--admin-text-subtle)", fontSize: "0.8rem" }}>None</span>;
+          return <span style={{ color: "var(--admin-text-subtle)", fontSize: "0.78rem" }}>—</span>;
         },
       },
       {
@@ -307,8 +385,9 @@ export default function AdminCollaborationsPage() {
                 fontSize: "0.72rem",
                 padding: "0.2rem 0.5rem",
                 borderRadius: "4px",
-                background: sub.source === "homepage_modal" ? "rgba(196, 154, 69, 0.1)" : "#f1f5f9",
-                color: sub.source === "homepage_modal" ? "#9a762e" : "#475569",
+                background: sub.source === "homepage_modal" ? "rgba(196, 154, 69, 0.1)" : "var(--admin-surface-muted)",
+                color: sub.source === "homepage_modal" ? "#9a762e" : "var(--admin-text-secondary)",
+                border: "1px solid var(--admin-border)",
                 fontWeight: 600,
               }}
             >
@@ -337,7 +416,7 @@ export default function AdminCollaborationsPage() {
       {
         field: "status",
         headerName: "Status",
-        width: 130,
+        width: 135,
         cellRenderer: (params: any) => {
           const sub = params.data as CollaborationSubmission;
           if (!sub) return null;
@@ -368,7 +447,7 @@ export default function AdminCollaborationsPage() {
       },
       {
         headerName: "Actions",
-        width: 100,
+        width: 95,
         pinned: "right",
         cellRenderer: (params: any) => {
           const sub = params.data as CollaborationSubmission;
@@ -452,7 +531,7 @@ export default function AdminCollaborationsPage() {
             Lighting Design Submissions
           </h1>
           <p style={{ color: "var(--admin-text-muted)", margin: "0.25rem 0 0 0", fontSize: "0.92rem" }}>
-            Review, evaluate, and shortlist original lighting concepts submitted by designers, architects, and creators.
+            Review, evaluate, and shortlist original lighting concepts and drawings submitted by architects, interior designers, and creators.
           </p>
         </div>
         <button
@@ -538,7 +617,7 @@ export default function AdminCollaborationsPage() {
             <div style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
               <input
                 type="search"
-                placeholder="Search designer, email, concept..."
+                placeholder="Search designer, email, phone, concept..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
@@ -550,7 +629,7 @@ export default function AdminCollaborationsPage() {
                   color: "var(--admin-text-main)",
                   fontSize: "13px",
                   outline: "none",
-                  minWidth: "220px",
+                  minWidth: "240px",
                 }}
               />
             </div>
@@ -564,7 +643,8 @@ export default function AdminCollaborationsPage() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0, 0, 0, 0.6)",
+            background: "rgba(0, 0, 0, 0.65)",
+            backdropFilter: "blur(3px)",
             zIndex: 9999,
             display: "flex",
             alignItems: "center",
@@ -577,12 +657,13 @@ export default function AdminCollaborationsPage() {
             style={{
               background: "var(--admin-surface)",
               borderRadius: "16px",
-              maxWidth: "680px",
+              maxWidth: "760px",
               width: "100%",
-              maxHeight: "90vh",
+              maxHeight: "92vh",
               overflowY: "auto",
-              boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
-              padding: "var(--a-space-5)",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              border: "1px solid var(--admin-border)",
+              padding: "1.75rem",
               position: "relative",
             }}
             onClick={(e) => e.stopPropagation()}
@@ -595,7 +676,7 @@ export default function AdminCollaborationsPage() {
                 top: "1.25rem",
                 right: "1.25rem",
                 background: "var(--admin-surface-muted)",
-                border: "none",
+                border: "1px solid var(--admin-border)",
                 borderRadius: "50%",
                 width: "32px",
                 height: "32px",
@@ -603,146 +684,388 @@ export default function AdminCollaborationsPage() {
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
+                color: "var(--admin-text-main)",
               }}
             >
               <X size={16} />
             </button>
 
-            <span style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", color: "#C49A45", letterSpacing: "0.08em" }}>
-              Submission Details
-            </span>
-            <h2 style={{ fontSize: "1.45rem", fontWeight: 700, color: "var(--admin-text-main)", margin: "0.3rem 0 1.25rem 0" }}>
+            {/* Modal Header */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.35rem" }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", color: "#C49A45", letterSpacing: "0.08em" }}>
+                Submission Dossier
+              </span>
+              <span
+                style={{
+                  ...getStatusBadgeStyle(selectedSubmission.status),
+                  fontSize: "0.72rem",
+                  padding: "0.15rem 0.5rem",
+                  borderRadius: "4px",
+                  fontWeight: 600,
+                  textTransform: "capitalize",
+                }}
+              >
+                {selectedSubmission.status}
+              </span>
+            </div>
+
+            <h2 style={{ fontSize: "1.45rem", fontWeight: 700, color: "var(--admin-text-main)", margin: "0.2rem 0 1rem 0" }}>
               {selectedSubmission.concept_title}
             </h2>
 
+            {/* Quick Action Bar for Instant Admin Outreach */}
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.6rem",
+                alignItems: "center",
+                padding: "0.75rem 1rem",
+                background: "var(--admin-surface-muted)",
+                borderRadius: "10px",
+                border: "1px solid var(--admin-border)",
+                marginBottom: "1.5rem",
+              }}
+            >
+              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--admin-text-secondary)" }}>
+                Quick Outreach:
+              </span>
+              {selectedSubmission.phone && (
+                <a
+                  href={`https://wa.me/${selectedSubmission.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                    `Hello ${selectedSubmission.name}, thank you for submitting your lighting design concept "${selectedSubmission.concept_title}" to Deluzex. We would love to discuss the details and production possibilities with you!`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.4rem",
+                    background: "#16a34a",
+                    color: "#ffffff",
+                    padding: "0.4rem 0.85rem",
+                    borderRadius: "6px",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                  }}
+                >
+                  <MessageCircle size={14} />
+                  WhatsApp Designer
+                </a>
+              )}
+              {selectedSubmission.email && (
+                <a
+                  href={`mailto:${selectedSubmission.email}?subject=${encodeURIComponent(
+                    `Deluzex Collaboration - ${selectedSubmission.concept_title}`
+                  )}`}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.4rem",
+                    background: "#2563eb",
+                    color: "#ffffff",
+                    padding: "0.4rem 0.85rem",
+                    borderRadius: "6px",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                  }}
+                >
+                  <Mail size={14} />
+                  Email Designer
+                </a>
+              )}
+            </div>
+
             {/* Designer Profile Card */}
             <div style={{ background: "var(--admin-surface-muted)", borderRadius: "10px", padding: "1.25rem", marginBottom: "1.5rem", border: "1px solid var(--admin-border)" }}>
-              <div className={styles.formGrid2} style={{ display: "grid", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Designer Name</div>
+                  <div style={{ fontSize: "0.74rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Designer Full Name</div>
                   <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--admin-text-main)", marginTop: "0.15rem" }}>{selectedSubmission.name}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Email Address</div>
-                  <div style={{ fontSize: "0.95rem", color: "var(--admin-text-main)", marginTop: "0.15rem" }}>
-                    <a href={`mailto:${selectedSubmission.email}`} style={{ color: "#2563eb", textDecoration: "none" }}>
+                  <div style={{ fontSize: "0.74rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Email Address</div>
+                  <div style={{ fontSize: "0.92rem", color: "var(--admin-text-main)", marginTop: "0.15rem" }}>
+                    <a href={`mailto:${selectedSubmission.email}`} style={{ color: "#2563eb", textDecoration: "none", fontWeight: 500 }}>
                       {selectedSubmission.email}
                     </a>
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Phone / WhatsApp</div>
-                  <div style={{ fontSize: "0.95rem", color: "var(--admin-text-main)", marginTop: "0.15rem" }}>
+                  <div style={{ fontSize: "0.74rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Phone / WhatsApp</div>
+                  <div style={{ fontSize: "0.92rem", color: "var(--admin-text-main)", marginTop: "0.15rem" }}>
                     {selectedSubmission.phone ? (
-                      <a href={`https://wa.me/${selectedSubmission.phone.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" style={{ color: "#10b981", textDecoration: "none" }}>
-                        {selectedSubmission.phone}
-                      </a>
+                      <span style={{ fontWeight: 500 }}>{selectedSubmission.phone}</span>
                     ) : (
-                      "N/A"
+                      <span style={{ color: "var(--admin-text-subtle)" }}>Not provided</span>
                     )}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>City / Location</div>
-                  <div style={{ fontSize: "0.95rem", color: "var(--admin-text-main)", marginTop: "0.15rem" }}>{selectedSubmission.city || "Not specified"}</div>
+                  <div style={{ fontSize: "0.74rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>City / Location</div>
+                  <div style={{ fontSize: "0.92rem", color: "var(--admin-text-main)", marginTop: "0.15rem", fontWeight: 500 }}>
+                    {selectedSubmission.city || "Not specified"}
+                  </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Design Background</div>
-                  <div style={{ fontSize: "0.95rem", color: "var(--admin-text-main)", marginTop: "0.15rem" }}>{selectedSubmission.role || "Architect / Designer"}</div>
+                  <div style={{ fontSize: "0.74rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Design Background</div>
+                  <div style={{ fontSize: "0.92rem", color: "var(--admin-text-main)", marginTop: "0.15rem", fontWeight: 500 }}>
+                    {selectedSubmission.role || "Architect / Designer"}
+                  </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Studio / Firm / College</div>
-                  <div style={{ fontSize: "0.95rem", color: "var(--admin-text-main)", marginTop: "0.15rem" }}>{selectedSubmission.studio_or_college || "Independent"}</div>
+                  <div style={{ fontSize: "0.74rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Studio / College</div>
+                  <div style={{ fontSize: "0.92rem", color: "var(--admin-text-main)", marginTop: "0.15rem", fontWeight: 500 }}>
+                    {selectedSubmission.studio_or_college || "Independent / Individual"}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Concept Details */}
+            {/* Concept Details & Inspiration */}
             <div style={{ marginBottom: "1.5rem" }}>
-              <div style={{ fontSize: "0.8rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.4rem" }}>
-                Concept Description &amp; Inspiration
+              <div style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.4rem" }}>
+                About the Design &amp; Inspiration
               </div>
-              <p style={{ background: "var(--admin-surface-muted)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--admin-border)", fontSize: "0.9rem", lineHeight: "1.6", color: "var(--admin-text-secondary)", margin: 0 }}>
+              <p
+                style={{
+                  background: "var(--admin-surface-muted)",
+                  padding: "1rem 1.25rem",
+                  borderRadius: "8px",
+                  border: "1px solid var(--admin-border)",
+                  fontSize: "0.9rem",
+                  lineHeight: "1.65",
+                  color: "var(--admin-text-secondary)",
+                  margin: 0,
+                  whiteSpace: "pre-wrap",
+                }}
+              >
                 {selectedSubmission.description || "No detailed description provided."}
               </p>
             </div>
 
-            {/* Additional Info */}
-            <div className={styles.formGrid2} style={{ display: "grid", gap: "1rem", marginBottom: "1.5rem" }}>
-              <div style={{ background: "var(--admin-surface-muted)", padding: "0.85rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
-                <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Manufactured / Prototyped Before?</div>
-                <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--admin-text-main)", marginTop: "0.2rem", textTransform: "capitalize" }}>
-                  {selectedSubmission.has_made_before || "No"}
+            {/* Prototyped Status & Submission Source */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+              <div style={{ background: "var(--admin-surface-muted)", padding: "0.9rem 1.1rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
+                <div style={{ fontSize: "0.74rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>
+                  Has this light been made before?
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "0.35rem" }}>
+                  <span
+                    style={{
+                      fontSize: "0.82rem",
+                      fontWeight: 700,
+                      padding: "0.2rem 0.6rem",
+                      borderRadius: "6px",
+                      background:
+                        (selectedSubmission.has_made_before || "").toLowerCase() === "yes"
+                          ? "rgba(245, 158, 11, 0.15)"
+                          : "rgba(16, 185, 129, 0.15)",
+                      color:
+                        (selectedSubmission.has_made_before || "").toLowerCase() === "yes"
+                          ? "#b45309"
+                          : "#047857",
+                      border:
+                        (selectedSubmission.has_made_before || "").toLowerCase() === "yes"
+                          ? "1px solid rgba(245, 158, 11, 0.3)"
+                          : "1px solid rgba(16, 185, 129, 0.3)",
+                    }}
+                  >
+                    {(selectedSubmission.has_made_before || "").toLowerCase() === "yes"
+                      ? "⚡ Yes - Previously Prototyped / Manufactured"
+                      : "💡 No - Brand New Original Concept"}
+                  </span>
                 </div>
               </div>
-              <div style={{ background: "var(--admin-surface-muted)", padding: "0.85rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
-                <div style={{ fontSize: "0.75rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Submission Source</div>
-                <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--admin-text-main)", marginTop: "0.2rem" }}>
-                  {selectedSubmission.source === "homepage_modal" ? "Homepage Modal" : "/collaborate Page"}
+
+              <div style={{ background: "var(--admin-surface-muted)", padding: "0.9rem 1.1rem", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
+                <div style={{ fontSize: "0.74rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600 }}>
+                  Submission Context &amp; Date
+                </div>
+                <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--admin-text-main)", marginTop: "0.35rem" }}>
+                  {selectedSubmission.source === "homepage_modal" ? "Homepage Modal" : "/collaborate Page Form"}
+                  {selectedSubmission.created_at && (
+                    <span style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)", fontWeight: 400, marginLeft: "8px" }}>
+                      • {new Date(selectedSubmission.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Portfolio Link & Files */}
-            {(selectedSubmission.portfolio_link || selectedSubmission.file_url) && (
-              <div style={{ marginBottom: "1.5rem" }}>
-                <div style={{ fontSize: "0.8rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.5rem" }}>
-                  Design Attachments &amp; Portfolio
-                </div>
-                <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-                  {selectedSubmission.file_url && (
-                    <a
-                      href={selectedSubmission.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                        background: "#0f172a",
-                        color: "#ffffff",
-                        padding: "0.6rem 1.2rem",
-                        borderRadius: "8px",
-                        fontSize: "0.85rem",
-                        fontWeight: 600,
-                        textDecoration: "none",
-                      }}
-                    >
-                      <Download size={16} />
-                      View Uploaded Design File
-                    </a>
-                  )}
-                  {selectedSubmission.portfolio_link && (
-                    <a
-                      href={selectedSubmission.portfolio_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                        background: "var(--admin-surface-muted)",
-                        color: "var(--admin-text-main)",
-                        padding: "0.6rem 1.2rem",
-                        borderRadius: "8px",
-                        fontSize: "0.85rem",
-                        fontWeight: 600,
-                        textDecoration: "none",
-                        border: "1px solid var(--admin-border)",
-                      }}
-                    >
-                      <ExternalLink size={16} />
-                      Open Portfolio Link
-                    </a>
-                  )}
-                </div>
+            {/* Design Attachments & Drawings Preview */}
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.6rem" }}>
+                Design Drawings &amp; Attachments
               </div>
-            )}
+
+              {selectedSubmission.file_url ? (
+                <div
+                  style={{
+                    background: "var(--admin-surface-muted)",
+                    borderRadius: "12px",
+                    border: "1px solid var(--admin-border)",
+                    padding: "1.25rem",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "1rem",
+                  }}
+                >
+                  {/* If it's an image: Render High-Resolution Visual Preview */}
+                  {isImageFile(selectedSubmission.file_url, selectedSubmission.file_name) ? (
+                    <div>
+                      <div
+                        style={{
+                          background: "#0b0f19",
+                          borderRadius: "10px",
+                          overflow: "hidden",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          maxHeight: "360px",
+                          border: "1px solid var(--admin-border)",
+                        }}
+                      >
+                        <img
+                          src={selectedSubmission.file_url}
+                          alt={selectedSubmission.concept_title || "Design Concept"}
+                          style={{
+                            maxWidth: "100%",
+                            maxHeight: "360px",
+                            objectFit: "contain",
+                            display: "block",
+                          }}
+                        />
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                        <span style={{ fontSize: "0.82rem", color: "var(--admin-text-muted)", display: "flex", alignItems: "center", gap: "6px" }}>
+                          <ImageIcon size={14} />
+                          {selectedSubmission.file_name || "Lighting Concept Drawing / Render"}
+                        </span>
+                        <div style={{ display: "flex", gap: "0.5rem" }}>
+                          <a
+                            href={selectedSubmission.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.4rem",
+                              background: "#0f172a",
+                              color: "#ffffff",
+                              padding: "0.45rem 0.95rem",
+                              borderRadius: "6px",
+                              fontSize: "0.82rem",
+                              fontWeight: 600,
+                              textDecoration: "none",
+                            }}
+                          >
+                            <ExternalLink size={13} />
+                            Open Full Resolution
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* If it's a PDF or Document: Render Document Preview Card */
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                        <div
+                          style={{
+                            width: "44px",
+                            height: "44px",
+                            borderRadius: "8px",
+                            background: "rgba(239, 68, 68, 0.12)",
+                            color: "#dc2626",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <FileText size={22} />
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 600, color: "var(--admin-text-main)", fontSize: "0.9rem" }}>
+                            {selectedSubmission.file_name || "Design Blueprint & Specifications (PDF)"}
+                          </div>
+                          <div style={{ fontSize: "0.76rem", color: "var(--admin-text-muted)" }}>
+                            Portable Document Format (.pdf)
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <a
+                          href={selectedSubmission.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "0.4rem",
+                            background: "#0f172a",
+                            color: "#ffffff",
+                            padding: "0.5rem 1rem",
+                            borderRadius: "6px",
+                            fontSize: "0.82rem",
+                            fontWeight: 600,
+                            textDecoration: "none",
+                          }}
+                        >
+                          <ExternalLink size={14} />
+                          Open PDF in New Window
+                        </a>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Portfolio Link if provided */}
+                  {selectedSubmission.portfolio_link && (
+                    <div style={{ paddingTop: "0.75rem", borderTop: "1px solid var(--admin-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: "0.82rem", color: "var(--admin-text-muted)" }}>External Designer Portfolio:</span>
+                      <a
+                        href={selectedSubmission.portfolio_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.4rem",
+                          color: "#2563eb",
+                          fontSize: "0.82rem",
+                          fontWeight: 600,
+                          textDecoration: "none",
+                        }}
+                      >
+                        <ExternalLink size={13} />
+                        {selectedSubmission.portfolio_link}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    background: "var(--admin-surface-muted)",
+                    borderRadius: "8px",
+                    border: "1px dashed var(--admin-border)",
+                    padding: "1rem",
+                    color: "var(--admin-text-muted)",
+                    fontSize: "0.85rem",
+                    textAlign: "center",
+                  }}
+                >
+                  No attachment uploaded for this concept.
+                </div>
+              )}
+            </div>
 
             {/* Status Changer Footer */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "1.25rem", borderTop: "1px solid var(--admin-border)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--admin-text-secondary)" }}>Current Status:</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--admin-text-secondary)" }}>Update Status:</span>
                 <select
                   value={selectedSubmission.status}
                   onChange={(e) => handleStatusChange(selectedSubmission._id || selectedSubmission.id || "", e.target.value)}
@@ -752,11 +1075,12 @@ export default function AdminCollaborationsPage() {
                     fontWeight: 600,
                     fontSize: "0.85rem",
                     ...getStatusBadgeStyle(selectedSubmission.status),
+                    cursor: "pointer",
                   }}
                 >
-                  <option value="pending">Pending</option>
-                  <option value="reviewed">Reviewed</option>
-                  <option value="shortlisted">Shortlisted</option>
+                  <option value="pending">Pending Review</option>
+                  <option value="reviewed">Reviewed &amp; Contacted</option>
+                  <option value="shortlisted">Shortlisted for Production</option>
                   <option value="archived">Archived</option>
                 </select>
               </div>
@@ -765,12 +1089,13 @@ export default function AdminCollaborationsPage() {
                 onClick={() => setSelectedSubmission(null)}
                 style={{
                   background: "var(--admin-surface-muted)",
-                  border: "none",
+                  border: "1px solid var(--admin-border)",
                   borderRadius: "8px",
                   padding: "0.55rem 1.25rem",
                   fontSize: "0.85rem",
                   fontWeight: 600,
                   cursor: "pointer",
+                  color: "var(--admin-text-main)",
                 }}
               >
                 Close
@@ -786,7 +1111,8 @@ export default function AdminCollaborationsPage() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0, 0, 0, 0.5)",
+            background: "rgba(0, 0, 0, 0.55)",
+            backdropFilter: "blur(2px)",
             zIndex: 9999,
             display: "flex",
             alignItems: "center",
@@ -801,8 +1127,10 @@ export default function AdminCollaborationsPage() {
               borderRadius: "12px",
               maxWidth: "420px",
               width: "100%",
-              padding: "var(--a-space-5)",
+              padding: "1.75rem",
               textAlign: "center",
+              border: "1px solid var(--admin-border)",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -824,7 +1152,7 @@ export default function AdminCollaborationsPage() {
             <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 0.5rem 0" }}>
               Delete Submission?
             </h3>
-            <p style={{ fontSize: "0.88rem", color: "var(--admin-text-muted)", margin: "0 0 1.5rem 0" }}>
+            <p style={{ fontSize: "0.88rem", color: "var(--admin-text-muted)", margin: "0 0 1.5rem 0", lineHeight: "1.5" }}>
               Are you sure you want to delete the submission for <strong>{itemToDelete.concept_title}</strong> by {itemToDelete.name}? This action cannot be undone.
             </p>
             <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
@@ -832,12 +1160,13 @@ export default function AdminCollaborationsPage() {
                 onClick={() => setItemToDelete(null)}
                 style={{
                   background: "var(--admin-surface-muted)",
-                  border: "none",
+                  border: "1px solid var(--admin-border)",
                   borderRadius: "8px",
                   padding: "0.6rem 1.25rem",
                   fontSize: "0.85rem",
                   fontWeight: 600,
                   cursor: "pointer",
+                  color: "var(--admin-text-main)",
                 }}
               >
                 Cancel

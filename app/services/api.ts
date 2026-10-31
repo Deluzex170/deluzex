@@ -3022,6 +3022,7 @@ export interface CollaborationSubmission {
   description?: string;
   portfolio_link?: string;
   file_url?: string;
+  file_name?: string;
   status: string; // "pending" | "reviewed" | "shortlisted" | "archived"
   source?: string; // "collaborate_page" | "homepage_modal"
   created_at?: string;

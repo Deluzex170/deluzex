@@ -71,79 +71,81 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   ];
 
   return (
-    <div className={styles.dashboardContainer}>
+    <div className={styles.dashboardShell}>
+      <div className={styles.dashboardContainer}>
 
-      {/* Sidebar */}
-      <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarCollapsed}`}>
-        <div className={styles.sidebarInner}>
-          {menuItems.map((group, idx) => (
-            <div key={idx} className={`${styles.menuGroup} ${group.group === "Administration" ? styles.adminGroup : ""}`}>
-              <h4 className={styles.groupTitle}>{group.group}</h4>
-              <ul className={styles.menuList}>
-                {group.items.map((item, i) => {
-                  const isActive = pathname.startsWith(item.path);
-                  return (
-                    <li key={i}>
-                      <Link
-                        href={item.path}
-                        title={item.name}
-                        aria-current={isActive ? "page" : undefined}
-                        className={`${styles.menuLink} ${isActive ? styles.activeLink : ""}`}
-                        onClick={() => setSidebarOpen(false)}
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d={item.icon} />
-                        </svg>
-                        <span className={styles.menuLinkText}>{item.name}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
+        {/* Sidebar */}
+        <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarCollapsed}`}>
+          <div className={styles.sidebarInner}>
+            {menuItems.map((group, idx) => (
+              <div key={idx} className={`${styles.menuGroup} ${group.group === "Administration" ? styles.adminGroup : ""}`}>
+                <h4 className={styles.groupTitle}>{group.group}</h4>
+                <ul className={styles.menuList}>
+                  {group.items.map((item, i) => {
+                    const isActive = pathname.startsWith(item.path);
+                    return (
+                      <li key={i}>
+                        <Link
+                          href={item.path}
+                          title={item.name}
+                          aria-current={isActive ? "page" : undefined}
+                          className={`${styles.menuLink} ${isActive ? styles.activeLink : ""}`}
+                          onClick={() => setSidebarOpen(false)}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d={item.icon} />
+                          </svg>
+                          <span className={styles.menuLinkText}>{item.name}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
 
-          <div className={styles.menuGroup}>
-            <button className={styles.logoutBtn} onClick={() => setShowLogoutModal(true)}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9" />
-              </svg>
-              <span className={styles.menuLinkText}>Logout</span>
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      {/* Overlay — closes sidebar when clicking outside */}
-      {sidebarOpen && (
-        <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />
-      )}
-
-      <main className={styles.mainContent}>
-        {children}
-      </main>
-
-      {/* Logout Modal */}
-      {showLogoutModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <div className={styles.modalIconWrapper}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5c-1.1 0-2 .9-2 2v2 M8 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
-                <circle cx="20" cy="12" r="3" />
-                <line x1="20" y1="9" x2="20" y2="15" />
-                <line x1="17" y1="12" x2="23" y2="12" />
-              </svg>
-            </div>
-            <h3>Logout</h3>
-            <p>Are you sure you want to logout your account?</p>
-            <div className={styles.modalActions}>
-              <button className={styles.btnCancel} onClick={() => setShowLogoutModal(false)}>Cancel</button>
-              <button className={styles.btnConfirmLogout} onClick={handleLogout}>Logout</button>
+            <div className={styles.menuGroup}>
+              <button className={styles.logoutBtn} onClick={() => setShowLogoutModal(true)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9" />
+                </svg>
+                <span className={styles.menuLinkText}>Logout</span>
+              </button>
             </div>
           </div>
-        </div>
-      )}
+        </aside>
+
+        {/* Overlay — closes sidebar when clicking outside */}
+        {sidebarOpen && (
+          <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />
+        )}
+
+        <main className={styles.mainContent}>
+          {children}
+        </main>
+
+        {/* Logout Modal */}
+        {showLogoutModal && (
+          <div className={styles.modalOverlay}>
+            <div className={styles.modal}>
+              <div className={styles.modalIconWrapper}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5c-1.1 0-2 .9-2 2v2 M8 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
+                  <circle cx="20" cy="12" r="3" />
+                  <line x1="20" y1="9" x2="20" y2="15" />
+                  <line x1="17" y1="12" x2="23" y2="12" />
+                </svg>
+              </div>
+              <h3>Logout</h3>
+              <p>Are you sure you want to logout your account?</p>
+              <div className={styles.modalActions}>
+                <button className={styles.btnCancel} onClick={() => setShowLogoutModal(false)}>Cancel</button>
+                <button className={styles.btnConfirmLogout} onClick={handleLogout}>Logout</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

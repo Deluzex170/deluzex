@@ -34,7 +34,9 @@ async def create_collaboration_submission(
     content_type = request.headers.get("content-type", "")
 
     file_url = None
+    file_name = None
     if file and file.filename:
+        file_name = file.filename
         try:
             file_url = await upload_image_to_imagekit(file, folder="/collaborations")
         except Exception as e:
@@ -42,11 +44,17 @@ async def create_collaboration_submission(
 
     # Case 1: Multipart form submission
     if "multipart/form-data" in content_type:
-        if not name or not email or not concept_title:
+        if not name or not email:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Name, email, and concept title are required.",
+                detail="Name and email are required.",
             )
+
+        effective_title = (
+            (concept_title or "").strip()
+            or ((description or "").strip()[:60] if description else None)
+            or "Lighting Design Submission"
+        )
 
         doc = {
             "name": sanitize_text(name, max_len=100),
@@ -56,10 +64,11 @@ async def create_collaboration_submission(
             "role": sanitize_text(role, max_len=100) if role else None,
             "studio_or_college": sanitize_text(studio_or_college, max_len=200) if studio_or_college else None,
             "has_made_before": sanitize_text(has_made_before, max_len=10) if has_made_before else "no",
-            "concept_title": sanitize_text(concept_title, max_len=200),
+            "concept_title": sanitize_text(effective_title, max_len=200),
             "description": sanitize_text(description, max_len=5000) if description else None,
             "portfolio_link": sanitize_text(portfolio_link, max_len=1000) if portfolio_link else None,
             "file_url": file_url,
+            "file_name": sanitize_text(file_name, max_len=300) if file_name else None,
             "status": "pending",
             "source": sanitize_text(source, max_len=50) if source else "collaborate_page",
             "created_at": datetime.utcnow(),
@@ -71,11 +80,19 @@ async def create_collaboration_submission(
         except Exception:
             body = {}
 
-        if not body.get("name") or not body.get("email") or not body.get("concept_title"):
+        if not body.get("name") or not body.get("email"):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Name, email, and concept title are required.",
+                detail="Name and email are required.",
             )
+
+        json_title = (
+            str(body.get("concept_title", "")).strip()
+            or (str(body.get("description", "")).strip()[:60] if body.get("description") else None)
+            or "Lighting Design Submission"
+        )
+
+        json_file_name = body.get("file_name") or file_name
 
         doc = {
             "name": sanitize_text(str(body.get("name", "")), max_len=100),
@@ -85,10 +102,11 @@ async def create_collaboration_submission(
             "role": sanitize_text(str(body.get("role", "")), max_len=100) if body.get("role") else None,
             "studio_or_college": sanitize_text(str(body.get("studio_or_college", "")), max_len=200) if body.get("studio_or_college") else None,
             "has_made_before": sanitize_text(str(body.get("has_made_before", "no")), max_len=10),
-            "concept_title": sanitize_text(str(body.get("concept_title", "")), max_len=200),
+            "concept_title": sanitize_text(json_title, max_len=200),
             "description": sanitize_text(str(body.get("description", "")), max_len=5000) if body.get("description") else None,
             "portfolio_link": sanitize_text(str(body.get("portfolio_link", "")), max_len=1000) if body.get("portfolio_link") else None,
             "file_url": body.get("file_url") or file_url,
+            "file_name": sanitize_text(str(json_file_name), max_len=300) if json_file_name else None,
             "status": "pending",
             "source": sanitize_text(str(body.get("source", "homepage_modal")), max_len=50),
             "created_at": datetime.utcnow(),
@@ -130,9 +148,11 @@ def get_collaborations(
         query["$or"] = [
             {"name": regex},
             {"email": regex},
+            {"phone": regex},
             {"concept_title": regex},
             {"studio_or_college": regex},
             {"city": regex},
+            {"role": regex},
         ]
 
     total = db.collaborations.count_documents(query)
