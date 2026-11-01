@@ -370,7 +370,9 @@ export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = 
               <path d="M6 5L20 6L19 13H6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
-          <span className={styles.cartBadge}>{mounted && cartItems.length > 0 ? cartItems.length : "0"}</span>
+          {mounted && cartItems.length > 0 && (
+            <span className={styles.cartBadge}>{cartItems.length}</span>
+          )}
         </div>
       </div>
     </header>

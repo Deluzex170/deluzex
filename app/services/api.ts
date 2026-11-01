@@ -1922,11 +1922,32 @@ export async function savePlacedOrder(order: UserOrder): Promise<UserOrder> {
     }
   }
 
+  // If the order was already created on the server (e.g. via COD / Razorpay payment APIs),
+  // skip the redundant POST /orders call to prevent duplicate orders and 422 schema errors.
+  if (order.order_id || order.id) {
+    return normalizedOrder;
+  }
+
   try {
+    const payload = {
+      user_id: order.user_id || undefined,
+      email: (order.user_email || "").trim(),
+      phone: (order.user_phone || "").trim(),
+      shipping_address: order.shipping_address,
+      items: order.items,
+      subtotal: Number(order.subtotal || 0),
+      discount: Number(order.discount || 0),
+      coupon_code: order.coupon_code || undefined,
+      gst: Number(order.gst || 0),
+      delivery: Number(order.delivery || 0),
+      total: Number(order.total || 0),
+      payment_method: order.payment_method || "cod",
+      notes: order.notes || undefined,
+    };
     const res = await fetch(`${API_BASE_URL}/orders`, {
       method: "POST",
       headers: getAuthHeaders(),
-      body: JSON.stringify(normalizedOrder),
+      body: JSON.stringify(payload),
     });
     if (res.ok) {
       const data = await res.json();

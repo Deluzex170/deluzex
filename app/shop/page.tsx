@@ -696,15 +696,7 @@ function ShopContent() {
                     {/* Wishlist Button */}
                     <WishlistButton product={product} variant="floating" />
 
-                    {isOutOfStock && (
-                      <span className={styles.outOfStockBadge}>Out of Stock</span>
-                    )}
-
-                    {isOutOfStock ? (
-                      <div className={styles.outOfStockBtn} title="Currently unavailable">
-                        Out of Stock
-                      </div>
-                    ) : cartItem ? (
+                    {isOutOfStock ? null : cartItem ? (
                       <div className={styles.cartQuantityControl}>
                         <button
                           type="button"

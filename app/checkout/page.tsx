@@ -304,10 +304,11 @@ export default function CheckoutPage() {
     setEditingAddressId(null);
     setIsAddingNewAddress(true);
     setAddressType("Home");
+    setSaveAddressToProfile(true);
     const userObj = user as Record<string, string> | null;
     if (userObj?.first_name) setFirstName(userObj.first_name);
     if (userObj?.last_name) setLastName(userObj.last_name);
-    if (userObj?.phone) setPhone(userObj.phone);
+    if (userObj?.phone && !phone) setPhone(userObj.phone);
     setStreet("");
     setCity("");
     setState("");
@@ -403,15 +404,25 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (isAuthenticated && saveAddressToProfile) {
+    const userObj = user as Record<string, string> | null;
+    const activeEmail = (userObj?.email || email || "").trim().toLowerCase();
+    const activePhone = (phone || userObj?.phone || "").trim();
+
+    const cleanPhone = activePhone.replace(/\D/g, "");
+    if (cleanPhone.length < 10) {
+      setErrorMessage("Please provide a valid 10-digit mobile number for delivery tracking.");
+      scrollToError();
+      return;
+    }
+
+    if (isAuthenticated) {
       setIsUpdatingAddress(true);
-      const userObj = user as Record<string, string> | null;
       const userId = userObj?._id || userObj?.id || "";
       try {
         const newAddr = await saveUserAddress({
           user_id: userId,
-          user_email: email.trim(),
-          user_phone: phone.trim(),
+          user_email: activeEmail,
+          user_phone: activePhone,
           type: addressType,
           first_name: firstName.trim(),
           last_name: lastName.trim(),
@@ -419,13 +430,15 @@ export default function CheckoutPage() {
           city: city.trim(),
           state: state.trim(),
           pin_code: pinCode.trim(),
-          phone: phone.trim(),
+          phone: activePhone,
           is_default: savedAddresses.length === 0,
         });
         if (newAddr) {
           setSavedAddresses((prev) => {
             const exists = prev.some((a) => (a.id || a._id) === (newAddr.id || newAddr._id));
-            return exists ? prev.map((a) => (a.id || a._id) === (newAddr.id || newAddr._id) ? newAddr : a) : [newAddr, ...prev];
+            return exists
+              ? prev.map((a) => ((a.id || a._id) === (newAddr.id || newAddr._id) ? newAddr : a))
+              : [newAddr, ...prev];
           });
           applyAddress(newAddr);
           setIsAddingNewAddress(false);
@@ -435,12 +448,15 @@ export default function CheckoutPage() {
       } catch (err: any) {
         console.error("Failed to save address:", err);
         setErrorMessage(err?.message || "Failed to save address.");
+        scrollToError();
       } finally {
         setIsUpdatingAddress(false);
       }
     } else {
       setSelectedAddressId(null);
       setIsAddingNewAddress(false);
+      setAddressUpdateMessage("Delivery address selected!");
+      setTimeout(() => setAddressUpdateMessage(null), 4000);
     }
   };
 
@@ -1252,6 +1268,19 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className={styles.formGroup}>
+                  <label className={styles.label}>Phone Number (for Delivery Updates) *</label>
+                  <input
+                    type="tel"
+                    required
+                    className={styles.input}
+                    placeholder="10-digit mobile number (e.g. 9876543210)"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    disabled={isProcessing}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
                   <label className={styles.label}>Street Address &amp; Landmark *</label>
                   <input
                     type="text"
@@ -1327,8 +1356,8 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Profile Save Checkbox: Only when adding new address or no saved addresses */}
-                {isAuthenticated && (isAddingNewAddress || savedAddresses.length === 0) && (
+                {/* Profile Save Checkbox: Only when no saved addresses exist yet */}
+                {isAuthenticated && savedAddresses.length === 0 && (
                   <label className={styles.checkboxWrapper}>
                     <input
                       type="checkbox"
