@@ -133,6 +133,12 @@ async def create_product(
             except Exception:
                 pass
         
+        effective_count = int(stock_count or 0)
+        effective_status = str(stock_status or "").upper()
+        derived_in_stock = in_stock if in_stock is not None else (effective_count > 0 and effective_status != "OUT OF STOCK")
+        if effective_status == "OUT OF STOCK" or effective_count <= 0:
+            derived_in_stock = False
+
         product = models.Product(
             product_title=product_title,
             product_price=product_price,
@@ -149,7 +155,7 @@ async def create_product(
             product_images=product_images_urls,
             sku=sku,
             stock_status=stock_status,
-            in_stock=in_stock,
+            in_stock=derived_in_stock,
             price_prefix=price_prefix,
             price_note=price_note,
             dimensions=dimensions,
@@ -274,7 +280,16 @@ async def update_product(
 
     if sku is not None: product.sku = sku
     if stock_status is not None: product.stock_status = stock_status
-    if in_stock is not None: product.in_stock = in_stock
+    if in_stock is not None:
+        product.in_stock = in_stock
+    else:
+        # Auto-sync in_stock flag based on effective stock count & status
+        effective_count = int(product.stock_count or 0)
+        effective_status = str(product.stock_status or "").upper()
+        if effective_status == "OUT OF STOCK" or effective_count <= 0:
+            product.in_stock = False
+        else:
+            product.in_stock = True
     if price_prefix is not None: product.price_prefix = price_prefix
     if price_note is not None: product.price_note = price_note
     if dimensions is not None: product.dimensions = dimensions

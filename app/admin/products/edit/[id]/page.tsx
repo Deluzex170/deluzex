@@ -173,6 +173,9 @@ export default function EditProduct() {
         }
       });
       payload.append("is_new_arrival", String(isNewArrival));
+      const count = parseInt(String(formData.stock_count)) || 0;
+      const status = String(formData.stock_status || "").toUpperCase();
+      payload.append("in_stock", String(count > 0 && status !== "OUT OF STOCK"));
       
       const validSpecs = customSpecs.filter(s => s.key.trim() && s.value.trim());
       payload.append("specifications", JSON.stringify(validSpecs));
