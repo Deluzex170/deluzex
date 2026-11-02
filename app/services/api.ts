@@ -1615,6 +1615,7 @@ export interface UserOrder {
   order_id: string;
   order_number?: string;
   invoice_number?: string;
+  user_id?: string;
   razorpay_order_id?: string;
   razorpay_payment_id?: string;
   user_email?: string;
@@ -1630,6 +1631,9 @@ export interface UserOrder {
   };
   items: OrderItem[];
   subtotal?: number;
+  discount?: number;
+  coupon_code?: string;
+  discount_breakdown?: Record<string, unknown>;
   gst?: number;
   delivery?: number;
   total: number;
@@ -1742,6 +1746,7 @@ export function normalizeUserOrder(raw: Record<string, unknown>): UserOrder {
     _id: String(raw._id || raw.id || orderId),
     id: String(raw.id || raw._id || orderId),
     order_id: String(orderId),
+    user_id: (raw.user_id || raw.userId) as string | undefined,
     razorpay_order_id: (raw.razorpay_order_id || raw.razorpayOrderId) as string | undefined,
     razorpay_payment_id: (raw.razorpay_payment_id || raw.razorpayPaymentId) as string | undefined,
     user_email: (raw.user_email || raw.email) as string | undefined,
@@ -1755,6 +1760,9 @@ export function normalizeUserOrder(raw: Record<string, unknown>): UserOrder {
     shipping_address: (raw.shipping_address || raw.shippingAddress || raw.address) as UserOrder["shipping_address"],
     items,
     subtotal: (raw.subtotal || raw.sub_total || (numTotal > 0 ? numTotal * 0.82 : 0)) as number,
+    discount: (raw.discount || raw.discount_amount || 0) as number,
+    coupon_code: (raw.coupon_code || raw.couponCode) as string | undefined,
+    discount_breakdown: raw.discount_breakdown as Record<string, unknown> | undefined,
     gst: (raw.gst || raw.tax || (numTotal > 0 ? numTotal * 0.18 : 0)) as number,
     delivery: (raw.delivery || raw.shipping_fee || 0) as number,
     total: numTotal,
