@@ -178,18 +178,34 @@ def delete_category(
 ):
     """
     Delete a category from MongoDB database by _id (ObjectId) or category_id.
+    Safely reassigns orphaned products to 'Uncategorized'.
     """
-    query = None
+    cat_doc = None
     if ObjectId.is_valid(identifier):
-        query = {"_id": ObjectId(identifier)}
-    else:
-        query = {"category_id": identifier}
+        cat_doc = db.categories.find_one({"_id": ObjectId(identifier)})
+    if not cat_doc:
+        cat_doc = db.categories.find_one({"category_id": identifier})
+    if not cat_doc:
+        cat_doc = db.categories.find_one({"name": identifier})
 
-    result = db.categories.delete_one(query)
-    if result.deleted_count == 0:
-        result = db.categories.delete_one({"name": identifier})
-
-    if result.deleted_count == 0:
+    if not cat_doc:
         raise HTTPException(status_code=404, detail="Category not found")
 
-    return {"message": "Category deleted successfully"}
+    cat_name = cat_doc.get("name")
+    cat_id_str = str(cat_doc.get("_id"))
+    custom_cat_id = cat_doc.get("category_id")
+
+    # Reassign affected products to 'Uncategorized' to prevent broken references
+    orphan_filter = {"$or": [
+        {"product_category": cat_name},
+        {"product_category": custom_cat_id},
+        {"category_id": cat_id_str},
+        {"category_id": custom_cat_id}
+    ]}
+    reassigned = db.products.update_many(orphan_filter, {"$set": {"product_category": "Uncategorized"}})
+
+    db.categories.delete_one({"_id": cat_doc["_id"]})
+    return {
+        "message": f"Category '{cat_name}' deleted successfully",
+        "reassigned_products_count": reassigned.modified_count
+    }

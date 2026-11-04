@@ -77,23 +77,22 @@ def decrement_product_stock(items: List[Union[Dict[str, Any], Any]]) -> None:
                 detail=f"Insufficient stock for '{title}'. Another customer may have just purchased the remaining units."
             )
 
+        if current_stock < qty:
+            if decremented_so_far:
+                restore_product_stock(decremented_so_far)
+            raise HTTPException(
+                status_code=400,
+                detail=f"Insufficient stock for '{title}'. Only {current_stock} unit(s) available, but {qty} requested."
+            )
+
         try:
-            if current_stock >= qty:
-                # Atomic optimistic concurrency check: only decrement if stock_count >= qty
-                atomic_query = {**prod_query, "stock_count": {"$gte": qty}}
-                updated = db.products.find_one_and_update(
-                    atomic_query,
-                    {"$inc": {"stock_count": -qty}},
-                    return_document=ReturnDocument.AFTER
-                )
-            else:
-                # Stock exists but is less than requested quantity: floor at 0
-                atomic_query = {**prod_query, "stock_count": {"$gt": 0}}
-                updated = db.products.find_one_and_update(
-                    atomic_query,
-                    {"$set": {"stock_count": 0, "in_stock": False, "stock_status": "OUT OF STOCK"}},
-                    return_document=ReturnDocument.AFTER
-                )
+            # Atomic optimistic concurrency check: only decrement if stock_count >= qty
+            atomic_query = {**prod_query, "stock_count": {"$gte": qty}}
+            updated = db.products.find_one_and_update(
+                atomic_query,
+                {"$inc": {"stock_count": -qty}},
+                return_document=ReturnDocument.AFTER
+            )
 
             if not updated:
                 # Race condition: another concurrent checkout reduced stock between find and update

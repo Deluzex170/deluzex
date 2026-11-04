@@ -243,6 +243,8 @@ def update_admin_coupon(
         raise HTTPException(status_code=404, detail="Coupon not found")
 
     updates = {k: v for k, v in payload.dict(exclude_unset=True).items()}
+    # Coupon code itself is immutable to protect redemption logs
+    updates.pop("code", None)
     updates["updated_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
 
     db.coupons.update_one({"_id": ObjectId(coupon_id)}, {"$set": updates})

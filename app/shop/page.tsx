@@ -670,9 +670,11 @@ function ShopContent() {
             currentProducts.map((product, i) => {
               const pId = String(product._id || product.id || i);
               const cartItem = cartItems.find((item) => String(item.id) === pId);
+              const stockNum = product.stock_count !== undefined && product.stock_count !== null ? Number(product.stock_count) : null;
               const isOutOfStock =
-                product.in_stock === false ||
-                String(product.stock_status || "").toUpperCase() === "OUT OF STOCK";
+                String(product.stock_status || "").toUpperCase() === "OUT OF STOCK" ||
+                (stockNum !== null && stockNum <= 0) ||
+                (product.in_stock === false && (stockNum === null || stockNum <= 0));
 
               return (
                 <div key={pId} className={styles.productCard}>

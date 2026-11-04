@@ -183,6 +183,7 @@ def get_analytics_stats(admin: models.User = Depends(deps.get_current_active_adm
 @router.get("/visitors", response_model=List[VisitorLogResponse])
 def get_visitor_logs(
     filter: str = Query("all", description="all, members, guests"),
+    filter_type: Optional[str] = Query(None, description="alias for filter"),
     search: Optional[str] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
@@ -191,10 +192,11 @@ def get_visitor_logs(
     """
     Get detailed visitor logs with filtering and search (Admin only).
     """
+    active_filter = (filter_type or filter or "all").lower()
     query = {}
-    if filter == "members":
+    if active_filter == "members":
         query["is_member"] = True
-    elif filter == "guests":
+    elif active_filter == "guests":
         query["is_member"] = False
 
     if search and search.strip():

@@ -464,9 +464,9 @@ def delete_account(
 
     clean_email = (current_user.email or "").strip().lower()
     if clean_email:
-        db.addresses.delete_many({"email": {"$regex": f"^{re.escape(clean_email)}$", "$options": "i"}})
-        db.cart_items.delete_many({"user_id": str(user_oid)})
-        db.wishlists.delete_many({"user_id": str(user_oid)})
+        db.addresses.delete_many({"$or": [{"user_email": clean_email}, {"email": {"$regex": f"^{re.escape(clean_email)}$", "$options": "i"}}]})
+        db.cart_items.delete_many({"$or": [{"user_email": clean_email}, {"user_id": str(user_oid)}, {"session_id": clean_email}]})
+        db.wishlist_items.delete_many({"$or": [{"user_email": clean_email}, {"user_id": str(user_oid)}]})
 
     db.users.delete_one({"_id": user_oid})
 

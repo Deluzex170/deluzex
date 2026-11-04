@@ -41,10 +41,11 @@ def read_product(product_id: str):
         pass
 
     if doc is None:
+        clean_id = product_id.strip()
         doc = (
-            db.products.find_one({"slug": product_id})
-            or db.products.find_one({"sku": product_id})
-            or db.products.find_one({"product_title": product_id})
+            db.products.find_one({"slug": clean_id})
+            or db.products.find_one({"product_title": {"$regex": f"^{re.escape(clean_id)}$", "$options": "i"}})
+            or db.products.find_one({"sku": clean_id})
         )
 
     if doc is None:
@@ -133,6 +134,15 @@ async def create_product(
             except Exception:
                 pass
         
+        if sku and sku.strip():
+            clean_sku = sku.strip()
+            existing_sku = db.products.find_one({"sku": clean_sku})
+            if existing_sku:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"SKU '{clean_sku}' is already in use by product '{existing_sku.get('product_title')}'. SKU must be unique."
+                )
+
         effective_count = int(stock_count or 0)
         effective_status = str(stock_status or "").upper()
         derived_in_stock = in_stock if in_stock is not None else (effective_count > 0 and effective_status != "OUT OF STOCK")
@@ -278,7 +288,16 @@ async def update_product(
     if is_featured is not None: product.is_featured = is_featured
     if is_new_arrival is not None: product.is_new_arrival = is_new_arrival
 
-    if sku is not None: product.sku = sku
+    if sku is not None:
+        clean_sku = sku.strip() if sku else None
+        if clean_sku:
+            existing_sku = db.products.find_one({"sku": clean_sku, "_id": {"$ne": obj_id}})
+            if existing_sku:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"SKU '{clean_sku}' is already in use by product '{existing_sku.get('product_title')}'. SKU must be unique."
+                )
+        product.sku = clean_sku
     if stock_status is not None: product.stock_status = stock_status
     if in_stock is not None:
         product.in_stock = in_stock
@@ -359,8 +378,8 @@ async def update_product(
         if trimmed_pdf_url:
             product.technical_spec_pdf = trimmed_pdf_url
 
-    # Save to db
-    update_data = product.model_dump(by_alias=True, exclude_none=True)
+    # Save to db (allow resetting optional fields to null when removed)
+    update_data = product.model_dump(by_alias=True)
     update_data.pop("_id", None)
     db.products.update_one({"_id": obj_id}, {"$set": update_data})
 

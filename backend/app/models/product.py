@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Optional, Union, List, Dict, Any
 from app.models.common import PyObjectId
 
@@ -42,3 +42,13 @@ class Product(BaseModel):
     class Config:
         populate_by_name = True
 
+    @model_validator(mode="after")
+    def sync_in_stock(self) -> "Product":
+        count = int(self.stock_count or 0)
+        status = str(self.stock_status or "").upper()
+        is_order = "ORDER" in status
+        if status == "OUT OF STOCK" or (not is_order and count <= 0):
+            self.in_stock = False
+        elif count > 0 and status != "OUT OF STOCK":
+            self.in_stock = True
+        return self

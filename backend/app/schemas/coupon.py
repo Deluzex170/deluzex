@@ -26,7 +26,8 @@ class CouponCreateRequest(BaseModel):
         return v.strip().upper()
 
 class CouponUpdateRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
+    code: Optional[str] = Field(default=None, max_length=30)
     title: Optional[str] = Field(default=None, max_length=100)
     description: Optional[str] = Field(default=None, max_length=500)
     discount_type: Optional[DiscountType] = None

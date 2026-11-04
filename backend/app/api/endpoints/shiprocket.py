@@ -776,20 +776,18 @@ def customer_request_return(
     elif payload.customer_email:
         if order.get("email") and order.get("email").strip().lower() == payload.customer_email.strip().lower():
             is_authorized = True
-    else:
-        is_authorized = True
 
     if not is_authorized:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not authorized to request a return for this order.",
+            detail="You are not authorized to request a return for this order. Please verify your email or log in.",
         )
 
     current_status = (order.get("status") or "").lower()
-    if current_status in ("returned", "cancelled"):
+    if current_status != "delivered":
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot request return: Order is already '{current_status}'.",
+            detail=f"Return requests are only permitted for delivered orders. Current order status is '{current_status}'.",
         )
 
     existing_return = order.get("return_details")

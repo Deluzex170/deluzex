@@ -2463,7 +2463,10 @@ export async function fetchVisitorLogs(params?: {
     const searchParams = new URLSearchParams();
     if (params?.limit) searchParams.append("limit", params.limit.toString());
     if (params?.skip) searchParams.append("skip", params.skip.toString());
-    if (params?.filter_type) searchParams.append("filter_type", params.filter_type);
+    if (params?.filter_type) {
+      searchParams.append("filter_type", params.filter_type);
+      searchParams.append("filter", params.filter_type);
+    }
     if (params?.search) searchParams.append("search", params.search);
 
     const query = searchParams.toString() ? `?${searchParams.toString()}` : "";

@@ -137,13 +137,13 @@ def toggle_wishlist_item(
 def delete_wishlist_item_by_product_id(
     product_id: str,
     email: str = Query(...),
-    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+    current_user: models.User = Depends(deps.get_current_active_user),
 ):
     """
     Remove an item from MongoDB wishlist by product_id and user_email.
     """
     email_clean = email.strip().lower()
-    if current_user and not getattr(current_user, "is_admin", False):
+    if not getattr(current_user, "is_admin", False):
         user_clean = (current_user.email or "").strip().lower()
         if email_clean != user_clean:
             raise HTTPException(
@@ -197,7 +197,7 @@ def check_wishlist_status(
 @router.delete("/{item_id}")
 def delete_wishlist_item(
     item_id: str,
-    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+    current_user: models.User = Depends(deps.get_current_active_user),
 ):
     """
     Remove an item from MongoDB wishlist.
@@ -209,7 +209,7 @@ def delete_wishlist_item(
     if not existing:
         raise HTTPException(status_code=404, detail="Wishlist item not found")
 
-    if current_user and not getattr(current_user, "is_admin", False):
+    if not getattr(current_user, "is_admin", False):
         user_clean = (current_user.email or "").strip().lower()
         item_email = (existing.get("user_email") or "").strip().lower()
         if item_email != user_clean:
@@ -225,13 +225,13 @@ def delete_wishlist_item(
 @router.delete("")
 def clear_user_wishlist(
     email: str = Query(...),
-    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+    current_user: models.User = Depends(deps.get_current_active_user),
 ):
     """
     Clear all items in user's wishlist.
     """
     email_clean = email.strip().lower()
-    if current_user and not getattr(current_user, "is_admin", False):
+    if not getattr(current_user, "is_admin", False):
         user_clean = (current_user.email or "").strip().lower()
         if email_clean != user_clean:
             raise HTTPException(

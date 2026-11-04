@@ -276,8 +276,6 @@ def remove_cart_item(identifier: str, product_id: str):
     }
 
     result = db.cart_items.delete_many(query)
-    if result.deleted_count == 0:
-        result = db.cart_items.delete_many({"$or": prod_id_clauses})
 
     return {
         "success": True,

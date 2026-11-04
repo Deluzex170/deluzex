@@ -21,23 +21,11 @@ def serialize_address(doc: dict) -> dict:
 @router.get("", response_model=List[AddressResponse])
 def get_user_addresses(
     email: Optional[str] = Query(None),
-    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+    current_user: models.User = Depends(deps.get_current_active_user),
 ):
     """
-    Fetch saved delivery addresses from MongoDB.
-    Authenticated users can access their own addresses; admins can view all or filter by email.
-    If email query param is provided, returns addresses matching that email.
+    Fetch saved delivery addresses from MongoDB (Authenticated users only).
     """
-    if not current_user:
-        if not email:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Authentication required to view saved addresses",
-            )
-        query = {"user_email": email.strip().lower()}
-        docs = list(db.addresses.find(query).sort("created_at", -1))
-        return [AddressResponse(**serialize_address(d)) for d in docs]
-
     query = {}
     if not getattr(current_user, "is_admin", False):
         user_email = (current_user.email or "").strip().lower()
@@ -144,11 +132,10 @@ def update_user_address(
     address_id: str,
     address_in: AddressUpdate,
     email: Optional[str] = Query(None),
-    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+    current_user: models.User = Depends(deps.get_current_active_user),
 ):
     """
     Update an existing delivery address in MongoDB.
-    Enforces ownership verification via authenticated user or verified email.
     """
     if not ObjectId.is_valid(address_id):
         raise HTTPException(status_code=400, detail="Invalid address ID format")
@@ -159,11 +146,9 @@ def update_user_address(
 
     existing_email = (existing.get("user_email") or "").strip().lower()
     authorized = False
-    if current_user and getattr(current_user, "is_admin", False):
+    if getattr(current_user, "is_admin", False):
         authorized = True
-    elif current_user and (current_user.email or "").strip().lower() == existing_email:
-        authorized = True
-    elif email and email.strip().lower() == existing_email:
+    elif (current_user.email or "").strip().lower() == existing_email:
         authorized = True
 
     if not authorized:
@@ -188,7 +173,7 @@ def update_user_address(
 def set_default_address(
     address_id: str,
     email: Optional[str] = Query(None),
-    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+    current_user: models.User = Depends(deps.get_current_active_user),
 ):
     """
     Set an address as the default delivery address for the user.
@@ -202,11 +187,9 @@ def set_default_address(
 
     existing_email = (existing.get("user_email") or "").strip().lower()
     authorized = False
-    if current_user and getattr(current_user, "is_admin", False):
+    if getattr(current_user, "is_admin", False):
         authorized = True
-    elif current_user and (current_user.email or "").strip().lower() == existing_email:
-        authorized = True
-    elif email and email.strip().lower() == existing_email:
+    elif (current_user.email or "").strip().lower() == existing_email:
         authorized = True
 
     if not authorized:
@@ -226,7 +209,7 @@ def set_default_address(
 def delete_user_address(
     address_id: str,
     email: Optional[str] = Query(None),
-    current_user: Optional[models.User] = Depends(deps.get_current_user_optional),
+    current_user: models.User = Depends(deps.get_current_active_user),
 ):
     """
     Delete an address from MongoDB.
@@ -240,11 +223,9 @@ def delete_user_address(
 
     existing_email = (existing.get("user_email") or "").strip().lower()
     authorized = False
-    if current_user and getattr(current_user, "is_admin", False):
+    if getattr(current_user, "is_admin", False):
         authorized = True
-    elif current_user and (current_user.email or "").strip().lower() == existing_email:
-        authorized = True
-    elif email and email.strip().lower() == existing_email:
+    elif (current_user.email or "").strip().lower() == existing_email:
         authorized = True
 
     if not authorized:

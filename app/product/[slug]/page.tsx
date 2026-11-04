@@ -266,16 +266,15 @@ export default function ProductDetail() {
 
   // Stock status text & class
   const isMadeToOrder = Boolean(product.stock_status?.toLowerCase().includes("order"));
-  const isOutOfStock = product.in_stock === false || 
-    (product.stock_status && product.stock_status.toUpperCase() === "OUT OF STOCK") || 
-    (!isMadeToOrder && product.stock_count !== undefined && product.stock_count !== null && Number(product.stock_count) <= 0);
+  const stockCount = product.stock_count !== undefined && product.stock_count !== null ? Number(product.stock_count) : null;
+  const isExplicitOOS = Boolean(product.stock_status && product.stock_status.toUpperCase() === "OUT OF STOCK");
+  const hasZeroStock = !isMadeToOrder && stockCount !== null && stockCount <= 0;
+  const isOutOfStock = isExplicitOOS || hasZeroStock || (product.in_stock === false && (stockCount === null || stockCount <= 0));
   const stockBadgeClass = isOutOfStock
     ? `${styles.stockBadge} ${styles.stockBadgeOutOfStock}`
     : isMadeToOrder
     ? `${styles.stockBadge} ${styles.stockBadgeMadeToOrder}`
     : styles.stockBadge;
-
-  const stockCount = product.stock_count !== undefined && product.stock_count !== null ? Number(product.stock_count) : null;
 
   const stockBadgeLabel = isOutOfStock
     ? "OUT OF STOCK"
@@ -1221,7 +1220,10 @@ export default function ProductDetail() {
                         e.preventDefault();
                         e.stopPropagation();
                         const relatedMax = getMaxQuantity(prod);
-                        if (prod.in_stock === false || relatedMax === 0) {
+                        const isRelatedOOS = String(prod.stock_status || "").toUpperCase() === "OUT OF STOCK" ||
+                          relatedMax === 0 ||
+                          (prod.in_stock === false && (prod.stock_count === undefined || prod.stock_count === null || Number(prod.stock_count) <= 0));
+                        if (isRelatedOOS) {
                           alert("This item is currently out of stock.");
                           return;
                         }

@@ -286,6 +286,8 @@ def create_order(payload: OrderCreateRequest):
         shipping_address=payload.shipping_address,
         items=payload.items,
         subtotal=payload.subtotal,
+        discount=payload.discount,
+        coupon_code=payload.coupon_code,
         gst=payload.gst,
         delivery=payload.delivery,
         total=payload.total,
@@ -304,6 +306,15 @@ def create_order(payload: OrderCreateRequest):
 
     # Decrement inventory stock
     decrement_product_stock(payload.items)
+
+    # Record coupon redemption if coupon was applied
+    if payload.coupon_code:
+        try:
+            from app.services.coupon_service import record_coupon_redemption
+            record_coupon_redemption(payload.coupon_code)
+            logger.info(f"[POST /orders] Recorded coupon redemption for '{payload.coupon_code}'")
+        except Exception as c_err:
+            logger.warning(f"[POST /orders] Failed to record coupon redemption: {c_err}")
 
     # Dispatch luxury order confirmation email safely
     try:
@@ -389,9 +400,17 @@ def update_order_status(
     new_status = str(payload.status).lower()
     old_status_clean = str(old_status).lower() if old_status else ""
     if new_status == "cancelled" and old_status_clean != "cancelled":
-        restore_product_stock(prev_doc.get("items", []))
+        try:
+            restore_product_stock(prev_doc.get("items", []))
+            logger.info(f"[PATCH /orders/{order_id}/status] Restored product stock for cancelled order #{order_id}")
+        except Exception as exc:
+            logger.warning(f"[PATCH /orders/{order_id}/status] Failed to restore inventory on cancel: {exc}")
     elif old_status_clean == "cancelled" and new_status != "cancelled":
-        decrement_product_stock(prev_doc.get("items", []))
+        try:
+            decrement_product_stock(prev_doc.get("items", []))
+            logger.info(f"[PATCH /orders/{order_id}/status] Decremented product stock for un-cancelled order #{order_id}")
+        except Exception as exc:
+            logger.warning(f"[PATCH /orders/{order_id}/status] Failed to decrement inventory on un-cancel: {exc}")
 
     doc = db.orders.find_one({"_id": obj_id})
     if not doc:
@@ -413,13 +432,7 @@ def update_order_status(
         except Exception as exc:
             logger.warning(f"[PATCH /orders/{order_id}/status] Failed to dispatch shipping notification email: {exc}")
 
-    # If order is cancelled by admin, safely restore inventory stock back to products
-    if payload.status == "cancelled" and old_status != "cancelled":
-        try:
-            restore_product_stock(prev_doc.get("items", []))
-            logger.info(f"[PATCH /orders/{order_id}/status] Restored product stock for cancelled order #{order_id}")
-        except Exception as exc:
-            logger.warning(f"[PATCH /orders/{order_id}/status] Failed to restore inventory on cancel: {exc}")
+    # Order cancellation stock restoration already safely handled above
 
     record_audit_event(
         action="ORDER_STATUS_UPDATE",
@@ -646,8 +659,20 @@ async def orders_logistics_webhook(request: Request):
         update_fields["status"] = "rto_initiated"
     elif current_status in ("RTO DELIVERED", "RTO_DELIVERED"):
         update_fields["status"] = "rto_delivered"
+        if order_doc.get("status") not in ("rto_delivered", "cancelled"):
+            try:
+                restore_product_stock(order_doc.get("items", []))
+                logger.info(f"[Logistics Webhook] Restored stock for RTO delivered order #{order_doc['_id']}")
+            except Exception as e:
+                logger.warning(f"[Logistics Webhook] Failed to restore stock on RTO: {e}")
     elif current_status in ("CANCELED", "CANCELLED"):
         update_fields["status"] = "cancelled"
+        if order_doc.get("status") != "cancelled":
+            try:
+                restore_product_stock(order_doc.get("items", []))
+                logger.info(f"[Logistics Webhook] Restored stock for cancelled order #{order_doc['_id']}")
+            except Exception as e:
+                logger.warning(f"[Logistics Webhook] Failed to restore stock on cancel: {e}")
 
     activity_entry = {
         "date": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
