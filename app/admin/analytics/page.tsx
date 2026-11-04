@@ -44,7 +44,7 @@ export default function VisitorAnalyticsPage() {
 
   useEffect(() => {
     loadData(true);
-    // Auto-refresh stats every 30 seconds
+    // Auto-refresh stats every 30 seconds test
     const interval = setInterval(() => {
       loadData(false);
     }, 30000);
