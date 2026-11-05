@@ -44,11 +44,11 @@ export default function VisitorAnalyticsPage() {
 
   useEffect(() => {
     loadData(true);
-    // Auto-refresh stats every 30 seconds test
+    // Auto-refresh stats every 30 seconds
     const interval = setInterval(() => {
       loadData(false);
     }, 30000);
-    
+
     return () => clearInterval(interval);
   }, []);
   // Re-fetch logs when filter or search changes
@@ -197,7 +197,7 @@ export default function VisitorAnalyticsPage() {
   );
 
 
-    return (
+  return (
     <div className={styles.container}>
       {/* HEADER */}
       <div className={styles.header}>
