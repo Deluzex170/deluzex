@@ -9,6 +9,7 @@ from app.services.imagekit import upload_image_to_imagekit
 from app.core.database import db
 from app.core.audit import record_audit_event
 import json
+import re
 
 router = APIRouter()
 
