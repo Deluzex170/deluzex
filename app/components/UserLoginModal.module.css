@@ -22,7 +22,7 @@
 
 .modal {
   background: #FFFFFF;
-  border: none;
+  border: 1px solid #EAE5DE;
   border-radius: 20px;
   width: 100%;
   max-width: 420px;
@@ -31,7 +31,7 @@
   overflow: hidden;
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   color: #2E3340;
-  padding: 26px 32px 22px;
+  padding: 28px 30px 24px;
   box-sizing: border-box;
 }
 
@@ -53,8 +53,8 @@
   background: #F3F4F6;
   border: none;
   color: #6B7280;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -72,18 +72,18 @@
 
 .header {
   text-align: center;
-  margin-bottom: 0.85rem;
+  margin-bottom: 1rem;
 }
 
 .logoWrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.5rem;
 }
 
 .logoImg {
-  height: 27px;
+  height: 26px;
   max-width: 120px;
   width: auto;
   object-fit: contain;
@@ -91,24 +91,39 @@
 
 .title {
   font-family: 'Adobe Arabic', serif;
-  font-size: 28px;
+  font-size: 27px;
   font-weight: 700;
-  color: #2E3340;
-  margin: 0 0 0.15rem;
-  line-height: 1.1;
+  color: #1A1A1A;
+  margin: 0 0 0.25rem;
+  line-height: 1.15;
 }
 
 .subtitle {
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 17px;
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13.5px;
   color: #6B7280;
-  line-height: 1.25;
+  line-height: 1.35;
   margin: 0;
+}
+
+/* Luxury Smart Detection Chip */
+.welcomeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(196, 154, 69, 0.1);
+  border: 1px solid rgba(196, 154, 69, 0.35);
+  color: #8C6A1E;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 6px;
 }
 
 /* Pending Product Card Preview */
 .productPreview {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.85rem;
   background: #FCFBF9;
   border: 1px dashed rgba(216, 165, 110, 0.55);
   border-radius: 8px;
@@ -119,8 +134,8 @@
 }
 
 .productThumb {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 6px;
   object-fit: cover;
   background: #F3F4F6;
@@ -136,7 +151,7 @@
 
 .productPreviewTitle {
   font-family: 'Adobe Arabic', serif;
-  font-size: 17.5px;
+  font-size: 17px;
   font-weight: 600;
   color: #1F2937;
   white-space: nowrap;
@@ -147,48 +162,99 @@
 }
 
 .productPreviewSub {
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 15.5px;
-  color: #D8A56E;
+  font-size: 13px;
+  color: #C49A45;
+  font-weight: 600;
   line-height: 1.2;
 }
 
-/* Form */
+/* Form Layout */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.85rem;
   width: 100%;
 }
 
 .inputGroup {
   display: flex;
   flex-direction: column;
-  gap: 0.18rem;
+  gap: 0.3rem;
   text-align: left;
   width: 100%;
 }
 
 .label {
   font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
-  color: #4B5563;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  color: #3A3A44;
+  letter-spacing: 0.01em;
   line-height: 1.2;
   margin: 0;
 }
 
+/* Phone Input with +91 Country Badge */
+.phoneInputWrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 42px;
+  border: 1px solid #DDD6CD;
+  border-radius: 8px;
+  background: #FFFFFF;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.phoneInputWrapper:focus-within {
+  border-color: #C49A45;
+  box-shadow: 0 0 0 3px rgba(196, 154, 69, 0.15);
+}
+
+.countryBadge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px;
+  background: #F8F6F2;
+  border-right: 1px solid #DDD6CD;
+  color: #4A4A52;
+  font-size: 13.5px;
+  font-weight: 600;
+  height: 100%;
+  user-select: none;
+}
+
+.phoneInput {
+  flex: 1;
+  height: 100%;
+  border: none;
+  background: transparent;
+  padding: 0 12px;
+  font-size: 14px;
+  color: #1A1A1A;
+  outline: none;
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: 0.03em;
+}
+
+.phoneInput::placeholder {
+  color: #9CA3AF;
+  font-size: 13.5px;
+}
+
+/* Standard Inputs (40px - 44px per rule) */
 .input {
   width: 100%;
-  height: 38px;
-  padding: 0 12px;
+  height: 42px;
+  padding: 0 14px;
   background: #FFFFFF;
-  border: 1px solid #D6CEBE;
-  border-radius: 7px;
+  border: 1px solid #DDD6CD;
+  border-radius: 8px;
   color: #1F2937;
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.2;
   font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   transition: all 0.2s ease;
@@ -198,13 +264,12 @@
 
 .input::placeholder {
   color: #9CA3AF;
-  font-size: 13px;
-  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13.5px;
 }
 
 .input:focus {
-  border-color: #D8A56E;
-  box-shadow: 0 0 0 2px rgba(216, 165, 110, 0.2);
+  border-color: #C49A45;
+  box-shadow: 0 0 0 3px rgba(196, 154, 69, 0.15);
 }
 
 .passwordWrapper {
@@ -213,12 +278,12 @@
 }
 
 .passwordWrapper .input {
-  padding-right: 46px;
+  padding-right: 44px;
 }
 
 .eyeToggle {
   position: absolute;
-  right: 12px;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
   background: transparent;
@@ -228,7 +293,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 5px;
+  padding: 6px;
   transition: color 0.2s ease;
 }
 
@@ -243,148 +308,134 @@
 }
 
 .forgotLink {
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 16.5px;
-  font-weight: 500;
+  font-size: 13px;
   color: #6B7280;
   text-decoration: none;
   background: none;
   border: none;
   cursor: pointer;
   padding: 0;
-  line-height: 1.15;
   transition: color 0.2s ease;
 }
 
 .forgotLink:hover {
-  color: #D8A56E;
+  color: #C49A45;
   text-decoration: underline;
 }
 
-.nameRow {
-  display: flex;
-  gap: 0.75rem;
-}
-
+/* Banners */
 .errorBanner {
   background: #FEF2F2;
   border: 1px solid #FECACA;
   color: #DC2626;
-  padding: 0.6rem 0.85rem;
+  padding: 8px 12px;
   border-radius: 8px;
-  font-size: 16px;
-  line-height: 1.25;
-  font-family: 'Adobe Arabic', sans-serif;
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .successBanner {
   background: #F0FDF4;
   border: 1px solid #BBF7D0;
   color: #16A34A;
-  padding: 0.6rem 0.85rem;
+  padding: 8px 12px;
   border-radius: 8px;
-  font-size: 16px;
-  line-height: 1.25;
-  font-family: 'Adobe Arabic', sans-serif;
+  font-size: 13px;
+  line-height: 1.35;
 }
 
-.btnRow {
-  display: flex;
-  justify-content: center;
+/* Primary CTA Button (46px - 50px per rule) */
+.primaryCta {
   width: 100%;
-  margin-top: 0.25rem;
-}
-
-.submitButton {
-  background: #E0AC69;
+  height: 48px;
+  background: linear-gradient(135deg, #D4AF37 0%, #C49A45 50%, #B58B35 100%);
   color: #FFFFFF;
   border: none;
   border-radius: 8px;
-  padding: 8px 38px;
-  font-size: 19px;
-  font-weight: 600;
-  font-family: 'Adobe Arabic', serif;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   letter-spacing: 0.02em;
-  line-height: 1.15;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 3px 12px rgba(224, 172, 105, 0.3);
+  box-shadow: 0 4px 14px rgba(196, 154, 69, 0.25);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+  margin-top: 0.2rem;
 }
 
-.submitButton:hover:not(:disabled) {
-  background: #C5925A;
+.primaryCta:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 5px 15px rgba(224, 172, 105, 0.4);
+  box-shadow: 0 6px 20px rgba(196, 154, 69, 0.35);
 }
 
-.submitButton:disabled {
-  opacity: 0.6;
+.primaryCta:disabled {
+  opacity: 0.65;
   cursor: not-allowed;
+  transform: none;
 }
 
-.footerSwitch {
+/* Helper note */
+.whatsappHint {
+  font-size: 12.5px;
+  color: #6B7280;
   text-align: center;
-  margin-top: 0.75rem;
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 17.5px;
-  line-height: 1.2;
-  color: #4B5563;
+  margin: 0;
+  line-height: 1.35;
 }
 
-.switchLink {
+/* OTP Specific Styles */
+.otpCard {
+  background: #FAF8F5;
+  border: 1px solid #EAE5DE;
+  border-radius: 10px;
+  padding: 12px 14px;
+  text-align: center;
+}
+
+.otpCardText {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #4B5563;
+  line-height: 1.35;
+}
+
+.phoneHighlight {
+  color: #1A1A1A;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.changeNumberBtn {
   background: none;
   border: none;
-  color: #D79322;
-  font-weight: 700;
+  color: #C49A45;
+  font-size: 12.5px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 0 3px;
-  font-family: 'Adobe Arabic', sans-serif;
-  font-size: 18px;
-  line-height: 1.2;
-  transition: all 0.2s ease;
-}
-
-.switchLink:hover {
-  color: #B58448;
+  padding: 0;
   text-decoration: underline;
 }
 
-@media (max-width: 480px) {
-  .modal {
-    padding: 30px 20px 24px;
-    border-radius: 20px;
-  }
-  .nameRow {
-    flex-direction: column;
-    gap: 1rem;
-  }
+.changeNumberBtn:hover {
+  color: #9E792D;
 }
 
 .otpInput {
   text-align: center !important;
-  letter-spacing: 0.32em !important;
-  font-size: 20px !important;
+  letter-spacing: 0.35em !important;
+  font-size: 22px !important;
   font-weight: 700 !important;
   height: 46px !important;
+  color: #1A1A1A !important;
 }
 
-.otpInfoBox {
-  background: rgba(216, 165, 110, 0.08);
-  border: 1px solid rgba(216, 165, 110, 0.3);
-  border-radius: 10px;
-  padding: 12px 14px;
-  text-align: center;
-  margin-bottom: 0.25rem;
-}
-
-.otpInfoText {
-  margin: 0;
-  font-size: 13px;
-  color: #4B5563;
-  line-height: 1.4;
+.otpInput::placeholder {
+  letter-spacing: 0.25em;
+  font-size: 18px;
+  color: #D1D5DB;
 }
 
 .resendRow {
@@ -393,26 +444,85 @@
   align-items: center;
   font-size: 13px;
   color: #6B7280;
-}
-
-.otpNotice {
-  background: rgba(216, 165, 110, 0.08);
-  border: 1px solid rgba(216, 165, 110, 0.3);
-  border-radius: 10px;
-  padding: 12px 14px;
-  text-align: center;
-  font-size: 13px;
-  color: #4B5563;
-  line-height: 1.45;
-  margin-bottom: 0.25rem;
-}
-
-.resendWrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-  color: #6B7280;
   margin-top: -0.2rem;
 }
 
+.resendBtn {
+  background: none;
+  border: none;
+  color: #C49A45;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.resendBtn:hover:not(:disabled) {
+  color: #9E792D;
+  text-decoration: underline;
+}
+
+.resendBtn:disabled {
+  color: #9CA3AF;
+  cursor: not-allowed;
+}
+
+.fallbackRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: #6B7280;
+  text-align: center;
+  margin-top: 0.1rem;
+}
+
+.fallbackLink {
+  background: none;
+  border: none;
+  color: #C49A45;
+  font-weight: 600;
+  font-size: 12.5px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.fallbackLink:hover {
+  color: #9E792D;
+}
+
+/* Footer / Secondary Navigation */
+.footerSection {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #F0ECE6;
+  text-align: center;
+}
+
+.secondaryBtn {
+  background: none;
+  border: none;
+  color: #6B7280;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color 0.2s ease;
+}
+
+.secondaryBtn:hover {
+  color: #C49A45;
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .modal {
+    padding: 24px 18px 20px;
+    border-radius: 16px;
+  }
+  .title {
+    font-size: 24px;
+  }
+}

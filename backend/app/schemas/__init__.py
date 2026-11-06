@@ -17,6 +17,8 @@ from .user import (
     SignupWhatsAppVerifyRequest,
     ProfilePhoneSendOtpRequest,
     ProfilePhoneVerifyOtpRequest,
+    CheckPhoneRequest,
+    CheckPhoneResponse,
     VerifyEmailOtpRequest,
     ResendEmailOtpRequest,
     ForgotPasswordRequest,

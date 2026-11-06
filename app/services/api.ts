@@ -1886,14 +1886,19 @@ export async function fetchOrderById(orderId: string): Promise<UserOrder | null>
     console.warn(`Error fetching GET /orders/${cleanId}:`, error);
   }
 
-  // 2. Check local storage cache
+  // 2. Check local storage cache (isolated to active user only)
   if (typeof window !== "undefined") {
     try {
-      const allKeys = Object.keys(localStorage).filter((k) => k.startsWith("deluzex_orders"));
-      for (const k of allKeys) {
-        const list: UserOrder[] = JSON.parse(localStorage.getItem(k) || "[]");
-        const found = list.find((o) => (o.order_id || o.id || "").replace("#", "") === cleanId);
-        if (found) return normalizeUserOrder(found as unknown as Record<string, unknown>);
+      const storedUser = localStorage.getItem("user");
+      const userEmail = storedUser ? (JSON.parse(storedUser).email || "").toLowerCase().trim() : "";
+      if (userEmail) {
+        const userKey = `deluzex_orders_${userEmail}`;
+        const raw = localStorage.getItem(userKey);
+        if (raw) {
+          const list: UserOrder[] = JSON.parse(raw);
+          const found = list.find((o) => (o.order_id || o.id || "").replace("#", "") === cleanId);
+          if (found) return normalizeUserOrder(found as unknown as Record<string, unknown>);
+        }
       }
     } catch {
       // ignore
@@ -2876,7 +2881,22 @@ export async function syncBackendCart(
   }
 }
 
-export async function sendWhatsAppOtp(phone: string): Promise<{ success: boolean; message: string }> {
+export async function checkCustomerPhone(phone: string): Promise<{ success: boolean; exists: boolean; first_name?: string; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/check-phone`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone }),
+    });
+    const data = await res.json();
+    return data;
+  } catch (error: any) {
+    logger.error("API", "Error checking phone:", error);
+    return { success: false, exists: false };
+  }
+}
+
+export async function sendWhatsAppOtp(phone: string): Promise<{ success: boolean; message: string; is_existing_user?: boolean; first_name?: string; retry_after?: number }> {
   try {
     const res = await fetch(`${API_BASE_URL}/auth/whatsapp/send-otp`, {
       method: "POST",

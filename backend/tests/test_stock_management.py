@@ -6,6 +6,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from bson import ObjectId
+from fastapi import HTTPException
 from app.core.database import db
 from app.services.inventory import decrement_product_stock, restore_product_stock
 
@@ -47,14 +48,16 @@ class TestStockManagement(unittest.TestCase):
         self.assertEqual(prod.get("stock_status"), "OUT OF STOCK")
 
     def test_decrement_oversell_floors_at_zero(self):
-        # Decrement 10 when only 5 exist (should floor at 0 and set OUT OF STOCK)
-        decrement_product_stock([{"product_id": str(self.test_product_id), "quantity": 10}])
+        # Decrement 10 when only 5 exist (must reject with HTTPException 400 to prevent overselling)
+        with self.assertRaises(HTTPException) as ctx:
+            decrement_product_stock([{"product_id": str(self.test_product_id), "quantity": 10}])
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("Insufficient stock", ctx.exception.detail)
 
+        # Verify stock remains untouched at 5
         prod = db.products.find_one({"_id": self.test_product_id})
         self.assertIsNotNone(prod)
-        self.assertEqual(prod.get("stock_count"), 0)
-        self.assertFalse(prod.get("in_stock"))
-        self.assertEqual(prod.get("stock_status"), "OUT OF STOCK")
+        self.assertEqual(prod.get("stock_count"), 5)
 
     def test_restore_stock_on_cancellation(self):
         # First reduce to 0

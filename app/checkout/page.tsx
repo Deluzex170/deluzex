@@ -34,6 +34,7 @@ import {
   getCartSessionId,
   updateBackendCartItem,
   removeBackendCartItem,
+  updateUserProfile,
 } from "../services/api";
 import { INDIAN_STATES, lookupPincode, normalizeIndianState } from "../lib/indiaAddress";
 import styles from "./checkout.module.css";
@@ -500,11 +501,12 @@ export default function CheckoutPage() {
     }
   };
 
-  // Pre-fill user profile if logged in
+  // Pre-fill user profile if logged in (ignore auto-generated @deluzex.com placeholder)
   useEffect(() => {
     if (user) {
       const userObj = user as Record<string, string>;
-      if (userObj.email && !email) setEmail(userObj.email);
+      const isRealEmail = userObj.email && !userObj.email.endsWith("@deluzex.com");
+      if (isRealEmail && !email) setEmail(userObj.email);
       if (userObj.phone && !phone) setPhone(userObj.phone);
       if (userObj.first_name && !firstName) setFirstName(userObj.first_name);
       if (userObj.last_name && !lastName) setLastName(userObj.last_name);
@@ -644,6 +646,14 @@ export default function CheckoutPage() {
           });
 
           if (verifyRes.success) {
+            // Auto-save email to customer profile if first checkout
+            if (isAuthenticated && email.trim() && !email.trim().endsWith("@deluzex.com")) {
+              const uObj = user as Record<string, string> | null;
+              if (!uObj?.email || uObj.email.endsWith("@deluzex.com")) {
+                updateUserProfile({ email: email.trim().toLowerCase() }).catch(() => {});
+              }
+            }
+
             await savePlacedOrder({
               order_id: params.order_id,
               razorpay_order_id: params.razorpay_order_id,
@@ -852,6 +862,14 @@ export default function CheckoutPage() {
         });
 
         if (codRes && codRes.success) {
+          // Auto-save email to customer profile if first checkout
+          if (isAuthenticated && email.trim() && !email.trim().endsWith("@deluzex.com")) {
+            const uObj = user as Record<string, string> | null;
+            if (!uObj?.email || uObj.email.endsWith("@deluzex.com")) {
+              updateUserProfile({ email: email.trim().toLowerCase() }).catch(() => {});
+            }
+          }
+
           await savePlacedOrder({
             order_id: codRes.order_id,
             razorpay_order_id: codRes.order_id,
@@ -1032,23 +1050,56 @@ export default function CheckoutPage() {
             <h2 className={styles.sectionTitle}>1. Contact Information</h2>
             {!isAuthenticated && (
               <div className={styles.guestBanner}>
-                <span>Checking out as a guest. Your order updates go to the email and phone below.</span>
+                <span>Have a mobile number? Sign in with WhatsApp for faster checkout & live tracking.</span>
                 <button
                   type="button"
                   className={styles.guestSignInBtn}
-                  onClick={() => openLoginModal(undefined, "Sign in to use your saved addresses and track orders in your account.")}
+                  onClick={() => openLoginModal(undefined, "Sign in with WhatsApp for faster checkout.")}
                 >
-                  Sign in instead
+                  Sign in with WhatsApp
                 </button>
               </div>
             )}
+
+            {/* Requirement C: Progressive Email Capture Notice for first checkout */}
+            {isAuthenticated && ((user as Record<string, string>)?.email?.endsWith("@deluzex.com") || !(user as Record<string, string>)?.email) && (
+              <div style={{
+                background: "#FAF8F5",
+                border: "1px solid #EAE5DE",
+                borderRadius: "8px",
+                padding: "10px 14px",
+                marginBottom: "14px",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                fontSize: "13px",
+                color: "#4A4A52"
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C49A45" strokeWidth="2" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
+                </svg>
+                <span>
+                  Please enter your email address to receive order confirmations, receipts and live tracking updates.
+                </span>
+              </div>
+            )}
+
             <div className={styles.formGroup}>
-              <label className={styles.label}>Email Address *</label>
+              <label className={styles.label}>
+                Email Address *
+                {isAuthenticated && (user as Record<string, string>)?.email && !(user as Record<string, string>)?.email?.endsWith("@deluzex.com") && (
+                  <span style={{ marginLeft: "8px", fontSize: "11px", color: "#16A34A", fontWeight: 600 }}>
+                    ✓ Saved in profile
+                  </span>
+                )}
+              </label>
               <input
                 type="email"
                 required
                 className={styles.input}
-                placeholder="admin@deluzex.com"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isProcessing}

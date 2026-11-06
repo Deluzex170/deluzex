@@ -26,6 +26,10 @@ admin_router = APIRouter()
 
 def _format_coupon(doc: dict) -> dict:
     doc["_id"] = str(doc["_id"])
+    if "max_uses_per_user" not in doc or doc.get("max_uses_per_user") is None:
+        doc["max_uses_per_user"] = 1
+    if "times_used" not in doc or doc.get("times_used") is None:
+        doc["times_used"] = 0
     return doc
 
 

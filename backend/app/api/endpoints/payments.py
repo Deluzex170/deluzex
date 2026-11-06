@@ -306,6 +306,13 @@ def create_order(payload: CreateOrderRequest, request: Request = None):
     result = db.orders.insert_one(order_doc)
     order_id = str(result.inserted_id)
 
+    # Auto-save email to customer profile if first checkout
+    try:
+        from app.services.user_service import auto_update_user_checkout_email
+        auto_update_user_checkout_email(email=payload.email, phone=payload.phone)
+    except Exception as u_err:
+        logger.warning(f"Failed to auto-update user checkout email on COD: {u_err}")
+
     record_audit_event(
         action="ORDER_PAYMENT_INIT",
         action_category="orders",
@@ -398,6 +405,13 @@ def verify_payment(payload: VerifyPaymentRequest, request: Request = None):
             }
         },
     )
+
+    # Auto-save email to customer profile if first checkout
+    try:
+        from app.services.user_service import auto_update_user_checkout_email
+        auto_update_user_checkout_email(email=order_doc.get("email"), phone=order_doc.get("phone"))
+    except Exception as u_err:
+        logger.warning(f"Failed to auto-update user checkout email on verify: {u_err}")
 
     # Decrement inventory stock atomically
     decrement_product_stock(order_doc.get("items", []))

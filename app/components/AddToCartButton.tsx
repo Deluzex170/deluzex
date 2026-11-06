@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
 import { addToCart, updateQuantity, removeFromCart, getMaxQuantity } from "../store/cartSlice";
 import { Product } from "../services/api";
+import { useToast } from "../context/ToastContext";
 
 interface AddToCartButtonProps {
   product: Product;
@@ -14,6 +15,7 @@ interface AddToCartButtonProps {
 
 export default function AddToCartButton({ product, styleClass, variant = "default" }: AddToCartButtonProps) {
   const dispatch = useDispatch();
+  const toast = useToast();
   const cartItems = useSelector((state: RootState) => state.cart.cartItems);
   const productId = product._id || product.id || "";
   const cartItem = cartItems.find(item => String(item.id) === String(productId));
@@ -34,10 +36,11 @@ export default function AddToCartButton({ product, styleClass, variant = "defaul
     e.preventDefault();
     e.stopPropagation();
     if (isOutOfStock) {
-      alert("This item is currently out of stock.");
+      toast.warning("This piece is currently out of stock.");
       return;
     }
     dispatch(addToCart({ ...product, max_quantity: maxQuantity }));
+    toast.success(`"${product.product_title || product.title || product.name || 'Piece'}" added to your shopping bag.`);
   };
 
   const handleDecrease = (e: React.MouseEvent) => {
@@ -56,7 +59,7 @@ export default function AddToCartButton({ product, styleClass, variant = "defaul
     e.stopPropagation();
     if (!productId) return;
     if (maxQuantity !== undefined && cartItem && cartItem.quantity >= maxQuantity) {
-      alert(`Only ${maxQuantity} units available in inventory.`);
+      toast.warning(`Only ${maxQuantity} units available in inventory.`);
       return;
     }
     dispatch(updateQuantity({ id: productId, change: 1, max_quantity: maxQuantity }));

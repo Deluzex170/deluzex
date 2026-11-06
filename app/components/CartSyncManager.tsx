@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
-import { setCartItems, CartItem } from "../store/cartSlice";
+import { setCartItems, clearCart, CartItem } from "../store/cartSlice";
 import { useAuth } from "../context/AuthContext";
 import {
   fetchBackendCart,
@@ -13,7 +13,6 @@ import {
   clearBackendCart,
   updateBackendCartItem,
   removeBackendCartItem,
-  BackendCartItem,
 } from "../services/api";
 
 export default function CartSyncManager() {
@@ -112,9 +111,41 @@ export default function CartSyncManager() {
     }
   }, [isAuthenticated, user, dispatch]);
 
-  // 3. Debounced synchronization to MongoDB whenever Redux cart changes
+  // 3. Account Logout Listener: Purge in-memory cart and isolate guest session
+  useEffect(() => {
+    const handleLogout = () => {
+      isSyncingFromBackend.current = true;
+      dispatch(clearCart());
+      prevAuthEmail.current = null;
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.removeItem("deluzex_cart_session");
+        } catch {
+          // ignore
+        }
+      }
+      setTimeout(() => {
+        isSyncingFromBackend.current = false;
+      }, 500);
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("auth:logout", handleLogout);
+      return () => {
+        window.removeEventListener("auth:logout", handleLogout);
+      };
+    }
+  }, [dispatch]);
+
+  // 4. Debounced synchronization to MongoDB whenever Redux cart changes
   useEffect(() => {
     if (!isInitialLoadDone.current || isSyncingFromBackend.current) {
+      return;
+    }
+
+    // Do not bleed logged-out user's cart into guest session
+    if (!isAuthenticated && prevAuthEmail.current !== null) {
+      prevAuthEmail.current = null;
       return;
     }
 
@@ -164,7 +195,7 @@ export default function CartSyncManager() {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [cartItems, user]);
+  }, [cartItems, user, isAuthenticated]);
 
   return null;
 }

@@ -245,14 +245,6 @@ def update_cart_item_quantity(identifier: str, product_id: str, update: CartItem
     )
 
     if not result:
-        # Fallback in case session rotated
-        result = db.cart_items.find_one_and_update(
-            {"$or": prod_id_clauses},
-            {"$set": {"quantity": update.quantity, "updated_at": now}},
-            return_document=True
-        )
-
-    if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cart item not found")
 
     return serialize_cart_item(result)

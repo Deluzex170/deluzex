@@ -297,7 +297,7 @@ def submit_product_review(payload: ReviewCreate):
         "rating": rating,
         "title": clean_title,
         "text": clean_text,
-        "is_approved": False,  # Moderation: Pending by default
+        "is_approved": True,  # Published by default; modifiable via admin moderation
         "created_at": datetime.utcnow()
     }
     

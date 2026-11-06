@@ -30,16 +30,20 @@ def record_audit_event(
     target_id: Optional[str] = None,
     target_name: Optional[str] = None,
     description: Optional[str] = None,
-    details: Optional[str] = None,
+    details: Optional[Any] = None,
     changes: Optional[Dict[str, Any]] = None,
     request: Optional[Request] = None,
     status: str = "SUCCESS",
+    performed_by: Optional[str] = None,
+    **kwargs: Any,
 ) -> Optional[str]:
     """
     Safely insert an audit log record into MongoDB.
     Non-blocking: Never raises an exception that disrupts the caller.
     """
     try:
+        effective_email = actor_email or performed_by or kwargs.get("email")
+        str_details = str(details) if isinstance(details, (dict, list)) else details
         ip = get_client_ip(request)
         ua = request.headers.get("user-agent", "") if request else ""
 
@@ -52,7 +56,7 @@ def record_audit_event(
 
         doc = {
             "user_id": user_obj_id,
-            "actor_email": actor_email,
+            "actor_email": effective_email,
             "actor_name": actor_name,
             "actor_role": actor_role,
             "action": action,
@@ -60,8 +64,8 @@ def record_audit_event(
             "target_type": target_type,
             "target_id": str(target_id) if target_id else None,
             "target_name": target_name,
-            "description": description or details or f"Performed {action}",
-            "details": details or description,
+            "description": description or str_details or f"Performed {action}",
+            "details": str_details or description,
             "changes": changes,
             "ip_address": ip,
             "user_agent": ua,

@@ -610,6 +610,43 @@ def login_admin(user_in: schemas.UserLogin, request: Request):
 # WhatsApp Authentication & Passwordless OTP Login
 # ---------------------------------------------------------------------------
 
+@router.post("/check-phone", response_model=schemas.CheckPhoneResponse)
+def check_phone_endpoint(req: schemas.CheckPhoneRequest):
+    """
+    Frictionless customer lookup: Checks if mobile number belongs to an existing customer.
+    """
+    phone_clean = (req.phone or "").strip()
+    if not phone_clean:
+        raise HTTPException(status_code=400, detail="Phone number is required.")
+
+    normalized_phone = whatsapp_service.normalize_phone_number(phone_clean)
+    if len(normalized_phone) < 10:
+        raise HTTPException(status_code=400, detail="Invalid mobile number format.")
+
+    phone_variants = [normalized_phone, phone_clean, f"+{normalized_phone}"]
+    if normalized_phone.startswith("91") and len(normalized_phone) == 12:
+        phone_variants.append(normalized_phone[2:])
+    elif len(normalized_phone) == 10:
+        phone_variants.append(f"91{normalized_phone}")
+        phone_variants.append(f"+91{normalized_phone}")
+
+    user_doc = db.users.find_one({"phone": {"$in": phone_variants}})
+    if user_doc:
+        first_name = (user_doc.get("first_name") or "").strip()
+        return schemas.CheckPhoneResponse(
+            success=True,
+            exists=True,
+            first_name=first_name or "Customer",
+            message="User exists"
+        )
+    return schemas.CheckPhoneResponse(
+        success=True,
+        exists=False,
+        first_name=None,
+        message="New customer"
+    )
+
+
 @router.post("/whatsapp/send-otp", response_model=schemas.StandardResponse)
 def send_whatsapp_otp_endpoint(req: schemas.WhatsAppSendOtpRequest, request: Request):
     phone_clean = (req.phone or "").strip()
@@ -619,6 +656,18 @@ def send_whatsapp_otp_endpoint(req: schemas.WhatsAppSendOtpRequest, request: Req
     normalized_phone = whatsapp_service.normalize_phone_number(phone_clean)
     if len(normalized_phone) < 10:
         raise HTTPException(status_code=400, detail="Invalid mobile number format.")
+
+    # Determine if user is returning or new
+    phone_variants = [normalized_phone, phone_clean, f"+{normalized_phone}"]
+    if normalized_phone.startswith("91") and len(normalized_phone) == 12:
+        phone_variants.append(normalized_phone[2:])
+    elif len(normalized_phone) == 10:
+        phone_variants.append(f"91{normalized_phone}")
+        phone_variants.append(f"+91{normalized_phone}")
+
+    existing_user_doc = db.users.find_one({"phone": {"$in": phone_variants}})
+    is_existing = existing_user_doc is not None
+    user_first_name = (existing_user_doc.get("first_name") or "").strip() if existing_user_doc else None
 
     # Rate limiting: 60-second cooldown between OTP requests for the same number
     now = datetime.utcnow()
@@ -635,7 +684,7 @@ def send_whatsapp_otp_endpoint(req: schemas.WhatsAppSendOtpRequest, request: Req
     # Generate 6-digit cryptographic OTP
     otp_code = f"{random.randint(100000, 999999)}"
 
-    # Send OTP via Meta WhatsApp Cloud API
+    # Send OTP via Meta WhatsApp Cloud API / MSG91
     delivery_res = whatsapp_service.send_whatsapp_otp(normalized_phone, otp_code)
     if not delivery_res.get("success"):
         raise HTTPException(
@@ -675,7 +724,9 @@ def send_whatsapp_otp_endpoint(req: schemas.WhatsAppSendOtpRequest, request: Req
 
     return schemas.StandardResponse(
         success=True,
-        message=msg
+        message=msg,
+        is_existing_user=is_existing,
+        first_name=user_first_name
     )
 
 
@@ -723,14 +774,27 @@ def verify_whatsapp_otp_endpoint(req: schemas.WhatsAppVerifyOtpRequest, request:
 
     # Search for existing user by phone
     phone_variants = [normalized_phone, phone_clean, f"+{normalized_phone}"]
+    if normalized_phone.startswith("91") and len(normalized_phone) == 12:
+        phone_variants.append(normalized_phone[2:])
+    elif len(normalized_phone) == 10:
+        phone_variants.append(f"91{normalized_phone}")
+        phone_variants.append(f"+91{normalized_phone}")
+
     user_doc = db.users.find_one({"phone": {"$in": phone_variants}})
 
     is_new_user = False
     if not user_doc:
         # Seamless Passwordless Auto-Registration for new WhatsApp users
         is_new_user = True
-        first_name = (req.first_name or "").strip() or f"User {normalized_phone[-4:]}"
-        last_name = (req.last_name or "").strip() or "Customer"
+        raw_name = (req.first_name or "").strip()
+        if raw_name:
+            parts = raw_name.split(" ", 1)
+            first_name = parts[0]
+            last_name = parts[1] if len(parts) > 1 else (req.last_name or "").strip() or "Customer"
+        else:
+            first_name = f"User {normalized_phone[-4:]}"
+            last_name = (req.last_name or "").strip() or "Customer"
+
         default_email = f"{normalized_phone}@deluzex.com"
 
         user = models.User(
@@ -749,10 +813,26 @@ def verify_whatsapp_otp_endpoint(req: schemas.WhatsAppVerifyOtpRequest, request:
     else:
         # User already exists
         user = models.User(**dict(user_doc))
-        # Mark phone as verified if not already
+        update_fields = {}
         if not user.is_verified:
-            db.users.update_one({"_id": user_doc["_id"]}, {"$set": {"is_verified": True}})
+            update_fields["is_verified"] = True
             user.is_verified = True
+
+        # If user provides their real name and current first_name is empty or generic
+        if (req.first_name or "").strip():
+            raw_name = req.first_name.strip()
+            parts = raw_name.split(" ", 1)
+            new_first = parts[0]
+            new_last = parts[1] if len(parts) > 1 else (req.last_name or "").strip()
+            if not user.first_name or user.first_name.startswith("User "):
+                update_fields["first_name"] = new_first
+                user.first_name = new_first
+                if new_last:
+                    update_fields["last_name"] = new_last
+                    user.last_name = new_last
+
+        if update_fields:
+            db.users.update_one({"_id": user_doc["_id"]}, {"$set": update_fields})
 
     # Generate JWT Session
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)

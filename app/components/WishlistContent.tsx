@@ -7,6 +7,8 @@ import { addToCart, openCart } from "../store/cartSlice";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useWishlist } from "../context/WishlistContext";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { WishlistItem } from "../services/api";
 
 function LampPlaceholder() {
@@ -36,6 +38,8 @@ function LampPlaceholder() {
 export default function WishlistContent() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const { isAuthenticated, loading: authLoading, openLoginModal } = useAuth();
+  const toast = useToast();
 
   const {
     wishlistItems: items,
@@ -50,8 +54,10 @@ export default function WishlistContent() {
   const [addingId, setAddingId] = useState<string | null>(null);
 
   useEffect(() => {
-    refreshWishlist();
-  }, [refreshWishlist]);
+    if (isAuthenticated) {
+      refreshWishlist();
+    }
+  }, [isAuthenticated, refreshWishlist]);
 
   const removeItem = async (item: WishlistItem) => {
     const pId = item.product_id || item.id || item._id;
@@ -61,8 +67,10 @@ export default function WishlistContent() {
 
     try {
       await globalRemove(pId || itemId || "", itemId, title);
+      toast.info(`"${item.product_title}" removed from your wishlist.`);
     } catch (err) {
       console.error("Failed to remove item from wishlist:", err);
+      toast.error("Failed to remove piece from wishlist.");
     }
   };
 
@@ -80,6 +88,7 @@ export default function WishlistContent() {
       })
     );
     dispatch(openCart());
+    toast.success(`"${item.product_title}" added to your shopping bag.`);
     setTimeout(() => setAddingId(null), 600);
   };
 
@@ -99,9 +108,78 @@ export default function WishlistContent() {
       );
     });
     dispatch(openCart());
+    toast.success("All pieces moved to your shopping bag.");
     setTimeout(() => setIsMovingAll(false), 800);
   };
 
+  // State 1: Authenticating / Checking Auth State
+  if (authLoading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>My Wishlist</h1>
+          <p className={styles.subtitle}>Your favourite lighting pieces, saved for you.</p>
+        </div>
+        <div className={styles.loadingState}>
+          <svg className={styles.btnSpinner} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C49A45" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+            <path d="M12 2a10 10 0 0 1 10 10" />
+          </svg>
+          <span>Verifying authentication...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // State 2: Unauthenticated Visitor / Guest
+  if (!isAuthenticated) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>My Wishlist</h1>
+          <p className={styles.subtitle}>Your favourite lighting pieces, saved for you.</p>
+        </div>
+
+        <div className={styles.unauthCard}>
+          <div className={styles.unauthIconWrapper} aria-hidden="true">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </div>
+
+          <h2 className={styles.unauthTitle}>Sign In to View Your Wishlist</h2>
+          <p className={styles.unauthSubtitle}>
+            Save and curate your bespoke lighting pieces. Sign in to your Deluzex account to access your saved favorites across all your devices.
+          </p>
+
+          <div className={styles.unauthActions}>
+            <button
+              type="button"
+              className={styles.btnSignIn}
+              onClick={() => {
+                if (openLoginModal) {
+                  openLoginModal(undefined, "Please sign in to access your personal wishlist.");
+                } else {
+                  router.push("/login");
+                }
+              }}
+            >
+              Sign In Now
+            </button>
+            <button
+              type="button"
+              className={styles.btnExploreSecondary}
+              onClick={() => router.push("/shop")}
+            >
+              Explore Collection
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // State 3: Authenticated User with Wishlist
   const filtered = items.filter((item) =>
     item.product_title.toLowerCase().includes(search.toLowerCase())
   );
@@ -308,4 +386,3 @@ export default function WishlistContent() {
     </div>
   );
 }
-

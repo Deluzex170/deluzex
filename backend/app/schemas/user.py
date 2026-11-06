@@ -116,6 +116,17 @@ class ProfilePhoneVerifyOtpRequest(BaseModel):
     phone: str = Field(..., min_length=10, max_length=25)
     otp: str = Field(..., min_length=4, max_length=8)
 
+class CheckPhoneRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    phone: str = Field(..., min_length=10, max_length=25)
+
+class CheckPhoneResponse(BaseModel):
+    success: bool
+    exists: bool
+    first_name: Optional[str] = None
+    message: Optional[str] = None
+
 class StandardResponse(BaseModel):
     success: bool
     message: str
@@ -126,3 +137,5 @@ class StandardResponse(BaseModel):
     pending_email: Optional[str] = None
     otp_sent: Optional[bool] = None
     retry_after: int = 0
+    is_existing_user: Optional[bool] = None
+    first_name: Optional[str] = None

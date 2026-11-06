@@ -50,16 +50,16 @@ class CouponResponse(BaseModel):
     discount_type: DiscountType
     discount_value: float
     max_discount_cap: Optional[float] = None
-    min_order_value: float
-    is_active: bool
-    is_public: bool
-    is_first_order_only: bool
+    min_order_value: float = 0.0
+    is_active: bool = True
+    is_public: bool = True
+    is_first_order_only: bool = False
     start_date: Optional[datetime] = None
     expiry_date: Optional[datetime] = None
     max_uses: Optional[int] = None
-    times_used: int
-    max_uses_per_user: int
-    created_at: datetime
+    times_used: int = 0
+    max_uses_per_user: int = 1
+    created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     class Config:

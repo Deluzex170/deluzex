@@ -21,6 +21,7 @@ import {
   Product,
 } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import WishlistButton from "../../components/WishlistButton";
 import PincodeChecker from "../../components/PincodeChecker";
 
@@ -29,6 +30,7 @@ export default function ProductDetail() {
   const router = useRouter();
   const cartItems = useSelector((state: RootState) => state.cart.cartItems);
   const { user, isAuthenticated, isAdmin, openLoginModal } = useAuth();
+  const toast = useToast();
   const userEmail = (user as Record<string, string>)?.email || "";
   const params = useParams();
   const [wishlistItemId, setWishlistItemId] = useState<string | null>(null);
@@ -301,7 +303,7 @@ export default function ProductDetail() {
   const handleBuyNow = () => {
     if (!product || isBuyingNow) return;
     if (isOutOfStock) {
-      alert("This item is currently sold out. You can submit an inquiry below for custom commissioning.");
+      toast.warning("This item is currently sold out. You can submit an inquiry below for custom commissioning.");
       return;
     }
     setIsBuyingNow(true);
@@ -313,16 +315,16 @@ export default function ProductDetail() {
   const handleAddToCart = () => {
     if (!product || isAddingToCart) return;
     if (isOutOfStock) {
-      alert("This item is currently out of stock.");
+      toast.warning("This item is currently out of stock.");
       return;
     }
     if (isAtStockLimit) {
-      alert(`Only ${maxQuantity} units available — they're all in your cart already.`);
+      toast.warning(`Only ${maxQuantity} units available — they're all in your cart already.`);
       return;
     }
     setIsAddingToCart(true);
     dispatchAddToCart();
-    setAddedToCartToast(true);
+    toast.success("Added to your shopping bag!");
     setTimeout(() => {
       setIsAddingToCart(false);
     }, 600);
@@ -388,16 +390,16 @@ export default function ProductDetail() {
       return;
     }
     if (!reviewForm.name.trim()) {
-      alert("Please enter your name.");
+      toast.warning("Please enter your name.");
       return;
     }
     if (!reviewForm.text.trim()) {
-      alert("Please enter your review comments.");
+      toast.warning("Please enter your review comments.");
       return;
     }
     const targetProductId = String(product.id || (product as any)._id || params.slug);
     if (!targetProductId) {
-      alert("Product ID is missing.");
+      toast.error("Product ID is missing.");
       return;
     }
 
@@ -426,7 +428,7 @@ export default function ProductDetail() {
       }, 2200);
     } catch (err: any) {
       console.error("Failed to submit review:", err);
-      alert(err?.message || "Failed to submit review. Please try again.");
+      toast.error(err?.message || "Failed to submit review. Please try again.");
     } finally {
       setReviewSubmitting(false);
     }
@@ -694,16 +696,6 @@ export default function ProductDetail() {
           </div>
         </div>
       </div>
-
-      {/* Floating Added to Cart Toast */}
-      {addedToCartToast && (
-        <div className={styles.toastNotification}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="3">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-          <span>Added to your shopping bag!</span>
-        </div>
-      )}
 
       {/* ==================== INQUIRY / QUOTE MODAL ==================== */}
       {inquiryModalOpen && (
@@ -1224,7 +1216,7 @@ export default function ProductDetail() {
                           relatedMax === 0 ||
                           (prod.in_stock === false && (prod.stock_count === undefined || prod.stock_count === null || Number(prod.stock_count) <= 0));
                         if (isRelatedOOS) {
-                          alert("This item is currently out of stock.");
+                          toast.warning("This item is currently out of stock.");
                           return;
                         }
                         setAddingRelatedId(prodId);

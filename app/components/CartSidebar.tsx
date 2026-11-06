@@ -338,7 +338,7 @@ export default function CartSidebar() {
               <div key={item.id} className={styles.cartItem}>
                 <div className={styles.itemImageWrapper}>
                   <Image
-                    src={item.image}
+                    src={item.image || "/images/lamp_modern_tall_1784107732736.jpg"}
                     alt={item.title}
                     fill
                     sizes="88px"

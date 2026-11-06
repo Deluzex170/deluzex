@@ -304,6 +304,13 @@ def create_order(payload: OrderCreateRequest):
     db_order.id = str(result.inserted_id)
     logger.info(f"[POST /orders] Created order with ID={db_order.id}")
 
+    # Auto-save email to customer profile if first checkout
+    try:
+        from app.services.user_service import auto_update_user_checkout_email
+        auto_update_user_checkout_email(email=payload.email, phone=payload.phone, user_id=payload.user_id)
+    except Exception as u_err:
+        logger.warning(f"Failed to auto-update user checkout email: {u_err}")
+
     # Decrement inventory stock
     decrement_product_stock(payload.items)
 

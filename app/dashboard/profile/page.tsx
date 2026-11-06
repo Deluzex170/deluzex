@@ -19,6 +19,7 @@ import {
 } from "../../services/api";
 import { INDIAN_STATES, lookupPincode, normalizeIndianState } from "../../lib/indiaAddress";
 import styles from "./profile.module.css";
+import { useToast } from "../../context/ToastContext";
 
 function getInitialUserValue(key: string, defaultValue: string, userObj?: Record<string, string> | null): string {
   if (userObj && userObj[key]) return userObj[key];
@@ -38,6 +39,7 @@ function getInitialUserValue(key: string, defaultValue: string, userObj?: Record
 
 export default function ProfilePage() {
   const { user, login, logout } = useAuth();
+  const toast = useToast();
   const userRecord = user as Record<string, any> | null;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -61,12 +63,12 @@ export default function ProfilePage() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      showToast("Please select a valid image file.");
+      toast.warning("Please select a valid image file.");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      showToast("Image size should be less than 5MB.");
+      toast.warning("Image size should be less than 5MB.");
       return;
     }
 
@@ -93,7 +95,7 @@ export default function ProfilePage() {
       } catch {
         // ignore
       }
-      showToast("Profile photo updated successfully!");
+      toast.success("Profile photo updated successfully!");
     };
     reader.readAsDataURL(file);
   };
@@ -101,7 +103,7 @@ export default function ProfilePage() {
   const handleRemoveAvatar = async () => {
     const hasPhoto = Boolean(avatarPreview || (typeof window !== "undefined" && localStorage.getItem("user_avatar")));
     if (!hasPhoto) {
-      showToast("No custom profile photo to remove.");
+      toast.info("No custom profile photo to remove.");
       return;
     }
     setAvatarPreview(null);
@@ -121,9 +123,9 @@ export default function ProfilePage() {
     }
     try {
       await removeUserAvatar();
-      showToast("Profile photo removed.");
+      toast.success("Profile photo removed.");
     } catch {
-      showToast("Profile photo removed.");
+      toast.success("Profile photo removed.");
     }
   };
 
@@ -131,12 +133,12 @@ export default function ProfilePage() {
     setDeleteLoading(true);
     try {
       await deleteUserProfile();
-      showToast("Account deleted successfully.");
+      toast.success("Account deleted successfully.");
       logout();
       window.location.href = "/";
     } catch (err: any) {
       console.error("Account deletion failed:", err);
-      showToast(err?.message || "Failed to delete account. Please try again.");
+      toast.error(err?.message || "Failed to delete account. Please try again.");
     } finally {
       setDeleteLoading(false);
       setShowDeleteModal(false);
@@ -194,18 +196,10 @@ export default function ProfilePage() {
   const [isVerifyingPhoneOtp, setIsVerifyingPhoneOtp] = useState(false);
   const [isSendingPhoneOtp, setIsSendingPhoneOtp] = useState(false);
   const [phoneOtpTimer, setPhoneOtpTimer] = useState(0);
-
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  // Timer countdown for Phone OTP resend
+// Timer countdown for Phone OTP resend
   useEffect(() => {
     if (phoneOtpTimer <= 0) return;
     const interval = setInterval(() => {
@@ -243,7 +237,7 @@ export default function ProfilePage() {
       })
       .catch((error: Error) => {
         if (isMounted && error.message !== "Could not validate credentials") {
-          showToast(error.message);
+          toast.error(error.message);
         }
       })
       .finally(() => {
@@ -264,15 +258,15 @@ export default function ProfilePage() {
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firstName.trim()) {
-      showToast("Please enter your first name.");
+      toast.warning("Please enter your first name.");
       return;
     }
     if (!lastName.trim()) {
-      showToast("Please enter your last name.");
+      toast.warning("Please enter your last name.");
       return;
     }
     if (!email.trim() || !email.includes("@")) {
-      showToast("Please enter a valid email address.");
+      toast.warning("Please enter a valid email address.");
       return;
     }
 
@@ -287,9 +281,9 @@ export default function ProfilePage() {
         setShowPhoneOtpModal(true);
         setPhoneOtp("");
         setPhoneOtpTimer(60);
-        showToast(`WhatsApp OTP sent to +91 ${cleanPhone}`);
+        toast.info(`WhatsApp OTP sent to +91 ${cleanPhone}`);
       } catch (error) {
-        showToast(error instanceof Error ? error.message : "Failed to send WhatsApp verification OTP.");
+        toast.error(error instanceof Error ? error.message : "Failed to send WhatsApp verification OTP.");
       } finally {
         setIsSendingPhoneOtp(false);
       }
@@ -315,9 +309,9 @@ export default function ProfilePage() {
         email: email.trim(),
         phone: phone.trim(),
       });
-      showToast("Personal information saved successfully!");
+      toast.success("Personal information saved successfully!");
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Failed to update profile.");
+      toast.error(error instanceof Error ? error.message : "Failed to update profile.");
     } finally {
       setIsSavingProfile(false);
     }
@@ -329,9 +323,9 @@ export default function ProfilePage() {
     try {
       await sendProfilePhoneOtp(cleanPhone);
       setPhoneOtpTimer(60);
-      showToast(`New WhatsApp OTP sent to +91 ${cleanPhone}`);
+      toast.info(`New WhatsApp OTP sent to +91 ${cleanPhone}`);
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Failed to resend OTP.");
+      toast.error(error instanceof Error ? error.message : "Failed to resend OTP.");
     }
   };
 
@@ -339,7 +333,7 @@ export default function ProfilePage() {
     e.preventDefault();
     const cleanOtp = phoneOtp.trim();
     if (cleanOtp.length !== 6) {
-      showToast("Please enter the 6-digit WhatsApp OTP.");
+      toast.warning("Please enter the 6-digit WhatsApp OTP.");
       return;
     }
 
@@ -366,9 +360,9 @@ export default function ProfilePage() {
 
       const token = localStorage.getItem("authToken") || "";
       login(token, updatedUser);
-      showToast("Phone number verified and profile saved successfully!");
+      toast.success("Phone number verified and profile saved successfully!");
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Invalid WhatsApp OTP. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Invalid WhatsApp OTP. Please try again.");
     } finally {
       setIsVerifyingPhoneOtp(false);
     }
@@ -383,19 +377,19 @@ export default function ProfilePage() {
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword.trim()) {
-      showToast("Please enter your current password.");
+      toast.warning("Please enter your current password.");
       return;
     }
     if (newPassword.length < 6) {
-      showToast("New password must be at least 6 characters long.");
+      toast.warning("New password must be at least 6 characters long.");
       return;
     }
     if (newPassword !== confirmPassword) {
-      showToast("New password and confirm password do not match.");
+      toast.warning("New password and confirm password do not match.");
       return;
     }
     if (currentPassword === newPassword) {
-      showToast("New password must be different from current password.");
+      toast.warning("New password must be different from current password.");
       return;
     }
 
@@ -408,9 +402,9 @@ export default function ProfilePage() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      showToast("Password updated successfully!");
+      toast.success("Password updated successfully!");
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Failed to update password.");
+      toast.error(error instanceof Error ? error.message : "Failed to update password.");
     } finally {
       setIsUpdatingPassword(false);
     }
@@ -485,7 +479,7 @@ export default function ProfilePage() {
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!addrFirstName.trim() || !addrStreet.trim() || !addrCity.trim() || !addrState.trim() || !addrPinCode.trim() || !addrPhone.trim()) {
-      showToast("Please fill all required address fields.");
+      toast.warning("Please fill all required address fields.");
       return;
     }
 
@@ -513,11 +507,11 @@ export default function ProfilePage() {
       setAddrState("");
       setAddrPinCode("");
       setAddrPhone("");
-      showToast("Address saved successfully!");
+      toast.success("Address saved successfully!");
       await loadAddresses();
     } catch (err) {
       console.error("Failed to save address:", err);
-      showToast("Failed to save address to database.");
+      toast.error("Failed to save address to database.");
     } finally {
       setIsSavingAddress(false);
     }
@@ -536,10 +530,10 @@ export default function ProfilePage() {
           is_default: (a.id || a._id) === addrId,
         }))
       );
-      showToast("Default delivery address updated.");
+      toast.success("Default delivery address updated.");
     } catch (err) {
       console.error("Failed to set default address:", err);
-      showToast("Failed to update default address.");
+      toast.error("Failed to update default address.");
     }
   };
 
@@ -552,11 +546,11 @@ export default function ProfilePage() {
     try {
       await deleteUserAddress(addrId, userEmail);
       setAddresses((prev) => prev.filter((a) => (a.id || a._id) !== addrId));
-      showToast("Address deleted successfully.");
+      toast.success("Address deleted successfully.");
       loadAddresses();
     } catch (err) {
       console.error("Failed to delete address:", err);
-      showToast("Failed to delete address.");
+      toast.error("Failed to delete address.");
     }
   };
 
@@ -1390,16 +1384,6 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-
-      {/* Feedback Toast */}
-      {toastMessage && (
-        <div className={styles.toast}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C89B60" strokeWidth="2">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          <span>{toastMessage}</span>
-        </div>
-      )}
-    </div>
+</div>
   );
 }

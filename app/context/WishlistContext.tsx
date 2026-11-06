@@ -10,12 +10,18 @@ import {
   Product,
 } from "../services/api";
 
-const LOCAL_STORAGE_KEY = "deluzex_wishlist_items";
+function getUserStorageKey(email?: string): string | null {
+  if (!email) return null;
+  const clean = email.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
+  return `deluzex_wishlist_${clean}`;
+}
 
-function readLocalWishlist(): WishlistItem[] {
-  if (typeof window === "undefined") return [];
+function readUserWishlist(email?: string): WishlistItem[] {
+  if (typeof window === "undefined" || !email) return [];
+  const key = getUserStorageKey(email);
+  if (!key) return [];
   try {
-    const raw = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+    const raw = window.localStorage.getItem(key);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
@@ -24,10 +30,21 @@ function readLocalWishlist(): WishlistItem[] {
   }
 }
 
-function writeLocalWishlist(items: WishlistItem[]) {
+function writeUserWishlist(email: string | undefined, items: WishlistItem[]) {
+  if (typeof window === "undefined" || !email) return;
+  const key = getUserStorageKey(email);
+  if (!key) return;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(items));
+  } catch {
+    // ignore storage quota errors
+  }
+}
+
+function purgeLegacyStorage() {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
+    window.localStorage.removeItem("deluzex_wishlist_items");
   } catch {
     // ignore
   }
@@ -49,13 +66,13 @@ interface WishlistContextType {
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [wishlistIds, setWishlistIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const isHydratedRef = useRef(false);
 
-  const userEmail = (user as Record<string, string>)?.email || "";
+  const userEmail = (user as Record<string, any>)?.email ? String((user as any).email).trim().toLowerCase() : "";
 
   // Helper to rebuild IDs Set from item list
   const buildIdsSet = useCallback((items: WishlistItem[]): Set<string> => {
@@ -69,69 +86,81 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     return ids;
   }, []);
 
-  // 1. Initial hydration from localStorage
-  useEffect(() => {
-    const local = readLocalWishlist();
-    if (local && local.length > 0) {
-      setWishlistItems(local);
-      setWishlistIds(buildIdsSet(local));
-    }
-    isHydratedRef.current = true;
-  }, [buildIdsSet]);
-
-  // 2. Refresh/sync wishlist
+  // Refresh/sync wishlist from backend
   const refreshWishlist = useCallback(async () => {
-    const local = readLocalWishlist();
-    if (local && local.length > 0) {
-      setWishlistItems(local);
-      setWishlistIds(buildIdsSet(local));
-    }
-
+    // Guest protection: If not authenticated, ensure wishlist is empty
     if (!isAuthenticated || !userEmail) {
+      setWishlistItems([]);
+      setWishlistIds(new Set());
+      purgeLegacyStorage();
       return;
     }
 
+    // 1. Optimistic read from user-scoped localStorage
+    const local = readUserWishlist(userEmail);
+    if (local && local.length > 0) {
+      setWishlistItems(local);
+      setWishlistIds(buildIdsSet(local));
+    }
+
+    // 2. Authoritative sync with backend
     setIsLoading(true);
     try {
       const serverItems = await fetchUserWishlist(userEmail);
-      if (Array.isArray(serverItems) && serverItems.length > 0) {
-        // Merge server items with local items
-        const mergedMap = new Map<string, WishlistItem>();
-        local.forEach((item) => {
-          const key = String(item.product_id || item.id || item._id || item.product_title).toLowerCase();
-          mergedMap.set(key, item);
-        });
-        serverItems.forEach((item) => {
-          const key = String(item.product_id || item.id || item._id || item.product_title).toLowerCase();
-          mergedMap.set(key, item);
-        });
-        const merged = Array.from(mergedMap.values());
-        setWishlistItems(merged);
-        setWishlistIds(buildIdsSet(merged));
-        writeLocalWishlist(merged);
+      if (Array.isArray(serverItems)) {
+        setWishlistItems(serverItems);
+        setWishlistIds(buildIdsSet(serverItems));
+        writeUserWishlist(userEmail, serverItems);
       }
     } catch (err) {
-      console.warn("Backend wishlist fetch warning, preserving local state:", err);
+      console.warn("Backend wishlist sync notice:", err);
     } finally {
       setIsLoading(false);
     }
   }, [isAuthenticated, userEmail, buildIdsSet]);
 
+  // Handle Authentication Changes
   useEffect(() => {
-    if (isHydratedRef.current) {
+    if (authLoading) return;
+
+    if (!isAuthenticated || !userEmail) {
+      // Guest: clear all wishlist state
+      setWishlistItems([]);
+      setWishlistIds(new Set());
+      purgeLegacyStorage();
+    } else {
+      // Authenticated: load user wishlist
       refreshWishlist();
     }
-  }, [refreshWishlist]);
+    isHydratedRef.current = true;
+  }, [isAuthenticated, userEmail, authLoading, refreshWishlist]);
+
+  // Listen to Global Logout Event
+  useEffect(() => {
+    const handleLogout = () => {
+      setWishlistItems([]);
+      setWishlistIds(new Set());
+      purgeLegacyStorage();
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("auth:logout", handleLogout);
+      return () => {
+        window.removeEventListener("auth:logout", handleLogout);
+      };
+    }
+  }, []);
 
   // Check if a product is wishlisted
   const isWishlisted = useCallback(
     (productId?: string | number, title?: string): boolean => {
+      if (!isAuthenticated || !userEmail) return false;
       if (!productId && !title) return false;
       const idStr = productId ? String(productId).trim() : "";
       const titleStr = title ? String(title).trim().toLowerCase() : "";
       return (idStr ? wishlistIds.has(idStr) : false) || (titleStr ? wishlistIds.has(titleStr) : false);
     },
-    [wishlistIds]
+    [isAuthenticated, userEmail, wishlistIds]
   );
 
   // Toggle wishlist item
@@ -139,6 +168,11 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     async (
       product: Partial<Product> & { title?: string; image?: string; price?: number | string; slug?: string }
     ): Promise<boolean> => {
+      // Wishlist is strictly for authenticated users
+      if (!isAuthenticated || !userEmail) {
+        return false;
+      }
+
       const pId = String(product._id || product.id || "").trim();
       const pTitle = String(product.product_title || product.title || product.name || "Product").trim();
       const pPrice = product.product_price ?? product.price ?? 0;
@@ -158,21 +192,19 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         const updatedIds = buildIdsSet(updatedItems);
         setWishlistItems(updatedItems);
         setWishlistIds(updatedIds);
-        writeLocalWishlist(updatedItems);
+        writeUserWishlist(userEmail, updatedItems);
 
-        // Sync with backend if user email is available
-        if (userEmail) {
-          toggleWishlistApi({
-            user_email: userEmail,
-            product_id: pId || undefined,
-            product_title: pTitle,
-            product_price: pPrice,
-            product_image: pImage,
-            product_slug: pSlug,
-          }).catch((err) => {
-            console.warn("Backend sync warning on remove:", err);
-          });
-        }
+        // Sync with backend
+        toggleWishlistApi({
+          user_email: userEmail,
+          product_id: pId || undefined,
+          product_title: pTitle,
+          product_price: pPrice,
+          product_image: pImage,
+          product_slug: pSlug,
+        }).catch((err) => {
+          console.warn("Backend sync warning on remove:", err);
+        });
 
         return false;
       } else {
@@ -185,7 +217,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
           product_price: pPrice,
           product_image: pImage,
           product_slug: pSlug,
-          user_email: userEmail || "guest",
+          user_email: userEmail,
           created_at: new Date().toISOString(),
         };
 
@@ -201,30 +233,30 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         const updatedIds = buildIdsSet(updatedItems);
         setWishlistItems(updatedItems);
         setWishlistIds(updatedIds);
-        writeLocalWishlist(updatedItems);
+        writeUserWishlist(userEmail, updatedItems);
 
-        // Sync with backend if user email is available
-        if (userEmail) {
-          toggleWishlistApi({
-            user_email: userEmail,
-            product_id: pId || undefined,
-            product_title: pTitle,
-            product_price: pPrice,
-            product_image: pImage,
-            product_slug: pSlug,
-          }).catch((err) => {
-            console.warn("Backend sync warning on add:", err);
-          });
-        }
+        // Sync with backend
+        toggleWishlistApi({
+          user_email: userEmail,
+          product_id: pId || undefined,
+          product_title: pTitle,
+          product_price: pPrice,
+          product_image: pImage,
+          product_slug: pSlug,
+        }).catch((err) => {
+          console.warn("Backend sync warning on add:", err);
+        });
 
         return true;
       }
     },
-    [isWishlisted, wishlistItems, buildIdsSet, userEmail]
+    [isAuthenticated, userEmail, isWishlisted, wishlistItems, buildIdsSet]
   );
 
   const removeFromWishlist = useCallback(
     async (productId: string | number, itemId?: string, title?: string): Promise<boolean> => {
+      if (!isAuthenticated || !userEmail) return false;
+
       const pId = String(productId || "").trim();
       const cleanItemId = itemId ? String(itemId).trim() : "";
       const cleanTitle = title ? String(title).trim().toLowerCase() : "";
@@ -239,39 +271,37 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       const updatedIds = buildIdsSet(updatedItems);
       setWishlistItems(updatedItems);
       setWishlistIds(updatedIds);
-      writeLocalWishlist(updatedItems);
+      writeUserWishlist(userEmail, updatedItems);
 
       // Backend sync
-      if (userEmail) {
-        if (cleanItemId) {
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api/v1"}/user/wishlist/${cleanItemId}`, {
-            method: "DELETE",
-            headers: {
-              ...(typeof window !== "undefined" && localStorage.getItem("authToken")
-                ? { Authorization: `Bearer ${localStorage.getItem("authToken")}` }
-                : {}),
-            },
-          }).catch(() => {});
-        }
-        if (pId) {
-          removeFromWishlistByProductId(pId, userEmail).catch(() => {});
-        }
+      if (cleanItemId) {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api/v1"}/user/wishlist/${cleanItemId}`, {
+          method: "DELETE",
+          headers: {
+            ...(typeof window !== "undefined" && localStorage.getItem("authToken")
+              ? { Authorization: `Bearer ${localStorage.getItem("authToken")}` }
+              : {}),
+          },
+        }).catch(() => {});
+      }
+      if (pId) {
+        removeFromWishlistByProductId(pId, userEmail).catch(() => {});
       }
 
       return true;
     },
-    [wishlistItems, buildIdsSet, userEmail]
+    [isAuthenticated, userEmail, wishlistItems, buildIdsSet]
   );
 
   return (
     <WishlistContext.Provider
       value={{
-        wishlistItems,
-        wishlistIds,
+        wishlistItems: isAuthenticated ? wishlistItems : [],
+        wishlistIds: isAuthenticated ? wishlistIds : new Set(),
         isWishlisted,
         toggleWishlist,
         removeFromWishlist,
-        wishlistCount: wishlistItems.length,
+        wishlistCount: isAuthenticated ? wishlistItems.length : 0,
         isLoading,
         refreshWishlist,
       }}

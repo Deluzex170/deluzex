@@ -34,6 +34,7 @@ const hanken = Hanken_Grotesk({
 import { AuthProvider } from "./context/AuthContext";
 import { SidebarProvider } from "./context/SidebarContext";
 import { WishlistProvider } from "./context/WishlistContext";
+import { ToastProvider } from "./context/ToastContext";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -55,25 +56,27 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${libre.variable} ${italianno.variable} ${hanken.variable}`} suppressHydrationWarning>
         <AuthProvider>
-          <Suspense fallback={null}>
-            <TopProgressBar />
-          </Suspense>
-          <VisitorTracker />
-          <SidebarProvider>
-            <ReduxProvider>
-              <WishlistProvider>
-                <CartSyncManager />
-                <EmailVerificationPrompt />
-                <Header />
-                {children}
-                <ConditionalFooter />
-                <CartSidebar />
-                <MainSidebar />
-                <UserLoginModal />
-                <ConsoleBanner />
-              </WishlistProvider>
-            </ReduxProvider>
-          </SidebarProvider>
+          <ToastProvider>
+            <Suspense fallback={null}>
+              <TopProgressBar />
+            </Suspense>
+            <VisitorTracker />
+            <SidebarProvider>
+              <ReduxProvider>
+                <WishlistProvider>
+                  <CartSyncManager />
+                  <EmailVerificationPrompt />
+                  <Header />
+                  {children}
+                  <ConditionalFooter />
+                  <CartSidebar />
+                  <MainSidebar />
+                  <UserLoginModal />
+                  <ConsoleBanner />
+                </WishlistProvider>
+              </ReduxProvider>
+            </SidebarProvider>
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>

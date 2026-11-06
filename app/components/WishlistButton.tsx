@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { useWishlist } from "../context/WishlistContext";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { Product } from "../services/api";
 import styles from "./WishlistButton.module.css";
 
@@ -26,16 +28,27 @@ export default function WishlistButton({
   showText = false,
 }: WishlistButtonProps) {
   const { isWishlisted, toggleWishlist } = useWishlist();
+  const { isAuthenticated, openLoginModal } = useAuth();
+  const toast = useToast();
   const [animating, setAnimating] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const pId = String(product._id || product.id || "");
-  const pTitle = String(product.product_title || product.title || product.name || "");
+  const pTitle = String(product.product_title || product.title || product.name || "Product").trim();
   const active = isWishlisted(pId, pTitle);
 
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // Guest protection: prompt to sign in
+    if (!isAuthenticated) {
+      toast.warning("Please sign in to save pieces to your wishlist.");
+      if (openLoginModal) {
+        openLoginModal(undefined, "Please sign in to save items to your wishlist.");
+      }
+      return;
+    }
 
     if (busy) return;
     setBusy(true);
@@ -43,7 +56,14 @@ export default function WishlistButton({
     setTimeout(() => setAnimating(false), 400);
 
     try {
-      await toggleWishlist(product);
+      const added = await toggleWishlist(product);
+      if (added) {
+        toast.success(`"${pTitle}" added to your wishlist!`);
+      } else {
+        toast.info(`"${pTitle}" removed from your wishlist.`);
+      }
+    } catch {
+      toast.error("Failed to update wishlist. Please try again.");
     } finally {
       setBusy(false);
     }

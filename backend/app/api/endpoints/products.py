@@ -44,9 +44,9 @@ def read_product(product_id: str):
     if doc is None:
         clean_id = product_id.strip()
         doc = (
-            db.products.find_one({"slug": clean_id})
+            db.products.find_one({"slug": {"$regex": f"^{re.escape(clean_id)}$", "$options": "i"}})
             or db.products.find_one({"product_title": {"$regex": f"^{re.escape(clean_id)}$", "$options": "i"}})
-            or db.products.find_one({"sku": clean_id})
+            or db.products.find_one({"sku": {"$regex": f"^{re.escape(clean_id)}$", "$options": "i"}})
         )
 
     if doc is None:
@@ -256,6 +256,14 @@ async def update_product(
     except:
         raise HTTPException(status_code=400, detail="Invalid product_id format")
 
+    form_keys = set()
+    if request:
+        try:
+            form_data = await request.form()
+            form_keys = set(form_data.keys())
+        except Exception:
+            pass
+
     doc = db.products.find_one({"_id": obj_id})
     if doc is None:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -286,8 +294,8 @@ async def update_product(
     if product_style is not None: product.product_style = product_style
     if product_finishing is not None: product.product_finishing = product_finishing
     if stock_count is not None: product.stock_count = stock_count
-    if is_featured is not None: product.is_featured = is_featured
-    if is_new_arrival is not None: product.is_new_arrival = is_new_arrival
+    if is_featured is not None and (not form_keys or "is_featured" in form_keys): product.is_featured = is_featured
+    if is_new_arrival is not None and (not form_keys or "is_new_arrival" in form_keys): product.is_new_arrival = is_new_arrival
 
     if sku is not None:
         clean_sku = sku.strip() if sku else None
@@ -299,8 +307,16 @@ async def update_product(
                     detail=f"SKU '{clean_sku}' is already in use by product '{existing_sku.get('product_title')}'. SKU must be unique."
                 )
         product.sku = clean_sku
-    if stock_status is not None: product.stock_status = stock_status
-    if in_stock is not None:
+    if stock_status is not None:
+        product.stock_status = stock_status
+    elif stock_count is not None:
+        effective_count = int(stock_count or 0)
+        if effective_count > 0 and str(product.stock_status or "").upper() == "OUT OF STOCK":
+            product.stock_status = "IN STOCK"
+        elif effective_count <= 0:
+            product.stock_status = "OUT OF STOCK"
+
+    if in_stock is not None and "in_stock" in form_keys:
         product.in_stock = in_stock
     else:
         # Auto-sync in_stock flag based on effective stock count & status
@@ -326,8 +342,8 @@ async def update_product(
     if replenishment is not None: product.replenishment = replenishment
     if whatsapp_number is not None: product.whatsapp_number = whatsapp_number
     if phone_number is not None: product.phone_number = phone_number
-    if amazon_link is not None:
-        trimmed_amazon = amazon_link.strip()
+    if "amazon_link" in form_keys or amazon_link is not None:
+        trimmed_amazon = (amazon_link or "").strip()
         product.amazon_link = trimmed_amazon if trimmed_amazon else None
 
     if specifications is not None:

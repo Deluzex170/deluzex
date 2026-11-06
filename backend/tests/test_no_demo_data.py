@@ -37,7 +37,7 @@ class RealDataOnlyTests(TestCase):
         self.assertEqual(stats["breakdown"][5]["count"], 1)
 
     def test_missing_whatsapp_config_never_claims_delivery_or_returns_code(self):
-        with patch.multiple(whatsapp.settings, WHATSAPP_ACCESS_TOKEN="", WHATSAPP_PHONE_NUMBER_ID=""):
+        with patch.multiple(whatsapp.settings, MSG91_AUTH_KEY="", WHATSAPP_ACCESS_TOKEN="", WHATSAPP_PHONE_NUMBER_ID=""):
             result = whatsapp.send_whatsapp_otp("+919876543210", "123456")
         self.assertFalse(result["success"])
         self.assertNotIn("123456", str(result))

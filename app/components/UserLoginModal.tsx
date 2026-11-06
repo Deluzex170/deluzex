@@ -1,17 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useDispatch } from "react-redux";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { addToCart, openCart } from "../store/cartSlice";
-import WhatsAppAuthSection from "./WhatsAppAuthSection";
-import { verifyEmailOtp, resendEmailOtp, requestPasswordReset, resetPasswordWithOtp } from "../services/api";
+import {
+  checkCustomerPhone,
+  sendWhatsAppOtp,
+  verifyWhatsAppOtp,
+  requestPasswordReset,
+  resetPasswordWithOtp,
+} from "../services/api";
 import styles from "./UserLoginModal.module.css";
 
 export default function UserLoginModal() {
   const dispatch = useDispatch();
+  const globalToast = useToast();
   const {
     showLoginModal,
     closeLoginModal,
@@ -21,346 +27,322 @@ export default function UserLoginModal() {
     login,
   } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<"login" | "register" | "forgot" | "email_otp">("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [resetEmail, setResetEmail] = useState("");
-  const [resetSent, setResetSent] = useState(false);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
+  // Primary steps: "phone" -> "otp", with secondary "password" and "forgot"
+  const [step, setStep] = useState<"phone" | "otp" | "password" | "forgot">("phone");
 
-  // Forgot Password 2-Step State
+  // WhatsApp Frictionless Auth States
+  const [phone, setPhone] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [isExistingCustomer, setIsExistingCustomer] = useState<boolean | null>(null);
+  const [detectedFirstName, setDetectedFirstName] = useState("");
+  const [isCheckingPhone, setIsCheckingPhone] = useState(false);
+
+  // OTP Verification States
+  const [otp, setOtp] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+
+  // Secondary Password Auth States
+  const [passwordEmail, setPasswordEmail] = useState("");
+  const [passwordValue, setPasswordValue] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
+
+  // Forgot Password States
+  const [resetEmail, setResetEmail] = useState("");
   const [forgotStep, setForgotStep] = useState<"email" | "otp_password">("email");
   const [resetOtp, setResetOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
-  // Email OTP state
-  const [emailOtp, setEmailOtp] = useState("");
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
-  const [isResendingOtp, setIsResendingOtp] = useState(false);
+  // In-modal inline error message for immediate accessibility
+  const [inlineError, setInlineError] = useState("");
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
+  const checkPhoneTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  React.useEffect(() => {
-    if (resendCooldown > 0) {
-      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
-      return () => clearTimeout(timer);
+  // Countdown timer for OTP resend cooldown
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setInterval(() => {
+        setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+      return () => clearInterval(timer);
     }
-  }, [resendCooldown]);
+  }, [cooldown]);
+
+  // Reset state when modal opens/closes
+  useEffect(() => {
+    if (!showLoginModal) {
+      setStep("phone");
+      setPhone("");
+      setFullName("");
+      setIsExistingCustomer(null);
+      setDetectedFirstName("");
+      setOtp("");
+      setInlineError("");
+    }
+  }, [showLoginModal]);
+
+  // Smart User Detection: Debounced phone lookup on 10 digits
+  useEffect(() => {
+    const cleanDigits = phone.replace(/\D/g, "");
+
+    if (checkPhoneTimerRef.current) {
+      clearTimeout(checkPhoneTimerRef.current);
+    }
+
+    if (cleanDigits.length === 10) {
+      setIsCheckingPhone(true);
+      checkPhoneTimerRef.current = setTimeout(async () => {
+        try {
+          const res = await checkCustomerPhone(cleanDigits);
+          if (res.exists) {
+            setIsExistingCustomer(true);
+            setDetectedFirstName(res.first_name || "Customer");
+          } else {
+            setIsExistingCustomer(false);
+            setDetectedFirstName("");
+          }
+        } catch {
+          setIsExistingCustomer(null);
+        } finally {
+          setIsCheckingPhone(false);
+        }
+      }, 350);
+    } else {
+      setIsExistingCustomer(null);
+      setDetectedFirstName("");
+      setIsCheckingPhone(false);
+    }
+
+    return () => {
+      if (checkPhoneTimerRef.current) {
+        clearTimeout(checkPhoneTimerRef.current);
+      }
+    };
+  }, [phone]);
 
   if (!showLoginModal) {
     return null;
   }
 
   const handleClose = () => {
-    if (isLoading) return;
-    setErrorMsg("");
-    setSuccessMsg("");
-    setResetSent(false);
+    if (isSendingOtp || isVerifyingOtp || isPasswordLoading || isResetting) return;
+    setInlineError("");
     closeLoginModal();
   };
 
-  const parseErrorDetail = (data: any, fallback: string): string => {
-    if (!data) return fallback;
-    if (typeof data.detail === "string") return data.detail;
-    if (Array.isArray(data.detail) && data.detail.length > 0) {
-      return data.detail.map((e: any) => e.msg || e.message || JSON.stringify(e)).join(", ");
-    }
-    if (typeof data.message === "string") return data.message;
-    return fallback;
-  };
-
-  const safeParseResponse = async (response: Response): Promise<any> => {
-    const contentType = response.headers.get("content-type") || "";
-    if (contentType.includes("application/json")) {
-      try {
-        return await response.json();
-      } catch {
-        return { detail: "Failed to parse server response." };
-      }
-    }
-    const text = await response.text();
-    return {
-      detail: response.status === 404
-        ? "Service endpoint not reachable (404)."
-        : text || "Server communication error.",
-    };
-  };
-
-  const authFetch = async (endpoint: string, options: RequestInit): Promise<Response> => {
-    const envUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
-    try {
-      const res = await fetch(`${envUrl}${endpoint}`, options);
-      return res;
-    } catch (primaryErr) {
-      if (envUrl.startsWith("http")) {
-        try {
-          const fallbackRes = await fetch(`/api/v1${endpoint}`, options);
-          return fallbackRes;
-        } catch {
-          // rethrow primary error if fallback also fails
-        }
-      }
-      throw primaryErr;
-    }
-  };
-
-  const handleLoginSubmit = async (e: React.FormEvent) => {
+  // Step 1: Send WhatsApp OTP
+  const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
+    setInlineError("");
 
-    if (!email.trim() || !password.trim()) {
-      setErrorMsg("Please enter both email and password.");
+    const cleanDigits = phone.replace(/\D/g, "");
+    if (cleanDigits.length !== 10) {
+      const err = "Please enter a valid 10-digit mobile number.";
+      setInlineError(err);
+      globalToast.error(err);
       return;
     }
 
-    setIsLoading(true);
+    // If new user, full name is required
+    if (isExistingCustomer === false && !fullName.trim()) {
+      const err = "Please enter your full name.";
+      setInlineError(err);
+      globalToast.error(err);
+      return;
+    }
 
+    setIsSendingOtp(true);
     try {
-      const response = await authFetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
-      });
+      const fullPhone = `+91${cleanDigits}`;
+      const res = await sendWhatsAppOtp(fullPhone);
 
-      const data = await safeParseResponse(response);
-
-      // Check if user is not registered -> Offer to sign up
-      if (response.status === 404 || data?.detail?.includes("ACCOUNT_NOT_FOUND")) {
-        setErrorMsg("No account found with this email. Switching to Sign Up...");
-        setTimeout(() => {
-          setActiveTab("register");
-        }, 1500);
-        return;
+      // Smart greeting
+      if (res.is_existing_user) {
+        setIsExistingCustomer(true);
+        if (res.first_name) setDetectedFirstName(res.first_name);
+      } else if (res.is_existing_user === false) {
+        setIsExistingCustomer(false);
       }
 
-      // Check if email verification is required
-      if (response.status === 403 && (data?.detail?.includes("EMAIL_NOT_VERIFIED") || data?.detail?.includes("verify your email"))) {
-        setActiveTab("email_otp");
-        setResendCooldown(data.retry_after ?? 0);
-        setSuccessMsg("Enter the verification code sent to your email. Check your spam folder too.");
-        return;
-      }
-
-      if (response.ok && data.success) {
-        // Authenticate in context
-        login(data.access_token, data.data);
-
-        // Add pending product if exists
-        if (pendingCartProduct) {
-          dispatch(addToCart(pendingCartProduct));
-          dispatch(openCart());
-          clearPendingCartProduct();
-          setSuccessMsg(`Welcome! ${pendingCartProduct.product_title || pendingCartProduct.name || "Item"} added to your cart.`);
-        } else {
-          setSuccessMsg("Logged in successfully!");
-        }
-
-        setTimeout(() => {
-          handleClose();
-        }, 1200);
-      } else {
-        setErrorMsg(parseErrorDetail(data, "Invalid email or password. Please try again."));
-      }
+      setStep("otp");
+      setCooldown(res.retry_after || 60);
+      globalToast.success(`Verification code dispatched to WhatsApp: +91 ${cleanDigits}`);
     } catch (err: any) {
-      setErrorMsg(err.message || "Unable to reach the server. Please try again.");
+      const msg = err.message || "Failed to dispatch WhatsApp code. Please try again.";
+      setInlineError(msg);
+      globalToast.error(msg);
     } finally {
-      setIsLoading(false);
+      setIsSendingOtp(false);
     }
   };
 
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
+  // Step 2: Verify WhatsApp OTP
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
+    setInlineError("");
 
-    const emailVal = email.trim();
-    if (!emailVal || !password.trim()) {
-      setErrorMsg("Please enter both email and password.");
+    const cleanOtp = otp.trim();
+    if (cleanOtp.length !== 6) {
+      const err = "Please enter the complete 6-digit code received on WhatsApp.";
+      setInlineError(err);
+      globalToast.error(err);
       return;
     }
 
-    if (password.length < 8) {
-      setErrorMsg("Password must be at least 8 characters.");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const nameFromEmail = emailVal.split("@")[0] || "User";
-      const response = await authFetch("/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          first_name: firstName.trim() || nameFromEmail,
-          last_name: lastName.trim() || "Customer",
-          email: emailVal,
-          password,
-          phone: phone.trim() || undefined,
-          accept_terms: true,
-        }),
-      });
-
-      const data = await safeParseResponse(response);
-
-      if (response.ok && data.success) {
-        if (data.requires_verification) {
-          setActiveTab("email_otp");
-          setResendCooldown(data.retry_after ?? 0);
-          if (data.otp_sent) setSuccessMsg(data.message);
-          else setErrorMsg(data.message);
-          return;
-        }
-
-        // If register returns access_token and user data, log in immediately
-        if (data.access_token && data.data) {
-          login(data.access_token, data.data);
-          if (pendingCartProduct) {
-            dispatch(addToCart(pendingCartProduct));
-            dispatch(openCart());
-            clearPendingCartProduct();
-            setSuccessMsg(`Account created! ${pendingCartProduct.product_title || pendingCartProduct.name || "Item"} added to your cart.`);
-          } else {
-            setSuccessMsg("Account created and logged in successfully!");
-          }
-          setTimeout(() => {
-            handleClose();
-          }, 1200);
-          return;
-        }
-
-        setActiveTab("login");
-        setSuccessMsg("Account created! Please enter your password to sign in.");
-      } else {
-        setErrorMsg(parseErrorDetail(data, "Registration failed. Please check your details."));
-      }
-    } catch (err: any) {
-      setErrorMsg(err.message || "Failed to create account. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyEmailOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
-    if (!emailOtp.trim() || emailOtp.trim().length !== 6) {
-      setErrorMsg("Please enter the 6-digit verification code.");
-      return;
-    }
     setIsVerifyingOtp(true);
     try {
-      const data = await verifyEmailOtp(email.trim(), emailOtp.trim());
-      if (data.success && data.access_token) {
-        login(data.access_token, data.data);
+      const cleanDigits = phone.replace(/\D/g, "");
+      const fullPhone = `+91${cleanDigits}`;
+      const res = await verifyWhatsAppOtp(fullPhone, cleanOtp, fullName.trim() || undefined);
+
+      if (res.success && res.access_token) {
+        login(res.access_token, res.data);
+
+        // Preserve guest cart: If user initiated an "Add to Cart" or "Buy Now" while guest
         if (pendingCartProduct) {
           dispatch(addToCart(pendingCartProduct));
           dispatch(openCart());
           clearPendingCartProduct();
-          setSuccessMsg(`Email verified! ${pendingCartProduct.product_title || pendingCartProduct.name || "Item"} added to your cart.`);
+          globalToast.success(`${pendingCartProduct.product_title || pendingCartProduct.name || "Item"} added to your cart!`);
         } else {
-          setSuccessMsg("Email verified! Logged in successfully.");
+          const greetingName = res.data?.first_name || detectedFirstName || "Customer";
+          globalToast.success(`Welcome back, ${greetingName}! Logged in successfully.`);
         }
-        setTimeout(() => {
-          handleClose();
-        }, 1200);
+
+        closeLoginModal();
+      } else {
+        throw new Error(res.message || "Authentication failed.");
       }
     } catch (err: any) {
-      setErrorMsg(err.message || "Invalid or expired verification code.");
+      const msg = err.message || "Invalid or expired verification code.";
+      setInlineError(msg);
+      globalToast.error(msg);
     } finally {
       setIsVerifyingOtp(false);
     }
   };
 
-  const handleResendEmailOtp = async () => {
-    if (resendCooldown > 0 || isResendingOtp) return;
-    setIsResendingOtp(true);
-    setErrorMsg("");
+  // Fallback: Resend OTP (SMS or WhatsApp)
+  const handleResendOtp = async () => {
+    if (cooldown > 0 || isSendingOtp) return;
+    setInlineError("");
+    setIsSendingOtp(true);
     try {
-      const res = await resendEmailOtp(email.trim());
-      setSuccessMsg(res.message || "A new 6-digit verification code has been sent to your email.");
-      setResendCooldown(45);
+      const cleanDigits = phone.replace(/\D/g, "");
+      const fullPhone = `+91${cleanDigits}`;
+      const res = await sendWhatsAppOtp(fullPhone);
+      setCooldown(res.retry_after || 60);
+      globalToast.success(res.message || "New verification code dispatched to your WhatsApp!");
     } catch (err: any) {
-      setErrorMsg(err.message || "Failed to resend code.");
+      const msg = err.message || "Failed to resend verification code.";
+      setInlineError(msg);
+      globalToast.error(msg);
     } finally {
-      setIsResendingOtp(false);
+      setIsSendingOtp(false);
     }
   };
 
-  const handleResetSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
-    if (!resetEmail.trim()) {
-      setErrorMsg("Please enter your registered email address.");
+  const handleSmsFallback = async () => {
+    if (cooldown > 0) {
+      globalToast.info(`Please wait ${cooldown} seconds before requesting a new code.`);
       return;
     }
-    setIsLoading(true);
+    await handleResendOtp();
+    globalToast.info("Verification code re-dispatched. Check both WhatsApp and SMS messages.");
+  };
+
+  // Secondary: Staff / Password Sign In
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInlineError("");
+
+    if (!passwordEmail.trim() || !passwordValue.trim()) {
+      setInlineError("Please enter both email and password.");
+      return;
+    }
+
+    setIsPasswordLoading(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+      const res = await fetch(`${apiUrl}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: passwordEmail.trim(), password: passwordValue }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.detail || data.message || "Incorrect email or password.");
+      }
+
+      login(data.access_token, data.data);
+      if (pendingCartProduct) {
+        dispatch(addToCart(pendingCartProduct));
+        dispatch(openCart());
+        clearPendingCartProduct();
+      }
+      globalToast.success("Logged in successfully!");
+      closeLoginModal();
+    } catch (err: any) {
+      setInlineError(err.message || "Login failed. Please check your credentials.");
+    } finally {
+      setIsPasswordLoading(false);
+    }
+  };
+
+  // Secondary: Request Password Reset
+  const handleRequestPasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInlineError("");
+    if (!resetEmail.trim()) {
+      setInlineError("Please enter your registered email address.");
+      return;
+    }
+    setIsResetting(true);
     try {
       const res = await requestPasswordReset(resetEmail.trim());
-      setResetSent(true);
       setForgotStep("otp_password");
-      setSuccessMsg(res.message || "A 6-digit reset code has been sent to your email.");
+      globalToast.success(res.message || "A 6-digit reset code has been sent to your email.");
     } catch (err: any) {
-      const msg = err.message || "Failed to send reset code. Please try again.";
-      if (msg.includes("ACCOUNT_NOT_FOUND") || msg.toLowerCase().includes("no account")) {
-        setErrorMsg("No account found with this email. Please check your email or sign up.");
-      } else {
-        setErrorMsg(msg);
-      }
+      setInlineError(err.message || "Failed to send reset code. Please try again.");
     } finally {
-      setIsLoading(false);
+      setIsResetting(false);
     }
   };
 
+  // Secondary: Confirm Password Reset with OTP
   const handleResetPasswordWithOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
-
+    setInlineError("");
     if (!resetOtp.trim() || resetOtp.trim().length !== 6) {
-      setErrorMsg("Please enter the 6-digit verification code.");
+      setInlineError("Please enter the 6-digit verification code.");
       return;
     }
-
-    if (!newPassword.trim() || newPassword.length < 8) {
-      setErrorMsg("New password must be at least 8 characters.");
+    if (!newPassword.trim() || newPassword.length < 6) {
+      setInlineError("New password must be at least 6 characters.");
       return;
     }
-
     if (newPassword !== confirmPassword) {
-      setErrorMsg("Passwords do not match.");
+      setInlineError("Passwords do not match.");
       return;
     }
 
-    setIsResettingPassword(true);
+    setIsResetting(true);
     try {
       const res = await resetPasswordWithOtp(resetEmail.trim(), resetOtp.trim(), newPassword);
-      setSuccessMsg(res.message || "Password reset successfully! Please sign in with your new password.");
-      setTimeout(() => {
-        setEmail(resetEmail.trim());
-        setPassword("");
-        setResetOtp("");
-        setNewPassword("");
-        setConfirmPassword("");
-        setForgotStep("email");
-        setActiveTab("login");
-      }, 1400);
+      globalToast.success(res.message || "Password reset successfully! Please sign in.");
+      setPasswordEmail(resetEmail.trim());
+      setPasswordValue("");
+      setForgotStep("email");
+      setStep("password");
     } catch (err: any) {
-      setErrorMsg(err.message || "Failed to reset password. Please check your code.");
+      setInlineError(err.message || "Failed to reset password. Please check your code.");
     } finally {
-      setIsResettingPassword(false);
+      setIsResetting(false);
     }
   };
 
@@ -379,65 +361,174 @@ export default function UserLoginModal() {
             <img
               src="/images/logos/de_luzex_black.svg"
               alt="de luzex"
-              width={105}
-              height={22}
+              width={110}
+              height={26}
               className={styles.logoImg}
             />
           </div>
+
           <h2 className={styles.title}>
-            {activeTab === "login"
-              ? "Welcome Back"
-              : activeTab === "register"
-              ? "Elevate Every Space With Light"
-              : activeTab === "email_otp"
-              ? "Verify Your Email"
+            {step === "phone"
+              ? "Sign In or Sign Up"
+              : step === "otp"
+              ? "Enter WhatsApp Code"
+              : step === "password"
+              ? "Password Sign In"
               : "Reset Password"}
           </h2>
-          {activeTab === "email_otp" && (
-            <p className={styles.subtitle}>
-              Enter the 6-digit verification code sent to your email
-            </p>
-          )}
-          {activeTab === "forgot" && (
-            <p className={styles.subtitle}>
-              We will send a password reset link to your registered email address
-            </p>
-          )}
-          {loginModalMessage && activeTab === "login" && (
+
+          {loginModalMessage && step === "phone" && (
             <p className={styles.subtitle}>{loginModalMessage}</p>
+          )}
+
+          {!loginModalMessage && step === "phone" && (
+            <p className={styles.subtitle}>
+              Instant verification with your WhatsApp mobile number.
+            </p>
+          )}
+
+          {isExistingCustomer && step === "phone" && (
+            <div className={styles.welcomeChip}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Welcome back, {detectedFirstName || "Customer"}!
+            </div>
           )}
         </div>
 
-        {activeTab === "email_otp" && (
-          <form className={styles.form} onSubmit={handleVerifyEmailOtp}>
-            {errorMsg && <div className={styles.errorBanner}>{errorMsg}</div>}
-            {successMsg && <div className={styles.successBanner}>{successMsg}</div>}
+        {/* Guest Pending Product Preview */}
+        {pendingCartProduct && (
+          <div className={styles.productPreview}>
+            {(pendingCartProduct.product_main_image || pendingCartProduct.image_url) && (
+              <img
+                src={pendingCartProduct.product_main_image || pendingCartProduct.image_url}
+                alt={pendingCartProduct.product_title || pendingCartProduct.name || "Product"}
+                className={styles.productThumb}
+              />
+            )}
+            <div className={styles.productPreviewInfo}>
+              <div className={styles.productPreviewTitle}>
+                {pendingCartProduct.product_title || pendingCartProduct.name || "Selected Item"}
+              </div>
+              <div className={styles.productPreviewSub}>
+                ₹{Number(pendingCartProduct.product_price || pendingCartProduct.price || 0).toLocaleString("en-IN")} • Added to your session
+              </div>
+            </div>
+          </div>
+        )}
 
-            <div className={styles.otpInfoBox}>
-              <p className={styles.otpInfoText}>
-                We sent a 6-digit code from <strong>support@deluzexlighting.com</strong> to:
+        {inlineError && <div className={styles.errorBanner}>{inlineError}</div>}
+
+        {/* STEP 1: Phone + Smart Name Form */}
+        {step === "phone" && (
+          <form className={styles.form} onSubmit={handleRequestOtp}>
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Mobile Number *</label>
+              <div className={styles.phoneInputWrapper}>
+                <span className={styles.countryBadge}>+91</span>
+                <input
+                  type="tel"
+                  required
+                  autoFocus
+                  maxLength={10}
+                  placeholder="Enter 10-digit mobile number"
+                  value={phone}
+                  onChange={(e) => {
+                    const clean = e.target.value.replace(/\D/g, "").slice(0, 10);
+                    setPhone(clean);
+                    if (inlineError) setInlineError("");
+                  }}
+                  className={styles.phoneInput}
+                  disabled={isSendingOtp}
+                />
+              </div>
+            </div>
+
+            {/* Smart Detection: Reveal Name input only if customer is new */}
+            {isExistingCustomer === false && (
+              <div className={styles.inputGroup} style={{ animation: "fadeIn 0.25s ease" }}>
+                <label className={styles.label}>Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Rahul Sharma"
+                  value={fullName}
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    if (inlineError) setInlineError("");
+                  }}
+                  className={styles.input}
+                  disabled={isSendingOtp}
+                />
+              </div>
+            )}
+
+            <button type="submit" disabled={isSendingOtp || phone.length < 10} className={styles.primaryCta}>
+              {isSendingOtp ? "Sending WhatsApp Code..." : "Get WhatsApp OTP"}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+
+            <p className={styles.whatsappHint}>
+              We will send a 6-digit one-time code to your WhatsApp.
+            </p>
+
+            <div className={styles.footerSection}>
+              <button
+                type="button"
+                className={styles.secondaryBtn}
+                onClick={() => {
+                  setInlineError("");
+                  setStep("password");
+                }}
+              >
+                Sign in with password instead
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* STEP 2: 6-Digit WhatsApp OTP Verification Form */}
+        {step === "otp" && (
+          <form className={styles.form} onSubmit={handleVerifyOtp}>
+            <div className={styles.otpCard}>
+              <p className={styles.otpCardText}>
+                We sent a 6-digit code to WhatsApp:
                 <br />
-                <strong style={{ color: "#D4AF37", fontSize: "14px" }}>{email}</strong>
+                <span className={styles.phoneHighlight}>+91 {phone}</span>
               </p>
+              <button
+                type="button"
+                className={styles.changeNumberBtn}
+                onClick={() => {
+                  setInlineError("");
+                  setStep("phone");
+                }}
+              >
+                Change Number
+              </button>
             </div>
 
             <div className={styles.inputGroup}>
-              <label className={styles.label}>Enter 6-Digit Code</label>
+              <label className={styles.label}>Enter 6-Digit OTP</label>
               <input
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]*"
                 maxLength={6}
                 placeholder="••••••"
-                value={emailOtp}
+                value={otp}
                 onChange={(e) => {
                   const val = e.target.value.replace(/\D/g, "").slice(0, 6);
-                  setEmailOtp(val);
-                  if (errorMsg) setErrorMsg("");
+                  setOtp(val);
+                  if (inlineError) setInlineError("");
                 }}
                 className={styles.otpInput}
                 autoFocus
                 required
+                disabled={isVerifyingOtp}
               />
             </div>
 
@@ -445,121 +536,73 @@ export default function UserLoginModal() {
               <span>Didn&apos;t receive code?</span>
               <button
                 type="button"
-                onClick={handleResendEmailOtp}
-                disabled={resendCooldown > 0 || isResendingOtp}
-                className={styles.switchLink}
-                style={{ cursor: resendCooldown > 0 ? "not-allowed" : "pointer", opacity: resendCooldown > 0 ? 0.6 : 1 }}
+                onClick={handleResendOtp}
+                disabled={cooldown > 0 || isSendingOtp}
+                className={styles.resendBtn}
               >
-                {isResendingOtp ? "Sending..." : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend Code"}
+                {cooldown > 0 ? `Resend OTP in ${cooldown}s` : "Resend OTP"}
               </button>
             </div>
 
-            <div className={styles.btnRow}>
-              <button type="submit" disabled={isVerifyingOtp || emailOtp.length !== 6} className={styles.submitButton}>
-                {isVerifyingOtp ? "Verifying..." : "Verify & Complete Sign In"}
-              </button>
-            </div>
-
-            <div className={styles.footerSwitch}>
-              <span>Need to change email or sign in? </span>
+            <div className={styles.fallbackRow}>
+              <span>Having WhatsApp issues?</span>
               <button
                 type="button"
-                className={styles.switchLink}
-                onClick={() => {
-                  setActiveTab("login");
-                  setErrorMsg("");
-                  setSuccessMsg("");
-                }}
+                onClick={handleSmsFallback}
+                className={styles.fallbackLink}
+                disabled={cooldown > 0}
               >
-                Back to Sign In
+                Get OTP via SMS
               </button>
             </div>
+
+            <button type="submit" disabled={isVerifyingOtp || otp.length < 6} className={styles.primaryCta}>
+              {isVerifyingOtp ? "Verifying..." : "Verify & Continue"}
+            </button>
           </form>
         )}
 
-        {pendingCartProduct && (
-          <div className={styles.productPreview}>
-            <div
-              style={{
-                position: "relative",
-                width: "40px",
-                height: "40px",
-                borderRadius: "6px",
-                overflow: "hidden",
-                flexShrink: 0,
-              }}
-            >
-              <Image
-                src={
-                  pendingCartProduct.product_main_image ||
-                  pendingCartProduct.image_url ||
-                  "/images/lamp_modern_tall_1784107732736.jpg"
-                }
-                alt={pendingCartProduct.product_title || pendingCartProduct.name || "Product"}
-                fill
-                sizes="40px"
-                style={{ objectFit: "contain" }}
-                className={styles.productThumb}
-              />
-            </div>
-            <div className={styles.productPreviewInfo}>
-              <div className={styles.productPreviewTitle}>
-                {pendingCartProduct.product_title || pendingCartProduct.name || "Selected Item"}
-              </div>
-              <div className={styles.productPreviewSub}>
-                ₹{Number(pendingCartProduct.product_price || pendingCartProduct.price || 0).toFixed(2)}
-                {pendingCartProduct.quantity && pendingCartProduct.quantity > 1 ? ` × ${pendingCartProduct.quantity}` : ""}
-                {" — will be added after sign in"}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "login" && (
-          <form className={styles.form} onSubmit={handleLoginSubmit}>
-            {errorMsg && <div className={styles.errorBanner}>{errorMsg}</div>}
-            {successMsg && <div className={styles.successBanner}>{successMsg}</div>}
-
+        {/* SECONDARY: Password Sign In */}
+        {step === "password" && (
+          <form className={styles.form} onSubmit={handlePasswordLogin}>
             <div className={styles.inputGroup}>
-              <label className={styles.label}>Enter Email</label>
+              <label className={styles.label}>Email Address *</label>
               <input
                 type="email"
                 required
-                autoComplete="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
+                value={passwordEmail}
+                onChange={(e) => setPasswordEmail(e.target.value)}
                 className={styles.input}
               />
             </div>
 
             <div className={styles.inputGroup}>
-              <label className={styles.label}>Enter Password</label>
+              <label className={styles.label}>Password *</label>
               <div className={styles.passwordWrapper}>
                 <input
                   type={showPassword ? "text" : "password"}
                   required
-                  autoComplete="current-password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  value={passwordValue}
+                  onChange={(e) => setPasswordValue(e.target.value)}
                   className={styles.input}
                 />
                 <button
                   type="button"
                   className={styles.eyeToggle}
-                  onClick={() => setShowPassword((prev) => !prev)}
+                  onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                      <line x1="1" y1="1" x2="23" y2="23" />
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" strokeLinecap="round" strokeLinejoin="round"/>
+                      <line x1="1" y1="1" x2="23" y2="23" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="12" cy="12" r="3"/>
                     </svg>
                   )}
                 </button>
@@ -567,294 +610,132 @@ export default function UserLoginModal() {
               <div className={styles.forgotWrapper}>
                 <button
                   type="button"
-                  onClick={() => {
-                    setActiveTab("forgot");
-                    setErrorMsg("");
-                    setSuccessMsg("");
-                  }}
                   className={styles.forgotLink}
+                  onClick={() => {
+                    setInlineError("");
+                    setResetEmail(passwordEmail);
+                    setStep("forgot");
+                  }}
                 >
                   Forgot Password?
                 </button>
               </div>
             </div>
 
-            <div className={styles.btnRow}>
-              <button type="submit" disabled={isLoading} className={styles.submitButton}>
-                {isLoading ? "Signing in..." : (pendingCartProduct ? "Sign In & Add to Cart" : "Sign In Now")}
-              </button>
-            </div>
+            <button type="submit" disabled={isPasswordLoading} className={styles.primaryCta}>
+              {isPasswordLoading ? "Signing In..." : "Sign In with Password"}
+            </button>
 
-            <WhatsAppAuthSection
-              onSuccess={(token, userData) => {
-                login(token, userData);
-                if (pendingCartProduct) {
-                  dispatch(addToCart(pendingCartProduct));
-                  dispatch(openCart());
-                  clearPendingCartProduct();
-                  setSuccessMsg(`Welcome! ${pendingCartProduct.product_title || pendingCartProduct.name || "Item"} added to your cart.`);
-                } else {
-                  setSuccessMsg("Logged in successfully via WhatsApp!");
-                }
-                setTimeout(() => {
-                  handleClose();
-                }, 1200);
-              }}
-              onError={(msg) => setErrorMsg(msg)}
-            />
-
-            <div className={styles.footerSwitch}>
-              <span>Don&apos;t have an account? </span>
+            <div className={styles.footerSection}>
               <button
                 type="button"
-                className={styles.switchLink}
+                className={styles.secondaryBtn}
                 onClick={() => {
-                  setActiveTab("register");
-                  setErrorMsg("");
-                  setSuccessMsg("");
+                  setInlineError("");
+                  setStep("phone");
                 }}
               >
-                Sign Up Here
+                ← Back to WhatsApp Sign In
               </button>
             </div>
           </form>
         )}
 
-        {activeTab === "register" && (
-          <form className={styles.form} onSubmit={handleRegisterSubmit}>
-            {errorMsg && <div className={styles.errorBanner}>{errorMsg}</div>}
-            {successMsg && <div className={styles.successBanner}>{successMsg}</div>}
-
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>Enter Email</label>
-              <input
-                type="email"
-                required
-                autoComplete="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={styles.input}
-              />
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>Enter Password</label>
-              <div className={styles.passwordWrapper}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  autoComplete="new-password"
-                  placeholder="Create new Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={styles.input}
-                />
-                <button
-                  type="button"
-                  className={styles.eyeToggle}
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                      <line x1="1" y1="1" x2="23" y2="23" />
-                    </svg>
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className={styles.btnRow}>
-              <button type="submit" disabled={isLoading} className={styles.submitButton}>
-                {isLoading ? "Signing up..." : (pendingCartProduct ? "Sign Up & Add to Cart" : "Sign Up Now")}
-              </button>
-            </div>
-
-            <div className={styles.footerSwitch}>
-              <span>Already have an account? </span>
-              <button
-                type="button"
-                className={styles.switchLink}
-                onClick={() => {
-                  setActiveTab("login");
-                  setErrorMsg("");
-                  setSuccessMsg("");
-                }}
-              >
-                Sign In Here
-              </button>
-            </div>
-          </form>
-        )}
-
-        {activeTab === "forgot" && (
-          forgotStep === "email" ? (
-            <form className={styles.form} onSubmit={handleResetSubmit}>
-              {errorMsg && <div className={styles.errorBanner}>{errorMsg}</div>}
-              {successMsg && <div className={styles.successBanner}>{successMsg}</div>}
-
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Enter Your Registered Email</label>
-                <input
-                  type="email"
-                  required
-                  autoComplete="email"
-                  placeholder="Enter your registered email"
-                  value={resetEmail}
-                  onChange={(e) => {
-                    setResetEmail(e.target.value);
-                    if (errorMsg) setErrorMsg("");
-                  }}
-                  className={styles.input}
-                  autoFocus
-                />
-              </div>
-
-              <div className={styles.btnRow}>
-                <button type="submit" disabled={isLoading} className={styles.submitButton}>
-                  {isLoading ? "Sending Code..." : "Send Verification Code"}
-                </button>
-              </div>
-
-              <div className={styles.footerSwitch}>
-                <span>Know your password? </span>
-                <button
-                  type="button"
-                  className={styles.switchLink}
-                  onClick={() => {
-                    setActiveTab("login");
-                    setErrorMsg("");
-                    setSuccessMsg("");
-                  }}
-                >
-                  Sign In Here
-                </button>
-              </div>
-            </form>
-          ) : (
-            <form className={styles.form} onSubmit={handleResetPasswordWithOtp}>
-              {errorMsg && <div className={styles.errorBanner}>{errorMsg}</div>}
-              {successMsg && <div className={styles.successBanner}>{successMsg}</div>}
-
-              <div className={styles.otpNotice}>
-                We sent a 6-digit verification code from <strong>support@deluzexlighting.com</strong> to:
-                <br />
-                <span style={{ color: "#D4AF37", fontWeight: 600 }}>{resetEmail}</span>
-              </div>
-
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Enter 6-Digit Code</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={6}
-                  placeholder="••••••"
-                  value={resetOtp}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, "").slice(0, 6);
-                    setResetOtp(val);
-                    if (errorMsg) setErrorMsg("");
-                  }}
-                  className={styles.input}
-                  autoFocus
-                />
-              </div>
-
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>New Password</label>
-                <div className={styles.passwordWrapper}>
+        {/* SECONDARY: Forgot Password */}
+        {step === "forgot" && (
+          <div className={styles.form}>
+            {forgotStep === "email" ? (
+              <form onSubmit={handleRequestPasswordReset} className={styles.form}>
+                <p className={styles.subtitle} style={{ textAlign: "center" }}>
+                  We will send a 6-digit password reset code to your registered email address.
+                </p>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Email Address *</label>
                   <input
-                    type={showNewPassword ? "text" : "password"}
+                    type="email"
                     required
-                    placeholder="At least 8 characters"
-                    value={newPassword}
-                    onChange={(e) => {
-                      setNewPassword(e.target.value);
-                      if (errorMsg) setErrorMsg("");
-                    }}
+                    placeholder="name@example.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
                     className={styles.input}
                   />
+                </div>
+                <button type="submit" disabled={isResetting} className={styles.primaryCta}>
+                  {isResetting ? "Sending Code..." : "Send Reset Code"}
+                </button>
+                <div className={styles.footerSection}>
                   <button
                     type="button"
-                    className={styles.eyeToggle}
-                    onClick={() => setShowNewPassword((prev) => !prev)}
-                    aria-label={showNewPassword ? "Hide password" : "Show password"}
+                    className={styles.secondaryBtn}
+                    onClick={() => {
+                      setInlineError("");
+                      setStep("password");
+                    }}
                   >
-                    {showNewPassword ? (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
-                    ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
+                    ← Back to Sign In
                   </button>
                 </div>
-              </div>
-
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Confirm New Password</label>
-                <input
-                  type={showNewPassword ? "text" : "password"}
-                  required
-                  placeholder="Confirm new password"
-                  value={confirmPassword}
-                  onChange={(e) => {
-                    setConfirmPassword(e.target.value);
-                    if (errorMsg) setErrorMsg("");
-                  }}
-                  className={styles.input}
-                />
-              </div>
-
-              <div className={styles.resendWrapper}>
-                <span>Didn&apos;t receive code? </span>
-                <button
-                  type="button"
-                  onClick={handleResetSubmit}
-                  disabled={isLoading}
-                  className={styles.switchLink}
-                >
-                  {isLoading ? "Sending..." : "Resend Code"}
+              </form>
+            ) : (
+              <form onSubmit={handleResetPasswordWithOtp} className={styles.form}>
+                <div className={styles.otpCard}>
+                  <p className={styles.otpCardText}>
+                    Reset code dispatched to: <strong>{resetEmail}</strong>
+                  </p>
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>6-Digit Reset Code *</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    placeholder="••••••"
+                    value={resetOtp}
+                    onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className={styles.otpInput}
+                  />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>New Password *</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="At least 6 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className={styles.input}
+                  />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Confirm New Password *</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Re-enter new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={styles.input}
+                  />
+                </div>
+                <button type="submit" disabled={isResetting} className={styles.primaryCta}>
+                  {isResetting ? "Resetting Password..." : "Update Password & Sign In"}
                 </button>
-              </div>
-
-              <div className={styles.btnRow}>
-                <button
-                  type="submit"
-                  disabled={isResettingPassword || resetOtp.length !== 6}
-                  className={styles.submitButton}
-                >
-                  {isResettingPassword ? "Updating Password..." : "Reset Password & Sign In"}
-                </button>
-              </div>
-
-              <div className={styles.footerSwitch}>
-                <button
-                  type="button"
-                  className={styles.switchLink}
-                  onClick={() => {
-                    setForgotStep("email");
-                    setErrorMsg("");
-                    setSuccessMsg("");
-                  }}
-                >
-                  ← Back to Email
-                </button>
-              </div>
-            </form>
-          )
+                <div className={styles.footerSection}>
+                  <button
+                    type="button"
+                    className={styles.secondaryBtn}
+                    onClick={() => {
+                      setInlineError("");
+                      setForgotStep("email");
+                      setStep("password");
+                    }}
+                  >
+                    ← Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         )}
       </div>
     </div>

@@ -204,6 +204,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (userData) {
       localStorage.setItem("user", JSON.stringify(userData));
     }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("auth:login", { detail: userData }));
+    }
   };
 
   const logout = () => {
@@ -219,6 +222,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("access_token");
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+      localStorage.removeItem("user_avatar");
+      localStorage.removeItem("deluzex_cart_session");
+      localStorage.removeItem("deluzex_wishlist_items");
+      localStorage.removeItem("deluzex_orders_global");
+      localStorage.removeItem("deluzex_password_updated_at");
+      try {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith("deluzex_wishlist") || key.startsWith("deluzex_orders"))) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch {
+        // ignore
+      }
+      window.dispatchEvent(new CustomEvent("auth:logout"));
     }
   };
 
@@ -263,4 +282,3 @@ export function useAuth() {
   }
   return context;
 }
-
