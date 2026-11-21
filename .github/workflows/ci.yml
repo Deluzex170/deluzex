@@ -9,6 +9,20 @@ on:
 jobs:
   backend-smoke:
     runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd mongosh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      MONGODB_URI: mongodb://localhost:27017/deluzex_ci
+      MONGODB_DATABASE: deluzex_ci
+      SECRET_KEY: deluzex_production_jwt_secret_change_me_super_secure_key_2026
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
