@@ -145,6 +145,8 @@ except Exception:
 app.include_router(api_router, prefix=settings.API_V1_STR)
 app.include_router(api_router)
 
+@app.get(f"{settings.API_V1_STR}/health", tags=["health"])
+@app.get("/health", tags=["health"])
 @app.get(f"{settings.API_V1_STR}/health-check", tags=["health"])
 @app.get("/health-check", tags=["health"])
 def application_health():
@@ -153,7 +155,7 @@ def application_health():
 
 @app.get("/")
 def root():
-    return {"message": "Welcome to deluzex-backend"}
+    return {"message": "Welcome to deluzex-backend", "status": "online", "deployment": "coolify"}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, access_log=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, access_log=False)
