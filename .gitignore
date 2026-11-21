@@ -57,3 +57,4 @@ venv/
 .pytest_cache/
 backend/set_admin.py
 backend/make_admin.py
+scripts/migrate_atlas_to_coolify.py
