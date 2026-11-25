@@ -45,12 +45,6 @@ def verify_and_calculate_order_totals(items, raw_subtotal, coupon_code, email, c
     shipping_rules = get_shipping_rules()
     min_order_enabled = shipping_rules.get("min_order_value_enabled", True)
     min_order_val = float(shipping_rules.get("min_order_value", 499.0))
-    if min_order_enabled and calculated_subtotal > 0 and calculated_subtotal < min_order_val:
-        custom_msg = shipping_rules.get("min_order_message") or "Minimum order value of ₹{amount} is required to place an order."
-        raise HTTPException(
-            status_code=400,
-            detail=custom_msg.replace("{amount}", f"{min_order_val:,.0f}")
-        )
 
     if coupon_code and coupon_code.strip():
         clean_coupon = coupon_code.strip().upper()
@@ -76,6 +70,14 @@ def verify_and_calculate_order_totals(items, raw_subtotal, coupon_code, email, c
         else:
             expected_delivery = std_fee
         expected_total = round(taxable + expected_gst + expected_delivery, 2)
+
+    # Minimum order value validation enforced against final total (Grand Total including GST & Delivery)
+    if min_order_enabled and expected_total > 0 and expected_total < min_order_val:
+        custom_msg = shipping_rules.get("min_order_message") or "Minimum order value of ₹{amount} is required to place an order."
+        raise HTTPException(
+            status_code=400,
+            detail=custom_msg.replace("{amount}", f"{min_order_val:,.0f}")
+        )
 
     if abs(claimed_total - expected_total) > 0.5:
         raise HTTPException(

@@ -8,6 +8,7 @@ export interface CartItem {
   quantity: number;
   // Units available in inventory; undefined means no known limit (e.g. made-to-order)
   maxQuantity?: number;
+  voltage?: string;
 }
 
 export interface AppliedCouponState {
@@ -47,6 +48,7 @@ export interface AddToCartPayload {
   image_url?: string;
   quantity?: number;
   max_quantity?: number;
+  voltage?: string;
 }
 
 // Inventory cap for a product: made-to-order pieces and products without a stock count are uncapped
@@ -74,6 +76,7 @@ const cartSlice = createSlice({
 
       if (existingItem) {
         if (maxQuantity !== undefined) existingItem.maxQuantity = maxQuantity;
+        if (product.voltage) existingItem.voltage = product.voltage;
         existingItem.quantity = clampToStock(existingItem.quantity + qtyToAdd, existingItem.maxQuantity);
       } else {
         state.cartItems.push({
@@ -83,6 +86,7 @@ const cartSlice = createSlice({
           image: product.product_main_image || product.image_url || "/images/lamp_modern_tall_1784107732736.jpg",
           quantity: clampToStock(qtyToAdd, maxQuantity),
           maxQuantity,
+          voltage: product.voltage,
         });
       }
       state.cartTotal = calculateTotal(state.cartItems);
@@ -97,12 +101,9 @@ const cartSlice = createSlice({
       if (itemIndex !== -1) {
         const item = state.cartItems[itemIndex];
         if (action.payload.max_quantity !== undefined) item.maxQuantity = action.payload.max_quantity;
-        const newQty = clampToStock(item.quantity + action.payload.change, item.maxQuantity);
-        if (newQty <= 0) {
-          state.cartItems.splice(itemIndex, 1);
-        } else {
-          item.quantity = newQty;
-        }
+        const targetQty = Math.max(1, item.quantity + action.payload.change);
+        const newQty = clampToStock(targetQty, item.maxQuantity);
+        item.quantity = newQty;
       }
       state.cartTotal = calculateTotal(state.cartItems);
     },

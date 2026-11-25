@@ -111,8 +111,8 @@ export default function CartSidebar() {
   const grandTotal = taxableSubtotal + gst + delivery;
 
   const isBelowMinOrder =
-    shippingRules.min_order_value_enabled && subtotal > 0 && subtotal < shippingRules.min_order_value;
-  const minOrderDiff = Math.max(0, shippingRules.min_order_value - subtotal);
+    shippingRules.min_order_value_enabled && grandTotal > 0 && grandTotal < shippingRules.min_order_value;
+  const minOrderDiff = Math.max(0, Math.ceil(shippingRules.min_order_value - grandTotal));
   const freeShippingDiff = Math.max(0, shippingRules.free_shipping_threshold - subtotal);
 
   // Re-validate coupon if cart total changes
@@ -348,6 +348,9 @@ export default function CartSidebar() {
                 <div className={styles.itemDetails}>
                   <div className={styles.itemTitleArea}>
                     <h4 className={styles.itemTitle}>{item.title}</h4>
+                    {item.voltage && (
+                      <span className={styles.itemVoltageBadge}>{item.voltage}</span>
+                    )}
                   </div>
                   <p className={styles.price}>
                     ₹{item.price.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -356,7 +359,12 @@ export default function CartSidebar() {
                     <div className={styles.quantity}>
                       <button
                         type="button"
-                        onClick={() => { if (item.quantity <= 1) { dispatch(removeFromCart(item.id)); } else { dispatch(updateQuantity({ id: item.id, change: -1 })); } }}
+                        onClick={() => {
+                          if (item.quantity > 1) {
+                            dispatch(updateQuantity({ id: item.id, change: -1 }));
+                          }
+                        }}
+                        disabled={item.quantity <= 1}
                         aria-label="Decrease quantity"
                       >
                         −

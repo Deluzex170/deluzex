@@ -152,8 +152,8 @@ export default function CheckoutPage() {
   const grandTotal = taxableSubtotal + gst + delivery;
 
   const isBelowMinOrder =
-    shippingRules.min_order_value_enabled && subtotal > 0 && subtotal < shippingRules.min_order_value;
-  const minOrderDiff = Math.max(0, shippingRules.min_order_value - subtotal);
+    shippingRules.min_order_value_enabled && grandTotal > 0 && grandTotal < shippingRules.min_order_value;
+  const minOrderDiff = Math.max(0, Math.ceil(shippingRules.min_order_value - grandTotal));
 
   // Initialize Idempotency Key, Preload Razorpay Script, & Fetch Shipping Rules
   useEffect(() => {
@@ -186,7 +186,7 @@ export default function CheckoutPage() {
             dispatch(removeReduxAppliedCoupon());
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [reduxCoupon, subtotal, email, appliedCoupon, dispatch]);
 
@@ -205,7 +205,7 @@ export default function CheckoutPage() {
             setCouponSuccessMsg(null);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     } else if (subtotal === 0) {
       setAppliedCoupon(null);
       dispatch(removeReduxAppliedCoupon());
@@ -650,7 +650,7 @@ export default function CheckoutPage() {
             if (isAuthenticated && email.trim() && !email.trim().endsWith("@deluzex.com")) {
               const uObj = user as Record<string, string> | null;
               if (!uObj?.email || uObj.email.endsWith("@deluzex.com")) {
-                updateUserProfile({ email: email.trim().toLowerCase() }).catch(() => {});
+                updateUserProfile({ email: email.trim().toLowerCase() }).catch(() => { });
               }
             }
 
@@ -671,7 +671,7 @@ export default function CheckoutPage() {
               },
               items: cartItems.map((item) => ({
                 product_id: String(item.id),
-                title: item.title,
+                title: item.voltage ? `${item.title} (${item.voltage})` : item.title,
                 price: item.price,
                 quantity: item.quantity,
                 image: item.image,
@@ -723,7 +723,7 @@ export default function CheckoutPage() {
           },
           items: cartItems.map((item) => ({
             product_id: String(item.id),
-            title: item.title,
+            title: item.voltage ? `${item.title} (${item.voltage})` : item.title,
             price: item.price,
             quantity: item.quantity,
             image: item.image,
@@ -846,7 +846,7 @@ export default function CheckoutPage() {
           },
           items: cartItems.map((item) => ({
             product_id: String(item.id),
-            title: item.title,
+            title: item.voltage ? `${item.title} (${item.voltage})` : item.title,
             price: item.price,
             quantity: item.quantity,
             image: item.image,
@@ -866,7 +866,7 @@ export default function CheckoutPage() {
           if (isAuthenticated && email.trim() && !email.trim().endsWith("@deluzex.com")) {
             const uObj = user as Record<string, string> | null;
             if (!uObj?.email || uObj.email.endsWith("@deluzex.com")) {
-              updateUserProfile({ email: email.trim().toLowerCase() }).catch(() => {});
+              updateUserProfile({ email: email.trim().toLowerCase() }).catch(() => { });
             }
           }
 
@@ -887,7 +887,7 @@ export default function CheckoutPage() {
             },
             items: cartItems.map((item) => ({
               product_id: String(item.id),
-              title: item.title,
+              title: item.voltage ? `${item.title} (${item.voltage})` : item.title,
               price: item.price,
               quantity: item.quantity,
               image: item.image,
@@ -1549,7 +1549,12 @@ export default function CheckoutPage() {
                   </div>
                   <div className={styles.itemDetails}>
                     <div className={styles.itemTitleRow}>
-                      <h4 className={styles.itemName}>{item.title}</h4>
+                      <div>
+                        <h4 className={styles.itemName}>{item.title}</h4>
+                        {item.voltage && (
+                          <span className={styles.itemVoltageBadge}>{item.voltage}</span>
+                        )}
+                      </div>
                       <div className={styles.qtyControlGroup}>
                         <button
                           type="button"
@@ -1742,7 +1747,7 @@ export default function CheckoutPage() {
               }}>
                 <span>⛔</span>
                 <span>
-                  {shippingRules.min_order_message.replace("{amount}", `₹${shippingRules.min_order_value.toLocaleString("en-IN")}`)} (Add items worth ₹{minOrderDiff.toLocaleString("en-IN")} more to complete order)
+                  {shippingRules.min_order_message.replace("{amount}", `₹${shippingRules.min_order_value.toLocaleString("en-IN")}`)} (Add ₹{minOrderDiff.toLocaleString("en-IN")} more to complete order)
                 </span>
               </div>
             )}

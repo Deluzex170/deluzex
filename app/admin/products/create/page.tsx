@@ -40,6 +40,8 @@ export default function CreateProduct() {
   });
 
   const [customSpecs, setCustomSpecs] = useState<ProductSpecification[]>([]);
+  const [voltageList, setVoltageList] = useState<string[]>([]);
+  const [voltageInput, setVoltageInput] = useState("");
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
@@ -91,6 +93,24 @@ export default function CreateProduct() {
     const updated = [...customSpecs];
     updated[index][field] = value;
     setCustomSpecs(updated);
+  };
+
+  const handleAddVoltage = (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = voltageInput.trim();
+    if (!trimmed) return;
+    if (!voltageList.some((v) => v.toLowerCase() === trimmed.toLowerCase())) {
+      const updated = [...voltageList, trimmed];
+      setVoltageList(updated);
+      setFormData((prev) => ({ ...prev, product_voltage: updated.join(", ") }));
+    }
+    setVoltageInput("");
+  };
+
+  const handleRemoveVoltage = (index: number) => {
+    const updated = voltageList.filter((_, i) => i !== index);
+    setVoltageList(updated);
+    setFormData((prev) => ({ ...prev, product_voltage: updated.join(", ") }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -260,6 +280,95 @@ export default function CreateProduct() {
             <p style={{ fontSize: '0.825rem', color: 'var(--admin-text-muted)', marginBottom: '1.25rem' }}>
               These specifications are featured directly in the product detail technical specifications table.
             </p>
+          </div>
+
+          {/* VOLTAGE OPTIONS BUILDER */}
+          <div style={{ gridColumn: '1 / -1', background: 'var(--admin-surface-muted, #F9F9F8)', padding: '1rem 1.25rem', borderRadius: '10px', border: '1px solid var(--admin-border, #E5E7EB)' }}>
+            <label style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text, #1F2937)', display: 'block', marginBottom: '0.25rem' }}>
+              Voltage Options (Supported Voltages)
+            </label>
+            <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.8rem', color: 'var(--admin-text-muted, #6B7280)' }}>
+              Add one or more voltages (e.g. <code style={{ background: '#ECEAE6', padding: '1px 5px', borderRadius: '4px' }}>110V AC</code>, <code style={{ background: '#ECEAE6', padding: '1px 5px', borderRadius: '4px' }}>220V–240V AC</code>, <code style={{ background: '#ECEAE6', padding: '1px 5px', borderRadius: '4px' }}>12V DC</code>). Customers can select their preferred voltage on the product page.
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: voltageList.length > 0 ? '0.75rem' : '0' }}>
+              <input
+                type="text"
+                value={voltageInput}
+                onChange={(e) => setVoltageInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddVoltage(e);
+                  }
+                }}
+                placeholder="Type a voltage and press Enter or click '+ Add Voltage'"
+                style={{ ...inputStyle, flex: 1, margin: 0 }}
+              />
+              <button
+                type="button"
+                onClick={handleAddVoltage}
+                disabled={!voltageInput.trim()}
+                style={{
+                  background: voltageInput.trim() ? '#CCA068' : '#D1D5DB',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '0 1.15rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  cursor: voltageInput.trim() ? 'pointer' : 'not-allowed',
+                  whiteSpace: 'nowrap',
+                  transition: 'background 0.2s'
+                }}
+              >
+                + Add Voltage
+              </button>
+            </div>
+            {voltageList.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                {voltageList.map((vol, idx) => (
+                  <span
+                    key={idx}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      background: '#FFFFFF',
+                      border: '1px solid #CCA068',
+                      color: '#262626',
+                      padding: '0.35rem 0.75rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+                    }}
+                  >
+                    <span>{vol}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveVoltage(idx)}
+                      title={`Remove ${vol}`}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#9CA3AF',
+                        fontSize: '1rem',
+                        lineHeight: 1,
+                        cursor: 'pointer',
+                        padding: '0 2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = '#EF4444')}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = '#9CA3AF')}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>

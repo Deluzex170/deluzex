@@ -2051,3 +2051,77 @@ textarea.modalFormInput {
 .reviewUserInfo {
   min-width: 0;
 }
+
+/* ==================== VOLTAGE SELECTOR ==================== */
+.voltageSelectorSection {
+  margin-bottom: 1.15rem;
+  padding: 0.85rem 1rem;
+  background: rgba(204, 160, 104, 0.05);
+  border: 1px solid rgba(204, 160, 104, 0.22);
+  border-radius: 10px;
+}
+
+.voltageLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.voltageLabel {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #353744;
+}
+
+.voltageSelectedValue {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #8C6D3F;
+}
+
+.voltagePillList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.voltagePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.42rem 0.9rem;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #4A4B54;
+  background: #FFFFFF;
+  border: 1.5px solid #D8CFC5;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  line-height: 1;
+}
+
+.voltagePill:hover {
+  border-color: #CCA068;
+  color: #1F2937;
+  transform: translateY(-1px);
+}
+
+.voltagePillActive {
+  background: #CCA068;
+  background: linear-gradient(135deg, #CCA068 0%, #B88B52 100%);
+  border-color: #B88B52;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(204, 160, 104, 0.35);
+}
+
+.voltagePillCheck {
+  font-size: 0.85rem;
+  line-height: 1;
+}

@@ -132,7 +132,7 @@ export default function ProductDetail() {
           setIsWishlisted(res.is_wishlisted);
           setWishlistItemId(res.item_id || null);
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [product, userEmail]);
 
@@ -159,6 +159,27 @@ export default function ProductDetail() {
 
   const displayThumbs = galleryImages.slice(0, 4);
 
+  // Voltage selection state and memoized available options (must be declared before any conditional return)
+  const [selectedVoltage, setSelectedVoltage] = useState<string>("");
+
+  const availableVoltages = useMemo(() => {
+    if (!product?.product_voltage) return [];
+    const raw = String(product.product_voltage).trim();
+    if (!raw) return [];
+    if (raw.startsWith("[") && raw.endsWith("]")) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed.map((v) => String(v).trim()).filter(Boolean);
+      } catch { }
+    }
+    return raw.split(",").map((v) => v.trim()).filter(Boolean);
+  }, [product?.product_voltage]);
+
+  useEffect(() => {
+    if (availableVoltages.length > 0 && !selectedVoltage) {
+      setSelectedVoltage(availableVoltages[0]);
+    }
+  }, [availableVoltages, selectedVoltage]);
 
   // Estimated delivery range matching Figma design
   const estimatedDeliveryText = useMemo(() => {
@@ -214,7 +235,7 @@ export default function ProductDetail() {
   const whatsappNum = rawWhatsApp.replace(/\D/g, "");
   const callPhoneNum = product.phone_number || "+918511682031";
   const encodedWhatsAppMsg = encodeURIComponent(
-    `Hello Deluzex team! I am interested in inquiring about "${product.product_title}" (SKU: ${product.sku || "N/A"}). Please provide quotation and volume pricing details.`
+    `Hello Deluzex team! I am interested in inquiring about "${product.product_title}"${selectedVoltage ? ` (Voltage: ${selectedVoltage})` : ""} (SKU: ${product.sku || "N/A"}). Please provide quotation and volume pricing details.`
   );
 
   // Helper to test if an admin-provided value is genuine and not null/empty/placeholder
@@ -243,7 +264,7 @@ export default function ProductDetail() {
     { key: "Finish", value: product.finish || product.product_finishing },
     { key: "Material", value: product.material || product.product_material },
     { key: "Colorway", value: product.colorway || product.product_style },
-    { key: "Voltage", value: product.product_voltage },
+    { key: "Voltage", value: selectedVoltage || (availableVoltages.length > 0 ? availableVoltages.join(", ") : product.product_voltage) },
     { key: "Wattage", value: product.product_wattage },
     { key: "Piece Weight", value: product.piece_weight },
     { key: "Care", value: product.care },
@@ -275,8 +296,8 @@ export default function ProductDetail() {
   const stockBadgeClass = isOutOfStock
     ? `${styles.stockBadge} ${styles.stockBadgeOutOfStock}`
     : isMadeToOrder
-    ? `${styles.stockBadge} ${styles.stockBadgeMadeToOrder}`
-    : styles.stockBadge;
+      ? `${styles.stockBadge} ${styles.stockBadgeMadeToOrder}`
+      : styles.stockBadge;
 
   const stockBadgeLabel = isOutOfStock
     ? "OUT OF STOCK"
@@ -288,17 +309,23 @@ export default function ProductDetail() {
   const maxQuantity = getMaxQuantity(product);
   const isAtStockLimit = maxQuantity !== undefined && quantityInCart >= maxQuantity;
 
-  const dispatchAddToCart = () =>
+  const dispatchAddToCart = () => {
+    const itemVoltage = selectedVoltage || (availableVoltages.length > 0 ? availableVoltages[0] : undefined);
+    const cartUniqueId = itemVoltage
+      ? `${cartProductId}_${itemVoltage.replace(/[^a-zA-Z0-9]/g, "")}`
+      : cartProductId;
     dispatch(
       addToCart({
-        id: cartProductId,
+        id: cartUniqueId,
         product_title: product.product_title,
         product_price: product.product_price,
         product_main_image: currentImage || product.product_main_image,
         quantity: 1,
         max_quantity: maxQuantity,
+        voltage: itemVoltage,
       })
     );
+  };
 
   const handleBuyNow = () => {
     if (!product || isBuyingNow) return;
@@ -580,6 +607,35 @@ export default function ProductDetail() {
               </div>
             ) : null}
 
+            {/* Voltage Selector Pills */}
+            {availableVoltages.length > 0 && (
+              <div className={styles.voltageSelectorSection}>
+                <div className={styles.voltageLabelRow}>
+                  <span className={styles.voltageLabel}>Select Voltage</span>
+                  {selectedVoltage && (
+                    <span className={styles.voltageSelectedValue}>{selectedVoltage}</span>
+                  )}
+                </div>
+                <div className={styles.voltagePillList}>
+                  {availableVoltages.map((v) => {
+                    const isSelected = selectedVoltage === v;
+                    return (
+                      <button
+                        key={v}
+                        type="button"
+                        className={`${styles.voltagePill} ${isSelected ? styles.voltagePillActive : ""}`}
+                        onClick={() => setSelectedVoltage(v)}
+                        aria-pressed={isSelected}
+                      >
+                        {v}
+                        {isSelected && <span className={styles.voltagePillCheck}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* 3 Pill Action Buttons */}
             <div className={styles.actionsWrapper}>
               <button
@@ -644,7 +700,7 @@ export default function ProductDetail() {
                 >
                   <span className={styles.btnAmazonIcon}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M13.62 14.51c-2.04 1.5-4.99 2.3-7.56 2.3-3.6 0-6.83-1.34-9.27-3.58-.19-.18-.02-.43.22-.29 2.64 1.54 5.86 2.47 9.21 2.47 2.28 0 4.77-.56 7.02-1.71.35-.18.64.27.38.81zm.9-1.14c-.26-.34-1.73-.14-2.39-.06-.2.02-.23-.15-.05-.28 1.17-.83 3.09-.59 3.32-.3.23.29-.06 2.22-1.17 3.13-.17.14-.33.06-.25-.12.25-.6.8-2.04.54-2.37zm2.18-5.32c-.44.75-.95 1.48-1.54 2.18-.17.2-.42.08-.34-.14.49-1.28.8-2.67.92-4.08.02-.27.35-.38.5-.16.48.71 1.05 1.37 1.68 1.98.2.19.04.46-.2.43-.34-.05-.68-.12-1.02-.21z"/>
+                      <path d="M13.62 14.51c-2.04 1.5-4.99 2.3-7.56 2.3-3.6 0-6.83-1.34-9.27-3.58-.19-.18-.02-.43.22-.29 2.64 1.54 5.86 2.47 9.21 2.47 2.28 0 4.77-.56 7.02-1.71.35-.18.64.27.38.81zm.9-1.14c-.26-.34-1.73-.14-2.39-.06-.2.02-.23-.15-.05-.28 1.17-.83 3.09-.59 3.32-.3.23.29-.06 2.22-1.17 3.13-.17.14-.33.06-.25-.12.25-.6.8-2.04.54-2.37zm2.18-5.32c-.44.75-.95 1.48-1.54 2.18-.17.2-.42.08-.34-.14.49-1.28.8-2.67.92-4.08.02-.27.35-.38.5-.16.48.71 1.05 1.37 1.68 1.98.2.19.04.46-.2.43-.34-.05-.68-.12-1.02-.21z" />
                     </svg>
                   </span>
                   <span>Buy on Amazon</span>
@@ -1077,19 +1133,19 @@ export default function ProductDetail() {
               <div className={styles.reviewList}>
                 {(reviewsStats?.reviews && reviewsStats.reviews.length > 0
                   ? (showAllReviews ? reviewsStats.reviews : reviewsStats.reviews.slice(0, 3)).map((rev) => ({
-                      id: rev.id,
-                      author_name: rev.author_name,
-                      time_ago: rev.created_at
-                        ? new Date(rev.created_at).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })
-                        : "Recent",
-                      rating: rev.rating || 5,
-                      text: rev.text,
-                      photos: [],
-                    }))
+                    id: rev.id,
+                    author_name: rev.author_name,
+                    time_ago: rev.created_at
+                      ? new Date(rev.created_at).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                      : "Recent",
+                    rating: rev.rating || 5,
+                    text: rev.text,
+                    photos: [],
+                  }))
                   : []
                 ).map((rev: any, i: number) => {
                   const starCount = Math.max(1, Math.min(5, rev.rating || 5));

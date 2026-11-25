@@ -1011,6 +1011,20 @@
   text-overflow: ellipsis;
 }
 
+.itemVoltageBadge {
+  display: inline-block;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #8C6D3F;
+  background: rgba(204, 160, 104, 0.12);
+  border: 1px solid rgba(204, 160, 104, 0.35);
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-top: 3px;
+  width: fit-content;
+}
+
 .qtyControlGroup {
   display: inline-flex;
   align-items: center;

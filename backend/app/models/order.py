@@ -32,6 +32,7 @@ class OrderItem(BaseModel):
     price: float = Field(..., ge=0, description="Price must be non-negative")
     quantity: int = Field(..., gt=0, le=100, description="Quantity must be between 1 and 100")
     image: Optional[str] = Field(None, max_length=500)
+    voltage: Optional[str] = Field(None, max_length=100)
 
 
 class ShippingAddress(BaseModel):
