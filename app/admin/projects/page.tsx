@@ -45,6 +45,25 @@ const PRESET_CATEGORIES = [
   "Public Spaces",
 ];
 
+const getImageDimensions = (source: File | string): Promise<{ width: number; height: number }> => {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") return resolve({ width: 0, height: 0 });
+    const img = new window.Image();
+    const isFile = typeof source !== "string";
+    const srcUrl = isFile ? URL.createObjectURL(source) : source;
+
+    img.onload = () => {
+      if (isFile) URL.revokeObjectURL(srcUrl);
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = () => {
+      if (isFile) URL.revokeObjectURL(srcUrl);
+      resolve({ width: 0, height: 0 });
+    };
+    img.src = srcUrl;
+  });
+};
+
 export default function AdminProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,6 +108,11 @@ export default function AdminProjectsPage() {
   const [imageTab, setImageTab] = useState<"file" | "url">("file");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+
+  // Resolution detection & quality guidance
+  const [coverDimensions, setCoverDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [galleryDimensions, setGalleryDimensions] = useState<Record<string, { width: number; height: number }>>({});
+  const [galleryWarnings, setGalleryWarnings] = useState<string[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -135,6 +159,9 @@ export default function AdminProjectsPage() {
     setNewVideoUrl("");
     setSelectedFile(null);
     setPreviewUrl("");
+    setCoverDimensions(null);
+    setGalleryDimensions({});
+    setGalleryWarnings([]);
     setImageTab("file");
     setEditingProject(null);
     setViewMode("create");
@@ -157,18 +184,44 @@ export default function AdminProjectsPage() {
       is_featured: Boolean(project.is_featured),
       sequence: project.sequence || 1,
     });
-    setGalleryImages(
+    const initialGallery =
       project.gallery_images && project.gallery_images.length > 0
         ? project.gallery_images
         : project.image_url
-        ? [project.image_url]
-        : []
-    );
+          ? [project.image_url]
+          : [];
+    setGalleryImages(initialGallery);
     setNewGalleryUrl("");
     setVideos(Array.isArray(project.videos) ? project.videos : []);
     setNewVideoUrl("");
     setSelectedFile(null);
     setPreviewUrl(project.image_url || "");
+    setCoverDimensions(null);
+    setGalleryWarnings([]);
+
+    // Measure existing cover resolution
+    if (project.image_url) {
+      getImageDimensions(project.image_url).then((dims) => {
+        if (dims.width > 0) setCoverDimensions(dims);
+      });
+    }
+
+    // Measure existing gallery images resolution
+    const dimsMap: Record<string, { width: number; height: number }> = {};
+    const lowResList: string[] = [];
+    initialGallery.forEach((imgUrl) => {
+      getImageDimensions(imgUrl).then((dims) => {
+        if (dims.width > 0) {
+          dimsMap[imgUrl] = dims;
+          setGalleryDimensions((prev) => ({ ...prev, [imgUrl]: dims }));
+          if (dims.width < 1200 || dims.height < 800) {
+            lowResList.push(`Gallery image (${dims.width} × ${dims.height} px) is below the minimum required 1200 px Width × 800 px Height.`);
+            setGalleryWarnings((prev) => Array.from(new Set([...prev, ...lowResList])));
+          }
+        }
+      });
+    });
+
     setImageTab(
       project.image_url?.startsWith("http") || project.image_url?.startsWith("/images")
         ? "url"
@@ -184,16 +237,31 @@ export default function AdminProjectsPage() {
     setErrorMsg("");
     setSelectedFile(null);
     setPreviewUrl("");
+    setCoverDimensions(null);
+    setGalleryDimensions({});
+    setGalleryWarnings([]);
     setGalleryImages([]);
     setNewGalleryUrl("");
     setVideos([]);
     setNewVideoUrl("");
   }
 
-  const handleAddGalleryUrl = () => {
-    if (!newGalleryUrl.trim()) return;
-    setGalleryImages((prev) => [...prev, newGalleryUrl.trim()]);
+  const handleAddGalleryUrl = async () => {
+    const trimmed = newGalleryUrl.trim();
+    if (!trimmed) return;
+    setGalleryImages((prev) => [...prev, trimmed]);
     setNewGalleryUrl("");
+
+    const dims = await getImageDimensions(trimmed);
+    if (dims.width > 0) {
+      setGalleryDimensions((prev) => ({ ...prev, [trimmed]: dims }));
+      if (dims.width < 1200 || dims.height < 800) {
+        setGalleryWarnings((prev) => [
+          ...prev,
+          `Image URL (${trimmed.slice(0, 30)}...) is ${dims.width} × ${dims.height} px. (Required: Min 1200 px Width × 800 px Height | Recommended: 1920 × 1080 px).`,
+        ]);
+      }
+    }
   };
 
   const handleGalleryFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -201,10 +269,26 @@ export default function AdminProjectsPage() {
     const files = Array.from(e.target.files);
     setUploadingGallery(true);
     setErrorMsg("");
+    const detectedDims: Record<string, { width: number; height: number }> = {};
+    const newWarnings: string[] = [];
+
     try {
       for (const file of files) {
+        const dims = await getImageDimensions(file);
+        if (dims.width > 0 && (dims.width < 1200 || dims.height < 800)) {
+          newWarnings.push(
+            `"${file.name}" is ${dims.width} × ${dims.height} px. (Required: Min 1200 px Width × 800 px Height | Recommended: 1920 × 1080 px).`
+          );
+        }
         const url = await uploadCmsImage(file);
+        if (dims.width > 0) {
+          detectedDims[url] = dims;
+        }
         setGalleryImages((prev) => [...prev, url]);
+      }
+      setGalleryDimensions((prev) => ({ ...prev, ...detectedDims }));
+      if (newWarnings.length > 0) {
+        setGalleryWarnings((prev) => [...prev, ...newWarnings]);
       }
       setSuccessMsg(`Uploaded ${files.length} photo(s) to gallery.`);
     } catch (err: unknown) {
@@ -248,26 +332,44 @@ export default function AdminProjectsPage() {
     setVideos((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
-  const handleSetCover = (url: string) => {
+  const handleSetCover = async (url: string) => {
     setFormData((prev) => ({ ...prev, image_url: url }));
     setPreviewUrl(url);
     setSelectedFile(null);
+    const dims = galleryDimensions[url] || (await getImageDimensions(url));
+    if (dims.width > 0) {
+      setCoverDimensions(dims);
+    }
     setSuccessMsg("Cover image updated to selected gallery photo.");
   };
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
+      const dims = await getImageDimensions(file);
+      if (dims.width > 0) {
+        setCoverDimensions(dims);
+      }
     }
   }
 
-  function handleImageUrlChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImageUrlChange(e: React.ChangeEvent<HTMLInputElement>) {
     const val = e.target.value;
     setFormData((prev) => ({ ...prev, image_url: val }));
     if (!selectedFile) {
       setPreviewUrl(val);
+      if (val.trim()) {
+        const dims = await getImageDimensions(val.trim());
+        if (dims.width > 0) {
+          setCoverDimensions(dims);
+        } else {
+          setCoverDimensions(null);
+        }
+      } else {
+        setCoverDimensions(null);
+      }
     }
   }
 
@@ -278,6 +380,46 @@ export default function AdminProjectsPage() {
     if (!formData.title.trim()) {
       setErrorMsg("Project title is required.");
       return;
+    }
+
+    // Strict Blocking Validation for Cover Image Resolution
+    if (selectedFile) {
+      const dims = await getImageDimensions(selectedFile);
+      if (dims.width > 0 && (dims.width < 1200 || dims.height < 800)) {
+        setErrorMsg(
+          `Publishing Blocked: Cover photograph "${selectedFile.name}" is only ${dims.width} × ${dims.height} px. Minimum required size is 1200 px (Width) × 800 px (Height) to prevent blurry rendering. Best recommended: 1920 × 1080 px.`
+        );
+        if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+    } else if (formData.image_url.trim()) {
+      const dims = await getImageDimensions(formData.image_url.trim());
+      if (dims.width > 0 && (dims.width < 1200 || dims.height < 800)) {
+        setErrorMsg(
+          `Publishing Blocked: Cover image URL is only ${dims.width} × ${dims.height} px. Minimum required size is 1200 px (Width) × 800 px (Height). Best recommended: 1920 × 1080 px.`
+        );
+        if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+    } else if (coverDimensions && (coverDimensions.width < 1200 || coverDimensions.height < 800)) {
+      setErrorMsg(
+        `Publishing Blocked: Cover image is only ${coverDimensions.width} × ${coverDimensions.height} px. Minimum required size is 1200 px (Width) × 800 px (Height). Best recommended: 1920 × 1080 px.`
+      );
+      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    // Strict Blocking Validation for Gallery Showcase Images
+    for (let i = 0; i < galleryImages.length; i++) {
+      const gUrl = galleryImages[i];
+      const gDims = galleryDimensions[gUrl] || (await getImageDimensions(gUrl));
+      if (gDims.width > 0 && (gDims.width < 1200 || gDims.height < 800)) {
+        setErrorMsg(
+          `Publishing Blocked: Gallery image #${i + 1} is only ${gDims.width} × ${gDims.height} px. All gallery images must be at least 1200 px (Width) × 800 px (Height). Best recommended: 1920 × 1080 px.`
+        );
+        if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -327,6 +469,46 @@ export default function AdminProjectsPage() {
     if (!formData.title.trim()) {
       setErrorMsg("Project title is required.");
       return;
+    }
+
+    // Strict Blocking Validation for Cover Image Resolution
+    if (selectedFile) {
+      const dims = await getImageDimensions(selectedFile);
+      if (dims.width > 0 && (dims.width < 1200 || dims.height < 800)) {
+        setErrorMsg(
+          `Updating Blocked: Cover photograph "${selectedFile.name}" is only ${dims.width} × ${dims.height} px. Minimum required size is 1200 px (Width) × 800 px (Height). Best recommended: 1920 × 1080 px.`
+        );
+        if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+    } else if (formData.image_url.trim()) {
+      const dims = await getImageDimensions(formData.image_url.trim());
+      if (dims.width > 0 && (dims.width < 1200 || dims.height < 800)) {
+        setErrorMsg(
+          `Updating Blocked: Cover image URL is only ${dims.width} × ${dims.height} px. Minimum required size is 1200 px (Width) × 800 px (Height). Best recommended: 1920 × 1080 px.`
+        );
+        if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+    } else if (coverDimensions && (coverDimensions.width < 1200 || coverDimensions.height < 800)) {
+      setErrorMsg(
+        `Updating Blocked: Cover image is only ${coverDimensions.width} × ${coverDimensions.height} px. Minimum required size is 1200 px (Width) × 800 px (Height). Best recommended: 1920 × 1080 px.`
+      );
+      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    // Strict Blocking Validation for Gallery Showcase Images
+    for (let i = 0; i < galleryImages.length; i++) {
+      const gUrl = galleryImages[i];
+      const gDims = galleryDimensions[gUrl] || (await getImageDimensions(gUrl));
+      if (gDims.width > 0 && (gDims.width < 1200 || gDims.height < 800)) {
+        setErrorMsg(
+          `Updating Blocked: Gallery image #${i + 1} is only ${gDims.width} × ${gDims.height} px. All gallery images must be at least 1200 px (Width) × 800 px (Height). Best recommended: 1920 × 1080 px.`
+        );
+        if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -427,7 +609,7 @@ export default function AdminProjectsPage() {
       }
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        
+
         return (
           proj.title?.toLowerCase().includes(q) ||
           proj.location?.toLowerCase().includes(q) ||
@@ -719,6 +901,21 @@ export default function AdminProjectsPage() {
   if (viewMode === "create" || viewMode === "edit") {
     const isEdit = viewMode === "edit";
 
+    const isCoverInvalid = Boolean(
+      coverDimensions &&
+      coverDimensions.width > 0 &&
+      (coverDimensions.width < 1200 || coverDimensions.height < 800)
+    );
+
+    const isGalleryInvalid = Boolean(
+      galleryImages.some((url) => {
+        const d = galleryDimensions[url];
+        return d && d.width > 0 && (d.width < 1200 || d.height < 800);
+      })
+    );
+
+    const hasBlockingImageError = isCoverInvalid || isGalleryInvalid;
+
     return (
       <div className={styles.sectionContainer} style={{ width: "100%", maxWidth: "100%", margin: 0 }}>
         {/* Navigation Breadcrumb */}
@@ -1008,6 +1205,32 @@ export default function AdminProjectsPage() {
                   </p>
                 </div>
 
+                {/* Quality / Resolution Guidance Banner */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.6rem",
+                    background: "rgba(196, 154, 69, 0.08)",
+                    border: "1px solid rgba(196, 154, 69, 0.25)",
+                    borderRadius: "8px",
+                    padding: "0.75rem 1rem",
+                    fontSize: "0.825rem",
+                    color: "#6b5420",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <Sparkles size={18} color="#C49A45" style={{ flexShrink: 0 }} />
+                  <div>
+                    <strong style={{ display: "block", color: "#8a661c", fontSize: "0.85rem", marginBottom: "2px" }}>
+                      📐 Best Recommended Size: 1920 px (Width) × 1080 px (Height)
+                    </strong>
+                    <span style={{ fontSize: "0.785rem", color: "#6b5420" }}>
+                      Minimum required: <strong>1200 × 800 px</strong> (to prevent blur or pixelation on desktop displays).
+                    </span>
+                  </div>
+                </div>
+
                 {/* Tab selector for upload method */}
                 <div
                   style={{
@@ -1107,6 +1330,74 @@ export default function AdminProjectsPage() {
                   </div>
                 )}
 
+                {/* Real-time Cover Resolution Feedback */}
+                {coverDimensions && coverDimensions.width > 0 && (
+                  isCoverInvalid ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "0.75rem",
+                        background: "#fef2f2",
+                        border: "1.5px solid #ef4444",
+                        borderRadius: "8px",
+                        padding: "0.85rem 1rem",
+                        fontSize: "0.825rem",
+                        color: "#991b1b",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      <AlertCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: "2px" }} />
+                      <div style={{ width: "100%" }}>
+                        <strong style={{ display: "block", marginBottom: "4px", color: "#b91c1c", fontSize: "0.9rem" }}>
+                          ⛔ Resolution Error: {coverDimensions.width} px (Width) × {coverDimensions.height} px (Height)
+                        </strong>
+                        <p style={{ margin: "0 0 8px 0", color: "#7f1d1d", fontWeight: 500 }}>
+                          This image is below the minimum required resolution. <strong>Project publishing is blocked</strong> until an image with valid dimensions is uploaded.
+                        </p>
+                        <div
+                          style={{
+                            background: "#ffffff",
+                            border: "1px solid #fca5a5",
+                            borderRadius: "6px",
+                            padding: "8px 12px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "3px",
+                            fontSize: "0.8rem",
+                          }}
+                        >
+                          <div style={{ color: "#b91c1c" }}>
+                            🚫 <strong>Required Minimum:</strong> At least <strong>1200 px (Width) × 800 px (Height)</strong>
+                          </div>
+                          <div style={{ color: "#166534" }}>
+                            ⭐ <strong>Best Recommended Size:</strong> <strong>1920 px (Width) × 1080 px (Height)</strong>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        background: "#f0fdf4",
+                        border: "1px solid #bbf7d0",
+                        borderRadius: "8px",
+                        padding: "0.6rem 0.85rem",
+                        fontSize: "0.8rem",
+                        color: "#166534",
+                      }}
+                    >
+                      <CheckCircle2 size={16} color="#16a34a" style={{ flexShrink: 0 }} />
+                      <span>
+                        <strong>✓ Resolution Approved ({coverDimensions.width} px Width × {coverDimensions.height} px Height)</strong> — Meets required dimensions for sharp, crystal-clear display.
+                      </span>
+                    </div>
+                  )
+                )}
+
                 {/* Live Card Preview Box */}
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.75rem" }}>
@@ -1181,23 +1472,42 @@ export default function AdminProjectsPage() {
                           {formData.category}
                         </span>
 
-                        {formData.is_featured && (
-                          <span
-                            style={{
-                              background: "#C49A45",
-                              color: "#000000",
-                              fontSize: "0.725rem",
-                              fontWeight: 700,
-                              padding: "3px 9px",
-                              borderRadius: "16px",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
-                            }}
-                          >
-                            <Star size={11} fill="#000000" /> Featured
-                          </span>
-                        )}
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          {coverDimensions && coverDimensions.width > 0 && (
+                            <span
+                              style={{
+                                background: (coverDimensions.width < 1200 || coverDimensions.height < 800) ? "rgba(220, 38, 38, 0.9)" : "rgba(22, 101, 52, 0.9)",
+                                color: "#ffffff",
+                                fontSize: "0.7rem",
+                                fontWeight: 700,
+                                padding: "2px 7px",
+                                borderRadius: "12px",
+                                backdropFilter: "blur(4px)",
+                                border: "1px solid rgba(255,255,255,0.2)",
+                              }}
+                            >
+                              {(coverDimensions.width < 1200 || coverDimensions.height < 800) ? "⚠️ " : "✓ "}{coverDimensions.width}×{coverDimensions.height}px
+                            </span>
+                          )}
+
+                          {formData.is_featured && (
+                            <span
+                              style={{
+                                background: "#C49A45",
+                                color: "#000000",
+                                fontSize: "0.725rem",
+                                fontWeight: 700,
+                                padding: "3px 9px",
+                                borderRadius: "16px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              <Star size={11} fill="#000000" /> Featured
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Overlay Project Card Label */}
@@ -1291,6 +1601,64 @@ export default function AdminProjectsPage() {
                     </div>
                   </div>
 
+                  {/* Showcase Gallery Resolution Guidance */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.6rem",
+                      background: "rgba(196, 154, 69, 0.08)",
+                      border: "1px solid rgba(196, 154, 69, 0.25)",
+                      borderRadius: "8px",
+                      padding: "0.75rem 1rem",
+                      fontSize: "0.825rem",
+                      color: "#6b5420",
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    <Sparkles size={18} color="#C49A45" style={{ flexShrink: 0 }} />
+                    <div>
+                      <strong style={{ display: "block", color: "#8a661c", fontSize: "0.85rem", marginBottom: "2px" }}>
+                        📐 Best Recommended Size: 1920 px (Width) × 1080 px (Height)
+                      </strong>
+                      <span style={{ fontSize: "0.785rem", color: "#6b5420" }}>
+                        Minimum required: <strong>1200 × 800 px</strong> (for crisp display on luxury showcase cards).
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Low Resolution Gallery Errors List */}
+                  {galleryWarnings.length > 0 && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.4rem",
+                        background: "#fef2f2",
+                        border: "1.5px solid #ef4444",
+                        borderRadius: "8px",
+                        padding: "0.75rem 1rem",
+                        fontSize: "0.825rem",
+                        color: "#991b1b",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <span style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: "6px", color: "#b91c1c" }}>
+                          <AlertCircle size={16} color="#dc2626" />
+                          ⛔ Gallery Resolution Errors ({galleryWarnings.length}) — Publishing Blocked
+                        </span>
+                      </div>
+                      <p style={{ margin: "0.25rem 0 0", color: "#7f1d1d", fontSize: "0.8rem" }}>
+                        Project cannot be published while low-resolution photos are present. Please remove or replace them with minimum 1200 × 800 px images:
+                      </p>
+                      <ul style={{ margin: "0.25rem 0 0", paddingLeft: "1.25rem", lineHeight: 1.5 }}>
+                        {galleryWarnings.map((warn, wIdx) => (
+                          <li key={wIdx} style={{ color: "#991b1b" }}>{warn}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   {/* Add by URL input */}
                   <div style={{ display: "flex", gap: "0.5rem" }}>
                     <input
@@ -1345,6 +1713,9 @@ export default function AdminProjectsPage() {
                     >
                       {galleryImages.map((imgUrl, imgIdx) => {
                         const isCover = formData.image_url === imgUrl;
+                        const dims = galleryDimensions[imgUrl];
+                        const isLowRes = Boolean(dims && dims.width > 0 && (dims.width < 1200 || dims.height < 800));
+
                         return (
                           <div
                             key={imgIdx}
@@ -1353,7 +1724,11 @@ export default function AdminProjectsPage() {
                               height: "110px",
                               borderRadius: "10px",
                               overflow: "hidden",
-                              border: isCover ? "2px solid #C49A45" : "1px solid var(--admin-border)",
+                              border: isLowRes
+                                ? "2px solid #ef4444"
+                                : isCover
+                                  ? "2px solid #C49A45"
+                                  : "1px solid var(--admin-border)",
                               background: "#000000",
                               boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
                             }}
@@ -1365,6 +1740,31 @@ export default function AdminProjectsPage() {
                               unoptimized
                               style={{ objectFit: "cover" }}
                             />
+
+                            {/* Dimension / Resolution Badge */}
+                            {dims && dims.width > 0 && (
+                              <span
+                                style={{
+                                  position: "absolute",
+                                  bottom: "6px",
+                                  left: "6px",
+                                  background: isLowRes ? "rgba(220, 38, 38, 0.9)" : "rgba(0, 0, 0, 0.75)",
+                                  color: "#ffffff",
+                                  fontSize: "0.625rem",
+                                  fontWeight: 700,
+                                  padding: "2px 5px",
+                                  borderRadius: "4px",
+                                  zIndex: 2,
+                                  backdropFilter: "blur(2px)",
+                                  pointerEvents: "none",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "3px",
+                                }}
+                              >
+                                {isLowRes ? "⚠️ " : ""}{dims.width}×{dims.height}
+                              </span>
+                            )}
 
                             {isCover && (
                               <span
@@ -1620,8 +2020,19 @@ export default function AdminProjectsPage() {
                 justifyContent: "flex-end",
                 gap: "1rem",
                 alignItems: "center",
+                flexWrap: "wrap",
               }}
             >
+              {hasBlockingImageError && (
+                <div style={{ color: "#dc2626", fontSize: "0.85rem", fontWeight: 600, display: "flex", alignItems: "center", gap: "6px", marginRight: "auto" }}>
+                  <AlertCircle size={17} color="#dc2626" />
+                  <span>
+                    {isCoverInvalid
+                      ? "Publishing blocked: Cover image resolution is below 1200 × 800 px"
+                      : "Publishing blocked: Fix low-resolution gallery photos (Min 1200 × 800 px)"}
+                  </span>
+                </div>
+              )}
               <button
                 type="button"
                 onClick={backToList}
@@ -1632,9 +2043,14 @@ export default function AdminProjectsPage() {
               </button>
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || hasBlockingImageError}
                 className={styles.primaryButton}
-                style={{ padding: "0.75rem 2rem", opacity: submitting ? 0.7 : 1 }}
+                style={{
+                  padding: "0.75rem 2rem",
+                  opacity: (submitting || hasBlockingImageError) ? 0.45 : 1,
+                  cursor: hasBlockingImageError ? "not-allowed" : "pointer",
+                }}
+                title={hasBlockingImageError ? "Cannot publish: Please fix low-resolution image(s) (Minimum required: 1200 × 800 px)" : undefined}
               >
                 {submitting ? (
                   "Saving Project..."

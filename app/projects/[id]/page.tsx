@@ -161,6 +161,7 @@ export default function ProjectDetailPage() {
                     alt={`${currentProject.title} detail ${idx + 1}`}
                     fill
                     sizes="(max-width: 1200px) 100vw, 1200px"
+                    quality={85}
                     className={styles.galleryImg}
                   />
                   <div className={styles.galleryOverlay}>
