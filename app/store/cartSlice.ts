@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface CartItem {
   id: string | number;
+  productId?: string | number;
   title: string;
   price: number;
   image: string;
@@ -9,6 +10,7 @@ export interface CartItem {
   // Units available in inventory; undefined means no known limit (e.g. made-to-order)
   maxQuantity?: number;
   voltage?: string;
+  color?: string;
 }
 
 export interface AppliedCouponState {
@@ -40,6 +42,7 @@ const calculateTotal = (items: CartItem[]) => {
 export interface AddToCartPayload {
   _id?: string | number;
   id?: string | number;
+  productId?: string | number;
   product_title?: string;
   name?: string;
   product_price?: number | string;
@@ -49,6 +52,7 @@ export interface AddToCartPayload {
   quantity?: number;
   max_quantity?: number;
   voltage?: string;
+  color?: string;
 }
 
 // Inventory cap for a product: made-to-order pieces and products without a stock count are uncapped
@@ -68,6 +72,7 @@ const cartSlice = createSlice({
     addToCart: (state, action: PayloadAction<AddToCartPayload>) => {
       const product = action.payload;
       const productId = product._id || product.id || Date.now().toString();
+      const rawProductId = product.productId || (String(productId).includes("_") ? String(productId).split("_")[0] : productId);
       const qtyToAdd = Math.max(1, product.quantity || 1);
       const maxQuantity = product.max_quantity;
       if (maxQuantity !== undefined && maxQuantity <= 0) return;
@@ -77,16 +82,20 @@ const cartSlice = createSlice({
       if (existingItem) {
         if (maxQuantity !== undefined) existingItem.maxQuantity = maxQuantity;
         if (product.voltage) existingItem.voltage = product.voltage;
+        if (product.color) existingItem.color = product.color;
+        if (!existingItem.productId) existingItem.productId = rawProductId;
         existingItem.quantity = clampToStock(existingItem.quantity + qtyToAdd, existingItem.maxQuantity);
       } else {
         state.cartItems.push({
           id: productId,
+          productId: rawProductId,
           title: product.product_title || product.name || "Product",
           price: Number(product.product_price || product.price) || 0,
           image: product.product_main_image || product.image_url || "/images/lamp_modern_tall_1784107732736.jpg",
           quantity: clampToStock(qtyToAdd, maxQuantity),
           maxQuantity,
           voltage: product.voltage,
+          color: product.color,
         });
       }
       state.cartTotal = calculateTotal(state.cartItems);
@@ -123,16 +132,25 @@ const cartSlice = createSlice({
       const knownCaps = new Map(state.cartItems.map(i => [String(i.id), i.maxQuantity]));
       state.cartItems = action.payload.map(item => {
         const maxQuantity = item.maxQuantity ?? knownCaps.get(String(item.id));
-        return { ...item, maxQuantity, quantity: Math.max(1, clampToStock(item.quantity, maxQuantity)) };
+        const resolvedProductId = item.productId || (String(item.id).includes("_") ? String(item.id).split("_")[0] : item.id);
+        return {
+          ...item,
+          productId: resolvedProductId,
+          maxQuantity,
+          quantity: Math.max(1, clampToStock(item.quantity, maxQuantity))
+        };
       });
       state.cartTotal = calculateTotal(state.cartItems);
     },
     setStockLimits: (state, action: PayloadAction<Record<string, number | undefined>>) => {
       for (const item of state.cartItems) {
         const key = String(item.id);
-        if (!(key in action.payload)) continue;
-        item.maxQuantity = action.payload[key];
-        item.quantity = Math.max(1, clampToStock(item.quantity, item.maxQuantity));
+        const baseKey = item.productId ? String(item.productId) : (key.includes("_") ? key.split("_")[0] : key);
+        const limit = action.payload[key] !== undefined ? action.payload[key] : action.payload[baseKey];
+        if (limit !== undefined) {
+          item.maxQuantity = limit;
+          item.quantity = Math.max(1, clampToStock(item.quantity, item.maxQuantity));
+        }
       }
       state.cartTotal = calculateTotal(state.cartItems);
     },

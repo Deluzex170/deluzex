@@ -12,11 +12,11 @@ import { fetchCategories, fetchProducts, Category, Product } from "../services/a
 import WishlistButton from "../components/WishlistButton";
 
 const SORT_OPTIONS = [
-  { label: "Featured", value: "FEATURED" },
-  { label: "Price: Low to High", value: "PRICE: LOW TO HIGH" },
-  { label: "Price: High to Low", value: "PRICE: HIGH TO LOW" },
-  { label: "Newest Arrivals", value: "NEWEST ARRIVALS" },
-  { label: "Rating: High to Low", value: "RATING: HIGH TO LOW" },
+  { label: "Featured", mobileLabel: "Featured", value: "FEATURED" },
+  { label: "Price: Low to High", mobileLabel: "Price: Low-High", value: "PRICE: LOW TO HIGH" },
+  { label: "Price: High to Low", mobileLabel: "Price: High-Low", value: "PRICE: HIGH TO LOW" },
+  { label: "Newest Arrivals", mobileLabel: "Newest", value: "NEWEST ARRIVALS" },
+  { label: "Rating: High to Low", mobileLabel: "Rating: High-Low", value: "RATING: HIGH TO LOW" },
 ];
 
 function ShopContent() {
@@ -38,6 +38,7 @@ function ShopContent() {
   const [isSortOpen, setIsSortOpen] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
   const categoriesRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLElement | null>(null);
   const [isCatPaused, setIsCatPaused] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -104,12 +105,30 @@ function ShopContent() {
     return () => clearInterval(timer);
   }, [isCatPaused, categories.length, handleCategoryScroll]);
 
+  const scrollToToolbar = useCallback(() => {
+    if (toolbarRef.current) {
+      const headerOffset = 76;
+      const elementPosition = toolbarRef.current.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      });
+    }
+  }, []);
+
   // Sync category and search params from URL
 
   useEffect(() => {
     setSelectedCategory(categoryParam);
     setCurrentPage(1);
-  }, [categoryParam]);
+    if (categoryParam) {
+      const timer = setTimeout(() => {
+        scrollToToolbar();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [categoryParam, scrollToToolbar]);
 
   useEffect(() => {
     setSearchQuery(searchParam);
@@ -237,6 +256,11 @@ function ShopContent() {
     const newUrl = params.toString() ? `/shop?${params.toString()}` : "/shop";
     router.push(newUrl, { scroll: false });
     setCurrentPage(1);
+    if (catIdentifier && catIdentifier.toLowerCase() !== "all") {
+      setTimeout(() => {
+        scrollToToolbar();
+      }, 50);
+    }
   };
 
   const handleClearAllFilters = () => {
@@ -366,7 +390,7 @@ function ShopContent() {
       </section>
 
       {/* PROFESSIONAL LUXURY CONTROL BAR */}
-      <section className={styles.toolbarSection}>
+      <section ref={toolbarRef} id="shop-toolbar" className={styles.toolbarSection}>
         <div className={styles.toolbarContainer}>
           {/* Main Row: Search + Filter Trigger + Custom Sort */}
           <div className={styles.toolbarMainRow}>
@@ -453,7 +477,12 @@ function ShopContent() {
                 >
                   <span className={styles.selectBtnLabel}>Sort:</span>
                   <span className={styles.selectBtnValue}>
-                    {SORT_OPTIONS.find((o) => o.value === sortBy)?.label || "Featured"}
+                    <span className={styles.selectBtnValueDesktop}>
+                      {SORT_OPTIONS.find((o) => o.value === sortBy)?.label || "Featured"}
+                    </span>
+                    <span className={styles.selectBtnValueMobile}>
+                      {SORT_OPTIONS.find((o) => o.value === sortBy)?.mobileLabel || SORT_OPTIONS.find((o) => o.value === sortBy)?.label || "Featured"}
+                    </span>
                   </span>
                   <svg className={`${styles.chevronIcon} ${isSortOpen ? styles.chevronIconOpen : ""}`} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <polyline points="6 9 12 15 18 9"></polyline>
@@ -770,9 +799,9 @@ function ShopContent() {
                   <div className={styles.productInfo}>
                     <div className={styles.productTopRow}>
                       {product.product_category &&
-                      product.product_category.trim() &&
-                      product.product_category.toLowerCase() !== "null" &&
-                      product.product_category.toLowerCase() !== "undefined" ? (
+                        product.product_category.trim() &&
+                        product.product_category.toLowerCase() !== "null" &&
+                        product.product_category.toLowerCase() !== "undefined" ? (
                         <span className={styles.productCategory}>
                           {product.product_category.replace(/_/g, " ")}
                         </span>

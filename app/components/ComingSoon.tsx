@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { isValidEmail, sanitizeEmail } from "../utils/validation";
 import styles from "./ComingSoon.module.css";
 
 interface ComingSoonProps {
@@ -100,11 +101,10 @@ export default function ComingSoon({ is404 = false }: ComingSoonProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanEmail = email.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const cleanEmail = sanitizeEmail(email);
 
-    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
-      showToast("Please enter a valid email address.");
+    if (!isValidEmail(cleanEmail)) {
+      showToast("Please enter a valid email address (e.g. name@example.com).");
       return;
     }
 
@@ -266,6 +266,11 @@ export default function ComingSoon({ is404 = false }: ComingSoonProps) {
               className={styles.emailInput}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => {
+                if (email.trim() && !isValidEmail(email)) {
+                  showToast("Please enter a valid email address (e.g. name@example.com).");
+                }
+              }}
               placeholder="Enter your email address"
               required
               autoComplete="email"

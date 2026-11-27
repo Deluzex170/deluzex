@@ -13,6 +13,7 @@ import {
   requestPasswordReset,
   resetPasswordWithOtp,
 } from "../services/api";
+import { isValidEmail, sanitizeEmail } from "../utils/validation";
 import styles from "./UserLoginModal.module.css";
 
 export default function UserLoginModal() {
@@ -261,8 +262,13 @@ export default function UserLoginModal() {
     e.preventDefault();
     setInlineError("");
 
-    if (!passwordEmail.trim() || !passwordValue.trim()) {
-      setInlineError("Please enter both email and password.");
+    const cleanEmail = sanitizeEmail(passwordEmail);
+    if (!cleanEmail || !isValidEmail(cleanEmail)) {
+      setInlineError("Please enter a valid email address (e.g. name@example.com).");
+      return;
+    }
+    if (!passwordValue.trim()) {
+      setInlineError("Please enter your password.");
       return;
     }
 
@@ -272,7 +278,7 @@ export default function UserLoginModal() {
       const res = await fetch(`${apiUrl}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: passwordEmail.trim(), password: passwordValue }),
+        body: JSON.stringify({ email: cleanEmail, password: passwordValue }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -298,13 +304,14 @@ export default function UserLoginModal() {
   const handleRequestPasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setInlineError("");
-    if (!resetEmail.trim()) {
-      setInlineError("Please enter your registered email address.");
+    const cleanEmail = sanitizeEmail(resetEmail);
+    if (!cleanEmail || !isValidEmail(cleanEmail)) {
+      setInlineError("Please enter a valid registered email address (e.g. name@example.com).");
       return;
     }
     setIsResetting(true);
     try {
-      const res = await requestPasswordReset(resetEmail.trim());
+      const res = await requestPasswordReset(cleanEmail);
       setForgotStep("otp_password");
       globalToast.success(res.message || "A 6-digit reset code has been sent to your email.");
     } catch (err: any) {
@@ -371,10 +378,10 @@ export default function UserLoginModal() {
             {step === "phone"
               ? "Sign In or Sign Up"
               : step === "otp"
-              ? "Enter WhatsApp Code"
-              : step === "password"
-              ? "Password Sign In"
-              : "Reset Password"}
+                ? "Enter WhatsApp Code"
+                : step === "password"
+                  ? "Password Sign In"
+                  : "Reset Password"}
           </h2>
 
           {loginModalMessage && step === "phone" && (
@@ -390,7 +397,7 @@ export default function UserLoginModal() {
           {isExistingCustomer && step === "phone" && (
             <div className={styles.welcomeChip}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Welcome back, {detectedFirstName || "Customer"}!
             </div>
@@ -467,7 +474,7 @@ export default function UserLoginModal() {
             <button type="submit" disabled={isSendingOtp || phone.length < 10} className={styles.primaryCta}>
               {isSendingOtp ? "Sending WhatsApp Code..." : "Get WhatsApp OTP"}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
 
@@ -572,7 +579,15 @@ export default function UserLoginModal() {
                 required
                 placeholder="name@example.com"
                 value={passwordEmail}
-                onChange={(e) => setPasswordEmail(e.target.value)}
+                onChange={(e) => {
+                  setPasswordEmail(e.target.value);
+                  if (inlineError) setInlineError("");
+                }}
+                onBlur={() => {
+                  if (passwordEmail.trim() && !isValidEmail(passwordEmail)) {
+                    setInlineError("Please enter a valid email address (e.g. name@example.com).");
+                  }
+                }}
                 className={styles.input}
               />
             </div>
@@ -596,13 +611,13 @@ export default function UserLoginModal() {
                 >
                   {showPassword ? (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" strokeLinecap="round" strokeLinejoin="round"/>
-                      <line x1="1" y1="1" x2="23" y2="23" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" strokeLinecap="round" strokeLinejoin="round" />
+                      <line x1="1" y1="1" x2="23" y2="23" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ) : (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" strokeLinejoin="round"/>
-                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="12" cy="12" r="3" />
                     </svg>
                   )}
                 </button>
@@ -656,7 +671,15 @@ export default function UserLoginModal() {
                     required
                     placeholder="name@example.com"
                     value={resetEmail}
-                    onChange={(e) => setResetEmail(e.target.value)}
+                    onChange={(e) => {
+                      setResetEmail(e.target.value);
+                      if (inlineError) setInlineError("");
+                    }}
+                    onBlur={() => {
+                      if (resetEmail.trim() && !isValidEmail(resetEmail)) {
+                        setInlineError("Please enter a valid email address (e.g. name@example.com).");
+                      }
+                    }}
                     className={styles.input}
                   />
                 </div>

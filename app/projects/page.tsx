@@ -5,6 +5,7 @@ import styles from "./projects.module.css";
 import Image from "next/image";
 import Link from "next/link";
 import { fetchProjects, Project, submitContactForm } from "../services/api";
+import { isValidEmail, sanitizeEmail } from "../utils/validation";
 
 const CATEGORIES = [
   "All Projects",
@@ -66,12 +67,39 @@ export default function Projects() {
   const handleFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    if (name === "email") {
+      setFormData((prev) => ({ ...prev, email: value }));
+      if (errorMessage && (isValidEmail(value) || value.trim().length === 0)) {
+        setErrorMessage("");
+      }
+      return;
+    }
+    if (name === "phone") {
+      const cleanDigits = value.replace(/\D/g, "").slice(0, 10);
+      setFormData((prev) => ({ ...prev, phone: cleanDigits }));
+      if (errorMessage && (cleanDigits.length === 10 || cleanDigits.length === 0)) {
+        setErrorMessage("");
+      }
+      return;
+    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email) return;
+    const cleanEmail = sanitizeEmail(formData.email);
+    if (!cleanEmail || !isValidEmail(cleanEmail)) {
+      setErrorMessage("Please enter a valid email address (e.g. name@example.com).");
+      return;
+    }
+
+    const cleanPhone = (formData.phone || "").replace(/\D/g, "");
+    if (cleanPhone && cleanPhone.length !== 10) {
+      setErrorMessage("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
     setSubmitting(true);
     setErrorMessage("");
 
@@ -84,7 +112,7 @@ export default function Projects() {
     try {
       await submitContactForm({
         name: formData.name || "Valued Client",
-        email: formData.email,
+        email: cleanEmail,
         phone: formData.phone || "",
         message: fullMessage,
       });
@@ -246,7 +274,9 @@ export default function Projects() {
                 src={selectedProject.image_url || "/images/project_lounge_1784107767735.jpg"}
                 alt={selectedProject.title}
                 fill
-                style={{ objectFit: "cover" }}
+                quality={95}
+                sizes="(max-width: 768px) 100vw, 50vw"
+                style={{ objectFit: "cover", objectPosition: "center" }}
               />
             </div>
             <div>
@@ -333,7 +363,9 @@ export default function Projects() {
                     src={coverImg}
                     alt={project.title}
                     fill
-                    style={{ objectFit: "cover" }}
+                    quality={90}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    style={{ objectFit: "cover", objectPosition: "center" }}
                   />
                   <div className={styles.projectLabelBox}>
                     <div className={styles.plbTextContainer}>
@@ -434,9 +466,14 @@ export default function Projects() {
                   name="email"
                   type="email"
                   required
-                  placeholder="Enter your mail"
+                  placeholder="Enter your email"
                   value={formData.email}
                   onChange={handleFormChange}
+                  onBlur={() => {
+                    if (formData.email && !isValidEmail(formData.email)) {
+                      setErrorMessage("Please enter a valid email address (e.g. name@example.com).");
+                    }
+                  }}
                   className={styles.formInput}
                 />
               </div>
@@ -449,11 +486,19 @@ export default function Projects() {
                   id="phone"
                   name="phone"
                   type="tel"
-                  placeholder="Enter your Number"
+                  inputMode="numeric"
+                  pattern="[0-9]{10}"
+                  maxLength={10}
+                  placeholder="Enter 10-digit mobile number"
                   value={formData.phone}
                   onChange={handleFormChange}
                   className={styles.formInput}
                 />
+                {formData.phone && formData.phone.length > 0 && formData.phone.length < 10 && (
+                  <span style={{ fontSize: "0.75rem", color: "#e11d48", marginTop: "4px", display: "block" }}>
+                    Please enter 10 digits ({formData.phone.length}/10)
+                  </span>
+                )}
               </div>
 
               <div className={styles.formGroup} ref={projectTypeRef}>

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import styles from "./collaborate.module.css";
 import { submitCollaboration, fetchFaqs, FAQItem } from "../services/api";
+import { isValidEmail } from "../utils/validation";
 
 const CITIES = [
   "Ahmedabad",
@@ -171,10 +172,9 @@ export default function CollaboratePage() {
     }
 
     const emailTrimmed = formFields.email.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailTrimmed) {
       errors.email = "Email address is compulsory";
-    } else if (!emailRegex.test(emailTrimmed)) {
+    } else if (!isValidEmail(emailTrimmed)) {
       errors.email = "Please enter a valid email address (e.g. name@example.com)";
     }
 
@@ -594,7 +594,7 @@ export default function CollaboratePage() {
         </section>
       )}
 
-            {/* 5. SUBMISSION FORM SECTION */}
+      {/* 5. SUBMISSION FORM SECTION */}
       <section id="submission-form" className={styles.formSection}>
         <div className={styles.formInner}>
 
@@ -650,7 +650,7 @@ export default function CollaboratePage() {
                   />
                   {formErrors.fullName && (
                     <span className={styles.fieldError}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                       {formErrors.fullName}
                     </span>
                   )}
@@ -668,12 +668,23 @@ export default function CollaboratePage() {
                     placeholder="Enter your email"
                     value={formFields.email}
                     onChange={handleInputChange}
+                    onBlur={() => {
+                      if (formFields.email.trim() && !isValidEmail(formFields.email)) {
+                        setFormErrors((prev) => ({ ...prev, email: "Please enter a valid email address (e.g. name@example.com)" }));
+                      } else if (formErrors.email && isValidEmail(formFields.email)) {
+                        setFormErrors((prev) => {
+                          const next = { ...prev };
+                          delete next.email;
+                          return next;
+                        });
+                      }
+                    }}
                     className={formErrors.email ? styles.inputError : ""}
                   />
                   <span className={styles.inputHelper}>we&apos;ll contact you here about your design</span>
                   {formErrors.email && (
                     <span className={styles.fieldError}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                       {formErrors.email}
                     </span>
                   )}
@@ -695,7 +706,7 @@ export default function CollaboratePage() {
                   />
                   {formErrors.phone && (
                     <span className={styles.fieldError}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                       {formErrors.phone}
                     </span>
                   )}
@@ -714,14 +725,16 @@ export default function CollaboratePage() {
                     </button>
                     {isCityOpen && (
                       <ul className={styles.customSelectMenu} role="listbox" aria-labelledby="cityLabel">
-                        {CITIES.map((c) => { const isSelected = formFields.city === c; return (
-                          <li key={c} role="option" aria-selected={isSelected}
-                            className={`${styles.customSelectOption} ${isSelected ? styles.customSelectOptionSelected : ""}`}
-                            onClick={() => { setFormFields((prev) => ({ ...prev, city: c })); setIsCityOpen(false); }}>
-                            <span>{c}</span>
-                            {isSelected && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
-                          </li>
-                        ); })}
+                        {CITIES.map((c) => {
+                          const isSelected = formFields.city === c; return (
+                            <li key={c} role="option" aria-selected={isSelected}
+                              className={`${styles.customSelectOption} ${isSelected ? styles.customSelectOptionSelected : ""}`}
+                              onClick={() => { setFormFields((prev) => ({ ...prev, city: c })); setIsCityOpen(false); }}>
+                              <span>{c}</span>
+                              {isSelected && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </div>
@@ -740,14 +753,16 @@ export default function CollaboratePage() {
                     </button>
                     {isRoleOpen && (
                       <ul className={styles.customSelectMenu} role="listbox" aria-labelledby="roleLabel">
-                        {ROLES.map((r) => { const isSelected = formFields.role === r; return (
-                          <li key={r} role="option" aria-selected={isSelected}
-                            className={`${styles.customSelectOption} ${isSelected ? styles.customSelectOptionSelected : ""}`}
-                            onClick={() => { setFormFields((prev) => ({ ...prev, role: r })); setIsRoleOpen(false); }}>
-                            <span>{r}</span>
-                            {isSelected && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
-                          </li>
-                        ); })}
+                        {ROLES.map((r) => {
+                          const isSelected = formFields.role === r; return (
+                            <li key={r} role="option" aria-selected={isSelected}
+                              className={`${styles.customSelectOption} ${isSelected ? styles.customSelectOptionSelected : ""}`}
+                              onClick={() => { setFormFields((prev) => ({ ...prev, role: r })); setIsRoleOpen(false); }}>
+                              <span>{r}</span>
+                              {isSelected && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </div>
@@ -844,7 +859,7 @@ export default function CollaboratePage() {
                   </div>
                   {formErrors.file && (
                     <span className={styles.fieldError}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                       {formErrors.file}
                     </span>
                   )}

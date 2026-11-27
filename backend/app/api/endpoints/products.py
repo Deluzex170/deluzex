@@ -49,6 +49,19 @@ def read_product(product_id: str):
             or db.products.find_one({"sku": {"$regex": f"^{re.escape(clean_id)}$", "$options": "i"}})
         )
 
+    if doc is None and "_" in product_id:
+        base_part = product_id.split("_")[0].strip()
+        try:
+            if ObjectId.is_valid(base_part):
+                doc = db.products.find_one({"_id": ObjectId(base_part)})
+        except Exception:
+            pass
+        if doc is None:
+            doc = (
+                db.products.find_one({"slug": {"$regex": f"^{re.escape(base_part)}$", "$options": "i"}})
+                or db.products.find_one({"sku": {"$regex": f"^{re.escape(base_part)}$", "$options": "i"}})
+            )
+
     if doc is None:
         raise HTTPException(status_code=404, detail="Product not found")
     return models.Product(**doc)
@@ -85,6 +98,7 @@ async def create_product(
     whatsapp_number: Optional[str] = Form(None),
     phone_number: Optional[str] = Form(None),
     amazon_link: Optional[str] = Form(None),
+    color_variants: Optional[str] = Form(None),
     specifications: Optional[str] = Form(None),
     technical_spec_pdf: Optional[UploadFile] = File(None),
     technical_spec_pdf_url: Optional[str] = Form(None),
@@ -134,6 +148,13 @@ async def create_product(
                 parsed_specs = json.loads(specifications)
             except Exception:
                 pass
+
+        parsed_colors = []
+        if color_variants:
+            try:
+                parsed_colors = json.loads(color_variants)
+            except Exception:
+                pass
         
         if sku and sku.strip():
             clean_sku = sku.strip()
@@ -181,6 +202,7 @@ async def create_product(
             phone_number=phone_number,
             amazon_link=amazon_link.strip() if (amazon_link and amazon_link.strip()) else None,
             specifications=parsed_specs if isinstance(parsed_specs, list) else [],
+            color_variants=parsed_colors if isinstance(parsed_colors, list) else [],
             technical_spec_pdf=pdf_url
         )
         
@@ -244,6 +266,7 @@ async def update_product(
     whatsapp_number: Optional[str] = Form(None),
     phone_number: Optional[str] = Form(None),
     amazon_link: Optional[str] = Form(None),
+    color_variants: Optional[str] = Form(None),
     specifications: Optional[str] = Form(None),
     technical_spec_pdf: Optional[UploadFile] = File(None),
     technical_spec_pdf_url: Optional[str] = Form(None),
@@ -351,6 +374,14 @@ async def update_product(
             parsed_specs = json.loads(specifications)
             if isinstance(parsed_specs, list):
                 product.specifications = parsed_specs
+        except Exception:
+            pass
+
+    if color_variants is not None:
+        try:
+            parsed_colors = json.loads(color_variants)
+            if isinstance(parsed_colors, list):
+                product.color_variants = parsed_colors
         except Exception:
             pass
 

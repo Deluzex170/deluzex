@@ -31,6 +31,7 @@ import {
   NewsletterSubscriberItem,
   NewsletterSubscribersResponse,
 } from "../../services/api";
+import { isValidEmail, sanitizeEmail } from "../../utils/validation";
 
 interface TemplatePreset {
   id: string;
@@ -311,8 +312,8 @@ export default function AdminNewsletterPage() {
     audience === "all" ? data.total : audience === "pending" ? data.pending : data.notified;
 
   const handleSendTest = async () => {
-    const target = (testEmail.trim() || "info@deluzexlighting.com").toLowerCase();
-    if (!target.includes("@")) {
+    const target = sanitizeEmail(testEmail) || "info@deluzexlighting.com";
+    if (!isValidEmail(target)) {
       setStatusMessage({
         type: "error",
         text: "Please enter a valid test recipient email address (e.g. info@deluzexlighting.com).",
@@ -446,9 +447,8 @@ export default function AdminNewsletterPage() {
         const isNotified = Boolean(p.data?.is_notified);
         return (
           <span
-            className={`${styles.statusBadge} ${
-              isNotified ? styles.statusNotified : styles.statusPending
-            }`}
+            className={`${styles.statusBadge} ${isNotified ? styles.statusNotified : styles.statusPending
+              }`}
           >
             {isNotified ? "Notified" : "Pending"}
           </span>
@@ -686,9 +686,8 @@ export default function AdminNewsletterPage() {
               <div className={styles.viewModeTabs}>
                 <button
                   type="button"
-                  className={`${styles.viewModeTab} ${
-                    viewMode === "edit" ? styles.viewModeTabActive : ""
-                  }`}
+                  className={`${styles.viewModeTab} ${viewMode === "edit" ? styles.viewModeTabActive : ""
+                    }`}
                   onClick={() => setViewMode("edit")}
                   title="Compose and edit email content"
                 >
@@ -697,9 +696,8 @@ export default function AdminNewsletterPage() {
                 </button>
                 <button
                   type="button"
-                  className={`${styles.viewModeTab} ${
-                    viewMode === "preview" ? styles.viewModeTabActive : ""
-                  }`}
+                  className={`${styles.viewModeTab} ${viewMode === "preview" ? styles.viewModeTabActive : ""
+                    }`}
                   onClick={() => {
                     setViewMode("preview");
                     loadPreview();
@@ -711,9 +709,8 @@ export default function AdminNewsletterPage() {
                 </button>
                 <button
                   type="button"
-                  className={`${styles.viewModeTab} ${
-                    viewMode === "split" ? styles.viewModeTabActive : ""
-                  }`}
+                  className={`${styles.viewModeTab} ${viewMode === "split" ? styles.viewModeTabActive : ""
+                    }`}
                   onClick={() => {
                     setViewMode("split");
                     loadPreview();
@@ -737,11 +734,10 @@ export default function AdminNewsletterPage() {
 
             {/* Modal Body: Split or Single View */}
             <div
-              className={`${styles.campaignModalBody} ${
-                viewMode === "split"
+              className={`${styles.campaignModalBody} ${viewMode === "split"
                   ? styles.campaignModalBodySplit
                   : styles.campaignModalBodySingle
-              }`}
+                }`}
             >
               {/* Form Pane (Rendered if viewMode is 'split' or 'edit') */}
               {(viewMode === "split" || viewMode === "edit") && (
@@ -759,9 +755,8 @@ export default function AdminNewsletterPage() {
                           statusMessage.type === "success"
                             ? "rgba(16, 185, 129, 0.15)"
                             : "rgba(239, 68, 68, 0.15)",
-                        border: `1px solid ${
-                          statusMessage.type === "success" ? "#10b981" : "#ef4444"
-                        }`,
+                        border: `1px solid ${statusMessage.type === "success" ? "#10b981" : "#ef4444"
+                          }`,
                         color:
                           statusMessage.type === "success"
                             ? "var(--admin-success-text)"
@@ -786,9 +781,8 @@ export default function AdminNewsletterPage() {
                         return (
                           <div
                             key={preset.id}
-                            className={`${styles.templateCard} ${
-                              isActive ? styles.templateCardActive : ""
-                            }`}
+                            className={`${styles.templateCard} ${isActive ? styles.templateCardActive : ""
+                              }`}
                             onClick={() => handleSelectPreset(preset)}
                           >
                             <span className={styles.templateTag}>{preset.tag}</span>
@@ -960,7 +954,18 @@ export default function AdminNewsletterPage() {
                         type="email"
                         className={styles.testEmailInput}
                         value={testEmail}
-                        onChange={(e) => setTestEmail(e.target.value)}
+                        onChange={(e) => {
+                          setTestEmail(e.target.value);
+                          if (statusMessage?.type === "error") setStatusMessage(null);
+                        }}
+                        onBlur={() => {
+                          if (testEmail.trim() && !isValidEmail(testEmail)) {
+                            setStatusMessage({
+                              type: "error",
+                              text: "Please enter a valid test recipient email address (e.g. info@deluzexlighting.com).",
+                            });
+                          }
+                        }}
                         placeholder="info@deluzexlighting.com"
                       />
                       <button
@@ -1083,7 +1088,18 @@ export default function AdminNewsletterPage() {
                       type="email"
                       className={styles.testEmailInput}
                       value={testEmail}
-                      onChange={(e) => setTestEmail(e.target.value)}
+                      onChange={(e) => {
+                        setTestEmail(e.target.value);
+                        if (statusMessage?.type === "error") setStatusMessage(null);
+                      }}
+                      onBlur={() => {
+                        if (testEmail.trim() && !isValidEmail(testEmail)) {
+                          setStatusMessage({
+                            type: "error",
+                            text: "Please enter a valid test recipient email address (e.g. info@deluzexlighting.com).",
+                          });
+                        }
+                      }}
                       placeholder="info@deluzexlighting.com"
                     />
                     <button
@@ -1159,9 +1175,8 @@ export default function AdminNewsletterPage() {
                   <Send size={15} />
                   {isSendingBroadcast
                     ? "Broadcasting Campaign..."
-                    : `Broadcast to ${targetRecipientCount} Subscriber${
-                        targetRecipientCount !== 1 ? "s" : ""
-                      }`}
+                    : `Broadcast to ${targetRecipientCount} Subscriber${targetRecipientCount !== 1 ? "s" : ""
+                    }`}
                 </button>
               </div>
             </div>

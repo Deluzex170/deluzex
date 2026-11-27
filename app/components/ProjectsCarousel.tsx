@@ -220,8 +220,9 @@ export default function ProjectsCarousel({ projects }: ProjectsCarouselProps) {
               src={proj.image_url || "/images/project_lounge_1784107767735.jpg"}
               alt={proj.title || "Project"}
               fill
+              quality={90}
               sizes="(max-width: 768px) 100vw, 620px"
-              style={{ objectFit: "cover", pointerEvents: "none" }}
+              style={{ objectFit: "cover", objectPosition: "center", pointerEvents: "none" }}
               draggable={false}
             />
             <div className={styles.projectCardLabel}>

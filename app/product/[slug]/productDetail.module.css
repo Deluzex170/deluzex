@@ -78,15 +78,20 @@
 }
 
 .thumbnailRow {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
   gap: 0.65rem;
   width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 157, 102, 0.4) transparent;
+  padding-bottom: 4px;
 }
 
 .thumbnailCard {
   position: relative;
-  width: 100%;
+  flex: 0 0 calc(25% - 0.5rem);
+  max-width: 110px;
+  min-width: 68px;
   aspect-ratio: 1 / 1;
   border-radius: 10px;
   overflow: hidden;
@@ -407,8 +412,13 @@
 }
 
 @keyframes spinBtn {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Subtle Divider */
@@ -1514,7 +1524,7 @@
 @media (max-width: 1024px) {
   .heroGrid {
     grid-template-columns: 1fr;
-    gap: 2.5rem;
+    gap: 1.25rem;
   }
 
   .galleryColumn {
@@ -1551,6 +1561,11 @@
 }
 
 @media (max-width: 640px) {
+  .heroGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.65rem;
+  }
+
   .showcaseCard {
     min-height: 300px;
     padding: 0;
@@ -1971,6 +1986,7 @@ textarea.modalFormInput {
   margin: 0 auto 1.25rem auto;
   box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
 }
+
 /* ─── Design-token layer: one rhythm for the purchase column ─── */
 .actionsWrapper {
   gap: var(--sf-space-2);
@@ -2042,6 +2058,13 @@ textarea.modalFormInput {
   }
 }
 
+@media (max-width: 640px) {
+  .heroGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.65rem;
+  }
+}
+
 /* Review header wraps its rating under the reviewer on narrow phones */
 .reviewHeader {
   flex-wrap: wrap;
@@ -2052,76 +2075,122 @@ textarea.modalFormInput {
   min-width: 0;
 }
 
-/* ==================== VOLTAGE SELECTOR ==================== */
-.voltageSelectorSection {
-  margin-bottom: 1.15rem;
-  padding: 0.85rem 1rem;
-  background: rgba(204, 160, 104, 0.05);
-  border: 1px solid rgba(204, 160, 104, 0.22);
-  border-radius: 10px;
+/* ==================== VOLTAGE & COLOR SELECTORS (SLEEK MINIMALIST) ==================== */
+.colorSelectorSection {
+  margin: 0 0 0.85rem 0;
+  padding: 0;
+  background: transparent;
+  border: none;
 }
 
+.voltageSelectorSection {
+  margin: 0 0 1.15rem 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.colorLabelRow,
 .voltageLabelRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.4rem;
 }
 
+.colorLabel,
 .voltageLabel {
   font-family: var(--font-inter), sans-serif;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #353744;
+  letter-spacing: 0.08em;
+  color: #78716C;
 }
 
+.colorSelectedValue,
 .voltageSelectedValue {
   font-family: var(--font-inter), sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   font-weight: 600;
-  color: #8C6D3F;
+  color: #CCA068;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
+.colorPillList,
 .voltagePillList {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
+.colorPill,
 .voltagePill {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.42rem 0.9rem;
+  gap: 0.4rem;
+  padding: 0.35rem 0.8rem;
+  min-height: 32px;
   font-family: var(--font-inter), sans-serif;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #4A4B54;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #292524;
   background: #FFFFFF;
-  border: 1.5px solid #D8CFC5;
+  border: 1px solid #E7E5E4;
   border-radius: 9999px;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   line-height: 1;
 }
 
-.voltagePill:hover {
+.colorPill:not(.colorPillActive):hover,
+.voltagePill:not(.voltagePillActive):hover {
   border-color: #CCA068;
-  color: #1F2937;
+  color: #111827;
+  background: #FAF8F5;
   transform: translateY(-1px);
 }
 
-.voltagePillActive {
-  background: #CCA068;
-  background: linear-gradient(135deg, #CCA068 0%, #B88B52 100%);
-  border-color: #B88B52;
+.colorPill.colorPillActive,
+.voltagePill.voltagePillActive,
+.colorPill.colorPillActive:hover,
+.voltagePill.voltagePillActive:hover,
+.colorPill.colorPillActive:focus,
+.voltagePill.voltagePillActive:focus,
+.colorPill.colorPillActive:active,
+.voltagePill.voltagePillActive:active {
+  background: #B88B52 !important;
+  background: linear-gradient(135deg, #CCA068 0%, #B88B52 100%) !important;
+  border-color: #B88B52 !important;
   color: #FFFFFF !important;
-  box-shadow: 0 4px 12px rgba(204, 160, 104, 0.35);
+  font-weight: 600 !important;
+  box-shadow: 0 3px 8px rgba(184, 139, 82, 0.35) !important;
+  transform: translateY(-1px);
 }
 
+.colorPillActive .colorPillName,
+.colorPillActive .colorPillCheck,
+.voltagePillActive .voltagePillCheck {
+  color: #FFFFFF !important;
+}
+
+.colorSwatchDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.colorPillName {
+  display: inline-block;
+}
+
+.colorPillCheck,
 .voltagePillCheck {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   line-height: 1;
+  font-weight: 700;
 }

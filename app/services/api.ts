@@ -211,6 +211,12 @@ export interface ProductSpecification {
   value: string;
 }
 
+export interface ColorVariant {
+  name: string;
+  image?: string;
+  images?: string[];
+}
+
 export interface Product {
   _id?: string | number;
   id?: string | number;
@@ -256,6 +262,7 @@ export interface Product {
   phone_number?: string;
   amazon_link?: string;
   specifications?: ProductSpecification[];
+  color_variants?: ColorVariant[];
   technical_spec_pdf?: string;
 }
 
@@ -489,11 +496,12 @@ export async function fetchProducts(queryParams?: URLSearchParams | string): Pro
 
 export async function fetchProductById(id: string): Promise<Product | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/products/${id}`, {
+    const cleanId = id && id.includes("_") ? id.split("_")[0] : id;
+    const res = await fetch(`${API_BASE_URL}/products/${cleanId}`, {
       headers: getAuthHeaders(),
       next: { revalidate: 60 }
     });
-    if (!res.ok) throw new Error(`Failed to fetch product ${id}`);
+    if (!res.ok) throw new Error(`Failed to fetch product ${cleanId}`);
     const data = await res.json();
 
     return data.data || data || null;

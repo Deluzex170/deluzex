@@ -16,17 +16,19 @@ def validate_stock_availability(items: List[Union[Dict[str, Any], Any]]) -> None
         return
 
     for item in items:
-        pid = item.get("product_id") if isinstance(item, dict) else getattr(item, "product_id", None)
+        raw_pid = item.get("product_id") if isinstance(item, dict) else getattr(item, "product_id", None)
         qty = int(item.get("quantity", 1) if isinstance(item, dict) else getattr(item, "quantity", 1))
         title = item.get("title") if isinstance(item, dict) else getattr(item, "title", "Product")
-        if not pid:
+        if not raw_pid:
             continue
 
-        is_valid_oid = ObjectId.is_valid(str(pid))
+        pid_str = str(raw_pid).strip()
+        base_pid = pid_str.split("_")[0].strip() if "_" in pid_str and not ObjectId.is_valid(pid_str) else pid_str
+        is_valid_oid = ObjectId.is_valid(base_pid)
         try:
-            prod_query = {"_id": ObjectId(pid)} if is_valid_oid else {"_id": str(pid)}
+            prod_query = {"_id": ObjectId(base_pid)} if is_valid_oid else {"_id": base_pid}
         except Exception:
-            prod_query = {"_id": str(pid)}
+            prod_query = {"_id": base_pid}
 
         product = db.products.find_one(prod_query)
         if not product and is_valid_oid:
@@ -54,18 +56,20 @@ def decrement_product_stock(items: List[Union[Dict[str, Any], Any]]) -> None:
     decremented_so_far = []
 
     for item in items:
-        pid = item.get("product_id") if isinstance(item, dict) else getattr(item, "product_id", None)
+        raw_pid = item.get("product_id") if isinstance(item, dict) else getattr(item, "product_id", None)
         qty = int(item.get("quantity", 1) if isinstance(item, dict) else getattr(item, "quantity", 1))
         title = item.get("title") if isinstance(item, dict) else getattr(item, "title", "Product")
-        if not pid or qty <= 0:
+        if not raw_pid or qty <= 0:
             continue
 
-        prod_query = {"_id": ObjectId(pid)} if ObjectId.is_valid(str(pid)) else {"_id": str(pid)}
+        pid_str = str(raw_pid).strip()
+        base_pid = pid_str.split("_")[0].strip() if "_" in pid_str and not ObjectId.is_valid(pid_str) else pid_str
+        prod_query = {"_id": ObjectId(base_pid)} if ObjectId.is_valid(base_pid) else {"_id": base_pid}
 
         # Check if product is tracked in MongoDB
         existing_prod = db.products.find_one(prod_query)
         if not existing_prod:
-            logger.warning(f"[INVENTORY] Product {pid} not found in database; skipping stock decrement.")
+            logger.warning(f"[INVENTORY] Product {raw_pid} not found in database; skipping stock decrement.")
             continue
 
         current_stock = int(existing_prod.get("stock_count", 0))
@@ -136,15 +140,17 @@ def restore_product_stock(items: List[Union[Dict[str, Any], Any]]) -> None:
         return
 
     for item in items:
-        pid = item.get("product_id") if isinstance(item, dict) else getattr(item, "product_id", None)
+        raw_pid = item.get("product_id") if isinstance(item, dict) else getattr(item, "product_id", None)
         qty = item.get("quantity", 1) if isinstance(item, dict) else getattr(item, "quantity", 1)
-        if not pid:
+        if not raw_pid:
             continue
 
+        pid_str = str(raw_pid).strip()
+        base_pid = pid_str.split("_")[0].strip() if "_" in pid_str and not ObjectId.is_valid(pid_str) else pid_str
         try:
-            prod_query = {"_id": ObjectId(pid)} if ObjectId.is_valid(str(pid)) else {"_id": str(pid)}
+            prod_query = {"_id": ObjectId(base_pid)} if ObjectId.is_valid(base_pid) else {"_id": base_pid}
         except Exception:
-            prod_query = {"_id": str(pid)}
+            prod_query = {"_id": base_pid}
 
         try:
             db.products.update_one(

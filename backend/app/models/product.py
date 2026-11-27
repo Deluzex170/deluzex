@@ -37,6 +37,7 @@ class Product(BaseModel):
     phone_number: Optional[str] = None
     amazon_link: Optional[str] = None
     specifications: Optional[list[dict]] = []
+    color_variants: Optional[List[Dict[str, Any]]] = []
     technical_spec_pdf: Optional[str] = None
 
     class Config:

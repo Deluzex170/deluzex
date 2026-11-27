@@ -261,6 +261,7 @@
   padding: 0 6rem;
   margin-bottom: 2rem;
   width: 100%;
+  scroll-margin-top: 80px;
 }
 
 .toolbarContainer {
@@ -431,10 +432,13 @@
   background: #FFFFFF;
   color: #1A1A1A;
   font-size: 0.92rem;
-  font-family: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .toolbarSelectBtn:hover,
@@ -451,12 +455,29 @@
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
 .selectBtnValue {
   font-weight: 400;
   color: #1A1A1A;
   font-size: 0.92rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.selectBtnValueDesktop {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.selectBtnValueMobile {
+  display: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chevronIcon {
@@ -1540,13 +1561,57 @@
     width: 100%;
   }
 
+  .sortWrapper {
+    width: 100%;
+    min-width: 0;
+  }
+
   .filterBtn,
   .toolbarSelectBtn {
-    height: 38px;
-    padding: 0 0.85rem;
-    font-size: 13.5px;
+    height: 40px;
+    padding: 0 0.75rem;
+    font-size: 13px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     justify-content: center;
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    gap: 0.35rem;
+  }
+
+  .selectBtnValue {
+    font-size: 12px;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    min-width: 0;
+    max-width: 100%;
+    text-align: center;
+    line-height: 1.2;
+    display: block;
+    flex: 1;
+  }
+
+  .selectBtnValueDesktop {
+    display: none !important;
+  }
+
+  .selectBtnValueMobile {
+    display: block !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    line-height: 1.2;
+  }
+
+  .chevronIcon {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
   }
 
   .toolbarDropdownMenu {
@@ -1564,7 +1629,7 @@
   }
 
   .selectBtnLabel {
-    display: none;
+    display: none !important;
   }
 
   .toolbarMetaRow {
@@ -1643,6 +1708,36 @@
 }
 
 @media (max-width: 480px) {
+  .toolbarSection {
+    padding: 0 0.85rem 1.25rem;
+  }
+
+  .toolbarActions {
+    gap: 0.5rem;
+  }
+
+  .filterBtn,
+  .toolbarSelectBtn {
+    height: 38px;
+    padding: 0 0.55rem;
+    font-size: 12px;
+    gap: 0.3rem;
+  }
+
+  .selectBtnValue {
+    font-size: 11.5px;
+  }
+
+  .selectBtnValueMobile {
+    font-size: 11.5px !important;
+  }
+
+  .filterBadge {
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+  }
+
   .heroTitle {
     font-size: 2.2rem;
   }

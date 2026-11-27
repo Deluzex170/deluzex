@@ -8,6 +8,7 @@ import { addToCart, openCart, getMaxQuantity } from "../../store/cartSlice";
 import { RootState } from "../../store/store";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useMemo } from "react";
+import { isValidEmail, sanitizeEmail } from "../../utils/validation";
 import {
   fetchProductById,
   fetchProducts,
@@ -19,6 +20,7 @@ import {
   fetchFaqs,
   ProductReviewsResponse,
   Product,
+  ColorVariant,
 } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -136,8 +138,8 @@ export default function ProductDetail() {
     }
   }, [product, userEmail]);
 
-  // Compile unique gallery images
-  const galleryImages = useMemo(() => {
+  // Default general product gallery images
+  const defaultGallery = useMemo(() => {
     if (!product) return [];
     const images: string[] = [];
     if (product.product_main_image) {
@@ -150,14 +152,66 @@ export default function ProductDetail() {
         }
       });
     }
-    // Fallback placeholder if no images
     if (images.length === 0) {
       images.push("/images/logos/de_luzex_black.svg");
     }
     return images;
   }, [product]);
 
-  const displayThumbs = galleryImages.slice(0, 4);
+  // Color selection state and memoized available options (must be declared before any conditional return)
+  const availableColors: ColorVariant[] = useMemo(() => {
+    if (Array.isArray(product?.color_variants) && product.color_variants.length > 0) {
+      return product.color_variants.filter((c) => c && c.name);
+    }
+    if (product?.colorway) {
+      return String(product.colorway)
+        .split(",")
+        .map((s) => ({ name: s.trim() }))
+        .filter((c) => Boolean(c.name));
+    }
+    return [];
+  }, [product?.color_variants, product?.colorway]);
+
+  const [selectedColor, setSelectedColor] = useState<string>("");
+
+  useEffect(() => {
+    if (availableColors.length > 0) {
+      const exists = availableColors.some((c) => c.name === selectedColor);
+      if (!selectedColor || !exists) {
+        setSelectedColor(availableColors[0].name);
+      }
+    } else {
+      setSelectedColor("");
+    }
+  }, [availableColors, selectedColor]);
+
+  // Active color variant object
+  const activeColorVariant = useMemo(() => {
+    if (!selectedColor) return null;
+    return availableColors.find(
+      (c) => c.name.toLowerCase() === selectedColor.toLowerCase()
+    ) || null;
+  }, [availableColors, selectedColor]);
+
+  // Dynamic gallery: when a color is selected, show that specific color's photos!
+  const activeGallery = useMemo(() => {
+    if (activeColorVariant) {
+      const vImages: string[] = [];
+      if (Array.isArray(activeColorVariant.images) && activeColorVariant.images.length > 0) {
+        activeColorVariant.images.forEach((img) => {
+          if (img && !vImages.includes(img)) vImages.push(img);
+        });
+      } else if (activeColorVariant.image) {
+        vImages.push(activeColorVariant.image);
+      }
+      if (vImages.length > 0) {
+        return vImages;
+      }
+    }
+    return defaultGallery;
+  }, [activeColorVariant, defaultGallery]);
+
+  const displayThumbs = activeGallery;
 
   // Voltage selection state and memoized available options (must be declared before any conditional return)
   const [selectedVoltage, setSelectedVoltage] = useState<string>("");
@@ -227,15 +281,45 @@ export default function ProductDetail() {
     );
   }
 
-  // Active preview image
-  const currentImage = galleryImages[activeThumb] || galleryImages[0] || product.product_main_image || "";
+  // Active preview image from the active color gallery
+  const currentImage = activeGallery[activeThumb] || activeGallery[0] || product.product_main_image || "";
+
+  const handleSelectColor = (col: ColorVariant) => {
+    setSelectedColor(col.name);
+    setActiveThumb(0);
+  };
+
+  const getSwatchColor = (colorName: string): string => {
+    const norm = colorName.toLowerCase().trim();
+    if (norm.includes("white")) return "#FFFFFF";
+    if (norm.includes("black")) return "#171717";
+    if (norm.includes("rose gold")) return "#B76E79";
+    if (norm.includes("gold")) return "#D4AF37";
+    if (norm.includes("brass")) return "#C5A059";
+    if (norm.includes("bronze")) return "#8C6239";
+    if (norm.includes("copper")) return "#B87333";
+    if (norm.includes("silver") || norm.includes("chrome") || norm.includes("nickel")) return "#D1D5DB";
+    if (norm.includes("grey") || norm.includes("gray")) return "#6B7280";
+    if (norm.includes("beige") || norm.includes("sand")) return "#F5F5DC";
+    if (norm.includes("champagne")) return "#F7E7CE";
+    if (norm.includes("cream")) return "#FFFDD0";
+    if (norm.includes("brown") || norm.includes("walnut")) return "#5D4037";
+    if (norm.includes("blue")) return "#1E3A8A";
+    if (norm.includes("green")) return "#14532D";
+    if (norm.includes("red")) return "#991B1B";
+    return "#CCA068";
+  };
 
   // Contact details & WhatsApp message
   const rawWhatsApp = product.whatsapp_number || "918511682031";
   const whatsappNum = rawWhatsApp.replace(/\D/g, "");
   const callPhoneNum = product.phone_number || "+918511682031";
+  const variantDetails = [
+    selectedColor ? `Color: ${selectedColor}` : "",
+    selectedVoltage ? `Voltage: ${selectedVoltage}` : "",
+  ].filter(Boolean).join(", ");
   const encodedWhatsAppMsg = encodeURIComponent(
-    `Hello Deluzex team! I am interested in inquiring about "${product.product_title}"${selectedVoltage ? ` (Voltage: ${selectedVoltage})` : ""} (SKU: ${product.sku || "N/A"}). Please provide quotation and volume pricing details.`
+    `Hello Deluzex team! I am interested in inquiring about "${product.product_title}"${variantDetails ? ` (${variantDetails})` : ""} (SKU: ${product.sku || "N/A"}). Please provide quotation and volume pricing details.`
   );
 
   // Helper to test if an admin-provided value is genuine and not null/empty/placeholder
@@ -263,7 +347,7 @@ export default function ProductDetail() {
     { key: "Dimensions", value: product.dimensions },
     { key: "Finish", value: product.finish || product.product_finishing },
     { key: "Material", value: product.material || product.product_material },
-    { key: "Colorway", value: product.colorway || product.product_style },
+    { key: "Colorway", value: selectedColor || (availableColors.length > 0 ? availableColors.map((c) => c.name).join(", ") : (product.colorway || product.product_style)) },
     { key: "Voltage", value: selectedVoltage || (availableVoltages.length > 0 ? availableVoltages.join(", ") : product.product_voltage) },
     { key: "Wattage", value: product.product_wattage },
     { key: "Piece Weight", value: product.piece_weight },
@@ -305,24 +389,34 @@ export default function ProductDetail() {
 
   // Action Button Handlers
   const cartProductId = String(product.id || params.slug || "");
-  const quantityInCart = cartItems.find((item) => String(item.id) === cartProductId)?.quantity || 0;
+  const quantityInCart = cartItems
+    .filter((item) => String(item.id) === cartProductId || String(item.productId) === cartProductId)
+    .reduce((sum, item) => sum + item.quantity, 0);
   const maxQuantity = getMaxQuantity(product);
   const isAtStockLimit = maxQuantity !== undefined && quantityInCart >= maxQuantity;
 
   const dispatchAddToCart = () => {
     const itemVoltage = selectedVoltage || (availableVoltages.length > 0 ? availableVoltages[0] : undefined);
-    const cartUniqueId = itemVoltage
-      ? `${cartProductId}_${itemVoltage.replace(/[^a-zA-Z0-9]/g, "")}`
+    const itemColor = selectedColor || (availableColors.length > 0 ? availableColors[0].name : undefined);
+    const variantParts = [
+      itemColor ? itemColor.replace(/[^a-zA-Z0-9]/g, "") : "",
+      itemVoltage ? itemVoltage.replace(/[^a-zA-Z0-9]/g, "") : "",
+    ].filter(Boolean);
+    const cartUniqueId = variantParts.length > 0
+      ? `${cartProductId}_${variantParts.join("_")}`
       : cartProductId;
+
     dispatch(
       addToCart({
         id: cartUniqueId,
+        productId: cartProductId,
         product_title: product.product_title,
         product_price: product.product_price,
-        product_main_image: currentImage || product.product_main_image,
+        product_main_image: currentImage || activeGallery[0] || product.product_main_image,
         quantity: 1,
         max_quantity: maxQuantity,
         voltage: itemVoltage,
+        color: itemColor,
       })
     );
   };
@@ -372,6 +466,13 @@ export default function ProductDetail() {
       openLoginModal(undefined, "Please sign in to submit a quote inquiry.");
       return;
     }
+
+    const cleanEmail = sanitizeEmail(inquiryForm.email);
+    if (!cleanEmail || !isValidEmail(cleanEmail)) {
+      toast.error("Please enter a valid email address (e.g. name@example.com).");
+      return;
+    }
+
     setInquiryLoading(true);
     try {
       // Post inquiry to backend contact / inquiry endpoint
@@ -380,7 +481,7 @@ export default function ProductDetail() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: inquiryForm.name,
-          email: inquiryForm.email,
+          email: cleanEmail,
           phone: inquiryForm.phone,
           subject: `Product Quote Inquiry: ${product.product_title} (SKU: ${product.sku || "N/A"})`,
           message: `Product: ${product.product_title}\nSKU: ${product.sku || "N/A"}\nRequested Quantity: ${inquiryForm.quantity}\nClient Notes: ${inquiryForm.message}`,
@@ -483,31 +584,100 @@ export default function ProductDetail() {
               {product && <WishlistButton product={product} variant="floating" size={22} />}
             </div>
 
-            {/* 4 Thumbnail Selector Grid matching Figma */}
-            <div className={styles.thumbnailRow}>
-              {displayThumbs.map((thumbUrl, idx) => (
-                <div
-                  key={idx}
-                  className={`${styles.thumbnailCard} ${activeThumb === idx ? styles.thumbnailActive : ""}`}
-                  onClick={() => setActiveThumb(idx % galleryImages.length)}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`View image ${idx + 1}`}
-                >
-                  <Image
-                    src={thumbUrl}
-                    alt={`${product.product_title} thumbnail ${idx + 1}`}
-                    fill
-                    sizes="160px"
-                    className={styles.thumbImg}
-                  />
-                </div>
-              ))}
-            </div>
+            {/* Dynamic Gallery Thumbnails */}
+            {displayThumbs.length > 0 && (
+              <div className={styles.thumbnailRow}>
+                {displayThumbs.map((thumbUrl, idx) => (
+                  <div
+                    key={`${thumbUrl}-${idx}`}
+                    className={`${styles.thumbnailCard} ${activeThumb === idx ? styles.thumbnailActive : ""}`}
+                    onClick={() => setActiveThumb(idx)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`View image ${idx + 1}`}
+                  >
+                    <Image
+                      src={thumbUrl}
+                      alt={`${product.product_title} thumbnail ${idx + 1}`}
+                      fill
+                      sizes="160px"
+                      className={styles.thumbImg}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* RIGHT COLUMN: PRODUCT DETAILS & PURCHASE OPTIONS */}
           <div className={styles.infoColumn}>
+            {/* Color Selector Pills */}
+            {availableColors.length > 0 && (
+              <div className={styles.colorSelectorSection}>
+                <div className={styles.colorLabelRow}>
+                  <span className={styles.colorLabel}>Color</span>
+                  {selectedColor && (
+                    <span className={styles.colorSelectedValue}>{selectedColor}</span>
+                  )}
+                </div>
+                <div className={styles.colorPillList}>
+                  {availableColors.map((col) => {
+                    const isSelected = selectedColor === col.name;
+                    const swatchBg = getSwatchColor(col.name);
+                    return (
+                      <button
+                        key={col.name}
+                        type="button"
+                        className={`${styles.colorPill} ${isSelected ? styles.colorPillActive : ""}`}
+                        onClick={() => handleSelectColor(col)}
+                        aria-pressed={isSelected}
+                        title={col.name}
+                      >
+                        <span
+                          className={styles.colorSwatchDot}
+                          style={{
+                            backgroundColor: swatchBg,
+                            border: swatchBg.toLowerCase() === "#ffffff" ? "1px solid #D1D5DB" : "1px solid rgba(0,0,0,0.15)",
+                          }}
+                        />
+                        <span className={styles.colorPillName}>{col.name}</span>
+                        {isSelected && <span className={styles.colorPillCheck}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Voltage Selector Pills */}
+            {availableVoltages.length > 0 && (
+              <div className={styles.voltageSelectorSection}>
+                <div className={styles.voltageLabelRow}>
+                  <span className={styles.voltageLabel}>Voltage</span>
+                  {selectedVoltage && (
+                    <span className={styles.voltageSelectedValue}>{selectedVoltage}</span>
+                  )}
+                </div>
+                <div className={styles.voltagePillList}>
+                  {availableVoltages.map((v) => {
+                    const isSelected = selectedVoltage === v;
+                    return (
+                      <button
+                        key={v}
+                        type="button"
+                        className={`${styles.voltagePill} ${isSelected ? styles.voltagePillActive : ""}`}
+                        onClick={() => setSelectedVoltage(v)}
+                        aria-pressed={isSelected}
+                      >
+                        {v}
+                        {isSelected && <span className={styles.voltagePillCheck}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Store Header & Rating Bar */}
             <div className={styles.storeHeaderRow}>
               <div className={styles.brandBadge}>
@@ -606,35 +776,6 @@ export default function ProductDetail() {
                 <span>✔</span> In Stock ({stockCount} units available for immediate dispatch)
               </div>
             ) : null}
-
-            {/* Voltage Selector Pills */}
-            {availableVoltages.length > 0 && (
-              <div className={styles.voltageSelectorSection}>
-                <div className={styles.voltageLabelRow}>
-                  <span className={styles.voltageLabel}>Select Voltage</span>
-                  {selectedVoltage && (
-                    <span className={styles.voltageSelectedValue}>{selectedVoltage}</span>
-                  )}
-                </div>
-                <div className={styles.voltagePillList}>
-                  {availableVoltages.map((v) => {
-                    const isSelected = selectedVoltage === v;
-                    return (
-                      <button
-                        key={v}
-                        type="button"
-                        className={`${styles.voltagePill} ${isSelected ? styles.voltagePillActive : ""}`}
-                        onClick={() => setSelectedVoltage(v)}
-                        aria-pressed={isSelected}
-                      >
-                        {v}
-                        {isSelected && <span className={styles.voltagePillCheck}>✓</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
             {/* 3 Pill Action Buttons */}
             <div className={styles.actionsWrapper}>
@@ -849,6 +990,11 @@ export default function ProductDetail() {
                         placeholder="you@company.com"
                         value={inquiryForm.email}
                         onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
+                        onBlur={() => {
+                          if (inquiryForm.email && !isValidEmail(inquiryForm.email)) {
+                            toast.error("Please enter a valid email address (e.g. name@example.com).");
+                          }
+                        }}
                       />
                     </div>
                     <div className={styles.modalFormGroup}>

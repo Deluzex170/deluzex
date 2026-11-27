@@ -18,6 +18,7 @@ import {
   verifyProfilePhoneOtp,
 } from "../../services/api";
 import { INDIAN_STATES, lookupPincode, normalizeIndianState } from "../../lib/indiaAddress";
+import { isValidEmail, sanitizeEmail } from "../../utils/validation";
 import styles from "./profile.module.css";
 import { useToast } from "../../context/ToastContext";
 
@@ -196,10 +197,10 @@ export default function ProfilePage() {
   const [isVerifyingPhoneOtp, setIsVerifyingPhoneOtp] = useState(false);
   const [isSendingPhoneOtp, setIsSendingPhoneOtp] = useState(false);
   const [phoneOtpTimer, setPhoneOtpTimer] = useState(0);
-const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-// Timer countdown for Phone OTP resend
+  // Timer countdown for Phone OTP resend
   useEffect(() => {
     if (phoneOtpTimer <= 0) return;
     const interval = setInterval(() => {
@@ -265,8 +266,9 @@ const [isLoadingProfile, setIsLoadingProfile] = useState(true);
       toast.warning("Please enter your last name.");
       return;
     }
-    if (!email.trim() || !email.includes("@")) {
-      toast.warning("Please enter a valid email address.");
+    const cleanEmail = sanitizeEmail(email);
+    if (!cleanEmail || !isValidEmail(cleanEmail)) {
+      toast.warning("Please enter a valid email address (e.g. name@example.com).");
       return;
     }
 
@@ -737,6 +739,11 @@ const [isLoadingProfile, setIsLoadingProfile] = useState(true);
                     className={styles.input}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onBlur={() => {
+                      if (email.trim() && !isValidEmail(email)) {
+                        toast.warning("Please enter a valid email address (e.g. name@example.com).");
+                      }
+                    }}
                   />
                 </div>
                 <div className={styles.formGroup}>
@@ -1384,6 +1391,6 @@ const [isLoadingProfile, setIsLoadingProfile] = useState(true);
           </div>
         </div>
       )}
-</div>
+    </div>
   );
 }

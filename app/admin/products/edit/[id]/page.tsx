@@ -7,6 +7,16 @@ import Link from "next/link";
 import styles from "../../../../admin/admin.module.css";
 import { fetchProductById, updateProduct, fetchCategories, Category, ProductSpecification } from "../../../../services/api";
 
+export interface AdminColorVariant {
+  name: string;
+  image?: string;
+  images?: string[];
+  files?: File[];
+  previews?: string[];
+  file?: File | null;
+  previewUrl?: string;
+}
+
 export default function EditProduct() {
   const router = useRouter();
   const params = useParams();
@@ -45,6 +55,10 @@ export default function EditProduct() {
   const [customSpecs, setCustomSpecs] = useState<ProductSpecification[]>([]);
   const [voltageList, setVoltageList] = useState<string[]>([]);
   const [voltageInput, setVoltageInput] = useState("");
+  const [colorVariants, setColorVariants] = useState<AdminColorVariant[]>([]);
+  const [newColorName, setNewColorName] = useState("");
+  const [newColorFiles, setNewColorFiles] = useState<File[]>([]);
+  const [newColorPreviews, setNewColorPreviews] = useState<string[]>([]);
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
   const [currentGallery, setCurrentGallery] = useState<string[]>([]);
@@ -127,6 +141,26 @@ export default function EditProduct() {
           } else {
             setVoltageList([]);
           }
+
+          if (Array.isArray(data.color_variants) && data.color_variants.length > 0) {
+            setColorVariants(
+              data.color_variants.map((c: any) => {
+                const imgList: string[] = Array.isArray(c.images) ? c.images.filter(Boolean) : (c.image ? [c.image] : []);
+                return {
+                  name: c.name || c.color || "",
+                  image: c.image || imgList[0] || "",
+                  images: imgList,
+                  previewUrl: c.image || imgList[0] || "",
+                  previews: imgList,
+                };
+              })
+            );
+          } else if (data.colorway) {
+            const parsed = String(data.colorway).split(",").map((s: string) => s.trim()).filter(Boolean);
+            setColorVariants(parsed.map((name: string) => ({ name })));
+          } else {
+            setColorVariants([]);
+          }
         }
       } catch (error) {
         console.error(error);
@@ -198,6 +232,96 @@ export default function EditProduct() {
     setFormData((prev) => ({ ...prev, product_voltage: updated.join(", ") }));
   };
 
+  const handleAddColorVariant = (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = newColorName.trim();
+    if (!trimmed) return;
+    if (!colorVariants.some((c) => c.name.toLowerCase() === trimmed.toLowerCase())) {
+      const newVariant: AdminColorVariant = {
+        name: trimmed,
+        images: [],
+        files: newColorFiles,
+        previews: newColorPreviews,
+        image: newColorPreviews[0] || undefined,
+        previewUrl: newColorPreviews[0] || undefined,
+      };
+      const updated = [...colorVariants, newVariant];
+      setColorVariants(updated);
+      setFormData((prev) => ({
+        ...prev,
+        colorway: updated.map((c) => c.name).join(", "),
+      }));
+    }
+    setNewColorName("");
+    setNewColorFiles([]);
+    setNewColorPreviews([]);
+  };
+
+  const handleAppendPendingColorFiles = (files: File[]) => {
+    setNewColorFiles((prev) => [...prev, ...files]);
+    setNewColorPreviews((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
+  };
+
+  const handleRemovePendingColorFile = (index: number) => {
+    setNewColorFiles((prev) => prev.filter((_, i) => i !== index));
+    setNewColorPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveVariantPhoto = (variantIndex: number, photoIndex: number) => {
+    setColorVariants((prev) =>
+      prev.map((variant, vIdx) => {
+        if (vIdx !== variantIndex) return variant;
+        const updatedPreviews = [...(variant.previews || [])];
+        updatedPreviews.splice(photoIndex, 1);
+        const updatedFiles = variant.files ? [...variant.files] : [];
+        if (updatedFiles.length > photoIndex) {
+          updatedFiles.splice(photoIndex, 1);
+        }
+        const updatedImages = variant.images ? [...variant.images] : [];
+        if (updatedImages.length > photoIndex) {
+          updatedImages.splice(photoIndex, 1);
+        }
+        const primary = updatedPreviews[0] || updatedImages[0] || undefined;
+        return {
+          ...variant,
+          files: updatedFiles,
+          previews: updatedPreviews,
+          images: updatedImages,
+          image: primary,
+          previewUrl: primary,
+        };
+      })
+    );
+  };
+
+  const handleAddPhotosToVariant = (variantIndex: number, files: File[]) => {
+    const newPreviews = files.map((f) => URL.createObjectURL(f));
+    setColorVariants((prev) =>
+      prev.map((variant, vIdx) => {
+        if (vIdx !== variantIndex) return variant;
+        const updatedFiles = [...(variant.files || []), ...files];
+        const updatedPreviews = [...(variant.previews || []), ...newPreviews];
+        const primary = updatedPreviews[0] || variant.image;
+        return {
+          ...variant,
+          files: updatedFiles,
+          previews: updatedPreviews,
+          image: primary,
+          previewUrl: primary,
+        };
+      })
+    );
+  };
+
+  const handleRemoveColorVariant = (index: number) => {
+    const updated = colorVariants.filter((_, i) => i !== index);
+    setColorVariants(updated);
+    setFormData((prev) => ({
+      ...prev,
+      colorway: updated.map((c) => c.name).join(", "),
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -212,9 +336,50 @@ export default function EditProduct() {
       const count = parseInt(String(formData.stock_count)) || 0;
       const status = String(formData.stock_status || "").toUpperCase();
       payload.append("in_stock", String(count > 0 && status !== "OUT OF STOCK"));
-      
+
       const validSpecs = customSpecs.filter(s => s.key.trim() && s.value.trim());
       payload.append("specifications", JSON.stringify(validSpecs));
+
+      // Upload color variant images if any
+      const finalColorVariants = await Promise.all(
+        colorVariants.map(async (variant) => {
+          const uploadedUrls: string[] = [];
+
+          if (variant.files && variant.files.length > 0) {
+            for (const f of variant.files) {
+              try {
+                const res = await uploadFileToCloudinary(f, "products");
+                if (res?.url) uploadedUrls.push(res.url);
+              } catch (err) {
+                console.warn("Variant image upload failed:", err);
+              }
+            }
+          } else if (variant.file) {
+            try {
+              const res = await uploadFileToCloudinary(variant.file, "products");
+              if (res?.url) uploadedUrls.push(res.url);
+            } catch (err) {
+              console.warn("Variant image upload failed:", err);
+            }
+          }
+
+          const allImages = [...(variant.images || []), ...uploadedUrls];
+          if (allImages.length === 0 && (variant.image || variant.previewUrl)) {
+            const fallback = variant.image || variant.previewUrl;
+            if (fallback && !fallback.startsWith("blob:")) allImages.push(fallback);
+          }
+
+          const primaryImage = allImages[0] || "";
+
+          return {
+            name: variant.name,
+            image: primaryImage,
+            images: allImages,
+          };
+        })
+      );
+      payload.append("color_variants", JSON.stringify(finalColorVariants));
+      payload.set("colorway", finalColorVariants.map((c) => c.name).join(", "));
 
       // Existing images to retain
       const retainedGallery = currentGallery.filter(url => Boolean(url));
@@ -237,7 +402,7 @@ export default function EditProduct() {
       } else if (mainImage) {
         payload.append("product_main_image", mainImage);
       }
-      
+
       newGalleryFiles.forEach((file) => {
         payload.append("product_images", file);
       });
@@ -260,8 +425,8 @@ export default function EditProduct() {
   };
 
   const inputStyle = {
-    width: '100%', padding: '0.45rem 0.75rem', height: '38px', borderRadius: '6px', 
-    border: '1px solid var(--admin-border, rgba(0,0,0,0.12))', marginTop: '0.25rem', 
+    width: '100%', padding: '0.45rem 0.75rem', height: '38px', borderRadius: '6px',
+    border: '1px solid var(--admin-border, rgba(0,0,0,0.12))', marginTop: '0.25rem',
     fontSize: '0.875rem', fontFamily: 'inherit', boxSizing: 'border-box' as const,
   };
 
@@ -287,7 +452,7 @@ export default function EditProduct() {
           <p>Loading product details...</p>
         ) : (
           <form onSubmit={handleSubmit} className={styles.formGrid2} style={{ display: 'grid', gap: '1rem' }}>
-            
+
             {/* BASIC INFO */}
             <div style={{ gridColumn: '1 / -1' }}>
               <h3 style={sectionHeaderStyle}>Basic Information</h3>
@@ -460,6 +625,306 @@ export default function EditProduct() {
               )}
             </div>
 
+            {/* COLOR / FINISH VARIANTS BUILDER */}
+            <div style={{ gridColumn: '1 / -1', background: 'var(--admin-surface-muted, #F9F9F8)', padding: '1.15rem 1.25rem', borderRadius: '10px', border: '1px solid var(--admin-border, #E5E7EB)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <label style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--color-text, #1F2937)' }}>
+                  Color / Finish Variants (with multiple photos per color)
+                </label>
+                <span style={{ fontSize: '0.78rem', color: '#CCA068', fontWeight: 600 }}>
+                  Dynamic gallery switches when customer selects color
+                </span>
+              </div>
+              <p style={{ margin: '0 0 0.85rem 0', fontSize: '0.8rem', color: 'var(--admin-text-muted, #6B7280)' }}>
+                Add product color options (e.g. <strong>Modern Luxury</strong>, <strong>Matte Black</strong>, <strong>Brushed Gold</strong>). Attach multiple photos to each color so customers can explore that color from every angle!
+              </p>
+
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  value={newColorName}
+                  onChange={(e) => setNewColorName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddColorVariant(e);
+                    }
+                  }}
+                  placeholder="Color Name (e.g. Matte Black)"
+                  style={{ ...inputStyle, flex: '1 1 220px', margin: 0 }}
+                />
+
+                <label
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    padding: '0.55rem 0.95rem',
+                    background: newColorPreviews.length > 0 ? '#FEF3C7' : '#FFFFFF',
+                    border: newColorPreviews.length > 0 ? '1px solid #CCA068' : '1px solid #D8CFC5',
+                    borderRadius: '6px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    color: newColorPreviews.length > 0 ? '#92400E' : '#374151',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                  <span>
+                    {newColorPreviews.length > 0
+                      ? `+ Add Photos (${newColorPreviews.length} selected)`
+                      : "Choose Photos (Multiple)"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        handleAppendPendingColorFiles(Array.from(e.target.files));
+                        e.target.value = "";
+                      }
+                    }}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  onClick={handleAddColorVariant}
+                  disabled={!newColorName.trim()}
+                  style={{
+                    background: newColorName.trim() ? '#CCA068' : '#D1D5DB',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '0.55rem 1.25rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    cursor: newColorName.trim() ? 'pointer' : 'not-allowed',
+                    whiteSpace: 'nowrap',
+                    transition: 'background 0.2s',
+                  }}
+                >
+                  + Add Color
+                </button>
+              </div>
+
+              {/* Pending Photo Thumbnails Strip */}
+              {newColorPreviews.length > 0 && (
+                <div style={{ marginTop: '0.65rem', padding: '0.5rem 0.65rem', background: '#FFFFFF', borderRadius: '6px', border: '1px dashed #CCA068', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#92400E' }}>
+                    Pending photos ({newColorPreviews.length}):
+                  </span>
+                  {newColorPreviews.map((pUrl, pIdx) => (
+                    <div key={pIdx} style={{ position: 'relative', width: '36px', height: '36px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #E5E7EB' }}>
+                      <img src={pUrl} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePendingColorFile(pIdx)}
+                        title="Remove photo"
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          right: 0,
+                          background: 'rgba(0,0,0,0.6)',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          borderRadius: '0 0 0 4px',
+                          width: '16px',
+                          height: '16px',
+                          fontSize: '11px',
+                          lineHeight: 1,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: 0,
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewColorFiles([]);
+                      setNewColorPreviews([]);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#EF4444',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      marginLeft: 'auto',
+                    }}
+                  >
+                    Clear All
+                  </button>
+                </div>
+              )}
+
+              {/* Added Color Variant Cards */}
+              {colorVariants.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.95rem' }}>
+                  {colorVariants.map((col, vIdx) => {
+                    const allPreviews = [
+                      ...(col.previews || []),
+                      ...(col.images || []),
+                      col.previewUrl,
+                      col.image,
+                    ].filter(Boolean) as string[];
+                    const uniquePreviews = Array.from(new Set(allPreviews));
+
+                    return (
+                      <div
+                        key={vIdx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '0.75rem',
+                          background: '#FFFFFF',
+                          border: '1px solid #E5E7EB',
+                          padding: '0.55rem 0.85rem',
+                          borderRadius: '8px',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#1F2937', minWidth: '100px' }}>
+                            {col.name}
+                          </span>
+
+                          {/* Photos row */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                            {uniquePreviews.map((imgUrl, pIdx) => (
+                              <div
+                                key={pIdx}
+                                style={{
+                                  position: 'relative',
+                                  width: '36px',
+                                  height: '36px',
+                                  borderRadius: '6px',
+                                  overflow: 'hidden',
+                                  border: pIdx === 0 ? '2px solid #CCA068' : '1px solid #E5E7EB',
+                                  flexShrink: 0,
+                                }}
+                                title={pIdx === 0 ? "Primary cover photo for this color" : `Photo ${pIdx + 1}`}
+                              >
+                                <img
+                                  src={imgUrl}
+                                  alt={`${col.name} ${pIdx + 1}`}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveVariantPhoto(vIdx, pIdx)}
+                                  title="Remove this photo"
+                                  style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    right: 0,
+                                    background: 'rgba(239, 68, 68, 0.85)',
+                                    color: '#FFFFFF',
+                                    border: 'none',
+                                    borderRadius: '0 0 0 4px',
+                                    width: '15px',
+                                    height: '15px',
+                                    fontSize: '11px',
+                                    lineHeight: 1,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    padding: 0,
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+
+                            {/* Add More Photos directly to this variant */}
+                            <label
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '36px',
+                                height: '36px',
+                                border: '1px dashed #CCA068',
+                                borderRadius: '6px',
+                                background: '#FFFDF9',
+                                color: '#CCA068',
+                                fontSize: '1.1rem',
+                                cursor: 'pointer',
+                                flexShrink: 0,
+                                transition: 'all 0.2s',
+                              }}
+                              title="Add more photos to this color"
+                            >
+                              +
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={(e) => {
+                                  if (e.target.files && e.target.files.length > 0) {
+                                    handleAddPhotosToVariant(vIdx, Array.from(e.target.files));
+                                    e.target.value = "";
+                                  }
+                                }}
+                                style={{ display: 'none' }}
+                              />
+                            </label>
+                          </div>
+
+                          <span style={{ fontSize: '0.75rem', color: '#CCA068', fontWeight: 600 }}>
+                            {uniquePreviews.length} {uniquePreviews.length === 1 ? 'photo' : 'photos'}
+                          </span>
+                        </div>
+
+                        {/* Remove Entire Color Variant */}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveColorVariant(vIdx)}
+                          title={`Delete color ${col.name}`}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#9CA3AF',
+                            fontSize: '1.2rem',
+                            lineHeight: 1,
+                            cursor: 'pointer',
+                            padding: '0.25rem 0.5rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'color 0.2s',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.color = '#EF4444')}
+                          onMouseLeave={(e) => (e.currentTarget.style.color = '#9CA3AF')}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             <div>
               <label style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--color-text)' }}>Dimensions</label>
               <input type="text" name="dimensions" value={formData.dimensions} onChange={handleChange} style={inputStyle} placeholder="e.g. 10.5 inch (26.7 cm) Diameter" />
@@ -543,106 +1008,106 @@ export default function EditProduct() {
               ))}
             </div>
 
-          {/* TECHNICAL SPECIFICATION PDF */}
-          <div style={{ gridColumn: '1 / -1', borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
-            <h3 style={sectionHeaderStyle}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10 9 9 9 8 9"></polyline>
-              </svg>
-              Technical Specification PDF / Brochure
-            </h3>
-            <p style={{ fontSize: '0.825rem', color: 'var(--admin-text-muted)', marginBottom: '0.75rem' }}>
-              Upload an official product datasheet or brochure PDF. Customers can view and download this document from the product page.
-            </p>
-            <div style={{ background: 'var(--admin-surface-muted)', padding: '1.25rem', borderRadius: '10px', border: '1px solid var(--admin-border)' }}>
-              {currentPdf && !removePdf ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--admin-surface)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid var(--admin-border)', marginBottom: specPdf ? '1rem' : '0' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: '#0B4228', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem' }}>
-                      PDF
+            {/* TECHNICAL SPECIFICATION PDF */}
+            <div style={{ gridColumn: '1 / -1', borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
+              <h3 style={sectionHeaderStyle}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                Technical Specification PDF / Brochure
+              </h3>
+              <p style={{ fontSize: '0.825rem', color: 'var(--admin-text-muted)', marginBottom: '0.75rem' }}>
+                Upload an official product datasheet or brochure PDF. Customers can view and download this document from the product page.
+              </p>
+              <div style={{ background: 'var(--admin-surface-muted)', padding: '1.25rem', borderRadius: '10px', border: '1px solid var(--admin-border)' }}>
+                {currentPdf && !removePdf ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--admin-surface)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid var(--admin-border)', marginBottom: specPdf ? '1rem' : '0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: '#0B4228', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem' }}>
+                        PDF
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--admin-text-main)' }}>Current Technical Datasheet</div>
+                        <a href={currentPdf} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.78rem', color: '#E0531C', textDecoration: 'underline' }}>
+                          View / Download current PDF &rarr;
+                        </a>
+                      </div>
                     </div>
-                    <div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--admin-text-main)' }}>Current Technical Datasheet</div>
-                      <a href={currentPdf} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.78rem', color: '#E0531C', textDecoration: 'underline' }}>
-                        View / Download current PDF &rarr;
-                      </a>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setRemovePdf(true)}
+                      style={{ background: 'rgba(239, 68, 68, 0.14)', color: 'var(--admin-danger-text)', border: 'none', borderRadius: '6px', padding: '0.4rem 0.85rem', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      ✕ Remove Current PDF
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setRemovePdf(true)}
-                    style={{ background: 'rgba(239, 68, 68, 0.14)', color: 'var(--admin-danger-text)', border: 'none', borderRadius: '6px', padding: '0.4rem 0.85rem', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
-                  >
-                    ✕ Remove Current PDF
-                  </button>
-                </div>
-              ) : removePdf ? (
-                <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.4)', color: 'var(--admin-danger-text)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                  <span>Current PDF will be removed upon saving.</span>
-                  <button type="button" onClick={() => setRemovePdf(false)} style={{ background: 'var(--admin-surface)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '4px', padding: '2px 8px', fontSize: '0.78rem', cursor: 'pointer', color: 'var(--admin-danger-text)' }}>Undo</button>
-                </div>
-              ) : null}
+                ) : removePdf ? (
+                  <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.4)', color: 'var(--admin-danger-text)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                    <span>Current PDF will be removed upon saving.</span>
+                    <button type="button" onClick={() => setRemovePdf(false)} style={{ background: 'var(--admin-surface)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '4px', padding: '2px 8px', fontSize: '0.78rem', cursor: 'pointer', color: 'var(--admin-danger-text)' }}>Undo</button>
+                  </div>
+                ) : null}
 
-              {specPdf ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--admin-surface)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.4)', marginTop: '0.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(245, 158, 11, 0.15)', color: 'var(--admin-warning-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem' }}>
-                      NEW
+                {specPdf ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--admin-surface)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.4)', marginTop: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(245, 158, 11, 0.15)', color: 'var(--admin-warning-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem' }}>
+                        NEW
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--admin-text-main)' }}>{specPdf.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>{(specPdf.size / 1024).toFixed(1)} KB (Will replace current PDF on save)</div>
+                      </div>
                     </div>
-                    <div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--admin-text-main)' }}>{specPdf.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>{(specPdf.size / 1024).toFixed(1)} KB (Will replace current PDF on save)</div>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSpecPdf(null)}
+                      style={{ background: 'rgba(239, 68, 68, 0.14)', color: 'var(--admin-danger-text)', border: 'none', borderRadius: '6px', padding: '0.4rem 0.85rem', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      ✕ Remove
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setSpecPdf(null)}
-                    style={{ background: 'rgba(239, 68, 68, 0.14)', color: 'var(--admin-danger-text)', border: 'none', borderRadius: '6px', padding: '0.4rem 0.85rem', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
-                  >
-                    ✕ Remove
-                  </button>
-                </div>
-              ) : (
-                <div style={{ marginTop: currentPdf && !removePdf ? '1rem' : '0' }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--admin-text-secondary)', display: 'block', marginBottom: '0.35rem' }}>
-                    {currentPdf && !removePdf ? "Upload New PDF to Replace" : "Upload Datasheet PDF"}
-                  </label>
-                  <input
-                    type="file"
-                    accept="application/pdf"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        setSpecPdf(e.target.files[0]);
-                        setRemovePdf(false);
-                      }
-                    }}
-                    style={inputStyle}
-                  />
+                ) : (
+                  <div style={{ marginTop: currentPdf && !removePdf ? '1rem' : '0' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--admin-text-secondary)', display: 'block', marginBottom: '0.35rem' }}>
+                      {currentPdf && !removePdf ? "Upload New PDF to Replace" : "Upload Datasheet PDF"}
+                    </label>
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setSpecPdf(e.target.files[0]);
+                          setRemovePdf(false);
+                        }
+                      }}
+                      style={inputStyle}
+                    />
 
-                  <div style={{ margin: '0.85rem 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-subtle)', fontWeight: 600, textTransform: 'uppercase' }}>OR Enter ImageKit / PDF URL</span>
-                    <div style={{ flex: 1, height: '1px', background: '#E2E8F0' }} />
+                    <div style={{ margin: '0.85rem 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-subtle)', fontWeight: 600, textTransform: 'uppercase' }}>OR Enter ImageKit / PDF URL</span>
+                      <div style={{ flex: 1, height: '1px', background: '#E2E8F0' }} />
+                    </div>
+                    <input
+                      type="url"
+                      placeholder="e.g. https://ik.imagekit.io/2s78gfu2x/specs/datasheet.pdf"
+                      value={specPdfUrl}
+                      onChange={(e) => {
+                        setSpecPdfUrl(e.target.value);
+                        if (e.target.value.trim()) {
+                          setRemovePdf(false);
+                        }
+                      }}
+                      style={{ ...inputStyle, marginTop: 0 }}
+                    />
                   </div>
-                  <input
-                    type="url"
-                    placeholder="e.g. https://ik.imagekit.io/2s78gfu2x/specs/datasheet.pdf"
-                    value={specPdfUrl}
-                    onChange={(e) => {
-                      setSpecPdfUrl(e.target.value);
-                      if (e.target.value.trim()) {
-                        setRemovePdf(false);
-                      }
-                    }}
-                    style={{ ...inputStyle, marginTop: 0 }}
-                  />
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
 
             {/* CONTACT & OVERRIDES */}
             <div style={{ gridColumn: '1 / -1', borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '1.5rem' }}>
@@ -762,9 +1227,9 @@ export default function EditProduct() {
                       style={{ display: 'none' }}
                     />
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '0.5rem' }}>
-                      <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-                      <circle cx="9" cy="9" r="2"/>
-                      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                      <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                      <circle cx="9" cy="9" r="2" />
+                      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
                     </svg>
                     <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--admin-gold-text)' }}>
                       + Click to choose or add more gallery images (single or multiple)

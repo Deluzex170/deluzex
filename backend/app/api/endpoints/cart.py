@@ -27,14 +27,15 @@ def serialize_cart_item(doc: dict) -> dict:
     # Read-only enrichment from db.products if fields are not cached on cart_item
     if not title or price is None or not image or stock is None:
         product_doc = None
-        if ObjectId.is_valid(product_id_str):
+        base_id_str = product_id_str.split("_")[0].strip() if "_" in product_id_str else product_id_str
+        if ObjectId.is_valid(base_id_str):
             try:
-                product_doc = db.products.find_one({"_id": ObjectId(product_id_str)})
+                product_doc = db.products.find_one({"_id": ObjectId(base_id_str)})
             except Exception:
                 product_doc = None
         if not product_doc:
             product_doc = db.products.find_one({
-                "$or": [{"_id": product_id_str}, {"sku": product_id_str}]
+                "$or": [{"_id": product_id_str}, {"sku": product_id_str}, {"_id": base_id_str}, {"sku": base_id_str}]
             })
 
         if product_doc:
@@ -85,14 +86,15 @@ def add_to_cart(item: CartItemCreate):
     stock = 99
 
     product_doc = None
-    if ObjectId.is_valid(product_id_str):
+    base_id_str = product_id_str.split("_")[0].strip() if "_" in product_id_str else product_id_str
+    if ObjectId.is_valid(base_id_str):
         try:
-            product_doc = db.products.find_one({"_id": ObjectId(product_id_str)})
+            product_doc = db.products.find_one({"_id": ObjectId(base_id_str)})
         except Exception:
             product_doc = None
     if not product_doc:
         product_doc = db.products.find_one({
-            "$or": [{"_id": product_id_str}, {"sku": product_id_str}]
+            "$or": [{"_id": product_id_str}, {"sku": product_id_str}, {"_id": base_id_str}, {"sku": base_id_str}]
         })
 
     if product_doc:

@@ -41,6 +41,7 @@ export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchWrapperRef = useRef<HTMLDivElement>(null);
   const { cartItems } = useSelector((state: RootState) => state.cart);
   const { wishlistCount } = useWishlist();
 
@@ -111,6 +112,23 @@ export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = 
     if (searchOpen && searchInputRef.current) {
       searchInputRef.current.focus();
     }
+  }, [searchOpen]);
+
+  // Close search when clicking outside
+  useEffect(() => {
+    if (!searchOpen) return;
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(target)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, [searchOpen]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -266,33 +284,60 @@ export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = 
       </nav>
 
       <div className={styles.headerIcons}>
-        <div className={styles.searchWrapper}>
+        <div ref={searchWrapperRef} className={styles.searchWrapper}>
           {searchOpen && (
-            <form onSubmit={handleSearchSubmit} className={styles.searchForm}>
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search lamps, chandeliers..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={styles.searchInput}
-              />
-              <button
-                type="button"
-                className={styles.searchCloseBtn}
+            <>
+              <div
+                className={styles.searchBackdrop}
                 onClick={() => {
                   setSearchOpen(false);
                   setSearchQuery("");
                 }}
-                title="Close search"
-                aria-label="Close search"
-              >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </form>
+                aria-hidden="true"
+              />
+              <form onSubmit={handleSearchSubmit} className={styles.searchForm}>
+                <button
+                  type="submit"
+                  className={styles.searchSubmitBtn}
+                  title="Search"
+                  aria-label="Submit search"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                    <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M21 21L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search lamps, chandeliers..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      setSearchOpen(false);
+                      setSearchQuery("");
+                    }
+                  }}
+                  className={styles.searchInput}
+                />
+                <button
+                  type="button"
+                  className={styles.searchCloseBtn}
+                  onClick={() => {
+                    setSearchOpen(false);
+                    setSearchQuery("");
+                  }}
+                  title="Close search"
+                  aria-label="Close search"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </form>
+            </>
           )}
           <button
             className={styles.iconBtn}
@@ -349,7 +394,7 @@ export default function Header({ hasBackgroundImage: propHasBg }: HeaderProps = 
               />
             ) : (
               <span className={styles.userInitials} title={displayName}>
-                {initial}
+                <span className={styles.initialChar}>{initial}</span>
               </span>
             )}
           </Link>

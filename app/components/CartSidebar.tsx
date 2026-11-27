@@ -78,14 +78,16 @@ export default function CartSidebar() {
   // Refresh inventory caps so quantities can't be raised beyond available stock
   const cartItemIds = cartItems.map((item) => String(item.id)).join(",");
   useEffect(() => {
-    if (!isCartOpen || !cartItemIds) return;
+    if (!isCartOpen || !cartItems.length) return;
     let cancelled = false;
     Promise.all(
-      cartItemIds.split(",").map((id) =>
-        fetchProductById(id)
-          .then((product) => [id, product] as const)
-          .catch(() => [id, null] as const)
-      )
+      cartItems.map((item) => {
+        const rawId = String(item.id);
+        const lookupId = String(item.productId || (rawId.includes("_") ? rawId.split("_")[0] : rawId));
+        return fetchProductById(lookupId)
+          .then((product) => [rawId, product] as const)
+          .catch(() => [rawId, null] as const);
+      })
     ).then((results) => {
       if (cancelled) return;
       const limits: Record<string, number | undefined> = {};
@@ -348,9 +350,14 @@ export default function CartSidebar() {
                 <div className={styles.itemDetails}>
                   <div className={styles.itemTitleArea}>
                     <h4 className={styles.itemTitle}>{item.title}</h4>
-                    {item.voltage && (
-                      <span className={styles.itemVoltageBadge}>{item.voltage}</span>
-                    )}
+                    <div className={styles.variantBadgesRow}>
+                      {item.color && (
+                        <span className={styles.itemColorBadge}>{item.color}</span>
+                      )}
+                      {item.voltage && (
+                        <span className={styles.itemVoltageBadge}>{item.voltage}</span>
+                      )}
+                    </div>
                   </div>
                   <p className={styles.price}>
                     ₹{item.price.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

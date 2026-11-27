@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./adminLogin.module.css";
 import { useAuth } from "../../context/AuthContext";
+import { isValidEmail, sanitizeEmail } from "../../utils/validation";
 
 type ToastProps = {
   type: "success" | "error";
@@ -57,8 +58,12 @@ export default function AdminLogin() {
     setPasswordError("");
 
     let valid = true;
-    if (!email.trim()) {
+    const cleanEmail = sanitizeEmail(email);
+    if (!cleanEmail) {
       setEmailError("Administrator email is required.");
+      valid = false;
+    } else if (!isValidEmail(cleanEmail)) {
+      setEmailError("Please enter a valid email address (e.g. admin@deluzex.com).");
       valid = false;
     }
     if (!password.trim()) {
@@ -76,7 +81,7 @@ export default function AdminLogin() {
       const response = await fetch(`${apiUrl}/auth/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ email: cleanEmail, password }),
       });
 
       const data = await response.json();
@@ -156,6 +161,11 @@ export default function AdminLogin() {
                 onChange={(e) => {
                   setEmail(e.target.value);
                   if (emailError) setEmailError("");
+                }}
+                onBlur={() => {
+                  if (email.trim() && !isValidEmail(email)) {
+                    setEmailError("Please enter a valid email address (e.g. admin@deluzex.com).");
+                  }
                 }}
                 className={`${styles.input} ${emailError ? styles.inputError : ""}`}
                 autoComplete="email"

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import styles from "./Footer.module.css";
 import { subscribeNewsletter, fetchSiteContent, fetchCategories, Category } from "../services/api";
+import { isValidEmail, sanitizeEmail } from "../utils/validation";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
@@ -20,10 +21,10 @@ export default function Footer() {
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanEmail = email.trim();
-    if (!cleanEmail || !cleanEmail.includes("@") || !cleanEmail.includes(".")) {
+    const cleanEmail = sanitizeEmail(email);
+    if (!isValidEmail(cleanEmail)) {
       setStatus("error");
-      setMessage("Please enter a valid email address.");
+      setMessage("Please enter a valid email address (e.g. name@example.com).");
       return;
     }
 
@@ -203,6 +204,12 @@ export default function Footer() {
                 onChange={(e) => {
                   setEmail(e.target.value);
                   if (status !== "idle") setStatus("idle");
+                }}
+                onBlur={() => {
+                  if (email.trim() && !isValidEmail(email)) {
+                    setStatus("error");
+                    setMessage("Please enter a valid email address (e.g. name@example.com).");
+                  }
                 }}
                 placeholder="Enter your email address"
                 aria-label="Email address for newsletter"

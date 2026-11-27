@@ -37,6 +37,7 @@ import {
   updateUserProfile,
 } from "../services/api";
 import { INDIAN_STATES, lookupPincode, normalizeIndianState } from "../lib/indiaAddress";
+import { isValidEmail, sanitizeEmail } from "../utils/validation";
 import styles from "./checkout.module.css";
 
 function getOrCreateIdempotencyKey(): string {
@@ -409,6 +410,12 @@ export default function CheckoutPage() {
     const activeEmail = (userObj?.email || email || "").trim().toLowerCase();
     const activePhone = (phone || userObj?.phone || "").trim();
 
+    if (!activeEmail || !isValidEmail(activeEmail)) {
+      setErrorMessage("Please provide a valid email address for your order confirmation.");
+      scrollToError();
+      return;
+    }
+
     const cleanPhone = activePhone.replace(/\D/g, "");
     if (cleanPhone.length < 10) {
       setErrorMessage("Please provide a valid 10-digit mobile number for delivery tracking.");
@@ -552,7 +559,7 @@ export default function CheckoutPage() {
       scrollToError();
       return false;
     }
-    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
+    if (!email.trim() || !isValidEmail(email)) {
       setErrorMessage("Please provide a valid email address for your order confirmation.");
       scrollToError();
       return false;
@@ -670,8 +677,8 @@ export default function CheckoutPage() {
                 pin_code: pinCode.trim(),
               },
               items: cartItems.map((item) => ({
-                product_id: String(item.id),
-                title: item.voltage ? `${item.title} (${item.voltage})` : item.title,
+                product_id: String(item.productId || (String(item.id).includes("_") ? String(item.id).split("_")[0] : item.id)),
+                title: [item.color, item.voltage].filter(Boolean).length > 0 ? `${item.title} (${[item.color, item.voltage].filter(Boolean).join(", ")})` : item.title,
                 price: item.price,
                 quantity: item.quantity,
                 image: item.image,
@@ -722,8 +729,8 @@ export default function CheckoutPage() {
             pin_code: pinCode.trim(),
           },
           items: cartItems.map((item) => ({
-            product_id: String(item.id),
-            title: item.voltage ? `${item.title} (${item.voltage})` : item.title,
+            product_id: String(item.productId || (String(item.id).includes("_") ? String(item.id).split("_")[0] : item.id)),
+            title: [item.color, item.voltage].filter(Boolean).length > 0 ? `${item.title} (${[item.color, item.voltage].filter(Boolean).join(", ")})` : item.title,
             price: item.price,
             quantity: item.quantity,
             image: item.image,
@@ -845,8 +852,8 @@ export default function CheckoutPage() {
             pin_code: pinCode.trim(),
           },
           items: cartItems.map((item) => ({
-            product_id: String(item.id),
-            title: item.voltage ? `${item.title} (${item.voltage})` : item.title,
+            product_id: String(item.productId || (String(item.id).includes("_") ? String(item.id).split("_")[0] : item.id)),
+            title: [item.color, item.voltage].filter(Boolean).length > 0 ? `${item.title} (${[item.color, item.voltage].filter(Boolean).join(", ")})` : item.title,
             price: item.price,
             quantity: item.quantity,
             image: item.image,
@@ -886,8 +893,8 @@ export default function CheckoutPage() {
               pin_code: pinCode.trim(),
             },
             items: cartItems.map((item) => ({
-              product_id: String(item.id),
-              title: item.voltage ? `${item.title} (${item.voltage})` : item.title,
+              product_id: String(item.productId || (String(item.id).includes("_") ? String(item.id).split("_")[0] : item.id)),
+              title: [item.color, item.voltage].filter(Boolean).length > 0 ? `${item.title} (${[item.color, item.voltage].filter(Boolean).join(", ")})` : item.title,
               price: item.price,
               quantity: item.quantity,
               image: item.image,
@@ -968,7 +975,8 @@ export default function CheckoutPage() {
             {isAddressReady ? "✓" : "1"}
           </div>
           <span className={`${styles.stepLabel} ${isAddressReady ? "" : styles.stepLabelActive}`}>
-            Delivery Address
+            <span className={styles.stepLabelFull}>Delivery Address</span>
+            <span className={styles.stepLabelShort}>Address</span>
           </span>
         </div>
 
@@ -979,7 +987,8 @@ export default function CheckoutPage() {
             2
           </div>
           <span className={`${styles.stepLabel} ${styles.stepLabelActive}`}>
-            Payment Method
+            <span className={styles.stepLabelFull}>Payment Method</span>
+            <span className={styles.stepLabelShort}>Payment</span>
           </span>
         </div>
 
@@ -990,7 +999,8 @@ export default function CheckoutPage() {
             3
           </div>
           <span className={styles.stepLabel}>
-            Confirmation
+            <span className={styles.stepLabelFull}>Confirmation</span>
+            <span className={styles.stepLabelShort}>Confirm</span>
           </span>
         </div>
       </div>
@@ -1101,7 +1111,15 @@ export default function CheckoutPage() {
                 className={styles.input}
                 placeholder="name@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errorMessage?.includes("email")) setErrorMessage(null);
+                }}
+                onBlur={() => {
+                  if (email.trim() && !isValidEmail(email)) {
+                    setErrorMessage("Please provide a valid email address (e.g. name@example.com).");
+                  }
+                }}
                 disabled={isProcessing}
               />
             </div>
@@ -1551,9 +1569,14 @@ export default function CheckoutPage() {
                     <div className={styles.itemTitleRow}>
                       <div>
                         <h4 className={styles.itemName}>{item.title}</h4>
-                        {item.voltage && (
-                          <span className={styles.itemVoltageBadge}>{item.voltage}</span>
-                        )}
+                        <div className={styles.variantBadgesRow}>
+                          {item.color && (
+                            <span className={styles.itemColorBadge}>{item.color}</span>
+                          )}
+                          {item.voltage && (
+                            <span className={styles.itemVoltageBadge}>{item.voltage}</span>
+                          )}
+                        </div>
                       </div>
                       <div className={styles.qtyControlGroup}>
                         <button

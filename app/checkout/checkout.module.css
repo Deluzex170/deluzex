@@ -51,6 +51,7 @@
   font-weight: 700;
   transition: all 0.25s ease;
   flex-shrink: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
 .stepCircleActive {
@@ -70,11 +71,20 @@
   color: #7A7670;
   white-space: nowrap;
   letter-spacing: 0.01em;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
 .stepLabelActive {
   color: #1A1918;
   font-weight: 700;
+}
+
+.stepLabelFull {
+  display: inline;
+}
+
+.stepLabelShort {
+  display: none;
 }
 
 .stepConnector {
@@ -126,6 +136,7 @@
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1011,6 +1022,27 @@
   text-overflow: ellipsis;
 }
 
+.variantBadgesRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 3px;
+}
+
+.itemColorBadge {
+  display: inline-block;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #1F2937;
+  background: #F3F4F6;
+  border: 1px solid #D1D5DB;
+  border-radius: 4px;
+  padding: 1px 6px;
+  width: fit-content;
+}
+
 .itemVoltageBadge {
   display: inline-block;
   font-family: var(--font-inter), sans-serif;
@@ -1021,7 +1053,6 @@
   border: 1px solid rgba(204, 160, 104, 0.35);
   border-radius: 4px;
   padding: 1px 6px;
-  margin-top: 3px;
   width: fit-content;
 }
 
@@ -1428,7 +1459,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .securityGuarantee {
@@ -1471,18 +1504,39 @@
   }
 
   .checkoutStepper {
-    padding: 6px 16px;
-    gap: 10px;
-    width: 100%;
+    padding: 6px 14px;
+    gap: 8px;
+    width: max-content;
+    max-width: 100%;
+    margin: 0 auto 1.5rem;
     box-sizing: border-box;
   }
 
+  .stepItem {
+    gap: 5px;
+  }
+
+  .stepCircle {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+
   .stepConnector {
-    width: 16px;
+    width: 14px;
+    flex-shrink: 0;
   }
 
   .stepLabel {
-    font-size: 11px;
+    font-size: 11.5px;
+  }
+
+  .stepLabelFull {
+    display: none !important;
+  }
+
+  .stepLabelShort {
+    display: inline !important;
   }
 
   .section {
@@ -1524,5 +1578,30 @@
   .btnPayCod {
     height: 46px;
     font-size: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .checkoutStepper {
+    padding: 5px 10px;
+    gap: 6px;
+  }
+
+  .stepItem {
+    gap: 4px;
+  }
+
+  .stepCircle {
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+  }
+
+  .stepConnector {
+    width: 10px;
+  }
+
+  .stepLabel {
+    font-size: 10.5px;
   }
 }

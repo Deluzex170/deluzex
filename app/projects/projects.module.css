@@ -119,6 +119,11 @@
   border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
+  text-decoration: none;
+}
+
+.projectCard:hover {
+  text-decoration: none;
 }
 
 .projectCard img {
@@ -163,20 +168,22 @@
   font-size: 1.2rem;
   font-weight: 500;
   color: #16202e;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-color: rgba(34, 43, 56, 0.45);
+  text-decoration: none;
   margin-bottom: 0.2rem;
   line-height: 1.25;
+}
+
+.projectCard:hover .plbTitle {
+  text-decoration: none;
 }
 
 .plbSub {
   font-family: 'General Sans', var(--font-hanken), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   display: block;
-  font-size: 0.95rem;
+  font-size: 0.65rem;
   color: #3d434d;
   font-weight: 400;
-  line-height: 1.1;
+  line-height: 1.2;
 }
 
 .plbTextContainer {
@@ -714,9 +721,7 @@
     font-size: 10px;
     font-weight: 600;
     color: #222b38;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    text-decoration-color: rgba(34, 43, 56, 0.45);
+    text-decoration: none;
     margin-bottom: 2px;
     line-height: 1.2;
     white-space: nowrap;
@@ -878,15 +883,16 @@
     font-size: 0.88rem;
   }
 }
+
 /* Phone/tablet legibility for the project label bar */
 @media (max-width: 1024px) {
   .plbTitle {
-    font-size: 0.8rem;
+    font-size: 0.95rem;
     line-height: 1.3;
   }
 
   .plbSubLocation {
-    font-size: 0.7rem;
+    font-size: 0.8rem;
   }
 }
 
@@ -907,7 +913,17 @@
     bottom: 12px;
     left: 12px;
     right: 12px;
-    padding: 10px 12px;
+    padding: 10px 14px;
     border-radius: 10px;
+  }
+
+  .plbTitle {
+    font-size: 15px;
+    line-height: 1.25;
+  }
+
+  .plbSubLocation {
+    font-size: 12.5px;
+    line-height: 1.25;
   }
 }

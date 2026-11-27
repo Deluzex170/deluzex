@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import styles from "./CollaborateSection.module.css";
 import { submitCollaboration } from "../services/api";
+import { isValidEmail, sanitizeEmail } from "../utils/validation";
 
 export default function CollaborateSection() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,13 +29,19 @@ export default function CollaborateSection() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanEmail = sanitizeEmail(formData.email);
+    if (!cleanEmail || !isValidEmail(cleanEmail)) {
+      setErrorMsg("Please enter a valid email address (e.g. name@example.com).");
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg("");
 
     try {
       await submitCollaboration({
         name: formData.name,
-        email: formData.email,
+        email: cleanEmail,
         phone: formData.phone,
         role: formData.role,
         concept_title: formData.conceptTitle,
@@ -168,6 +175,13 @@ export default function CollaborateSection() {
                         required
                         value={formData.email}
                         onChange={handleChange}
+                        onBlur={() => {
+                          if (formData.email && !isValidEmail(formData.email)) {
+                            setErrorMsg("Please enter a valid email address (e.g. name@example.com).");
+                          } else if (errorMsg) {
+                            setErrorMsg("");
+                          }
+                        }}
                         placeholder="you@studio.com"
                       />
                     </div>

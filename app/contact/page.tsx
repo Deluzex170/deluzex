@@ -4,6 +4,7 @@ import styles from "./contact.module.css";
 import { useState, useEffect } from "react";
 import { submitContactForm, fetchSiteContent } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { isValidEmail, sanitizeEmail } from "../utils/validation";
 
 export default function Contact() {
   const { isAuthenticated, openLoginModal, user } = useAuth();
@@ -19,7 +20,7 @@ export default function Contact() {
   const [settings, setSettings] = useState<any>(null);
 
   useEffect(() => {
-    fetchSiteContent("site_settings").then(setSettings).catch(() => {});
+    fetchSiteContent("site_settings").then(setSettings).catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -39,7 +40,13 @@ export default function Contact() {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === "phone") {
+      const cleanDigits = value.replace(/\D/g, "").slice(0, 10);
+      setFormData((prev) => ({ ...prev, phone: cleanDigits }));
+      return;
+    }
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,6 +55,14 @@ export default function Contact() {
       openLoginModal(undefined, "Please sign in to send an inquiry or message to our studio team.");
       return;
     }
+
+    const cleanEmail = sanitizeEmail(formData.email);
+    if (!cleanEmail || !isValidEmail(cleanEmail)) {
+      setStatus("error");
+      setErrorMessage("Please enter a valid email address (e.g. name@example.com).");
+      return;
+    }
+
     setStatus("loading");
     setErrorMessage("");
 
@@ -58,7 +73,7 @@ export default function Contact() {
     try {
       await submitContactForm({
         name: formData.name,
-        email: formData.email,
+        email: cleanEmail,
         phone: formData.phone,
         message: fullMessage,
       });
@@ -221,10 +236,16 @@ export default function Contact() {
                 <input
                   type="email"
                   name="email"
-                  placeholder="Enter your mail"
+                  placeholder="Enter your email"
                   className={styles.formInput}
                   value={formData.email}
                   onChange={handleChange}
+                  onBlur={() => {
+                    if (formData.email && !isValidEmail(formData.email)) {
+                      setStatus("error");
+                      setErrorMessage("Please enter a valid email address (e.g. name@example.com).");
+                    }
+                  }}
                   required
                 />
               </div>
@@ -234,7 +255,10 @@ export default function Contact() {
                 <input
                   type="tel"
                   name="phone"
-                  placeholder="Enter your Number"
+                  inputMode="numeric"
+                  pattern="[0-9]{10}"
+                  maxLength={10}
+                  placeholder="Enter 10-digit mobile number"
                   className={styles.formInput}
                   value={formData.phone}
                   onChange={handleChange}

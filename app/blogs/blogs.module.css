@@ -571,6 +571,7 @@
     font-size: 1.85rem;
   }
 }
+
 /* The filter strip scrolls sideways instead of widening the page */
 .filters {
   min-width: 0;

@@ -54,7 +54,7 @@ export default function CategoriesCarousel({ categories }: CategoriesCarouselPro
         .then((data) => {
           if (data && data.length > 0) setList(data);
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [categories]);
 
@@ -218,7 +218,7 @@ export default function CategoriesCarousel({ categories }: CategoriesCarouselPro
           return (
             <Link
               key={cat.id || cat._id || idx}
-              href={`/shop?category=${encodeURIComponent(catIdentifier)}`}
+              href={`/shop?category=${encodeURIComponent(catIdentifier)}#shop-toolbar`}
               className={styles.catCard}
               onClick={(e) => {
                 if (hasDraggedRef.current) {

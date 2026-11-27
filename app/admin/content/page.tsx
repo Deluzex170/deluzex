@@ -27,6 +27,7 @@ import {
   updateSiteContent,
   uploadCmsImage,
 } from "../../services/api";
+import { isValidEmail } from "../../utils/validation";
 
 type TabKey = "homepage" | "about" | "site_settings";
 
@@ -77,7 +78,17 @@ export default function AdminContentPage() {
     let payload: any = null;
     if (tab === "homepage") payload = homepageData;
     if (tab === "about") payload = aboutData;
-    if (tab === "site_settings") payload = settingsData;
+    if (tab === "site_settings") {
+      if (settingsData?.email && !isValidEmail(settingsData.email)) {
+        setErrorMsg("Please enter a valid Concierge Email address (e.g. concierge@deluzex.com).");
+        return;
+      }
+      if (settingsData?.invoice_email && !isValidEmail(settingsData.invoice_email)) {
+        setErrorMsg("Please enter a valid Invoice Concierge Email address (e.g. invoice@deluzex.com).");
+        return;
+      }
+      payload = settingsData;
+    }
 
     if (!payload) return;
 

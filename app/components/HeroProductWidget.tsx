@@ -18,6 +18,7 @@ export type HeroLamp = {
   price?: number;
   count?: number;
   alt: string;
+  category?: string;
 };
 
 export default function HeroProductWidget() {
@@ -74,6 +75,7 @@ export default function HeroProductWidget() {
             price: Number(item.product_price ?? item.price ?? 0),
             count: Number(item.product_price ?? item.price ?? 0),
             alt: item.product_title || item.title || "Luxury Architectural Lighting",
+            category: (item.product_category || (item as any).category || "").trim(),
           }));
           setLamps(formatted);
           setCarouselPosition(formatted.length * 2 + 1);
@@ -298,11 +300,28 @@ export default function HeroProductWidget() {
       {/* PREVIOUS STATIC SHOP LINK - COMMENTED OUT AS PER REQUIREMENT:
       <Link href="/shop" className={styles.heroInfoCard} aria-live="polite" style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }} title="View product in shop">
       */}
-      <Link
-        href={activeLamp?._id || activeLamp?.id ? `/product/${activeLamp._id || activeLamp.id}` : "/shop"}
+      <div
         className={styles.heroInfoCard}
         aria-live="polite"
-        style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+        role="button"
+        tabIndex={0}
+        onClick={() => {
+          if (activeLamp?._id || activeLamp?.id) {
+            router.push(`/product/${activeLamp._id || activeLamp.id}`);
+          } else {
+            router.push("/shop");
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (activeLamp?._id || activeLamp?.id) {
+              router.push(`/product/${activeLamp._id || activeLamp.id}`);
+            } else {
+              router.push("/shop");
+            }
+          }
+        }}
         title={`View ${activeLamp?.name || "product"} details`}
       >
         <div className={styles.heroInfoCardImg}>
@@ -317,10 +336,27 @@ export default function HeroProductWidget() {
         <div className={styles.heroInfoCardContent}>
           <span className={styles.heroInfoCardName}>{activeLamp.name}</span>
           <span className={styles.heroInfoCardCount}>
-            ₹{Number(activeLamp.price ?? activeLamp.count ?? 0).toLocaleString("en-IN")}
+            <span className={styles.heroRupeeSymbol}>₹</span>{Number(activeLamp.price ?? activeLamp.count ?? 0).toLocaleString("en-IN")}
           </span>
         </div>
-      </Link>
+        {activeLamp.category &&
+          activeLamp.category.toLowerCase() !== "null" &&
+          activeLamp.category.toLowerCase() !== "undefined" && (
+            <Link
+              href={`/shop?category=${encodeURIComponent(activeLamp.category)}#shop-toolbar`}
+              className={styles.heroCategoryBadge}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              title={`View all ${activeLamp.category.replace(/_/g, " ")} products in shop`}
+            >
+              <span>{activeLamp.category.replace(/_/g, " ")}</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </Link>
+          )}
+      </div>
 
       <div
         className={styles.heroLamps}
